@@ -1,6 +1,6 @@
 # OMIFlow — Danh mục module (trigger, nút, hành động, điều kiện)
 
-Nguồn: (1) JSON thật của 11 flow đang chạy trên một tenant y tế, đọc qua `GET /omi_v2/campaign/get/{id}`; (2) enum và nhãn tiếng Việt trích từ mã giao diện OMICRM (bản stg, 10/2026). Mục có nhãn **[verify JSON]** đã thấy trong flow thật; mục **[enum]** mới thấy trong mã giao diện, chưa có JSON mẫu: khi dùng phải dựng thử trên UI một lần rồi đọc lại JSON để lấy schema.
+Danh mục này là của **nền tảng**, áp dụng cho mọi tenant (xem `concepts.md` để hiểu cơ chế đối tượng, biến, trigger). Nguồn: (1) enum và nhãn tiếng Việt trích từ mã giao diện OMICRM (bản stg, 10/2026); (2) tài liệu chính thức `omicrm.io/post/topic/omiflow-7`; (3) JSON thật của các flow đang chạy, đọc qua `GET /omi_v2/campaign/get/{id}`. Mục có nhãn **[verify JSON]** đã thấy JSON thật; mục **[enum]** đã biết công dụng nhưng chưa có JSON mẫu: khi dùng thì dựng thử một lần (hoặc Ctrl+C một nút cùng loại trên canvas để xem định dạng clipboard), GET lại để lấy schema rồi bổ sung vào đây.
 
 Id trong ví dụ đã thay bằng `<...>`. Mã biến thật là chuỗi ngẫu nhiên 10 ký tự (ví dụ `{{MpQxWEiLis}}`).
 
@@ -13,9 +13,9 @@ Trigger KHÔNG phải node riêng: nó là **node `CONDITION` đầu tiên** (`i
 | Mã (`conditions[0].type`) | Nhãn UI | Khi nào dùng | Trạng thái |
 |---|---|---|---|
 | `WEB_HOOK` | API | Hệ thống ngoài, Callbot, Chatbot gọi vào URL để chạy flow, truyền biến qua body | [verify JSON] |
-| `GENERAL` | Điều kiện | Sự kiện trong OMICRM thoả điều kiện: cuộc gọi kết thúc với trạng thái hoặc phím IVR nhất định, phiếu ghi mới thuộc danh mục X, … | [verify JSON] |
+| `GENERAL` | Điều kiện | Đối tượng (khách, phiếu, cuộc gọi, cuộc gọi AI phân tích, hội thoại) được thêm mới hoặc cập nhật và thoả thuộc tính; hoặc **sự kiện mở rộng** (cuộc gọi kết thúc, phím IVR, phiếu mới, khách quan tâm OA, đánh giá ZNS…) kèm điều kiện thuộc tính | [verify JSON] |
 | `FORM` | Biểu mẫu | Khách hoàn thành hoặc sửa Biểu mẫu | [enum] |
-| `PERIOD` | Xảy ra định kỳ | Lịch ngày, tuần, tháng (nhắc lịch, chăm sóc định kỳ, báo cáo) | [enum] |
+| `PERIOD` | Xảy ra định kỳ | Hằng ngày, tuần, tháng; **trước hoặc sau** một thuộc tính thời gian (sinh nhật, hạn phiếu, ngày hẹn); thời điểm cụ thể | [enum] |
 | `EXCEL` | Kích hoạt bằng File Excel | Chạy hàng loạt, mỗi dòng Excel là một đối tượng, định nghĩa giá trị biến | [enum] |
 | `THIRD_PARTY` | Đối tác | Nhận sự kiện hoặc webhook từ đối tác tích hợp | [enum] |
 | `DIRECT_CALL` | Cuộc gọi đang diễn ra | Chạy ngay trong lúc cuộc gọi diễn ra (kết hợp `HOLDING_CALL`, `TRANSFER_CALL`) | [enum] |
@@ -69,13 +69,13 @@ Mọi node có chung khung: `id, is_first_node, description, description_type, c
 | `CONDITION` | Logic → Điều kiện | Rẽ nhánh theo nhiều *trường hợp*; `next_nodes` của node = nhánh "Bước tiếp theo" (else) | [verify JSON] |
 | `DELAY` | Logic → Trì hoãn (Delay) | Chờ khoảng thời gian, chờ đến khung giờ, hoặc chờ đến khi thoả điều kiện | [verify JSON] |
 | `RANDOM` | Logic → Random | Chia nhánh ngẫu nhiên theo tỉ lệ (A/B test kịch bản, phân tải) | [enum] |
-| `AI_ANALYZE` | Logic → Phân tích thông tin | Phân tích nội dung (dùng trong luồng hội thoại hoặc cuộc gọi) | [enum] |
+| `AI_ANALYZE` | Logic → Phân tích thông tin | AI phân loại một đoạn nội dung theo Chủ đề hoặc Ý định đã đào tạo ở mô-đun AI, mỗi ý định một nhánh | [enum] |
 | `ACTION` | Tương tác → Hành động | Chuỗi nhiều hành động chạy tuần tự (mục 3) | [verify JSON] |
 | `MARKETING` | Tương tác → Marketing | Tạo phiên gửi hàng loạt: SMS, ZNS hoặc ZBS, ZCC (xin quyền gọi Zalo), Email, AutoCall, AI Callbot, Viber Business | [enum] |
 | `INFO_DIALOG` / `FORM_DIALOG` / `BUTTON_DIALOG` / `VARIABLE_DIALOG` / `VIEW_DETAIL_DIALOG` / `FEATURE_DIALOG` | Tương tác → Cửa sổ tương tác | Bật cửa sổ trên màn hình nhân viên (mục 4) | INFO, FORM [verify JSON]; còn lại [enum] |
 | `ZALO_PERSONAL_MESSAGE`, `ZALO_MESSAGE`, `FACEBOOK_CHAT_MESSAGE`, `FACEBOOK_POST_MESSAGE`, `LIVE_TALK_MESSAGE`, `TELEGRAM_MESSAGE`, `VIBER_MESSAGE`, `TIKTOK_BUSINESS_MESSAGE`, `WHATSAPP_BUSINESS_MESSAGE`, `EMAIL_SMTP_MESSAGE`, `MULTI_CHANNEL_MESSAGE` | Trò chuyện → từng kênh / Gửi tin nhắn chung | Gửi tin hoặc thao tác trên kênh (ví dụ Zalo cá nhân: `REQUEST_FRIEND`) | Zalo cá nhân [verify JSON] |
 | `CHAT_GPT`, `CHATX_AI`, `OMI_BOT_AI`, `PRO_AI`, `PARTNER_AI`, `CUSTOMIZE_BOT_AI` | Trò chuyện → ChatGPT / ChatX / AI Chatbot / ProAI / Partner AI | Giao cuộc trò chuyện cho bot AI xử lý | [enum] |
-| `COLLECT_INFO` | Khác → Thu thập thông tin | Gán giá trị cho biến thu thập (kể cả ngoài callbot, xem 5.3) | [verify JSON] |
+| `COLLECT_INFO` | Khác → Thu thập thông tin | AI bóc Đối tượng hoặc Thực thể (SĐT, email, ngày, thực thể tự đào tạo) từ nội dung, lưu vào biến; tuỳ chọn `FROM_DEFINED_VARIABLE` gán giá trị cố định | [verify JSON] (kiểu giá trị cố định) |
 | `DESCRIPTION` | Khác → Ghi chú | Ghi chú trên canvas (URL webhook, cURL mẫu, giải thích) | [verify JSON] |
 | `MENU`, `CUSTOM_UI`, `DIRECT_CALL*`, `END_CALL`, `BEGIN` | (luồng gọi / bot) | Dùng trong flow cuộc gọi trực tiếp hoặc giao diện tuỳ biến | [enum] |
 
@@ -102,7 +102,8 @@ Phép toán (UI → API): `=`→`EQUAL`, `!=`→`NOT_EQUAL`, `>`→`GT`, `<`→`
 ```json
 {"id":"<a>","type":"DELAY","data":{"type":"after","value_string":"10","unit":"second","use_time_slot":false,"days_in_week":null}}
 ```
-- `type`: `after` (sau khoảng) hoặc trì hoãn **đến** một thời điểm (`delayTo`); `use_time_slot` + `days_in_week` để chỉ chạy tiếp trong khung giờ, ngày cho phép.
+- 4 tuỳ chọn: **sau khoảng thời gian** (`type:"after"`, giây, phút, giờ, ngày); **thời gian cụ thể** (mốc trong quá khứ thì bỏ qua nút); **khung giờ tiếp tục** (`use_time_slot` + `days_in_week`, ví dụ 08:00–17:30 thứ 2–6 trước khi gọi hoặc gửi ZNS); **hoặc điều kiện đến trước** (`conditions`).
+- Lượt chạy đang trì hoãn vẫn chờ kể cả khi flow bị ngưng; trong Lịch sử có thể Tiếp tục hoặc Huỷ hàng loạt.
 - **Chờ có điều kiện**: thêm `conditions` (cùng schema CONDITION). Ví dụ: chờ tối đa 30 phút cho đến khi cuộc gọi có `ct_transaction_id` = biến và đã kết thúc:
 ```json
 {"conditions":[{"id":"<c>","operator_type":"AND","data":[
@@ -111,7 +112,8 @@ Phép toán (UI → API): `=`→`EQUAL`, `!=`→`NOT_EQUAL`, `>`→`GT`, `<`→`
  "type":"after","value_string":"30","unit":"minute","use_time_slot":false}
 ```
 
-### 2.3 COLLECT_INFO [verify JSON]
+### 2.3 COLLECT_INFO [verify JSON — kiểu giá trị cố định]
+Kiểu AI bóc thực thể (chọn nội dung cần phân tích + Đối tượng hoặc Thực thể) chưa có JSON mẫu. Kiểu gán cố định, dùng làm giá trị mặc định khi tra cứu không ra:
 ```json
 {"type":"COLLECT_INFO","data":{"content":"Khách hàng mới","variables":[
   {"variable_code":"<code10>","variable_name":"Tên bệnh nhân","variable_value":"Khách hàng mới","option":"FROM_DEFINED_VARIABLE"}]}}
@@ -271,7 +273,7 @@ Giá trị nhân viên nhập vào biểu mẫu thành biến `{{<field_code>}}`
 ## 5. Biến dùng được trong flow
 1. **Biến trigger**: `multi_variables` của WEB_HOOK, tham chiếu `{{<field_code>}}`.
 2. **Biến liên kết tùy chỉnh**: từ `CREATE_CUSTOM_VARIABLE`, khai báo ở top-level `custom_variables:[{"name","field_code"}]`.
-3. **Biến thu thập** (`COLLECT_INFO`): dùng như giá trị mặc định. Mẫu: tra API không ra tên thì gán "Khách hàng mới", rồi nhập lại nhánh chính.
+3. **Dữ liệu thu thập** (`COLLECT_INFO` hoặc phần thu thập trong nút gửi tin): AI bóc thực thể từ nội dung hoặc câu trả lời; hoặc gán giá trị cố định (mẫu: tra API không ra tên thì gán "Khách hàng mới", rồi nhập lại nhánh chính). Biến tuỳ chỉnh và dữ liệu thu thập chỉ sống trong flow hiện tại.
 4. **Biến hệ thống cuộc gọi**: `{{ct_phone_number}}`, `{{ct_transaction_id}}`, `ct_key_action`, `ct_call_status`, `ct_call_type`, `ct_sip_number`.
 5. **AI Assistant**: `{{ca_summarize}}` (tóm tắt cuộc gọi), `{{ca_ai_assistant}}` (kết quả phân tích, hay chèn vào mô tả phiếu).
 6. **Đa kênh**: `social_*` (ví dụ `social_phone_number_linked`, `social_customer_name`, `social_zalo_shared_info_phone`…).

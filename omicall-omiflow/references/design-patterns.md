@@ -1,6 +1,6 @@
 # OMIFlow — Tư duy thiết kế và thư viện mẫu
 
-Mẫu **[đã chạy]** rút từ flow thật của một tenant y tế (đã ẩn danh). Mẫu **[suy luận]** ghép từ danh mục module (`node-catalog.md`): logic đúng theo năng lực, nhưng schema của module [enum] phải dựng thử một lần trên UI để lấy JSON.
+Module là của nền tảng, dùng chung mọi tenant; mẫu chỉ khác nhau ở **nghiệp vụ**. Mẫu **[tài liệu OMI]** lấy từ hướng dẫn chính thức; mẫu **[đã chạy]** rút từ flow thật (ví dụ ở một tenant y tế, đã ẩn danh; khung áp dụng cho mọi ngành có tổng đài và hệ thống ngoài); mẫu **[suy luận]** ghép từ danh mục module, logic đúng theo năng lực, nhưng schema của module [enum] phải dựng thử một lần để lấy JSON.
 
 ## A. Khung suy luận: từ bài toán đến flow
 
@@ -9,7 +9,7 @@ Mẫu **[đã chạy]** rút từ flow thật của một tenant y tế (đã �
 | # | Câu hỏi | Chọn module |
 |---|---|---|
 | 1 | **Cái gì xảy ra thì flow phải chạy?** Hệ thống ngoài hoặc bot gọi vào? Sự kiện trong CRM (cuộc gọi kết thúc, bấm phím, phiếu mới, phiếu đổi trạng thái, khách mới)? Theo lịch? Theo danh sách? Đơn hàng đối tác? | `WEB_HOOK` · `GENERAL` / `TICKET` / `CONTACT` · `PERIOD` · `EXCEL` · `HARAVAN`/`SAPO`/… · `FORM` · `DIRECT_CALL` |
-| 2 | **Đối tượng gốc là ai?** Flow đang cầm khách, cuộc gọi, phiếu hay hội thoại? Trigger API **không** tự có đối tượng gốc. | `GET_RELATED` (CLOSEST_CONTACT/CALL/TICKET/CONV) hoặc điều kiện xác định khách theo SĐT |
+| 2 | **Đối tượng nào phải có trong luồng?** Đối tượng gốc từ trigger là gì, cái gì tự kéo theo, hành động phía sau cần đối tượng nào (gửi Zalo cần hội thoại Zalo, gửi ZNS cho "Khách hàng" cần khách, cập nhật đơn cần ID đơn)? Trigger API **không** có đối tượng gốc. Xem `concepts.md` mục 1. | `GET_RELATED` (khách, phiếu, cuộc gọi, hội thoại, nhân viên, đơn hàng đối tác; có thể tìm qua đối tượng khác; vị trí 1–5) |
 | 3 | **Thiếu dữ liệu gì để quyết định?** Dữ liệu ở hệ thống ngoài → gọi API lấy về biến. Dữ liệu là văn bản tự do (tóm tắt cuộc gọi, tin nhắn) → AI phân loại. Cần tính → tính toán. | `CREATE_CUSTOM_VARIABLE` API_V2 · CHAT_GPT · CALCULATION |
 | 4 | **Rẽ nhánh theo gì?** Giá trị biến, phím IVR, trong hoặc ngoài giờ làm việc, khách đã tồn tại, trạng thái phiếu, kết quả AI. Có nhánh mặc định không? | `CONDITION` (mỗi tình huống một trường hợp + "Bước tiếp theo" làm nhánh mặc định) |
 | 5 | **Kết quả nghiệp vụ là gì?** Ghi CRM (tạo hoặc cập nhật khách, phiếu, cuộc gọi, hội thoại), báo nhân viên, đẩy sang hệ thống ngoài, nhắn khách, gọi khách. | `ADD_TICKET`/`UPDATE_INFO_*` · `PUSH_NOTIFICATION`/`PUSH_REMINDER` · `SEND_WEBHOOK` · node kênh chat · `MARKETING` (SMS, ZNS, Callbot, AutoCall, Email) |
@@ -24,9 +24,36 @@ Quy tắc ghép:
 - **Ghi chú trên canvas** (`DESCRIPTION`): URL webhook, cURL mẫu, nguồn gọi ("nhận từ kịch bản callbot số 4").
 - Đặt tên flow có số thứ tự và mục đích: `5 - [AI CALL BOT TẠO TICKET SAU GIỜ LÀM VIỆC]`.
 
-## B. Mẫu đã chạy (tenant y tế)
+## B0. Mẫu trong tài liệu chính thức [tài liệu OMI]
 
-### B1. Callbot → webhook → tra hệ thống ngoài → phiếu ghi gắn cuộc gọi [đã chạy]
+### B0.1 Bán lẻ — chatbot xác nhận đơn và báo giao hàng (Haravan + Messenger)
+```
+Đối tác Haravan · trường hợp 1: Đơn hàng tạo mới | trường hợp 2: Đơn cập nhật + trạng thái giao = Đang giao
+ → GET_RELATED Cuộc trò chuyện (kênh Facebook Tin nhắn), tìm qua Khách hàng có SĐT = {{SĐT đặt hàng Haravan}}
+ → node FACEBOOK_CHAT_MESSAGE: mã đơn, địa chỉ, tổng tiền + 2 nút [Xác nhận] [Từ chối]
+     ├─ Xác nhận → Hành động Đối tác: Haravan "Xác nhận đơn" (ID đơn = biến)
+     └─ Từ chối  → Hành động Đối tác: Haravan "Huỷ đơn"
+ (trường hợp 2) → GET_RELATED hội thoại → tin "Đơn đang được giao"
+```
+Biến thể: gửi ZNS khi đơn mới; điều kiện kèm (đơn trên 1 triệu, kênh bán, đã thanh toán, khách có doanh thu tích luỹ ≥ 10 triệu).
+
+### B0.2 Marketing game — Zalo OA + nền tảng game (2 flow)
+```
+Flow 1: Sự kiện khách quan tâm OA → Biến tuỳ chỉnh API (POST lấy link game, partner_user_id = {{social_zalo_user_id}})
+        → gửi Tin giao dịch Zalo chứa {{game_url}}
+Flow 2: API (nền tảng game gọi về khi có kết quả quay thưởng) → điều kiện trúng/không → gửi Tin giao dịch chúc mừng hoặc cảm ơn
+```
+Trigger của flow 1 có thể thay bằng: khách bấm menu OA, quét QR, nhắn từ khoá hoặc ý định (AI), hoàn thành biểu mẫu, admin gửi hàng loạt.
+
+### B0.3 Nhân sự — chấm công từ thiết bị (Đối tác tự định nghĩa)
+Đối tác "Thiết bị chấm công" có 2 đối tượng: *Lượt chấm công*, *Đơn xin nghỉ*. Thuộc tính khai báo bằng cú pháp truy vấn (`personName`, `today-checkinTime`, `month|1-checkinTime`). Flow: sự kiện lượt chấm công → điều kiện giờ vào > 08:00 → thông báo cho quản lý hoặc ghi Google Sheet.
+
+### B0.4 Vận hành — sự kiện từ Google Sheet
+App Script trên sheet POST vào trigger API khi cột "Trạng thái" = "Xác nhận" → flow nhận `data[]`, `action` → tạo phiếu, gửi ZNS hoặc gọi Callbot cho dòng đó.
+
+## B. Mẫu đã chạy trong flow thật (ví dụ ngành y tế, khung dùng chung)
+
+### B1. Callbot → webhook → tra hệ thống ngoài (CRM, ERP, HIS…) → phiếu ghi gắn cuộc gọi [đã chạy]
 Bài toán: ngoài giờ, callbot tiếp nhận; bot không xử lý được thì tạo phiếu cho nhân viên gọi lại.
 ```
 WEB_HOOK(full_name, phone_number, summary, call_id)
@@ -53,7 +80,7 @@ GENERAL: cuộc gọi vào, đã kết thúc, ct_key_action ∈ {1..4}
 ```
 Bài học: AI trả **mã** (snake_case) và điều kiện so `CONTAIN` mã đó. Giữ danh sách mã trong prompt và trong các trường hợp của CONDITION **giống hệt nhau**.
 
-### B3. Đồng bộ hai chiều với hệ thống ngoài (đặt, sửa, huỷ lịch) [đã chạy]
+### B3. Đồng bộ hai chiều với hệ thống ngoài: tạo, sửa, huỷ một bản ghi (lịch hẹn, đơn, hợp đồng…) [đã chạy]
 ```
 WEB_HOOK(… status, appointmentID, patientID …)  ← callbot gọi
  → API_V2 GET hồ sơ theo SĐT

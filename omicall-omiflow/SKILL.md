@@ -8,11 +8,13 @@ description: Shared skill to design and build OMICall/OMICRM OMIFlow automations
 ## Overview
 **OMIFlow** (menu OMIFlow, path `/flow/list`, editor `/flow/edit/{id}`) là bộ máy tự động hoá của OMICRM, cùng loại N8N, Zapier, Make, nhưng gắn sẵn với tổng đài, Callbot, Chatbot, đa kênh, phiếu ghi, khách hàng. Một flow = **điều kiện bắt đầu** → chuỗi **nút** (điều kiện, trì hoãn, hành động, cửa sổ tương tác, marketing, kênh chat) → kết quả nghiệp vụ.
 
-Các flow mẫu ở tenant demo chỉ là **minh hoạ nhỏ**. Khi nhận bài toán, agent phải **tự suy luận** module nào ghép được thành lời giải từ danh mục đầy đủ (`references/node-catalog.md`), không chép nguyên flow mẫu.
+**Module là của nền tảng, dùng chung mọi tenant.** Tenant chỉ khác ở dữ liệu cấu hình (danh mục phiếu, thuộc tính, nhân viên, tag), tích hợp đã bật (OA, SMS, Email, ZNS, đối tác, callbot) và gói (quota flow, nút). Flow có sẵn ở một tenant chỉ là **minh hoạ nhỏ**. Khi nhận bài toán, agent phải **tự suy luận** module nào ghép được thành lời giải từ danh mục đầy đủ (`references/node-catalog.md`) và cơ chế nền tảng (`references/concepts.md`), không chép nguyên flow mẫu.
+
+Tài liệu chính thức: `https://omicrm.io/post/topic/omiflow-7` (tổng quan, trì hoãn, biến, đối tượng, đối tác, Google Sheet, kịch bản mẫu). Gặp module chưa rõ thì đọc ở đây trước.
 
 ## Rules (BẮT BUỘC)
 1. **Suy luận từ bài toán**: chạy khung 8 câu hỏi ở `references/design-patterns.md` mục A, rồi chọn module. Mẫu đã chạy chỉ tham chiếu hình dạng.
-2. **Không bịa schema**: module có nhãn [verify JSON] dùng JSON trong catalog; module [enum] phải dựng thử 1 lần trên UI → GET lại để lấy schema → ghi bổ sung vào catalog.
+2. **Không bịa schema**: module có nhãn [verify JSON] dùng JSON trong catalog; module [enum] phải dựng thử 1 lần (hoặc Ctrl+C một nút cùng loại trên canvas để đọc định dạng clipboard) → GET lại để lấy schema → ghi bổ sung vào catalog.
 3. **An toàn dữ liệu khách**: chỉ đọc flow đang chạy. Sửa flow đang chạy → lưu nháp hoặc tạo flow mới để **tắt**, chỉ cập nhật hay bật khi user đồng ý. Không xoá, không tắt flow của khách nếu không được yêu cầu. Kiểm tra quota flow ("Thêm mới N/M") và quota nút trước khi tạo.
 4. **Không bịa dữ liệu nghiệp vụ**: URL API ngoài, danh mục phiếu, nhân viên nhận, đầu số… lấy từ tài liệu user hoặc từ tenant (GET); thiếu thì ghi "Cần xác nhận".
 5. **Verify mọi lần lưu**: GET lại và chạy checklist trong `references/api-reference.md`; test bằng cURL hoặc sự kiện thật, xem tab **Lịch sử**.
@@ -31,7 +33,13 @@ Các flow mẫu ở tenant demo chỉ là **minh hoạ nhỏ**. Khi nhận bài 
 - Dữ liệu cấu hình để tham chiếu id (gọi bằng cùng token): danh mục và trạng thái phiếu (`ticket-v2-stg.omicrm.com/ticket/category/get-all`, `/ticket/status-set/get-all`), nhân viên (`agent-v1-stg.omicrm.com/get_all_agent/no_role`), phân bổ (`tenant-v1-stg.omicrm.com/sale_allocation/search`), thuộc tính (`tenant-v1-stg.omicrm.com/attribute/get_all?has_attr=true`), kịch bản callbot (`chatbot-gateway-v1-stg.omicrm.com/callbot/script/list-by-tenant/{tenant_id}`).
 
 ### Bước 1 — Phân tích bài toán
-Khung 8 câu (design-patterns mục A): sự kiện kích hoạt · đối tượng gốc · dữ liệu còn thiếu · rẽ nhánh · kết quả nghiệp vụ · người tham gia · thời gian chờ · caller cần gì và chống lặp. Ghi ra bảng: câu hỏi → module → cấu hình.
+Khung 8 câu (design-patterns mục A): sự kiện kích hoạt · đối tượng cần có trong luồng · dữ liệu còn thiếu · rẽ nhánh · kết quả nghiệp vụ · người tham gia · thời gian chờ · caller cần gì và chống lặp. Ghi ra bảng: câu hỏi → module → cấu hình. Kiểm tra tenant đã bật tích hợp mà thiết kế cần chưa (OA, nhà cung cấp SMS, template ZNS, đối tác, kịch bản callbot); thiếu thì ghi "Cần cấu hình".
+
+### Mô hình đối tượng (phải nắm trước khi thiết kế — chi tiết `references/concepts.md`)
+- Mỗi lượt chạy mang **đối tượng gốc** từ trigger: khách, phiếu, cuộc gọi, hội thoại, dòng Excel, lượt biểu mẫu, đơn hàng đối tác. Trigger API thì không có đối tượng gốc.
+- Một số đối tượng **tự kéo theo**: phiếu kéo khách, cuộc gọi, hội thoại đính kèm; cuộc gọi kéo khách; hội thoại kéo khách; đơn hàng kéo khách đối tác.
+- Hành động chỉ chạy khi **đối tượng nó cần đã có trong luồng**: gửi tin Zalo cần hội thoại Zalo, Marketing gửi cho "Khách hàng" cần khách, cập nhật đơn cần ID đơn. Thiếu thì thêm **Gán đối tượng liên quan**; đối tượng cùng loại thứ 2 trở đi có **vị trí** 1–5.
+- Biến tuỳ chỉnh và dữ liệu thu thập chỉ sống trong flow hiện tại, không truyền sang flow được gọi.
 
 ### Bước 2 — Thiết kế flow
 - Vẽ luồng dạng text (như mẫu B1–B6): trigger → nút → nhánh, có nhánh lỗi và nhánh mặc định.
@@ -41,20 +49,20 @@ Khung 8 câu (design-patterns mục A): sự kiện kích hoạt · đối tư�
 ### Bước 3 — Dựng JSON và lưu
 - Lấy một flow cùng tenant làm khung (top-level fields), dựng `nodes` + `edges.connections` theo schema DUAL ở `references/api-reference.md` (nhánh lưu cả trong node lẫn edge).
 - Lưu nháp `save_draft_v2` hoặc tạo `add_v2`; sửa `update_v2/{id}`; multipart field `file`, Python `requests` (không dùng curl).
-- Nếu API lưu chưa verify cho tenant đó → dựng trên UI (mục *Thao tác UI*), rồi GET để đối chiếu.
+- Nếu API lưu chưa verify cho tenant đó → dựng bằng **dán JSON nút vào canvas** (định dạng clipboard editor, `concepts.md` mục 7) hoặc thao tác UI, rồi GET để đối chiếu.
 
 ### Bước 4 — Verify, test, giao
 - Checklist trong api-reference; test webhook bằng cURL; xem tab Lịch sử từng nút.
 - Giao: editor URL `https://{domain}.omicrm.io/flow/edit/{id}?lng=vi`, sơ đồ luồng, bảng biến, cURL test, các điểm "Cần xác nhận".
 
 ## Danh mục module (tóm tắt — chi tiết và JSON: `references/node-catalog.md`)
-- **Trigger** (node CONDITION đầu tiên): API (`WEB_HOOK`), Điều kiện (`GENERAL`: sự kiện cuộc gọi, phím IVR, phiếu mới…), Biểu mẫu, Định kỳ, File Excel, Đối tác (Haravan, Sapo, KiotViet, Shopify, WooCommerce, Pancake, POS Bird, TPOS, Lark Base, Email SMTP), Cuộc gọi đang diễn ra, Khách hàng mới hoặc thoả thuộc tính, Phiếu ghi chuyển trạng thái.
-- **Logic**: Điều kiện (nhiều trường hợp + nhánh mặc định; so sánh biến, cuộc gọi, khách, phiếu, khung giờ làm việc), Trì hoãn (sau khoảng, đến thời điểm, trong khung giờ, chờ đến khi thoả điều kiện), Random (A/B), Phân tích thông tin.
+- **Trigger** (node CONDITION đầu tiên): API (`WEB_HOOK`); Điều kiện (`GENERAL`: đối tượng thêm mới hoặc cập nhật thoả thuộc tính, hoặc sự kiện mở rộng như cuộc gọi kết thúc, phím IVR, phiếu mới, khách quan tâm OA, đánh giá ZNS); Biểu mẫu; Định kỳ (ngày, tuần, tháng, trước hoặc sau một thuộc tính thời gian, thời điểm cụ thể); File Excel; Đối tác (liên kết trực tiếp: Haravan, Sapo, KiotViet, WooCommerce, Pancake…; webhook; đối tác tự định nghĩa); Cuộc gọi đang diễn ra; Phiếu ghi chuyển trạng thái.
+- **Logic**: Điều kiện (nhiều trường hợp + nhánh mặc định; so sánh biến, cuộc gọi, khách, phiếu, khung giờ làm việc), Trì hoãn (sau khoảng, thời điểm cụ thể, khung giờ tiếp tục, hoặc điều kiện đến trước), Random (A/B), Phân tích thông tin (AI phân loại theo chủ đề hoặc ý định đã đào tạo, mỗi ý định một nhánh).
 - **Hành động** (22): thêm hoặc cập nhật khách, tạo hoặc cập nhật phiếu, thông báo, nhắc nhở, trả kết quả qua Biểu mẫu hoặc API, biến liên kết tùy chỉnh (API, ChatGPT, tính toán, ngẫu nhiên, ảnh thư mời), gán đối tượng liên quan, Google Sheet, cập nhật hội thoại, cuộc gọi, nhân viên, cửa sổ, đánh giá AI Chatbot, gọi API ra ngoài, phân loại, chuyển tiếp cuộc gọi, gọi flow khác, cập nhật đối tác, giữ cuộc gọi.
 - **Cửa sổ tương tác** (màn hình nhân viên): thông tin, biểu mẫu (có nhánh hoàn thành), nút bấm, biến, xem chi tiết, tính năng.
 - **Marketing** (gửi hàng loạt): SMS, ZNS hoặc ZBS, xin quyền gọi ZCC, Email, AutoCall, AI Callbot, Viber Business.
 - **Trò chuyện**: tin nhắn từng kênh (Facebook, Zalo OA, Zalo cá nhân, LiveTalk, Telegram, Viber, TikTok, WhatsApp, Email), gửi tin nhắn chung, giao cho bot AI (ChatGPT, ChatX, AI Chatbot, ProAI, Partner AI).
-- **Khác**: Thu thập thông tin (gán biến mặc định), Ghi chú.
+- **Khác**: Thu thập thông tin (AI bóc thực thể từ nội dung vào biến, hoặc gán giá trị cố định), Ghi chú.
 
 ## Kết nối với Callbot và Chatbot
 - **Callbot → OMIFlow**: callbot gọi URL webhook (khi thu đủ biến, khi bot không xử lý được, khi khách bấm phím chuyển máy) để tạo phiếu, đồng bộ hệ thống ngoài, bật popup cho nhân viên.
@@ -84,6 +92,7 @@ Khung 8 câu (design-patterns mục A): sự kiện kích hoạt · đối tư�
 - **Browser pane không bắt XHR khác domain** trong `read_network_requests`; dùng `performance.getEntriesByType('resource')` để tìm endpoint. Pane hẹp làm canvas tràn ngang → ưu tiên API thay vì bấm UI.
 
 ## Tài liệu tham khảo
+- `references/concepts.md` — cơ chế nền tảng: đối tượng và vị trí, trigger, biến, cú pháp truy vấn JSON, trì hoãn, AI, marketing, trò chuyện, dán JSON vào canvas, Google Sheet.
 - `references/node-catalog.md` — mọi trigger, nút, hành động, điều kiện, biến; JSON đã kiểm chứng.
 - `references/design-patterns.md` — khung suy luận 8 câu, 6 mẫu đã chạy, mẫu mở rộng theo lĩnh vực, lỗi thiết kế cần tránh.
 - `references/api-reference.md` — endpoint, schema flow, DUAL node và edge, khung lưu, checklist.
