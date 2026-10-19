@@ -1,6 +1,6 @@
 ---
 name: omicall-chatbot-gen-ai
-description: Shared skill to build/edit OMiCALL/OMiCRM AI Chatbot (OmiBot, text bot for Zalo OA / Facebook / LiveTalk) for ANY tenant — system prompt, intents (Ngữ cảnh bắt đầu), RAG "Dữ liệu khác", API "Truy vấn" (api_knowledge, e.g. OMICall Public API contact/search by {{social_phone_number_linked}}), save_draft_v2/publish_v2 via chatbot-gateway, editor …/ai/bot/edit/{bot_id}. Use when the user gives an omicrm.io /ai/bot/ URL or asks to build/configure an OMI chatbot. Read references/api-reference.md before building.
+description: Shared skill to build/edit OMiCALL/OMiCRM AI Chatbot (OmiBot, text bot for Zalo OA / Facebook / LiveTalk) for ANY tenant — system prompt, intents (Ngữ cảnh bắt đầu), RAG "Dữ liệu khác", API "Truy vấn" (api_knowledge, e.g. OMICall Public API contact/search by {{social_phone_number_linked}}), save_draft_v2/publish_v2 via chatbot-gateway, editor …/ai/bot/edit/{bot_id}. Use when the user gives an omicrm.io /ai/bot/ URL or asks to build/configure an OMI chatbot. Read references/api-reference.md before building. Logs in via the OMI MCP server (omicall-mcp: login_omicall_mcp) when available and uses its tools for lookups/testing — see references/omi-mcp.md.
 ---
 
 # OMiCALL/OMiCRM AI Chatbot (OmiBot) Gen AI — Generic Builder Playbook (mọi tenant / mọi bot)
@@ -17,12 +17,15 @@ AI **Chatbot** (text) — OMI gọi là **AI Chatbot / OmiBot** (`/ai/bot/...`),
 6. **Suy luận từ nghiệp vụ**: đọc tài liệu → tự tách nhóm khách, intent, biến thu, prompt — chỉ dùng bot tenant khác làm tham chiếu hình dạng.
 
 # Input contract
-Ask nếu thiếu: (1) `OMICALL_USERNAME`+`OMICALL_PASSWORD`+`OMICALL_DOMAIN` (hoặc xem credentials.md); (2) `DATA_FILE` (Kịch bản / FAQ / doc mô tả dịch vụ); (3) `SCRIPT_NAME`. Bot đã có sẵn đúng nhu cầu → reuse giữ nguyên `_id` (save ghi đè).
+Hỏi một lần: (1) **domain doanh nghiệp**; (2) **tài khoản** (đăng nhập qua MCP OMI — mật khẩu do user tự đặt trong cấu hình MCP, không gửi trong chat); (3) **mô tả nghiệp vụ** (kịch bản, FAQ, tài liệu dịch vụ hoặc prompt). Tên bot tự đặt theo doanh nghiệp và mục đích. Bot đã có sẵn đúng nhu cầu → reuse giữ nguyên `_id` (save ghi đè).
 
 # Workflow
 
-## Bước 0 — Login & lấy token
-- Tương tự callbot: cookie `{domain}_omicrm_io` → key `"2"` = JWT (URL-encode → unquote). Base API: `https://chatbot-gateway-v1-stg.omicrm.com` (`Authorization: Bearer <token>`).
+## Bước 0 — Đăng nhập (MCP OMI trước) & lấy token — chi tiết `references/omi-mcp.md`
+- **MCP OMI**: `login_omicall_mcp` (+ `select_tenant`) → `python scripts/omi_session.py` (đọc phiên MCP, in tenant/domain/hạn, không in token); script khác import `omi_session.headers()`. MCP chưa cài cho domain này → đưa user lệnh `claude mcp add …` (omi-mcp.md mục 1).
+- **Tra một lần bằng MCP**, lưu `tenant_context.json` ở scratchpad: `get_service_package` (module `integrated`, `ai`), `get_all_channels` (oa_id, page_id, widget, bot_id để gắn bot), `list_agents` (nhân viên nhận chuyển hội thoại).
+- Dự phòng không có MCP: user đăng nhập một lần trong browser pane → cookie `{domain}_omicrm_io` → key `"2"` = JWT (URL-encode → unquote). Xem mục *Đăng nhập an toàn*.
+- Base API (MCP không có công cụ chatbot): `https://chatbot-gateway-v1-stg.omicrm.com` (`Authorization: Bearer <token>`).
 
 ## Bước 1 — Baseline schema
 - `POST /omiai_assistant/get/{bot_id}` body `{"_id": bot_id}` → cấu trúc bot hiện có (nếu cần tạo mới: dựng payload theo api-reference).
@@ -56,16 +59,17 @@ Ask nếu thiếu: (1) `OMICALL_USERNAME`+`OMICALL_PASSWORD`+`OMICALL_DOMAIN` (h
 1. Tạo dữ liệu đào tạo **"Dữ liệu khác"** bằng API (không cần UI): upload file lên `file_store/put_v2` (`business_type=warehouse_of_knowledge_files`, field `file_0`) → tạo record `warehouse_of_knowledge/other/add` (base `external-v1-stg.omicrm.com`, **Bearer token**, body có `object_info` + `add_bot_uuids`). Chi tiết + body chuẩn: `references/api-reference.md` mục **"RAG — Dữ liệu khác"** (đã verify end-to-end: file ≤15MB, ref_id = record `_id`).
 2. **Gắn file vào Ngữ cảnh bắt đầu → Kho tri thức → Dữ liệu khác**: set `vector_store` + `campaign.nodes[0].ai_analyze.vector_store_ids=[record _id]` rồi `save_draft_v2`. Sau save `file_training_status:"completed"` = đã train xong, bot trả lời được bằng kiến thức.
 3. Test chat: `POST /omiai_assistant/bot_testing_v2` hoặc nút "Trò chuyện thử".
-4. Verify: `GET bot` (payload) + reload editor + test tin nhắn. Giao: editor URL `https://{domain}.omicrm.io/ai/bot/edit/{bot_id}?lng=vi`.
+4. Verify: `GET bot` (chỉ in trường cần kiểm tra) + reload editor + test tin nhắn. Giao: editor URL `https://{domain}.omicrm.io/ai/bot/edit/{bot_id}?lng=vi`.
+5. **Kiểm thử bằng MCP**: `get_contact_by_phone` hoặc `search_contacts` để kiểm tra dữ liệu bot tra cứu; `search_conversations` + `search_channel_messages` để xem hội thoại thật bot đã trả lời; `create_contact` để tạo khách mẫu (dọn bằng `delete_contact` khi user đồng ý). `send_*_message` gửi cho người thật — chỉ khi user đồng ý.
 
 # Interactive OMiCRM (user xem realtime)
 Chrome CDP port 9222, profile riêng theo tenant: `Start-Process chrome.exe -ArgumentList '--remote-debugging-port=9222',"--user-data-dir=%TEMP%\omicrm-<profile>",'--no-first-run','https://<domain>.omicrm.io/ai/bot/edit/<bot_id>?lng=vi'`. Dùng `cdp.py` (`find_omicrm_tab()` + `CDP(ws).eval_js/navigate`).
 **Học schema từ UI**: inject fetch/XHR captor vào trang editor (ghi `POST body`/`response` vào `window.__omiCaps`) → user thao tác trong Chrome → đọc `window.__omiCaps` → ghi schema học được vào api-reference.md.
 
-## Đăng nhập an toàn — KHÔNG tự động hoá login
-- **Không** tự điền username/password vào form đăng nhập bằng script/JS (kể cả khi có sẵn creds trong `credentials.md`), và **không** đọc `document.cookie`/JWT của tenant thật qua JS/CDP để tự build header `Authorization` — hành vi này bị chặn bởi lớp an toàn của agent (phân loại "Credential Materialization") và không nên tìm cách vòng qua bằng công cụ khác (CDP, Windows-MCP, script khác...).
-- Quy trình đúng: mở bot editor trong **browser pane** (`mcp__Claude_Browser`), nhờ **user tự gõ email/mật khẩu và bấm Đăng nhập** ngay trong pane đó, chờ user xác nhận xong rồi mới tiếp tục.
-- Sau khi user đăng nhập, **thao tác tiếp bằng click/type trên UI** (không lấy token để gọi API trực tiếp) — vừa an toàn, vừa đúng nhu cầu "xem realtime" của user. Chỉ dùng đường API (Bước 5/6) khi có token hợp lệ do người dùng cung cấp trực tiếp, không tự trích xuất.
+## Đăng nhập an toàn
+- **Không** tự điền username/password vào form đăng nhập hay API đăng nhập bằng script/JS, kể cả khi đã có sẵn thông tin đăng nhập.
+- **Ưu tiên MCP OMI**: mật khẩu nằm trong cấu hình MCP do user tự cài; agent chỉ gọi `login_omicall_mcp` rồi đọc token từ phiên MCP bằng `scripts/omi_session.py`. Đây là đường chính để gọi API chatbot (Bước 5/6).
+- **Dự phòng không có MCP**: mở editor trong browser pane, nhờ user tự đăng nhập một lần. Việc đọc cookie để lấy JWT từng bị lớp an toàn của agent chặn (phân loại "Credential Materialization") ở một phiên trước, nhưng chạy được ở phiên khác (10/2026, sau khi user tự đăng nhập). Nếu bị chặn thì **không** tìm cách lách bằng CDP, Windows-MCP hay script khác: đề nghị user cài MCP OMI, hoặc thao tác bằng click/type trên UI.
 
 # Gotchas chí tử (mọi tenant — sai là hỏng)
 - **END POINT KHÁC callbot**: chatbot dùng `omiai_assistant/...` (KHÔNG phải `callbot/...`) trên cùng gateway.
@@ -76,7 +80,7 @@ Chrome CDP port 9222, profile riêng theo tenant: `Start-Process chrome.exe -Arg
 - **DUAL trí**: nếu intent phải khai CẢ `name_mappings[0].conditions` (editor) LẪN `nodes[].ai_analyze.conditions` (runtime) như callbot — xác minh bằng captor, không tự đoán.
 - **RAG cần training xong** mới trả lời đúng; `vector_store`/`question_answer` rỗng thì bot chỉ dựa `system_prompt`.
 - Không bấm **Xuất bản** trên UI trừ khi user yêu cầu (`is_publish` giữ nguyên).
-- Chỉ dùng token đúng tenant (cookie `{domain}_omicrm_io`); HttpOnly → CDP `Network.getAllCookies`/`document.cookie` — nhưng xem mục "Đăng nhập an toàn" ở trên, không tự trích xuất token của user thật.
+- Chỉ dùng token đúng tenant: kiểm tra `domain`/`tenant_id` bằng `python scripts/omi_session.py` trước khi ghi; nhiều tenant thì mỗi tenant một server MCP hoặc `logout` rồi đăng nhập lại. Xem mục "Đăng nhập an toàn".
 - **Không dùng phím Escape** trong editor Kịch bản để đóng drawer/dialog — có thể kích hoạt reset state cục bộ (mất sạch ý định chưa lưu) hoặc dialog "Xác nhận rời trang". Luôn đóng bằng nút X/"Đóng" hiển thị rõ trên UI.
 - **Tab "Đào tạo" tự động lưu ngay** (mọi thao tác thêm/xoá "Dữ liệu khác", "Bộ câu hỏi" áp dụng tức thì, hiện toast "Cập nhật thành công"/"Đã lưu") — khác tab **"Kịch bản"** cần bấm **"Lưu lại"** thủ công. Nếu tab Kịch bản đang có state cục bộ bị lỗi/mất dữ liệu (do thao tác nhầm), **tuyệt đối không** chuyển sang tab Đào tạo trước khi xử lý xong, vì autosave của Đào tạo có thể không đụng tới campaign — nhưng để chắc chắn, luôn **F5 reload lại toàn trang và xác nhận qua `get_page_text`** sau mỗi thao tác quan trọng trước khi tin state hiện tại là đúng.
 - **Trước khi sửa nhiều node**: chụp/đọc lại state hiện có (số lượng ý định, tên) TRƯỚC khi bắt đầu; sau khi sửa xong và bấm "Lưu lại", **luôn reload trang (navigate lại đúng URL) rồi đọc `get_page_text`** để xác nhận server thực sự giữ đúng — không tin tưởng UI ngay sau khi bấm lưu.
@@ -225,6 +229,7 @@ Bảng creds + bot mẫu từng tenant: **`references/credentials.md`**. Tenant 
 
 # Reference
 Endpoint, schema bot top-level + campaign + ví dụ đã verify, checklist validation, captor script: **`references/api-reference.md`**.
+MCP OMI — cài đặt, đăng nhập, công cụ cho từng bước, cách tiết kiệm token: **`references/omi-mcp.md`** (bản giống hệt trong 3 skill OMI). Token cho API: `scripts/omi_session.py`.
 
 Base directory for this skill: C:\Users\User\.agents\skills\omicall-chatbot-gen-ai
 Relative paths in this skill (e.g., scripts/, references/) are relative to this base directory.

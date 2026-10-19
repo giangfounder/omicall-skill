@@ -1,6 +1,6 @@
 ---
 name: omicall-callbot-gen-ai
-description: Shared skill to build OMiCall/OMiCRM Callbot Gen AI (SmartAgent) scripts end-to-end — works for ANY tenant and ANY Kịch bản/Callbot. Use when wiring intents, adding ACTION/collect-info/ADD_CLASSIFY/API nodes, calling external APIs (knowledge.apis), using RAG (knowledge.files), forwarding calls, building a Callbot script from business docs/PDF/Kịch bản, editing the Callbot editor (…/ai/callbot/script/update/{scriptId}), verifying via the chatbot-gateway API, or showing work live on OMiCRM. The AI reasons the intents, handling, routing, and the agent-guiding prompt from the business content itself (no copy from other tenants). Schemas: read references/api-reference.md before building.
+description: Shared skill to build OMiCall/OMiCRM Callbot Gen AI (SmartAgent) scripts end-to-end — works for ANY tenant and ANY Kịch bản/Callbot. Use when wiring intents, adding ACTION/collect-info/ADD_CLASSIFY/API nodes, calling external APIs (knowledge.apis), using RAG (knowledge.files), forwarding calls, building a Callbot script from business docs/PDF/Kịch bản, editing the Callbot editor (…/ai/callbot/script/update/{scriptId}), verifying via the chatbot-gateway API, or showing work live on OMiCRM. The AI reasons the intents, handling, routing, and the agent-guiding prompt from the business content itself (no copy from other tenants). Schemas: read references/api-reference.md before building. Logs in via the OMI MCP server (omicall-mcp: login_omicall_mcp) when available and uses its tools for lookups/testing — see references/omi-mcp.md.
 ---
 
 # OMiCALL Callbot Gen AI — Generic Builder Playbook (all tenants / all scripts)
@@ -23,14 +23,19 @@ Callbot **SmartAgent** (`type:"AI_AGENT"`): STT → LLM(+RAG/API) → TTS; tự 
 
 Có đủ 3 thứ này thì **không hỏi thêm**. Việc phân tích nghiệp vụ, đặt tên kịch bản (`SCRIPT_NAME` lấy theo doanh nghiệp + mục đích cuộc gọi), thiết kế intent/biến/phân loại, soạn prompt, dựng payload, lưu `add_v2`, verify, xuất thư mục giao đều do agent tự làm. Chỗ nghiệp vụ còn trống thì ghi "Cần xác nhận" trong báo cáo, không bịa và không dừng lại hỏi. Tenant đã có script phù hợp → dùng làm baseline qua `list-by-tenant`; tenant trống → dựng từ schema trong `references/api-reference.md`.
 
-**Đăng nhập — giới hạn an toàn**: agent không tự gõ mật khẩu vào form đăng nhập hay tự gọi API đăng nhập bằng mật khẩu (quy tắc an toàn của agent, kể cả khi user đã đưa sẵn). Thứ tự ưu tiên: (a) công cụ MCP đăng nhập `omicall_login_omicall_mcp` nếu có trong phiên; (b) phiên đã đăng nhập sẵn (`~/.omicall-mcp/session.json`, hoặc cookie `{domain}_omicrm_io` trong browser pane); (c) nếu chưa có phiên nào, mở trang đăng nhập trong browser pane, nhờ user bấm đăng nhập đúng một lần rồi tự lấy token từ cookie và làm tiếp mọi bước còn lại. Không lưu mật khẩu vào file, `credentials.md` hay repo chia sẻ.
+**Đăng nhập — ưu tiên MCP OMI** (chi tiết `references/omi-mcp.md`). Agent không tự gõ mật khẩu vào form hay gọi API đăng nhập bằng mật khẩu, kể cả khi user đã đưa sẵn. Mật khẩu chỉ nằm trong cấu hình MCP do user tự cài. Thứ tự:
+- **(a) MCP OMI**: `login_omicall_mcp` (+ `select_tenant` nếu nhiều tenant) → token cho API callbot lấy bằng `python scripts/omi_session.py` (đọc phiên `~/.omicall-mcp/session.json`, không in token). Nếu MCP chưa cài cho domain này: đưa user lệnh `claude mcp add …` ở omi-mcp.md mục 1 (user tự điền mật khẩu) thay vì hỏi mật khẩu trong chat.
+- **(b) Phiên có sẵn**: biến `OMI_TOKEN_FILE`, hoặc cookie `{domain}_omicrm_io` trong browser pane.
+- **(c) Dự phòng**: mở trang đăng nhập trong browser pane, nhờ user bấm đăng nhập đúng một lần, rồi lấy token từ cookie và làm tiếp.
+
+Không lưu mật khẩu vào file, `credentials.md` hay repo chia sẻ.
 
 ## Workflow
 
 ### Bước 0 — Login & API (giống mọi tenant)
-1. Lấy phiên đăng nhập theo mục *Input contract* (MCP login → phiên có sẵn → user đăng nhập một lần) → ghi `tenant_id` từ payload JWT.
-2. Token: `~/.omicall-mcp/session.json`→`accessToken`, hoặc cookie theo `references/credentials.md`.
-3. Base API: `https://chatbot-gateway-v1-stg.omicrm.com` (header `Authorization: Bearer <token>`).
+1. Đăng nhập theo mục *Input contract* (MCP OMI trước). `python scripts/omi_session.py` in `tenant_id`, `domain`, thời hạn token (không in token).
+2. **Tra cứu một lần bằng MCP**, lưu `tenant_context.json` ở scratchpad: `get_service_package` (module đã bật), `list_agents` + `list_extensions` (cho `TRANSFER_CALL`), `list_hotlines`. Không mở giao diện để tra những thứ này.
+3. Base API (MCP không có công cụ callbot): `https://chatbot-gateway-v1-stg.omicrm.com`, header lấy từ `omi_session.headers()`.
 4. Lấy script cũ làm baseline: `GET /callbot/script/get/{id}` — **nguồn schema chuẩn** cho `nodes`/`org_nodes`/`connections` của TENANT ĐÓ (giữ id/uuid/public_key/voice/model, overwrite nội dung).
 
 ### Bước 1 — Hiểu nghiệp vụ (PHÂN TÍCH — do LLM)
@@ -83,8 +88,9 @@ Nối intent → node theo routing đã thiết kế: TRANSFER_CALL (chuyển ex
 
 ### Bước 6 — Lưu + Verify + Giao
 1. **Lưu add_v2 LIÊN TỤC sau từng khối** (reload trang mất bản đang dở; server tự tăng version). Multipart field `file`, dùng Python `requests` (xem api-reference).
-2. **Verify mỗi save**: `GET /callbot/script/get/{new_id}` + checklist đầy đủ trong api-reference.
-3. **Giao**: editor URL `https://{domain}.omicrm.io/ai/callbot/script/update/{new_id}?lng=vi` + folder `D:\Tải Xuống\<SCRIPT_NAME>_Knowledge\` (text trích xuất, System Prompt, PDF gốc, README: script id, tenant, intents, biến, TTS, editor URL, lưu ý).
+2. **Verify mỗi save**: `GET /callbot/script/get/{new_id}` + checklist đầy đủ trong api-reference. Chỉ in các trường cần kiểm tra, không in cả payload.
+3. **Gọi thử bằng MCP** (khi user đồng ý gọi số thật): `click_to_call(extension, hotline, phone_number)` → `search_calls` hoặc `get_call_detail` để xem kết quả, tag, ghi chú. Nghe thử giọng: `text_to_speech`.
+4. **Giao**: editor URL `https://{domain}.omicrm.io/ai/callbot/script/update/{new_id}?lng=vi` + folder `D:\Tải Xuống\<SCRIPT_NAME>_Knowledge\` (text trích xuất, System Prompt, PDF gốc, README: script id, tenant, intents, biến, TTS, editor URL, lưu ý).
 
 ## Interactive OMiCRM (user xem realtime)
 Chrome CDP port 9222, profile `C:\Users\User\AppData\Local\Temp\opencode\chrome-cdp`: `Start-Process chrome.exe -ArgumentList '--remote-debugging-port=9222',"--user-data-dir=C:\Users\User\AppData\Local\Temp\opencode\chrome-cdp",'--no-first-run','https://<domain>.omicrm.io'`. Sau mỗi `add_v2` chạy `python scripts/goto.py <new_id>`. Dashboard: `python scripts/refresh_status.py <script_id>`. UI thao tác: `cdp.py` (`find_omicrm_tab()` + `CDP(ws).eval_js/navigate`).
@@ -141,3 +147,4 @@ Bảng creds + script mẫu từng tenant: **`references/credentials.md`**. Tena
 
 ## Reference
 Mọi schema (node/intent/system/collect/API/ADD_CLASSIFY/END_CALL/connection/org), save snippet, validation checklist: **`references/api-reference.md`**.
+MCP OMI — cài đặt, đăng nhập, công cụ cho từng bước, cách tiết kiệm token: **`references/omi-mcp.md`** (bản giống hệt trong 3 skill OMI). Token cho API: `scripts/omi_session.py`.

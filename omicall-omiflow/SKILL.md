@@ -1,6 +1,6 @@
-﻿---
+---
 name: omicall-omiflow
-description: Shared skill to design and build OMICall/OMICRM OMIFlow automations (workflow /flow/list) for ANY tenant and ANY business problem — triggers (API webhook, call events, IVR keys, tickets, schedule, Excel, partners), conditions, delays, AI classification, external API lookups, ticket/contact/call updates, agent popups, marketing (SMS/ZNS/Callbot), linking with Callbot/Chatbot. The agent reasons from the business problem to a flow using the module catalog; reads/saves flows via campaign-v1 API. Read references/node-catalog.md and references/design-patterns.md before designing.
+description: Shared skill to design and build OMICall/OMICRM OMIFlow automations (workflow /flow/list) for ANY tenant and ANY business problem — triggers (API webhook, call events, IVR keys, tickets, schedule, Excel, partners), conditions, delays, AI classification, external API lookups, ticket/contact/call updates, agent popups, marketing (SMS/ZNS/Callbot), linking with Callbot/Chatbot. The agent reasons from the business problem to a flow using the module catalog; reads/saves flows via campaign-v1 API. Read references/node-catalog.md and references/design-patterns.md before designing. Logs in via the OMI MCP server (omicall-mcp: login_omicall_mcp) when available and uses its tools for lookups/testing — see references/omi-mcp.md.
 ---
 
 # OMICall OMIFlow — Builder Playbook (mọi tenant, mọi bài toán)
@@ -25,12 +25,18 @@ Tài liệu chính thức: `https://omicrm.io/post/topic/omiflow-7` (tổng quan
 2. **Tài khoản đăng nhập**.
 3. **Bài toán nghiệp vụ**: file hoặc prompt mô tả (sự kiện gì, cần ra kết quả gì, ai nhận, hệ thống ngoài nào).
 
-**Đăng nhập**: agent không tự gõ mật khẩu vào form hay gọi API đăng nhập bằng mật khẩu. Thứ tự: công cụ MCP đăng nhập (nếu có) → phiên có sẵn → mở trang đăng nhập trong browser pane để user bấm đăng nhập **một lần**. Sau đó agent tự lấy token từ cookie `{domain}_omicrm_io` (JSON, key `"2"`, có thể URL-encode) và làm toàn bộ phần còn lại qua API. Lưu token ở file tạm (scratchpad), không ghi vào skill. Không chuyển trang khi user đang đăng nhập.
+**Đăng nhập — ưu tiên MCP OMI** (chi tiết `references/omi-mcp.md`). Agent không tự gõ mật khẩu vào form hay gọi API đăng nhập bằng mật khẩu. Thứ tự:
+- **(a)** `login_omicall_mcp` (+ `select_tenant`): mật khẩu nằm trong cấu hình MCP do user tự cài. Token cho API OMIFlow lấy bằng `scripts/omi_session.py` (đọc phiên MCP, không in token). MCP chưa cài cho domain này → đưa user lệnh `claude mcp add …` (omi-mcp.md mục 1).
+- **(b)** Phiên có sẵn (`OMI_TOKEN_FILE`).
+- **(c)** Dự phòng: mở trang đăng nhập trong browser pane để user bấm đăng nhập **một lần**, rồi lấy token từ cookie `{domain}_omicrm_io` (JSON, key `"2"`, có thể URL-encode) và lưu vào file scratchpad, đặt `OMI_TOKEN_FILE`. Không chuyển trang khi user đang đăng nhập.
+
+Không ghi token hay mật khẩu vào skill.
 
 ## Workflow
 ### Bước 0 — Khảo sát tenant
-- `POST /omi_v2/campaign/search?page=1&size=50` body `{}` → danh sách flow; `GET /omi_v2/campaign/get/{id}` từng flow → hiểu tenant đang tự động hoá gì, biến và danh mục phiếu đang dùng, webhook nào đã có.
-- Dữ liệu cấu hình để tham chiếu id (gọi bằng cùng token): danh mục và trạng thái phiếu (`ticket-v2-stg.omicrm.com/ticket/category/get-all`, `/ticket/status-set/get-all`), nhân viên (`agent-v1-stg.omicrm.com/get_all_agent/no_role`), phân bổ (`tenant-v1-stg.omicrm.com/sale_allocation/search`), thuộc tính (`tenant-v1-stg.omicrm.com/attribute/get_all?has_attr=true`), kịch bản callbot (`chatbot-gateway-v1-stg.omicrm.com/callbot/script/list-by-tenant/{tenant_id}`).
+- **Flow hiện có — đọc bằng bản tóm tắt, không đổ JSON**: `python scripts/flow_outline.py --list`, rồi `python scripts/flow_outline.py <id>` (trigger → nút → nhánh, tên biến thay cho mã). Chỉ `--save <id>` ra file khi cần sửa JSON.
+- **Tra id bằng MCP OMI** (một lần mỗi phiên, lưu `tenant_context.json` ở scratchpad): `get_service_package` (module đã bật), `get_ticket_categories` (danh mục phiếu), `list_agents` (contact_id cho thông báo, người liên quan), `list_hotlines` (đầu số cho trigger cuộc gọi), `get_all_channels` (OA, page, widget cho nút Trò chuyện, Marketing), `list_webhooks`.
+- **Chưa có trong MCP → API cùng token**: bộ trạng thái phiếu (`ticket-v2-stg.omicrm.com/ticket/status-set/get-all`), phân bổ (`tenant-v1-stg.omicrm.com/sale_allocation/search`), thuộc tính động (`tenant-v1-stg.omicrm.com/attribute/get_all?has_attr=true`), kịch bản callbot (`chatbot-gateway-v1-stg.omicrm.com/callbot/script/list-by-tenant/{tenant_id}`). Chỉ in các trường id và tên.
 
 ### Bước 1 — Phân tích bài toán
 Khung 8 câu (design-patterns mục A): sự kiện kích hoạt · đối tượng cần có trong luồng · dữ liệu còn thiếu · rẽ nhánh · kết quả nghiệp vụ · người tham gia · thời gian chờ · caller cần gì và chống lặp. Ghi ra bảng: câu hỏi → module → cấu hình. Kiểm tra tenant đã bật tích hợp mà thiết kế cần chưa (OA, nhà cung cấp SMS, template ZNS, đối tác, kịch bản callbot); thiếu thì ghi "Cần cấu hình".
@@ -53,6 +59,12 @@ Khung 8 câu (design-patterns mục A): sự kiện kích hoạt · đối tư�
 
 ### Bước 4 — Verify, test, giao
 - Checklist trong api-reference; test webhook bằng cURL; xem tab Lịch sử từng nút.
+- **Kiểm thử bằng MCP** thay vì mở giao diện:
+  - flow tạo phiếu → `search_tickets`, `get_ticket`;
+  - flow cập nhật khách → `get_contact_by_phone`;
+  - trigger cuộc gọi hoặc phím IVR → `click_to_call` (khi user đồng ý gọi số thật) rồi `search_calls` lấy `transaction_id`.
+
+  Dọn dữ liệu test (`delete_ticket`, `delete_contact`) chỉ khi user đồng ý.
 - Giao: editor URL `https://{domain}.omicrm.io/flow/edit/{id}?lng=vi`, sơ đồ luồng, bảng biến, cURL test, các điểm "Cần xác nhận".
 
 ## Danh mục module (tóm tắt — chi tiết và JSON: `references/node-catalog.md`)
@@ -96,5 +108,7 @@ Khung 8 câu (design-patterns mục A): sự kiện kích hoạt · đối tư�
 - `references/node-catalog.md` — mọi trigger, nút, hành động, điều kiện, biến; JSON đã kiểm chứng.
 - `references/design-patterns.md` — khung suy luận 8 câu, 6 mẫu đã chạy, mẫu mở rộng theo lĩnh vực, lỗi thiết kế cần tránh.
 - `references/api-reference.md` — endpoint, schema flow, DUAL node và edge, khung lưu, checklist.
+- `references/omi-mcp.md` — MCP OMI: cài đặt, đăng nhập, công cụ cho từng bước, cách tiết kiệm token (bản giống hệt trong 3 skill OMI).
+- `scripts/omi_session.py` — token từ phiên MCP; `scripts/flow_outline.py` — liệt kê và tóm tắt flow.
 - `references/webhook-examples.md` — mẫu cURL và response.
 - `references/react-flow-selectors.md` — selector DOM để thao tác canvas bằng JS.

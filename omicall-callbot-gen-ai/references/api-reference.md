@@ -146,3 +146,12 @@ Assert TẤT CẢ:
 8. ADD_CLASSIFY: runtime `actions[].data.classifies` == editor `actions[].datas.classifies`; top-level `classifies` đủ nhãn.
 9. END_CALL: runtime `description` + org `data.description`/`data.content` (cách kết thúc).
 10. `is_newest_version:true`, `is_publish:true`, `version` đã tăng.
+
+## Bài học tenant trống (không có script baseline) — đã verify
+- `list-by-tenant` trả `payload:[]` vẫn tạo được script mới bằng `add_v2` KHÔNG cần `id`/`uuid`/`public_key`; server sinh `id`, `uuid`, `version:1`. Muốn cập nhật tiếp thì truyền `id` cũ.
+- Gửi `is_publish:false` nhưng server trả `is_publish:true` — không dựa vào trường này để biết đã xuất bản.
+- Biến đầu vào chiến dịch gọi ra (tên, xe, hạn...) khai báo trong `variables` (type COLLECT_INFO, is_dynamic_attribute true) và nhúng `{{var_x}}` vào prompt; chỉ biến cần thu mới đưa vào BEGIN `collect_variables`. Chưa xác nhận cơ chế nạp giá trị từ chiến dịch.
+- Đăng nhập là việc của user (không nhập mật khẩu hộ). Sau khi user đăng nhập trong browser pane, lấy token từ cookie `{domain}_omicrm_io` key "2".
+- Ví dụ add_v2 tối thiểu đã chạy: xem payload gồm `nodes`(BEGIN + ACTION ADD_CLASSIFY + END_CALL), `org_nodes`, `connections` (intent→clf→END), `classifies`.
+- **Cập nhật phiên bản mới**: `add_v2` phải gửi CẢ `id` lẫn `uuid` của script cũ. Chỉ gửi `id` → server tạo script trùng (uuid mới, version 1). Gửi cả hai → version tăng và `id` đổi sang id mới (ví dụ v1 `6ad5c47f…` → v2 `6ad5c5b3…`, cùng uuid); luôn lấy `id` mới từ response.
+- **Xoá script**: `POST /callbot/script/delete` JSON `{"ids":["<script_id>"]}` (trả `payload:["<id>"]`). Body `{"id":...}` trả 9999 nhưng KHÔNG xoá. Chỉ xoá khi user đồng ý.
