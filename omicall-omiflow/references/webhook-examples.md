@@ -1,9 +1,9 @@
 # OMIFlow Webhook — Mẫu cURL + Response Schema
 
-## Mẫu 1: Flow "Tạo hồ sơ KH nếu chưa có" (tenant oanhtesting)
+## Mẫu 1: Flow "Tạo hồ sơ KH nếu chưa có" (tenant demo)
 
 ### URL
-`https://external-v1-stg.omicrm.com/api/campaign/webhook/6ab9d2c8949dfc02813731e6-IBHxKkTczPcbaqmT8XFG`
+`https://external-v1-stg.omicrm.com/api/campaign/webhook/{tenant_id}-{token}`
 
 ### Trigger biến khai báo
 - `so_dien_thoai_khach` — SĐT khách gửi lên (từ body)
@@ -11,7 +11,7 @@
 
 ### cURL test
 ```bash
-curl -X POST 'https://external-v1-stg.omicrm.com/api/campaign/webhook/6ab9d2c8949dfc02813731e6-IBHxKkTczPcbaqmT8XFG' \
+curl -X POST 'https://external-v1-stg.omicrm.com/api/campaign/webhook/{tenant_id}-{token}' \
   -H 'Content-Type: application/json' \
   -d '{
     "so_dien_thoai_khach": "0912345678",
@@ -35,7 +35,7 @@ curl -X POST 'https://external-v1-stg.omicrm.com/api/campaign/webhook/6ab9d2c894
    - Nhánh "Bước tiếp theo" (chưa tồn tại) → node Hành động "Tạo mới khách hàng":
      - Tên đầy đủ = `{{ten_khach_da_kenh}}`
      - Số điện thoại = `{{so_dien_thoai_khach}}`
-     - Phân bổ: Nhân viên cụ thể = TESTING_DUY
+     - Phân bổ: Nhân viên cụ thể = <nhân viên phụ trách>
 
 ## Mẫu 2: Flow "Lấy data KH từ CRM" (TODO — chưa dựng do quota)
 

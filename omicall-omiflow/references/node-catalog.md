@@ -1,0 +1,280 @@
+# OMIFlow — Danh mục module (trigger, nút, hành động, điều kiện)
+
+Nguồn: (1) JSON thật của 11 flow đang chạy trên một tenant y tế, đọc qua `GET /omi_v2/campaign/get/{id}`; (2) enum và nhãn tiếng Việt trích từ mã giao diện OMICRM (bản stg, 10/2026). Mục có nhãn **[verify JSON]** đã thấy trong flow thật; mục **[enum]** mới thấy trong mã giao diện, chưa có JSON mẫu: khi dùng phải dựng thử trên UI một lần rồi đọc lại JSON để lấy schema.
+
+Id trong ví dụ đã thay bằng `<...>`. Mã biến thật là chuỗi ngẫu nhiên 10 ký tự (ví dụ `{{MpQxWEiLis}}`).
+
+---
+
+## 1. Điều kiện bắt đầu (trigger)
+
+Trigger KHÔNG phải node riêng: nó là **node `CONDITION` đầu tiên** (`is_first_node:true`), `conditions[0].type` = loại trigger. `kick_off.event` của flow lặp lại loại này, `kick_off_ids` chứa id webhook (nếu có).
+
+| Mã (`conditions[0].type`) | Nhãn UI | Khi nào dùng | Trạng thái |
+|---|---|---|---|
+| `WEB_HOOK` | API | Hệ thống ngoài, Callbot, Chatbot gọi vào URL để chạy flow, truyền biến qua body | [verify JSON] |
+| `GENERAL` | Điều kiện | Sự kiện trong OMICRM thoả điều kiện: cuộc gọi kết thúc với trạng thái hoặc phím IVR nhất định, phiếu ghi mới thuộc danh mục X, … | [verify JSON] |
+| `FORM` | Biểu mẫu | Khách hoàn thành hoặc sửa Biểu mẫu | [enum] |
+| `PERIOD` | Xảy ra định kỳ | Lịch ngày, tuần, tháng (nhắc lịch, chăm sóc định kỳ, báo cáo) | [enum] |
+| `EXCEL` | Kích hoạt bằng File Excel | Chạy hàng loạt, mỗi dòng Excel là một đối tượng, định nghĩa giá trị biến | [enum] |
+| `THIRD_PARTY` | Đối tác | Nhận sự kiện hoặc webhook từ đối tác tích hợp | [enum] |
+| `DIRECT_CALL` | Cuộc gọi đang diễn ra | Chạy ngay trong lúc cuộc gọi diễn ra (kết hợp `HOLDING_CALL`, `TRANSFER_CALL`) | [enum] |
+| `HARAVAN`, `SAPO`, `KIOTVIET`, `WOOCOMMERCE`, `SHOPIFY`, `PANCAKEPOS`, `POSBIRD`, `TPOS`, `LARK_BASE`, `EMAIL_SMTP` | Đối tác cụ thể | Sự kiện đơn hàng, khách hàng, hoá đơn: tạo mới, cập nhật, thanh toán, huỷ, giao hàng; sự kiện email | [enum] |
+| `SEARCHOPT` | (nội bộ) | Dùng làm `sub_condition` khi tra đối tượng, không phải trigger | [verify JSON] |
+
+Mô tả chính thức của các trigger (nhãn UI): ADD_CONTACT "khi có 1 khách hàng được thêm mới và thoả 1 trong các điều kiện"; CONTACT "khi khách hàng thoả các điều kiện thuộc tính"; TICKET "khi phiếu ghi được chuyển đến trạng thái nhất định"; FORM; PERIOD; EXCEL; THIRD_PARTY; WEB_HOOK; DIRECT_CALL.
+
+### 1a. WEB_HOOK [verify JSON]
+```json
+{"id":"<caseId>","type":"WEB_HOOK","operator_type":"AND",
+ "data":[{"type":"WEB_HOOK","method":"POST","web_hook_id":"<tenant_id>-<token20>",
+   "multi_variables":[
+     {"field_code":"<code10>","field_name":"phone_number","shorthand_query":"phone_number","query":[{"key":"phone_number","filter":"="}]},
+     {"field_code":"<code10>","field_name":"status","shorthand_query":"status","query":[{"key":"status","filter":"="}]}],
+   "response_config":"{\n  \"message\": \"success\",\n  \"status_code\": 9999\n}",
+   "time_out":5000,"skip_time_out":true}],
+ "next_nodes":["<nodeId>"],"iteration_config":{"is_limit":false,"number_of_times":0,"time_range":"none","apply_for_branch":false}}
+```
+- URL: `https://external-v1-stg.omicrm.com/api/campaign/webhook/<web_hook_id>`.
+- Mỗi biến trong `multi_variables` lấy `body.<key>`; truy vấn lồng dùng `query` nhiều bậc như API_V2 (xem 3.9).
+- `response_config` là body trả về cố định. Muốn trả **dữ liệu động** (sau khi tra cứu) thì dùng hành động `SEND_RESPONSE_WEBHOOK_API` ("Trả kết quả qua API") trong luồng.
+- `skip_time_out:true` + `time_out` (ms): caller không phải chờ hết flow.
+
+### 1b. GENERAL — sự kiện cuộc gọi [verify JSON]
+```json
+{"id":"<caseId>","type":"GENERAL","operator_type":"AND","data":[
+  {"type":"CALL","attributes":[
+     {"field_code":"ct_call_status","values":["answered","noanswered"],"operator_type":"OR"},
+     {"field_code":"ct_call_type","values":["inbound"],"operator_type":"OR"},
+     {"field_code":"ct_sip_number","values":["<đầu số>"],"operator_type":"OR"}]},
+  {"type":"COMPARE","compare_conditions":[
+     {"operator":"CONTAIN","operator_type":"OR","values":[{"start_value":"1"},{"start_value":"2"}],"target_type":"CALL","field_code":"ct_key_action"}]}],
+ "next_nodes":["<nodeId>"],"allocation":{},"iteration_config":{"time_range":"none"}}
+```
+Thuộc tính cuộc gọi hay dùng: `ct_call_status` (answered, noanswered…), `ct_call_type` (inbound, outbound, local), `ct_sip_number` (đầu số), `ct_key_action` (phím IVR khách bấm, có thể là "2" hoặc "02"), `ct_phone_number`, `ct_transaction_id`.
+
+### 1c. GENERAL — phiếu ghi mới [verify JSON]
+```json
+{"type":"GENERAL","data":[{"type":"CUSTOM","custom_data":[{"target_type":"NEW_TICKET","category":{"id":"<ticket_category_id>"}}]}]}
+```
+
+---
+
+## 2. Loại nút (`node_type`)
+
+Mọi node có chung khung: `id, is_first_node, description, description_type, color, position{x,y}, node_type, conditions, actions, next_nodes, fail_next_nodes, success_next_nodes, collapse_obj, width, height`.
+
+| `node_type` | Nhóm / nhãn UI | Vai trò | Trạng thái |
+|---|---|---|---|
+| `CONDITION` | Logic → Điều kiện | Rẽ nhánh theo nhiều *trường hợp*; `next_nodes` của node = nhánh "Bước tiếp theo" (else) | [verify JSON] |
+| `DELAY` | Logic → Trì hoãn (Delay) | Chờ khoảng thời gian, chờ đến khung giờ, hoặc chờ đến khi thoả điều kiện | [verify JSON] |
+| `RANDOM` | Logic → Random | Chia nhánh ngẫu nhiên theo tỉ lệ (A/B test kịch bản, phân tải) | [enum] |
+| `AI_ANALYZE` | Logic → Phân tích thông tin | Phân tích nội dung (dùng trong luồng hội thoại hoặc cuộc gọi) | [enum] |
+| `ACTION` | Tương tác → Hành động | Chuỗi nhiều hành động chạy tuần tự (mục 3) | [verify JSON] |
+| `MARKETING` | Tương tác → Marketing | Tạo phiên gửi hàng loạt: SMS, ZNS hoặc ZBS, ZCC (xin quyền gọi Zalo), Email, AutoCall, AI Callbot, Viber Business | [enum] |
+| `INFO_DIALOG` / `FORM_DIALOG` / `BUTTON_DIALOG` / `VARIABLE_DIALOG` / `VIEW_DETAIL_DIALOG` / `FEATURE_DIALOG` | Tương tác → Cửa sổ tương tác | Bật cửa sổ trên màn hình nhân viên (mục 4) | INFO, FORM [verify JSON]; còn lại [enum] |
+| `ZALO_PERSONAL_MESSAGE`, `ZALO_MESSAGE`, `FACEBOOK_CHAT_MESSAGE`, `FACEBOOK_POST_MESSAGE`, `LIVE_TALK_MESSAGE`, `TELEGRAM_MESSAGE`, `VIBER_MESSAGE`, `TIKTOK_BUSINESS_MESSAGE`, `WHATSAPP_BUSINESS_MESSAGE`, `EMAIL_SMTP_MESSAGE`, `MULTI_CHANNEL_MESSAGE` | Trò chuyện → từng kênh / Gửi tin nhắn chung | Gửi tin hoặc thao tác trên kênh (ví dụ Zalo cá nhân: `REQUEST_FRIEND`) | Zalo cá nhân [verify JSON] |
+| `CHAT_GPT`, `CHATX_AI`, `OMI_BOT_AI`, `PRO_AI`, `PARTNER_AI`, `CUSTOMIZE_BOT_AI` | Trò chuyện → ChatGPT / ChatX / AI Chatbot / ProAI / Partner AI | Giao cuộc trò chuyện cho bot AI xử lý | [enum] |
+| `COLLECT_INFO` | Khác → Thu thập thông tin | Gán giá trị cho biến thu thập (kể cả ngoài callbot, xem 5.3) | [verify JSON] |
+| `DESCRIPTION` | Khác → Ghi chú | Ghi chú trên canvas (URL webhook, cURL mẫu, giải thích) | [verify JSON] |
+| `MENU`, `CUSTOM_UI`, `DIRECT_CALL*`, `END_CALL`, `BEGIN` | (luồng gọi / bot) | Dùng trong flow cuộc gọi trực tiếp hoặc giao diện tuỳ biến | [enum] |
+
+### 2.1 CONDITION — nhiều trường hợp [verify JSON]
+```json
+{"id":"<nodeId>","node_type":"CONDITION","description":"Kiểm tra giờ làm việc",
+ "conditions":[
+   {"id":"<caseA>","operator_type":"AND","data":[{"type":"COMPARE","compare_conditions":[
+      {"operator":"EQUAL","operator_type":"AND","values":[{"start_value":"new"}],"target_type":"CUSTOM_VARIABLE","is_dynamic_field":true,"field_code":"<code10>","field_name":"status"}]}],
+    "next_nodes":["<nodeNew>"]},
+   {"id":"<caseB>", "...": "...", "next_nodes":["<nodeUpdate>"]}],
+ "next_nodes":["<nodeElse>"],
+ "collapse_obj":{"<caseA>":false,"<caseB>":false,"NEXT_STEP":false}}
+```
+Kiểu `data[].type` trong một trường hợp: `COMPARE` (so sánh), `CALL` (thuộc tính cuộc gọi), `CUSTOM` (`TIME_FRAME`, `NEW_TICKET`…), `TICKET` (trạng thái phiếu), `CONTACT`, `SOCIAL`, `FORM`, `COLLECT_INFO`, `AGENT`, `VOUCHER`, `VOICE_VERIFICATION`, `AI_CALL_TRANSACTION`, `CALL_ASSISTANT`, `AI_ASSISTANT_MULTI_CHANNEL`, `CHAT_INSIGHT`.
+
+`target_type` của `COMPARE`: `CUSTOM_VARIABLE` (biến liên kết), `CALL`, `CONTACT`, `TICKET`, `COLLECT_INFO`, …
+
+Phép toán (UI → API): `=`→`EQUAL`, `!=`→`NOT_EQUAL`, `>`→`GT`, `<`→`LT`, `>=`→`GTE`, `<=`→`LTE`, `IN`/`NOT IN` (dùng `ml_values`), `BETWEEN` (`start_value` + `end_value`), `CONTAIN`, `NOT_CONTAIN`, `START_WITH`, `NOT_START_WITH`, `END_WITH`, `NOT_END_WITH`. "Rỗng" = `NOT_EQUAL` với `values:[{}]` hoặc `[{"start_value":""}]`.
+
+**Khung giờ làm việc** (`CUSTOM` → `TIME_FRAME`): `working_days` theo thứ `"1"`…`"7"`, mỗi ngày `{"type":"time_frame","time_frames":[{"from":<epoch ms>,"to":<epoch ms>}]}` (chỉ lấy giờ:phút) hoặc `{"type":"not_apply"}`. Trường hợp thoả = **trong giờ**; nhánh "Bước tiếp theo" = **ngoài giờ**.
+
+### 2.2 DELAY [verify JSON]
+```json
+{"id":"<a>","type":"DELAY","data":{"type":"after","value_string":"10","unit":"second","use_time_slot":false,"days_in_week":null}}
+```
+- `type`: `after` (sau khoảng) hoặc trì hoãn **đến** một thời điểm (`delayTo`); `use_time_slot` + `days_in_week` để chỉ chạy tiếp trong khung giờ, ngày cho phép.
+- **Chờ có điều kiện**: thêm `conditions` (cùng schema CONDITION). Ví dụ: chờ tối đa 30 phút cho đến khi cuộc gọi có `ct_transaction_id` = biến và đã kết thúc:
+```json
+{"conditions":[{"id":"<c>","operator_type":"AND","data":[
+   {"type":"COMPARE","compare_conditions":[{"operator":"EQUAL","values":[{"start_value":"{{<callIdVar>}}"}],"target_type":"CALL","field_code":"ct_transaction_id"}]},
+   {"type":"CALL","attributes":[{"field_code":"ct_call_status","values":["answered","noanswered"],"operator_type":"OR"}]}]}],
+ "type":"after","value_string":"30","unit":"minute","use_time_slot":false}
+```
+
+### 2.3 COLLECT_INFO [verify JSON]
+```json
+{"type":"COLLECT_INFO","data":{"content":"Khách hàng mới","variables":[
+  {"variable_code":"<code10>","variable_name":"Tên bệnh nhân","variable_value":"Khách hàng mới","option":"FROM_DEFINED_VARIABLE"}]}}
+```
+
+### 2.4 DESCRIPTION [verify JSON]
+`{"node_type":"DESCRIPTION","description":"<text, URL webhook, cURL mẫu>","description_type":"TEXT","color":"#56CC6E"}` — không nối cạnh.
+
+### 2.5 ZALO_PERSONAL_MESSAGE → REQUEST_FRIEND [verify JSON]
+`{"type":"REQUEST_FRIEND","data":{"message_type":"REQUEST_FRIEND","message":"<lời mời kết bạn>","target":"","quick_reply":[]}}`
+
+---
+
+## 3. Hành động trong nút ACTION (`actions[].type`)
+
+Ngăn "Hành động" trên UI có 22 mục (nhãn và mô tả chính thức):
+
+| Mã | Nhãn UI | Mô tả chính thức | Trạng thái |
+|---|---|---|---|
+| `ADD_NEW_CONTACT` | Thêm khách hàng | Gán cho nhân viên cụ thể hoặc cấu hình Phân Sale | [enum] |
+| `UPDATE_INFO_CONTACT` | Cập nhật khách hàng | Cập nhật thuộc tính khách hàng nếu đã tồn tại | [enum] |
+| `ADD_TICKET` | Tạo phiếu ghi | Dùng thuộc tính từ biểu mẫu hoặc tự định nghĩa | [verify JSON] |
+| `UPDATE_INFO_TICKET` | Cập nhật phiếu ghi | Cập nhật thuộc tính phiếu ghi đã tồn tại (lưu thành các `ASSIGN_TICKET_*`) | [verify JSON] |
+| `PUSH_NOTIFICATION` | Tạo thông báo | Gửi thông báo đẩy đến nhân viên hoặc nhóm | [verify JSON] |
+| `PUSH_REMINDER` | Tạo nhắc nhở | Tạo lời nhắc cho nhân viên hoặc nhóm | [enum] |
+| `SEND_DATA_TO_FORM` | Trả kết quả qua Biểu mẫu | Trả thông tin sau khi khách hoàn thành hoặc sửa biểu mẫu | [enum] |
+| `SEND_RESPONSE_WEBHOOK_API` | Trả kết quả qua API | Trả thông tin sau khi bên thứ 3 gọi API (trả dữ liệu động cho caller) | [enum] |
+| `CREATE_CUSTOM_VARIABLE` | Biến liên kết tùy chỉnh | Khai báo biến và quy định giá trị: API, ChatGPT, tính toán, ngẫu nhiên, ảnh thư mời | [verify JSON] |
+| `GET_RELATED` | Gán đối tượng liên quan | Đưa đối tượng liên quan (phiếu, cuộc gọi, khách, nhân viên, hội thoại…) vào luồng | [verify JSON] |
+| `UPLOAD_GOOGLE_SHEET` | Google Sheet | Ghi bảng tính với tài khoản Google đã liên kết | [enum] |
+| `UPDATE_CONVERSATION` | Cập nhật cuộc trò chuyện | Cập nhật thuộc tính hội thoại đi qua flow | [enum] |
+| `UPDATE_CALL_TRANSACTION` | Cập nhật lịch sử cuộc gọi | Cập nhật thuộc tính cuộc gọi đi qua flow | [enum] |
+| `UPDATE_INFO_EMPLOYEE` | Cập nhật nhân viên | Cập nhật thuộc tính nhân viên | [enum] |
+| `UPDATE_CUSTOM_DIALOG` | Cập nhật cửa sổ tương tác | Cập nhật thuộc tính ở Cửa sổ thông tin, Cửa sổ biểu mẫu | [enum] |
+| `OMI_BOT_EVALUATION` | Cập nhật đánh giá AI Chatbot | Ghi đánh giá chất lượng AI Chatbot | [enum] |
+| `SEND_WEBHOOK` | API | Gửi thông tin cho đối tác theo phương thức tự định nghĩa | [verify JSON] |
+| `ADD_CLASSIFY` | Phân loại | Đánh dấu, phân loại lịch sử chiến dịch để báo cáo | [enum] |
+| `TRANSFER_CALL` | Chuyển tiếp cuộc gọi | Chuyển đến nhân viên, nhóm nội bộ, nhóm bên ngoài | [enum] |
+| `START_OTHER_CAMPAIGN` | Gọi đến kịch bản khác | Kích hoạt flow khác; flow đích phải là loại *phụ thuộc* | [enum] |
+| `ORDER_*_ACTION` (Haravan, KiotViet, Sapo, Shopify, WooCommerce, POS Bird, TPos), `PANCAKEPOS_ACTION`, `UPDATE_LARK_BASE`, `CREATE_RECORD_LARK_BASE` | Cập nhật đối tác | Cập nhật đơn hàng, khách hàng ở đối tác | [enum] |
+| `HOLDING_CALL` | Giữ cuộc gọi | Tạm giữ cuộc gọi để chờ điều kiện, hành động hoặc thông tin bên thứ 3 | [enum] |
+
+Mã chi tiết hơn (lưu bên trong khi chọn trường trong "Cập nhật …"): `ASSIGN_TICKET_TYPE/STATUS/PRIORITY/DUE_DATE/NAME/DESCRIPTION/TAG/REPORTER/ASSIGNEE/ASSIGNEE_ALLOCATION/PIN_OBJECT/ATTRIBUTE_STRUCTURE/NOTIFY_*`, `ADD_TICKET_NOTE`, `ADD_TICKET_EVALUATION`, `ASSIGN_TAG`, `REMOVE_TAG`, `ASSIGN_ATTRIBUTE_STRUCTURE`, `REMOVE_ATTRIBUTE_STRUCTURE`, `ASSIGN_GROUP`, `ASSIGN_BUSINESS`, `ASSIGN_SALE_ALLOCATION`, `ASSIGN_USER_OWNER_ID/ALLOCATION`, `ASSIGN_RELATED_EMPLOYEE`, `ADD_CONTACT_NOTE`, `ADD_CONTACT_EVALUATION`, `ASSIGN_CALL_TRANSACTION_TAG/CALL_PURPOSE/ASSGNEE`, `ADD_CALL_TRANSACTION_NOTE`, `ASSIGN_CONVERSATION_TAG/MEMBER/ATTRIBUTE_STRUCTURE`, `ADD_CONVERSATION_NOTE`, `UPDATE_SOCIAL_CHATBOT_STATUS`, `UPDATE_SOCIAL_IS_SOLVED`, `BLOCK_CONVERSATION`, `LINK_CONTACT_CONVERSATION`, `AGENT_ASSIGN_*`, `UPDATE_VOUCHER_*`, `ASSIGN_VOUCHER_LINK_*`, `ACCEPT/REJECT_REQUEST_JOIN_GROUP(_ZLP)`, `ACTION_MINI_APP`, `ASSIGN_CUSTOM_DIALOG`, `REMOVE_CUSTOM_DIALOG`, `RE_DISTRIBUTE`.
+
+### 3.1 ADD_TICKET [verify JSON]
+```json
+{"type":"ADD_TICKET","data":{
+  "ticket_detail":{"name":"ĐĂNG KÝ KHÁM MỚI - {{<tenVar>}} - {{<sdtVar>}}",
+    "ticket_category_id":"<categoryId>","priority":"from_topic","tags":["<tagId>"],
+    "description":"<HTML được phép>","is_not_draft":true,"source":"crud",
+    "assignee_config":{"sale_allocation_type":"allocate_according_to_configuration","sale_allocation_ids":["<allocId>"],
+       "priority_option":{"agent_join_conv":true,"agent_of_call":true},"assign_criteria":{}}},
+  "created_by":{"option":"SYSTEM"}}}
+```
+- `created_by.option`: `SYSTEM` hoặc `CAMPAIGN_CALLBOT_CREATOR` (người tạo = người phụ trách chiến dịch callbot).
+- `priority_option`: ưu tiên nhân viên đã nghe cuộc gọi hoặc đang ở hội thoại, rồi mới đến cấu hình phân bổ.
+- Phiếu vừa tạo trở thành **đối tượng phiếu ghi** của luồng: các hành động `ASSIGN_TICKET_*` sau đó áp lên phiếu này.
+
+### 3.2 Cập nhật phiếu ghi (`ASSIGN_TICKET_*`) [verify JSON]
+```json
+{"type":"ASSIGN_TICKET_REPORTER","data":{"fix_attribute":{"ids":["<agentContactId>"]},"update_types":[{"field_code":"ticket_reporter","field_type":"single_text","type":"INSERT"}]}}
+{"type":"ASSIGN_TICKET_PIN_OBJECT","data":{"fix_attribute":{"pin_info":[{"action":"add","ref_type":"call_transaction","ref_id":"{{ct_transaction_id}}"}],"pin_all":{"call_transaction":true}}}}
+{"type":"ASSIGN_TICKET_TYPE","data":{"fix_attribute":{"ticket_category_id":"<categoryId>","current_type":2}}}
+{"type":"ASSIGN_TICKET_DESCRIPTION","data":{"fix_attribute":{"description":" {{ca_ai_assistant}} "},
+  "update_types":[{"field_code":"ticket_description","field_type":"multi_text","type":"INSERT","position":"END"}]}}
+{"type":"ASSIGN_TICKET_ATTRIBUTE_STRUCTURE","data":{"attribute_structures":[{"field_code":"<attr>","field_type":"single_text","value":[{"display_value":"{{<var>}}"}]}],
+  "update_types":[{"field_code":"<attr>","field_type":"single_text","type":"OVERWRITE"}]}}
+```
+`update_types[].type`: `INSERT` (chèn thêm), `OVERWRITE` (ghi đè), gỡ giá trị (nhóm "Gỡ giá trị" trên UI). `current_type` của `ASSIGN_TICKET_TYPE` chọn trạng thái trong bộ trạng thái của danh mục (theo thứ tự).
+
+### 3.3 PUSH_NOTIFICATION [verify JSON]
+```json
+{"type":"PUSH_NOTIFICATION","data":{"title":"CÓ LỖI VỚI LỊCH HẸN CỦA {{<tenVar>}}","content":"<HTML>",
+  "send_to_agent_contact":true,"agent_contact_ids":["<agentContactId>"],"enable_platforms":["web"]}}
+```
+
+### 3.4 SEND_WEBHOOK (gọi API ra ngoài) [verify JSON]
+```json
+{"type":"SEND_WEBHOOK","data":{"url":"https://<he-thong-ngoai>/api/TaoLichKham","method":"POST",
+  "headers":[{"id":"<id>","key":"Content-Type","value":"application/json"}],
+  "param_type":"json","body_type":"raw",
+  "body_json":"{\n  \"fullname\": \"{{<tenVar>}}\",\n  \"phonenumber\": \"{{<sdtVar>}}\"\n}"}}
+```
+Chỉ **gửi** dữ liệu. Muốn **đọc kết quả trả về vào biến** thì dùng `CREATE_CUSTOM_VARIABLE` kiểu API (3.5).
+
+### 3.5 CREATE_CUSTOM_VARIABLE — 5 kiểu
+| UI (`typeVar`) | `data.type` lưu | Dùng để |
+|---|---|---|
+| `api` | `API_V2` | Gọi API ngoài và bóc kết quả vào biến (tra cứu khách hàng, hồ sơ, đơn hàng, lịch hẹn…) [verify JSON] |
+| `gpt` | `CHAT_GPT` | Cho mô hình ngôn ngữ phân loại, tóm tắt hoặc trích xuất từ văn bản; kết quả là một biến [verify JSON] |
+| `math` | `CALCULATION` | Tính toán từ biến (cộng ngày, điểm, tiền) [enum] |
+| `random` | `RANDOM` | Sinh giá trị ngẫu nhiên (mã, nội dung gợi ý) [enum] |
+| `invitation` | `COMBINE_IMAGE` | Ghép 2 ảnh thành ảnh thư mời, dùng như URL [enum] |
+
+API_V2 [verify JSON]:
+```json
+{"type":"CREATE_CUSTOM_VARIABLE","data":{"type":"API_V2","config":{
+  "url":"https://<he-thong-ngoai>/api/BenhNhan","method":"POST","time_out":10,
+  "headers":[{"id":"<id>","key":"Content-Type","value":"application/json"}],
+  "variables":[{"id":"<id>","key":"phoneNumber","value":"{{ct_phone_number}}","type":"text"}],
+  "multi_variables":[
+    {"field_code":"<code10>","field_name":"Mã bệnh nhân","whole_response":false,"shorthand_query":"data|1.mabenhnhan",
+     "query":[{"type":"array","key":"data","pos":1},{"key":"mabenhnhan","filter":"="}]},
+    {"field_code":"<code10>","field_name":"Toàn bộ kết quả","whole_response":true,"shorthand_query":"tenBenhNhan","query":[{"key":"tenBenhNhan","filter":"="}]}],
+  "param_type":"array","body_type":"raw"}}}
+```
+- GET: tham số đặt thẳng vào URL (`...?phoneNumber={{<sdtVar>}}`); POST: `variables` là cặp key, value của body (`param_type:"array"`), hoặc `param_type:"json"` + `body_json`.
+- `shorthand_query` `data|1.ten` = phần tử thứ nhất của mảng `data`, lấy trường `ten`. `whole_response:true` = lấy cả response.
+
+CHAT_GPT [verify JSON]:
+```json
+{"type":"CREATE_CUSTOM_VARIABLE","data":{"type":"CHAT_GPT","config_variables":[{"type":"CHAT_GPT","config":{"multi_variables":[
+  {"field_code":"<code10>","field_name":"intent","chat_gpt_model":"gpt-4o-mini","llm_config":{},
+   "content":"Bạn là chuyên gia phân loại ý định...\nTÓM TẮT: {{ca_summarize}}\n...Trả về DUY NHẤT mã ý định."}]}}]}}
+```
+Mô hình chọn được: `gpt-3.5-turbo`, `gpt-4`, `gpt-4o-mini`.
+
+### 3.6 GET_RELATED (Gán đối tượng liên quan) [verify JSON]
+```json
+{"type":"GET_RELATED","data":{"options":["CLOSEST_CALL"],"sort_by_created_date":true,
+  "condition":{"id":"<c>","type":"GENERAL","operator_type":"AND","data":[{"type":"COMPARE","compare_conditions":[
+     {"operator":"EQUAL","operator_type":"AND","values":[{"start_value":"{{<callIdVar>}}"}],"target_type":"CALL","field_code":"ct_transaction_id"}]}],
+     "iteration_config":{"time_range":"none"},"allocation":{}},
+  "search_with_other_object":true,"sub_options":["CLOSEST_CONTACT"],"sub_sort_by_created_date":true,
+  "sub_condition":{"type":"SEARCHOPT","data":[{"type":"COMPARE","compare_conditions":[
+     {"operator":"EQUAL","values":[{"start_value":"{{<sdtVar>}}"}],"target_type":"CONTACT","field_code":"phone_number","field_type":"phone"}]}]}}}
+```
+- `options`: `CLOSEST_TICKET`, `CLOSEST_CONTACT`, `CLOSEST_AGENT`, `CLOSEST_CALL`, `CLOSEST_CONV`, voucher, `CLOSEST_LARK_BASE`, `OTHER` (đối tác). Ưu tiên theo `created_date` hoặc `last_updated_date`.
+- Điều kiện tra theo trạng thái phiếu: `{"type":"TICKET","ticket_status":[{"id":"<statusSetId>","indexes":[0],"not_contain":false}]}`.
+- `sub_options` + `sub_condition`: tra đối tượng thứ hai (ví dụ phiếu gần nhất **của khách có SĐT = biến**).
+- Có nhánh `success_next_nodes` (tìm thấy) và "Bước tiếp theo".
+
+---
+
+## 4. Cửa sổ tương tác (hiện trên màn hình nhân viên)
+| Mã | Mô tả chính thức |
+|---|---|
+| `INFO_DIALOG` | Cửa sổ thông tin: văn bản, hình ảnh, checklist [verify JSON] |
+| `FORM_DIALOG` | Hiển thị biểu mẫu; nhân viên hoàn thành thì luồng đi tiếp nhánh `success_action_step` [verify JSON] |
+| `BUTTON_DIALOG` | Các nút đã gắn sẵn kịch bản, hành động hoặc marketing, chạy khi nhân viên bấm [enum] |
+| `VARIABLE_DIALOG` | Hiển thị các biến liên kết của luồng [enum] |
+| `VIEW_DETAIL_DIALOG` | Tự mở cửa sổ chi tiết đối tượng hoặc thêm mới [enum] |
+| `FEATURE_DIALOG` | Mở chi tiết Khách hàng, Phiếu ghi, Đa kênh, Lịch sử cuộc gọi [enum] |
+
+```json
+{"type":"FORM_DIALOG","data":{"title":"KHÁCH BẤM PHÍM 1 - PHIẾU ĐĂNG KÝ KHÁM",
+  "sending_option":{"send_to_agent_contact":true,"agent_contact_ids":["<agentContactId>"],"send_to_agent_in_session":true},
+  "ui_config":{"bg_color":"#00B1FF","audio":{}},"auto_close":{"unit":"minute","value":5},"dialog_id":"<uuid>",
+  "variables":[{"name":"<code10>","type":"CUSTOM"},{"name":"<code10>","type":"COLLECT_INFO"}],
+  "attribute_structures":[{"field_code":"<f>","field_name":"Họ và tên","field_type":"single_text","default_value":"{{<tenVar>}}","values":[{"default_value":"{{<tenVar>}}"}]},
+                          {"field_code":"<f>","field_name":"Ngày đăng ký khám","field_type":"date"}]}}
+```
+Giá trị nhân viên nhập vào biểu mẫu thành biến `{{<field_code>}}` dùng ở các nút sau (ví dụ tạo phiếu ghi). `INFO_DIALOG` dùng `info_dialog_data:[{"type":"multiText","text":"<HTML có {{biến}}>"}]`. `send_to_agent_in_session:true` = gửi cho nhân viên đang nghe máy hoặc đang ở hội thoại.
+
+---
+
+## 5. Biến dùng được trong flow
+1. **Biến trigger**: `multi_variables` của WEB_HOOK, tham chiếu `{{<field_code>}}`.
+2. **Biến liên kết tùy chỉnh**: từ `CREATE_CUSTOM_VARIABLE`, khai báo ở top-level `custom_variables:[{"name","field_code"}]`.
+3. **Biến thu thập** (`COLLECT_INFO`): dùng như giá trị mặc định. Mẫu: tra API không ra tên thì gán "Khách hàng mới", rồi nhập lại nhánh chính.
+4. **Biến hệ thống cuộc gọi**: `{{ct_phone_number}}`, `{{ct_transaction_id}}`, `ct_key_action`, `ct_call_status`, `ct_call_type`, `ct_sip_number`.
+5. **AI Assistant**: `{{ca_summarize}}` (tóm tắt cuộc gọi), `{{ca_ai_assistant}}` (kết quả phân tích, hay chèn vào mô tả phiếu).
+6. **Đa kênh**: `social_*` (ví dụ `social_phone_number_linked`, `social_customer_name`, `social_zalo_shared_info_phone`…).
+7. **Biến từ biểu mẫu trong cửa sổ**: `{{<field_code>}}` của `FORM_DIALOG`.
+
+Top-level `variables` liệt kê mọi biến đã dùng (`{"name":"<code10>","type":"CUSTOM"|"COLLECT_INFO"|...}`). UI báo "N biến liên kết có vấn đề" khi văn bản tham chiếu một mã không còn được khai báo.
