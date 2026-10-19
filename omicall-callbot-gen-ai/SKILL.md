@@ -16,13 +16,19 @@ Callbot **SmartAgent** (`type:"AI_AGENT"`): STT → LLM(+RAG/API) → TTS; tự 
 5. **Giữ skill tổng quát**: KHÔNG hardcode intent/prompt/tên script của một tenant cụ thể vào SKILL.md — tenant cụ thể chỉ là thông tin login (credentials.md) + schema (api-reference), còn thiết kế ý định/lời thoại là suy luận mỗi lần.
 6. **Suy luận từ nghiệp vụ hiện tại**: đọc Kịch bản/tài liệu → tự tách nhánh luồng, intent, biến thu, prompt — chỉ dùng script tenant khác làm *tham chiếu hình dạng*, không copy nội dung.
 
-## Input contract
-Ask nếu thiếu: (1) `OMICALL_USERNAME`+`OMICALL_PASSWORD`+`OMICALL_DOMAIN` — hoặc xem `references/credentials.md` nếu tenant đã đăng ký; (2) `DATA_FILE` (Kịch bản PDF ưu tiên / txt / docx): điều kiện kích hoạt, lời thoại bot, thông tin cần thu, điều kiện chuyển; (3) `SCRIPT_NAME`. Tenant đã có script phù hợp → reuse qua `list-by-tenant`.
+## Input contract (chỉ 3 thứ, hỏi MỘT LẦN rồi tự làm hết)
+1. **Domain doanh nghiệp** (ví dụ `<tên>.omicrm.io`).
+2. **Tài khoản đăng nhập**: user + mật khẩu.
+3. **Mô tả nghiệp vụ**: file (PDF/docx/xlsx/txt, ví dụ phiếu khảo sát hoặc kịch bản) và/hoặc prompt mô tả.
+
+Có đủ 3 thứ này thì **không hỏi thêm**. Việc phân tích nghiệp vụ, đặt tên kịch bản (`SCRIPT_NAME` lấy theo doanh nghiệp + mục đích cuộc gọi), thiết kế intent/biến/phân loại, soạn prompt, dựng payload, lưu `add_v2`, verify, xuất thư mục giao đều do agent tự làm. Chỗ nghiệp vụ còn trống thì ghi "Cần xác nhận" trong báo cáo, không bịa và không dừng lại hỏi. Tenant đã có script phù hợp → dùng làm baseline qua `list-by-tenant`; tenant trống → dựng từ schema trong `references/api-reference.md`.
+
+**Đăng nhập — giới hạn an toàn**: agent không tự gõ mật khẩu vào form đăng nhập hay tự gọi API đăng nhập bằng mật khẩu (quy tắc an toàn của agent, kể cả khi user đã đưa sẵn). Thứ tự ưu tiên: (a) công cụ MCP đăng nhập `omicall_login_omicall_mcp` nếu có trong phiên; (b) phiên đã đăng nhập sẵn (`~/.omicall-mcp/session.json`, hoặc cookie `{domain}_omicrm_io` trong browser pane); (c) nếu chưa có phiên nào, mở trang đăng nhập trong browser pane, nhờ user bấm đăng nhập đúng một lần rồi tự lấy token từ cookie và làm tiếp mọi bước còn lại. Không lưu mật khẩu vào file, `credentials.md` hay repo chia sẻ.
 
 ## Workflow
 
 ### Bước 0 — Login & API (giống mọi tenant)
-1. Login MCP `omicall_login_omicall_mcp` (domain) → ghi `tenant_id`.
+1. Lấy phiên đăng nhập theo mục *Input contract* (MCP login → phiên có sẵn → user đăng nhập một lần) → ghi `tenant_id` từ payload JWT.
 2. Token: `~/.omicall-mcp/session.json`→`accessToken`, hoặc cookie theo `references/credentials.md`.
 3. Base API: `https://chatbot-gateway-v1-stg.omicrm.com` (header `Authorization: Bearer <token>`).
 4. Lấy script cũ làm baseline: `GET /callbot/script/get/{id}` — **nguồn schema chuẩn** cho `nodes`/`org_nodes`/`connections` của TENANT ĐÓ (giữ id/uuid/public_key/voice/model, overwrite nội dung).
@@ -106,6 +112,11 @@ Chrome CDP port 9222, profile `C:\Users\User\AppData\Local\Temp\opencode\chrome-
 
 ### Kết thúc và chuyển cuộc gọi
 - Mỗi `END_CALL` phải mô tả rõ trình tự: nói lời cảm ơn → chúc khách hàng → thông báo xin phép kết thúc → tạm biệt → sau đó mới ngắt cuộc gọi. Không chỉ ghi “kết thúc” chung chung.
+- **Hỏi nhu cầu còn lại trước khi cúp (bắt buộc, mọi kịch bản)**: trước khi vào `END_CALL`, bot phải hỏi khách còn nhu cầu nào cần hỗ trợ không (ví dụ: “Anh hoặc chị còn cần em hỗ trợ thêm vấn đề gì không ạ?”). Còn nhu cầu → tiếp tục hỗ trợ trong phạm vi kịch bản rồi hỏi lại. Chỉ chuyển sang kết thúc khi khách xác nhận đã xong (“không còn”, “hết rồi”, “cảm ơn”). Thực hiện ở ba chỗ:
+  1. `instruction`: thêm bước “hỏi còn nhu cầu nào cần hỗ trợ không; chỉ kết thúc khi khách xác nhận không còn” vào luồng cuộc gọi và Điều kiện hoàn thành.
+  2. Intent “Hoàn tất cuộc trò chuyện” có `content` là câu xác nhận không còn nhu cầu (“không còn gì nữa đâu”, “hết rồi, cảm ơn em”). Các nhánh khác (từ chối, bận) cũng hỏi một lần trước khi cúp, trừ khi khách yêu cầu dừng ngay hoặc sai người nghe máy.
+  3. `END_CALL.description`: ghi rõ chỉ cúp sau khi khách đã xác nhận không còn nhu cầu.
+  Khách im lặng sau câu hỏi này thì hỏi lại một lần, vẫn im mới kết thúc lịch sự.
 - Nếu user yêu cầu chuyển đến nhân viên, cấu hình `TRANSFER_CALL` có `transfer_collected_info:true`; nối cả intent “khách yêu cầu gặp nhân viên” và system intent “bot không xử lý được” đến node chuyển máy, nếu đúng yêu cầu nghiệp vụ.
 - Lời báo trước khi chuyển máy cũng cần bằng tiếng Việt đầy đủ, ví dụ: “Em xin phép kết nối anh hoặc chị với nhân viên phụ trách.” Không hứa thời gian liên hệ khi chưa có dữ liệu.
 
@@ -130,8 +141,3 @@ Bảng creds + script mẫu từng tenant: **`references/credentials.md`**. Tena
 
 ## Reference
 Mọi schema (node/intent/system/collect/API/ADD_CLASSIFY/END_CALL/connection/org), save snippet, validation checklist: **`references/api-reference.md`**.
-
-## Skill liên quan
-- **`omicall-omiflow`**: nếu callbot cần thao tác CRM nâng cao (search Contact theo attribute, tạo/cập nhật KH có điều kiện) — callbot gọi webhook OMIFlow qua node API. Chi tiết trigger types, điều kiện Kiểm tra tồn tại, gotcha React Flow trong skill đó.
-- **`omicall-chatbot-gen-ai`**: bot text (Zalo OA/Fanpage/Website) — schema `omiai_assistant/...` khác callbot.
-- **`ai-chatbot-builder`**: playbook tổng quát mọi nền tảng.
