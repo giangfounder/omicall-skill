@@ -49,16 +49,16 @@ Không lưu mật khẩu vào file, `credentials.md` hay repo chia sẻ.
 Từ phân tích trên, **bạn tự đặt tên intent, viết câu khách nói, chọn hành động** theo khung sau (không phụ thuộc intent tenant khác):
 
 1. **Danh sách intent** — với mỗi intent xác định 4 thứ:
-   - `content` = câu khách sẽ nói (1–3 câu tự nhiên, tách biệt giữa các intent).
+   - `content` = **đúng 1 câu nhận dạng cho mỗi intent** (`data` chỉ có 1 phần tử): viết gộp mô tả ý định + vài cách nói mẫu cách nhau bằng dấu chấm phẩy. Ví dụ: "Khách đồng ý ghé cửa hàng hoặc đồng ý đặt lịch hẹn, ví dụ: được em, mai anh ghé; ok em đặt lịch cho chị thứ bảy nhé." Không tách thành nhiều câu nhận dạng.
    - `action_steps` = thu biến nào (`collect_variables`), hay gọi kiến thức/API (`search_knowledge`), hay không cần (`action_steps:null`).
    - `next_node` = BEGIN (trả lời/tư vấn trong kịch bản) / ACTION (chuyển, gửi thông báo, phân loại) / END (cúp).
    - Tên intent rõ nghĩa (CONVENTION: Intent xác nhận thường = tên nhóm khách thực, intent hành động = "Từ chối"/"Hoàn tất"/"Chốt lịch"...).
 2. **Menu intent tối thiểu nên có** (điều chỉnh theo nghiệp vụ, tối thiểu **5 intent**):
    - Nhóm chính ≥1 (Chủ hàng/Nhà vận tải/KH mua/... — tuỳ nghiệp vụ).
    - Xác nhận/Đồng ý (lịch, đặt hàng, nhận tài liệu...) → TRANSFER.
-   - Từ chối/Không có nhu cầu → END (kèm mô tả cách kết thúc) hoặc tư vấn.
-   - Tra cứu/Hỏi thông tin → trả lời bằng RAG/API (ở lại BEGIN hoặc PUSH_NOTIFICATION).
-   - Hoàn tất cuộc trò chuyện → END.
+   - Từ chối/Không có nhu cầu → phân loại rồi **quay về BEGIN** (bot hỏi còn cần hỗ trợ gì không), không cúp ngay.
+   - **Hỏi đáp, FAQ, tra cứu thông tin: KHÔNG dựng intent riêng.** Bot trả lời ngay trong BEGIN từ prompt, RAG hoặc API (`knowledge`). Chỉ dựng intent khi có hành động thật: thu biến, phân loại, chuyển máy, gửi thông báo, kết thúc.
+   - Hoàn tất cuộc trò chuyện (khách xác nhận không còn yêu cầu, hoặc yêu cầu dừng ngay) → END. **Đây là intent duy nhất nối END_CALL.**
 3. **Routing pattern** (chọn theo nghiệp vụ, có thể hỏi user muốn hướng nào):
    - **Tối giản**: bot tư vấn trong BEGIN; chỉ intent cuối nối node — Từ chối→END, Đồng ý/Chốt→TRANSFER; intent tư vấn có `next_node`=BEGIN (vòng kịch bản).
    - **Chuyển ngay khi nhận diện**: mọi intent "có nhu cầu"→TRANSFER (bot chào + thu gọn + phân loại rồi bàn giao); tách nhiều node chuyển để mỗi nhóm thu bộ biến riêng.
@@ -107,7 +107,7 @@ Chrome CDP port 9222, profile `C:\Users\User\AppData\Local\Temp\opencode\chrome-
 
 ### Phân loại dùng lại theo cấu hình chung
 - Khi nghiệp vụ cần phân loại sau mỗi intent, tạo toàn bộ **nhãn phân loại** một lần trong phần cấu hình phân loại chung, rồi chọn lại nhãn tương ứng trong từng node `ADD_CLASSIFY`. Không tạo nhãn trùng cho từng intent.
-- Luồng chuẩn: `CUSTOM_INTENT` → `ADD_CLASSIFY` → bước tiếp theo (trở về `BEGIN`, `TRANSFER_CALL`, hoặc `END_CALL` theo nghiệp vụ).
+- Luồng chuẩn: `CUSTOM_INTENT` → `ADD_CLASSIFY` → bước tiếp theo (trở về `BEGIN`, `TRANSFER_CALL`, hoặc `END_CALL` theo nghiệp vụ). Mặc định trở về `BEGIN` để bot hỏi tiếp còn nhu cầu; chỉ intent Hoàn tất mới đi `END_CALL`. Connection quay về: `{"source":"<clf_id>","sourceHandle":"2","target":"<begin_id>","targetHandle":"1","id":"reactflow__edge-<clf_id>2-<begin_id>1","type":"custom"}` (đã kiểm chứng 2026-10-20: lưu qua API, editor vẽ đường nối vào cổng nhận phía trên của BEGIN; cổng này không có handle id, `targetHandle:"1"` vẫn hiển thị đúng).
 - Nếu user nói rõ “trừ các phân loại” hoặc chỉ yêu cầu sửa prompt/mô tả intent, giữ nguyên top-level `classifies`, node `ADD_CLASSIFY`, tên nhãn và routing của các node phân loại. Chỉ cập nhật đúng trường user yêu cầu.
 
 ### Chuẩn tiếng Việt cho thoại và giọng đọc tự động
@@ -120,7 +120,7 @@ Chrome CDP port 9222, profile `C:\Users\User\AppData\Local\Temp\opencode\chrome-
 - Mỗi `END_CALL` phải mô tả rõ trình tự: nói lời cảm ơn → chúc khách hàng → thông báo xin phép kết thúc → tạm biệt → sau đó mới ngắt cuộc gọi. Không chỉ ghi “kết thúc” chung chung.
 - **Hỏi nhu cầu còn lại trước khi cúp (bắt buộc, mọi kịch bản)**: trước khi vào `END_CALL`, bot phải hỏi khách còn nhu cầu nào cần hỗ trợ không (ví dụ: “Anh hoặc chị còn cần em hỗ trợ thêm vấn đề gì không ạ?”). Còn nhu cầu → tiếp tục hỗ trợ trong phạm vi kịch bản rồi hỏi lại. Chỉ chuyển sang kết thúc khi khách xác nhận đã xong (“không còn”, “hết rồi”, “cảm ơn”). Thực hiện ở ba chỗ:
   1. `instruction`: thêm bước “hỏi còn nhu cầu nào cần hỗ trợ không; chỉ kết thúc khi khách xác nhận không còn” vào luồng cuộc gọi và Điều kiện hoàn thành.
-  2. Intent “Hoàn tất cuộc trò chuyện” có `content` là câu xác nhận không còn nhu cầu (“không còn gì nữa đâu”, “hết rồi, cảm ơn em”). Các nhánh khác (từ chối, bận) cũng hỏi một lần trước khi cúp, trừ khi khách yêu cầu dừng ngay hoặc sai người nghe máy.
+  2. Intent “Hoàn tất cuộc trò chuyện” có `content` là câu xác nhận không còn nhu cầu (“không còn gì nữa đâu”, “hết rồi, cảm ơn em”). Các nhánh khác (đồng ý, bận, từ chối, sai người) **không nối END_CALL**: phân loại xong quay về BEGIN, bot hỏi còn cần hỗ trợ gì không; khách trả lời không còn (hoặc yêu cầu dừng ngay) thì intent Hoàn tất mới đưa tới END_CALL.
   3. `END_CALL.description`: ghi rõ chỉ cúp sau khi khách đã xác nhận không còn nhu cầu.
   Khách im lặng sau câu hỏi này thì hỏi lại một lần, vẫn im mới kết thúc lịch sự.
 - Nếu user yêu cầu chuyển đến nhân viên, cấu hình `TRANSFER_CALL` có `transfer_collected_info:true`; nối cả intent “khách yêu cầu gặp nhân viên” và system intent “bot không xử lý được” đến node chuyển máy, nếu đúng yêu cầu nghiệp vụ.
