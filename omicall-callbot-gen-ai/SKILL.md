@@ -101,6 +101,7 @@ Chrome CDP port 9222, profile `C:\Users\User\AppData\Local\Temp\opencode\chrome-
 - **END_CALL phải mô tả cách kết thúc**: runtime `description` + org `data.description`/`data.content` (cảm ơn + chúc sức khỏe + tạm biệt rồi cúp).
 - **add_v2 multipart** field `file`=JSON blob; dùng Python `requests`, KHÔNG curl (`invalid_param`).
 - **Phiên bản có thể tăng ngoài ý muốn**: mở editor có thể tự tạo phiên bản mới (lưu bố cục), hoặc user sửa tay trên UI. Trước mỗi lần lưu từ file build: `list-by-tenant` lấy bản mới nhất; nếu `version` khác bản mình lưu lần trước thì GET bản đó, so `instruction`, intent và connections với file build. Có khác biệt do người sửa thì gộp vào trước khi lưu, không ghi đè.
+- **Tab editor cũ ghi đè bản mới** (sự cố thật 2026-10-20): một tab editor mở từ bản cũ, bấm **Cập nhật** sẽ lưu nguyên trạng thái cũ thành phiên bản mới nhất, xoá mất các thay đổi đã lưu sau đó (prompt, node chuyển máy, nhánh hệ thống). Phòng tránh: sau mỗi lần lưu qua API, dặn user **tải lại hoặc đóng mọi tab editor** của kịch bản đó trước khi sửa tay; trước khi sửa tay trên UI phải tải lại trang. Phát hiện: so bản mới nhất với bản mình lưu gần nhất (prompt, `nodes`, `connections`); nếu thấy nội dung quay về bản cũ thì báo user và lưu bản gộp (phần user sửa + phần đã mất). Lưu từ UI còn đổi cấu trúc runtime (END_CALL có thêm `ai_agent_config.instruction`, ADD_CLASSIFY runtime chỉ còn `data.ids`), nên luôn GET lại kiểm tra.
 - **Token theo tenant**: credentials.md (cookie key "2", có tenant URL-encode + HttpOnly → CDP `Network.getAllCookies`).
 - Không bấm **Xuất bản** trên UI trừ khi user yêu cầu (`is_publish` giữ nguyên).
 - **Editor không nạp lại nhân viên đã chọn ở node `TRANSFER_CALL`**: mở trang thì card và ngăn cấu hình hiện "Chưa có dữ liệu" / "Chọn tùy chọn", kể cả khi dữ liệu do chính editor lưu. Dữ liệu chạy thật vẫn đúng. Nguy cơ: bấm **Cập nhật** trên UI mà không chọn lại nhân viên thì có thể ghi `ids:[""]`. Sau mọi lần lưu qua UI: GET lại, kiểm tra `nodes[xfer].actions[0].data.ids` khác rỗng.
@@ -114,9 +115,20 @@ Chrome CDP port 9222, profile `C:\Users\User\AppData\Local\Temp\opencode\chrome-
 
 ### Chuẩn tiếng Việt cho thoại và giọng đọc tự động
 - Với callbot tiếng Việt, mọi câu khách nghe được — `instruction`, `start_call_instruction`, `CUSTOM_INTENT.data[].content` và `END_CALL.description/content` — phải viết bằng tiếng Việt tự nhiên, câu đầy đủ và ngắn.
-- Không để chữ viết tắt, mã nội bộ, dấu gạch chéo, hoặc thuật ngữ kỹ thuật rút gọn xuất hiện trong lời thoại. Diễn giải đầy đủ bằng tiếng Việt; khi bắt buộc nêu tên riêng nước ngoài, thêm cách phiên âm để giọng đọc tự động phát âm rõ.
-- Viết “anh hoặc chị”, không dùng dạng rút gọn có dấu gạch chéo trong câu khách nghe được. Đọc số điện thoại theo từng chữ số; diễn giải ngày, giờ, tiền và địa chỉ thư điện tử theo tiếng Việt tự nhiên.
+- Không để chữ viết tắt, mã nội bộ, dấu gạch chéo (trừ "anh/chị"), hoặc thuật ngữ kỹ thuật rút gọn xuất hiện trong lời thoại. Diễn giải đầy đủ bằng tiếng Việt; khi bắt buộc nêu tên riêng nước ngoài, thêm cách phiên âm để giọng đọc tự động phát âm rõ.
+- **Xưng hô** (user yêu cầu 2026-10-20): bot xưng "em"; khi chưa biết khách là nam hay nữ thì gọi **"anh/chị"**; ngay khi xác định được (khách tự xưng "anh"/"chị", khách sửa cách gọi, tên đệm rõ giới tính như "Văn" hoặc "Thị") thì từ đó **chỉ gọi "anh" hoặc chỉ gọi "chị"**, nhất quán đến hết cuộc gọi. **Tuyệt đối không viết "anh hoặc chị"**: giọng đọc tự động đọc nguyên văn nghe rất máy móc. Mọi prompt có mục `# XƯNG HÔ` (mẫu bên dưới); câu cố định (`start_call_instruction`, `END_CALL`) dùng "anh/chị".
+- Đọc số điện thoại theo từng chữ số; diễn giải ngày, giờ, tiền và địa chỉ thư điện tử theo tiếng Việt tự nhiên.
 - Mô tả intent cũng dùng từ đầy đủ để mô hình nhận dạng ổn định và để người quản trị có thể đọc, kiểm tra dễ dàng. Không thay đổi nhãn phân loại chỉ để chuẩn hóa câu thoại nếu user đã loại trừ phạm vi đó.
+
+### Mục xưng hô (chèn đầu `instruction`, sau Vai trò) — đã dùng thật 2026-10-20
+```
+# XƯNG HÔ
+- Khi chưa biết khách là nam hay nữ: gọi "anh/chị".
+- Xác định ngay khi có dấu hiệu: khách tự xưng "anh" hoặc "chị" (ví dụ "anh đang bận", "chị không cần"), khách sửa cách gọi, hoặc tên khách {{<biến tên>}} rõ giới tính (tên đệm "Văn" thường là anh, "Thị" thường là chị). Không chắc thì giữ "anh/chị" cho đến khi khách tự xưng.
+- Đã xác định thì từ đó chỉ gọi "anh" hoặc chỉ gọi "chị", không dùng "anh/chị" nữa, giữ nhất quán đến hết cuộc gọi.
+- Tuyệt đối không nói "anh hoặc chị".
+```
+`END_CALL.description` thêm: Gọi khách đúng cách đã xác định trong cuộc gọi: chỉ “anh” hoặc chỉ “chị”, chưa rõ thì “anh/chị”.
 
 ### Khối quy tắc đầu ra cho giọng đọc (chèn vào cuối `instruction`, trước Điều kiện hoàn thành)
 Đã dùng thật (kịch bản gọi ra, 2026-10-20). Thay phần trong `<...>` theo nghiệp vụ, giữ nguyên các quy tắc:
@@ -124,8 +136,8 @@ Chrome CDP port 9222, profile `C:\Users\User\AppData\Local\Temp\opencode\chrome-
 # QUY TẮC ĐẦU RA CHO GIỌNG ĐỌC TIẾNG VIỆT (BẮT BUỘC)
 Mọi câu em nói được chuyển thẳng thành giọng nói tiếng Việt, vì vậy chỉ viết đúng những chữ cần đọc to.
 1. Chỉ dùng tiếng Việt có dấu đầy đủ, câu ngắn tự nhiên như nói chuyện điện thoại. Mỗi lượt tối đa ba câu, mỗi câu không quá hai mươi lăm chữ. Dùng dấu phẩy để ngắt hơi, dấu chấm hoặc dấu chấm hỏi để kết câu.
-2. Không dùng định dạng hay ký hiệu: không dấu sao, dấu thăng, gạch đầu dòng, gạch chéo, dấu ngoặc, mũi tên, biểu tượng cảm xúc, không xuống dòng để liệt kê. Cần liệt kê thì nói thành câu: thứ nhất, thứ hai.
-3. Không viết tắt và không viết in hoa cả chữ: nói đầy đủ "<cụm từ nghiệp vụ hay bị viết tắt>", "số điện thoại", "anh hoặc chị".
+2. Không dùng định dạng hay ký hiệu: không dấu sao, dấu thăng, gạch đầu dòng, gạch chéo (trừ cách gọi "anh/chị" khi chưa biết giới tính), dấu ngoặc, mũi tên, biểu tượng cảm xúc, không xuống dòng để liệt kê. Cần liệt kê thì nói thành câu: thứ nhất, thứ hai.
+3. Không viết tắt và không viết in hoa cả chữ: nói đầy đủ "<cụm từ nghiệp vụ hay bị viết tắt>", "số điện thoại", "anh/chị".
 4. Mọi con số viết thành chữ theo cách đọc tiếng Việt:
    số lượng và thứ tự: "mười hai hạng mục", "lần thứ hai";
    số điện thoại và mã số: đọc từng chữ số, chia nhóm bằng dấu phẩy, ví dụ "không chín một hai, ba bốn năm, sáu bảy tám";
@@ -139,7 +151,7 @@ Mọi câu em nói được chuyển thẳng thành giọng nói tiếng Việt,
 
 ### Kết thúc và chuyển cuộc gọi
 - Mỗi `END_CALL` phải mô tả rõ trình tự: nói lời cảm ơn → chúc khách hàng → thông báo xin phép kết thúc → tạm biệt → sau đó mới ngắt cuộc gọi. Không chỉ ghi “kết thúc” chung chung.
-- **Hỏi nhu cầu còn lại trước khi cúp (bắt buộc, mọi kịch bản)**: trước khi vào `END_CALL`, bot phải hỏi khách còn nhu cầu nào cần hỗ trợ không (ví dụ: “Anh hoặc chị còn cần em hỗ trợ thêm vấn đề gì không ạ?”). Còn nhu cầu → tiếp tục hỗ trợ trong phạm vi kịch bản rồi hỏi lại. Chỉ chuyển sang kết thúc khi khách xác nhận đã xong (“không còn”, “hết rồi”, “cảm ơn”). Thực hiện ở ba chỗ:
+- **Hỏi nhu cầu còn lại trước khi cúp (bắt buộc, mọi kịch bản)**: trước khi vào `END_CALL`, bot phải hỏi khách còn nhu cầu nào cần hỗ trợ không (ví dụ: “Anh/chị còn cần em hỗ trợ thêm vấn đề gì không ạ?”). Còn nhu cầu → tiếp tục hỗ trợ trong phạm vi kịch bản rồi hỏi lại. Chỉ chuyển sang kết thúc khi khách xác nhận đã xong (“không còn”, “hết rồi”, “cảm ơn”). Thực hiện ở ba chỗ:
   1. `instruction`: thêm bước “hỏi còn nhu cầu nào cần hỗ trợ không; chỉ kết thúc khi khách xác nhận không còn” vào luồng cuộc gọi và Điều kiện hoàn thành.
   2. Intent “Hoàn tất cuộc trò chuyện” có `content` là câu xác nhận không còn nhu cầu (“không còn gì nữa đâu”, “hết rồi, cảm ơn em”). Các nhánh khác (đồng ý, bận, từ chối, sai người) **không nối END_CALL**: intent → ADD_CLASSIFY là node cuối nhánh (không kéo dây về BEGIN). Bot vẫn ở hội thoại, hỏi còn cần hỗ trợ gì không; khách trả lời không còn (hoặc yêu cầu dừng ngay) thì intent Hoàn tất mới đưa tới END_CALL.
   3. `END_CALL.description`: ghi rõ chỉ cúp sau khi khách đã xác nhận không còn nhu cầu.
@@ -148,7 +160,7 @@ Mọi câu em nói được chuyển thẳng thành giọng nói tiếng Việt,
   - runtime `ai_analyze.conditions[id=bot_can_not_answer].next_node = "<xfer_id>"` **và** `ai_analyze.bot_can_not_answer.next_node = "<xfer_id>"`;
   - connection `{"source":"<begin_id>","sourceHandle":"bot_can_not_answer","target":"<xfer_id>","targetHandle":"1","id":"reactflow__edge-<begin_id>bot_can_not_answer-<xfer_id>1","type":"custom"}`;
   - node ACTION `TRANSFER_CALL`: runtime `data:{"ids":["<agent_id>"],"actionType":"Extension","sip_number":"<ext>","transfer_collected_info":true,"transfer_customize_info":false}`; org `datas.selected` = `{"sipNumber":"<ext>","gender":"male","fullName":"<tên>","avatar":"","label":"<ext> - <tên>","contact_id":"<contact_id>","value":"<agent_id>","email":""}`, `typeOptions.Extension=[<cùng option>]`, `transferType:"Extension"`, `isTransferCollectedInfo:true`.
-- Lời báo trước khi chuyển máy cũng cần bằng tiếng Việt đầy đủ, ví dụ: “Em xin phép kết nối anh hoặc chị với nhân viên phụ trách.” Không hứa thời gian liên hệ khi chưa có dữ liệu.
+- Lời báo trước khi chuyển máy cũng cần bằng tiếng Việt đầy đủ, ví dụ: “Em xin phép kết nối anh/chị với nhân viên phụ trách.” Không hứa thời gian liên hệ khi chưa có dữ liệu.
 
 ### Thao tác với trình biên tập OMiCRM
 - Các ô nội dung dài trong trình biên tập là vùng nhập có thể nối thêm nội dung khi dán. Muốn thay toàn bộ prompt hoặc mô tả phải: đặt tiêu điểm vào ô → `Ctrl+A` → dán nội dung mới → đọc lại nội dung hiển thị để xác nhận không bị ghép với bản cũ.
@@ -159,7 +171,7 @@ Ví dụ JSON đã kiểm chứng cho mô tả kết thúc rõ ràng:
 {
   "id": "cogoEnd",
   "node_type": "END_CALL",
-  "description": "Cảm ơn anh hoặc chị đã gọi đến ContainerGo. Chúc anh hoặc chị sức khỏe và một ngày tốt lành. Em xin phép kết thúc cuộc gọi tại đây. Tạm biệt anh hoặc chị.",
+  "description": "Cảm ơn anh/chị đã gọi đến ContainerGo. Chúc anh/chị sức khỏe và một ngày tốt lành. Em xin phép kết thúc cuộc gọi tại đây. Tạm biệt anh/chị.",
   "actions": [],
   "variables": [],
   "is_collapse": false
