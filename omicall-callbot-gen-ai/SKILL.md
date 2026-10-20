@@ -56,7 +56,7 @@ Từ phân tích trên, **bạn tự đặt tên intent, viết câu khách nói
 2. **Menu intent tối thiểu nên có** (điều chỉnh theo nghiệp vụ, tối thiểu **5 intent**):
    - Nhóm chính ≥1 (Chủ hàng/Nhà vận tải/KH mua/... — tuỳ nghiệp vụ).
    - Xác nhận/Đồng ý (lịch, đặt hàng, nhận tài liệu...) → TRANSFER.
-   - Từ chối/Không có nhu cầu → phân loại rồi **quay về BEGIN** (bot hỏi còn cần hỗ trợ gì không), không cúp ngay.
+   - Từ chối/Không có nhu cầu → ADD_CLASSIFY là **node cuối nhánh** (không nối tiếp), không cúp ngay; bot vẫn ở hội thoại, hỏi còn cần hỗ trợ gì không.
    - **Hỏi đáp, FAQ, tra cứu thông tin: KHÔNG dựng intent riêng.** Bot trả lời ngay trong BEGIN từ prompt, RAG hoặc API (`knowledge`). Chỉ dựng intent khi có hành động thật: thu biến, phân loại, chuyển máy, gửi thông báo, kết thúc.
    - Hoàn tất cuộc trò chuyện (khách xác nhận không còn yêu cầu, hoặc yêu cầu dừng ngay) → END. **Đây là intent duy nhất nối END_CALL.**
 3. **Routing pattern** (chọn theo nghiệp vụ, có thể hỏi user muốn hướng nào):
@@ -76,7 +76,7 @@ Soạn System Prompt (`instruction`) **từ nghiệp vụ hiện tại**, bám c
 3. **Quy tắc đối thoại** — mỗi lượt 1–3 câu, hỏi 1 ý/lần, lịch sự xưng hô Anh/Chị, khách bận/cúp/không phản hồi/khách khó chịu → cách xử lý.
 4. **Guardrails** — chỉ dùng dữ liệu trong RAG/kịch bản; không bịa giá/ưu đãi; không hỏi dữ liệu nhạy cảm (CCCD/OTP/ngân hàng); tôn trọng từ chối; khi khách đồng ý → chuyển NV.
 5. **BIẾN DỮ LIỆU** — mã + tên từng biến + khi nào thu (khớp `collect_variables`).
-6. **Đọc số liệu** — SĐT đọc từng chữ số; tiền đọc tiếng Việt (98.000đ → "chín mươi tám nghìn đồng"); ngày/giờ tự nhiên; thuật ngữ tiếng Anh phiên âm Việt (implant → "im-plăng") khi có.
+6. **Quy tắc đầu ra cho giọng đọc tiếng Việt (BẮT BUỘC, mọi prompt)** — chèn nguyên khối ở mục *Khối quy tắc đầu ra cho giọng đọc* bên dưới, chỉ thay phần phiên âm tên riêng và ví dụ biến theo nghiệp vụ. LLM phải xuất văn bản tiếng Việt đọc to được ngay: không ký hiệu, không viết tắt, số viết thành chữ, tên nước ngoài phiên âm.
 7. **Definition of Done** — thế nào là cuộc gọi thành công (đủ biến + phân loại + xác nhận được gì...).
 `start_call_instruction` = câu mở đầu (chào + dẫn vào bước hỏi đầu tiên).
 
@@ -100,14 +100,16 @@ Chrome CDP port 9222, profile `C:\Users\User\AppData\Local\Temp\opencode\chrome-
 - **ADD_CLASSIFY**: runtime action key **`data`**, editor org action key **`datas`**. Sai key → lưu 200 nhưng editor không hiện phân loại / runtime `data:null`.
 - **END_CALL phải mô tả cách kết thúc**: runtime `description` + org `data.description`/`data.content` (cảm ơn + chúc sức khỏe + tạm biệt rồi cúp).
 - **add_v2 multipart** field `file`=JSON blob; dùng Python `requests`, KHÔNG curl (`invalid_param`).
+- **Phiên bản có thể tăng ngoài ý muốn**: mở editor có thể tự tạo phiên bản mới (lưu bố cục), hoặc user sửa tay trên UI. Trước mỗi lần lưu từ file build: `list-by-tenant` lấy bản mới nhất; nếu `version` khác bản mình lưu lần trước thì GET bản đó, so `instruction`, intent và connections với file build. Có khác biệt do người sửa thì gộp vào trước khi lưu, không ghi đè.
 - **Token theo tenant**: credentials.md (cookie key "2", có tenant URL-encode + HttpOnly → CDP `Network.getAllCookies`).
 - Không bấm **Xuất bản** trên UI trừ khi user yêu cầu (`is_publish` giữ nguyên).
+- **Editor không nạp lại nhân viên đã chọn ở node `TRANSFER_CALL`**: mở trang thì card và ngăn cấu hình hiện "Chưa có dữ liệu" / "Chọn tùy chọn", kể cả khi dữ liệu do chính editor lưu. Dữ liệu chạy thật vẫn đúng. Nguy cơ: bấm **Cập nhật** trên UI mà không chọn lại nhân viên thì có thể ghi `ids:[""]`. Sau mọi lần lưu qua UI: GET lại, kiểm tra `nodes[xfer].actions[0].data.ids` khác rỗng.
 
 ## Quy ước biên soạn và thao tác giao diện đã kiểm chứng
 
 ### Phân loại dùng lại theo cấu hình chung
 - Khi nghiệp vụ cần phân loại sau mỗi intent, tạo toàn bộ **nhãn phân loại** một lần trong phần cấu hình phân loại chung, rồi chọn lại nhãn tương ứng trong từng node `ADD_CLASSIFY`. Không tạo nhãn trùng cho từng intent.
-- Luồng chuẩn: `CUSTOM_INTENT` → `ADD_CLASSIFY` → bước tiếp theo (trở về `BEGIN`, `TRANSFER_CALL`, hoặc `END_CALL` theo nghiệp vụ). Mặc định trở về `BEGIN` để bot hỏi tiếp còn nhu cầu; chỉ intent Hoàn tất mới đi `END_CALL`. Connection quay về: `{"source":"<clf_id>","sourceHandle":"2","target":"<begin_id>","targetHandle":"1","id":"reactflow__edge-<clf_id>2-<begin_id>1","type":"custom"}` (đã kiểm chứng 2026-10-20: lưu qua API, editor vẽ đường nối vào cổng nhận phía trên của BEGIN; cổng này không có handle id, `targetHandle:"1"` vẫn hiển thị đúng).
+- Luồng chuẩn: `CUSTOM_INTENT` → `ADD_CLASSIFY` (node cuối nhánh), hoặc `ADD_CLASSIFY` → `TRANSFER_CALL` / `END_CALL` khi nghiệp vụ cần đi tiếp. **KHÔNG BAO GIỜ kéo dây từ node phụ (ADD_CLASSIFY, PUSH_NOTIFICATION, SEND_WEBHOOK…) quay về node chính BEGIN** — sai thiết kế hệ thống (user đã sửa lại, 2026-10-20). Node phụ là điểm cuối của nhánh: không có connection đi ra, hội thoại vẫn tiếp tục ở BEGIN. Chỉ nối tiếp node phụ khi nghiệp vụ cần đi tiếp tới `TRANSFER_CALL` hoặc `END_CALL`. Chỉ intent Hoàn tất mới đi `END_CALL`.
 - Nếu user nói rõ “trừ các phân loại” hoặc chỉ yêu cầu sửa prompt/mô tả intent, giữ nguyên top-level `classifies`, node `ADD_CLASSIFY`, tên nhãn và routing của các node phân loại. Chỉ cập nhật đúng trường user yêu cầu.
 
 ### Chuẩn tiếng Việt cho thoại và giọng đọc tự động
@@ -116,14 +118,36 @@ Chrome CDP port 9222, profile `C:\Users\User\AppData\Local\Temp\opencode\chrome-
 - Viết “anh hoặc chị”, không dùng dạng rút gọn có dấu gạch chéo trong câu khách nghe được. Đọc số điện thoại theo từng chữ số; diễn giải ngày, giờ, tiền và địa chỉ thư điện tử theo tiếng Việt tự nhiên.
 - Mô tả intent cũng dùng từ đầy đủ để mô hình nhận dạng ổn định và để người quản trị có thể đọc, kiểm tra dễ dàng. Không thay đổi nhãn phân loại chỉ để chuẩn hóa câu thoại nếu user đã loại trừ phạm vi đó.
 
+### Khối quy tắc đầu ra cho giọng đọc (chèn vào cuối `instruction`, trước Điều kiện hoàn thành)
+Đã dùng thật (kịch bản gọi ra, 2026-10-20). Thay phần trong `<...>` theo nghiệp vụ, giữ nguyên các quy tắc:
+```
+# QUY TẮC ĐẦU RA CHO GIỌNG ĐỌC TIẾNG VIỆT (BẮT BUỘC)
+Mọi câu em nói được chuyển thẳng thành giọng nói tiếng Việt, vì vậy chỉ viết đúng những chữ cần đọc to.
+1. Chỉ dùng tiếng Việt có dấu đầy đủ, câu ngắn tự nhiên như nói chuyện điện thoại. Mỗi lượt tối đa ba câu, mỗi câu không quá hai mươi lăm chữ. Dùng dấu phẩy để ngắt hơi, dấu chấm hoặc dấu chấm hỏi để kết câu.
+2. Không dùng định dạng hay ký hiệu: không dấu sao, dấu thăng, gạch đầu dòng, gạch chéo, dấu ngoặc, mũi tên, biểu tượng cảm xúc, không xuống dòng để liệt kê. Cần liệt kê thì nói thành câu: thứ nhất, thứ hai.
+3. Không viết tắt và không viết in hoa cả chữ: nói đầy đủ "<cụm từ nghiệp vụ hay bị viết tắt>", "số điện thoại", "anh hoặc chị".
+4. Mọi con số viết thành chữ theo cách đọc tiếng Việt:
+   số lượng và thứ tự: "mười hai hạng mục", "lần thứ hai";
+   số điện thoại và mã số: đọc từng chữ số, chia nhóm bằng dấu phẩy, ví dụ "không chín một hai, ba bốn năm, sáu bảy tám";
+   ngày giờ: "ngày hai mươi lăm tháng mười", "tám giờ ba mươi sáng";
+   tiền và tỉ lệ: "chín mươi tám nghìn đồng", "mười phần trăm"; năm: "năm hai nghìn không trăm hai mươi sáu".
+5. Từ và tên nước ngoài viết theo cách đọc tiếng Việt: <tên thương hiệu → phiên âm, ví dụ Honda → "Hon-đa">, "ô kê". Ký hiệu đọc thành chữ: dấu cộng là "cộng", dấu phần trăm là "phần trăm", dấu và là "và".
+6. Giá trị biến <liệt kê biến đầu vào> có thể ở dạng số hoặc ký hiệu, ví dụ "25/10/2026". Khi nói phải đổi sang cách đọc theo các quy tắc trên. Không bao giờ đọc ký hiệu ngoặc nhọn của biến; biến trống thì bỏ qua.
+7. Không đọc đường dẫn, địa chỉ thư điện tử hay mã nội bộ; cần thì mời khách gọi tổng đài.
+```
+Áp dụng cả cho `start_call_instruction` và `END_CALL.content`: tự kiểm tra trước khi lưu, không còn chữ số, ký hiệu hay chữ viết tắt trong câu khách nghe.
+
 ### Kết thúc và chuyển cuộc gọi
 - Mỗi `END_CALL` phải mô tả rõ trình tự: nói lời cảm ơn → chúc khách hàng → thông báo xin phép kết thúc → tạm biệt → sau đó mới ngắt cuộc gọi. Không chỉ ghi “kết thúc” chung chung.
 - **Hỏi nhu cầu còn lại trước khi cúp (bắt buộc, mọi kịch bản)**: trước khi vào `END_CALL`, bot phải hỏi khách còn nhu cầu nào cần hỗ trợ không (ví dụ: “Anh hoặc chị còn cần em hỗ trợ thêm vấn đề gì không ạ?”). Còn nhu cầu → tiếp tục hỗ trợ trong phạm vi kịch bản rồi hỏi lại. Chỉ chuyển sang kết thúc khi khách xác nhận đã xong (“không còn”, “hết rồi”, “cảm ơn”). Thực hiện ở ba chỗ:
   1. `instruction`: thêm bước “hỏi còn nhu cầu nào cần hỗ trợ không; chỉ kết thúc khi khách xác nhận không còn” vào luồng cuộc gọi và Điều kiện hoàn thành.
-  2. Intent “Hoàn tất cuộc trò chuyện” có `content` là câu xác nhận không còn nhu cầu (“không còn gì nữa đâu”, “hết rồi, cảm ơn em”). Các nhánh khác (đồng ý, bận, từ chối, sai người) **không nối END_CALL**: phân loại xong quay về BEGIN, bot hỏi còn cần hỗ trợ gì không; khách trả lời không còn (hoặc yêu cầu dừng ngay) thì intent Hoàn tất mới đưa tới END_CALL.
+  2. Intent “Hoàn tất cuộc trò chuyện” có `content` là câu xác nhận không còn nhu cầu (“không còn gì nữa đâu”, “hết rồi, cảm ơn em”). Các nhánh khác (đồng ý, bận, từ chối, sai người) **không nối END_CALL**: intent → ADD_CLASSIFY là node cuối nhánh (không kéo dây về BEGIN). Bot vẫn ở hội thoại, hỏi còn cần hỗ trợ gì không; khách trả lời không còn (hoặc yêu cầu dừng ngay) thì intent Hoàn tất mới đưa tới END_CALL.
   3. `END_CALL.description`: ghi rõ chỉ cúp sau khi khách đã xác nhận không còn nhu cầu.
   Khách im lặng sau câu hỏi này thì hỏi lại một lần, vẫn im mới kết thúc lịch sự.
-- Nếu user yêu cầu chuyển đến nhân viên, cấu hình `TRANSFER_CALL` có `transfer_collected_info:true`; nối cả intent “khách yêu cầu gặp nhân viên” và system intent “bot không xử lý được” đến node chuyển máy, nếu đúng yêu cầu nghiệp vụ.
+- **Nhánh hệ thống “bot không xử lý được” (`bot_can_not_answer`) LUÔN nối tới node `TRANSFER_CALL` chuyển máy cho nhân viên** (mọi kịch bản, `transfer_collected_info:true`). Lấy nhân viên và máy lẻ bằng MCP `list_agents`/`list_extensions`, hoặc API `agent-v1-stg.omicrm.com/get_all_agent/no_role` (`agent_id`, `_id` = contact_id, `sip_user`). Tenant chưa có nhân viên nào thì ghi "Cần xác nhận" trong báo cáo. Nối cả intent “khách yêu cầu gặp nhân viên” nếu nghiệp vụ có. Ba chỗ phải khớp (đã kiểm chứng 2026-10-20):
+  - runtime `ai_analyze.conditions[id=bot_can_not_answer].next_node = "<xfer_id>"` **và** `ai_analyze.bot_can_not_answer.next_node = "<xfer_id>"`;
+  - connection `{"source":"<begin_id>","sourceHandle":"bot_can_not_answer","target":"<xfer_id>","targetHandle":"1","id":"reactflow__edge-<begin_id>bot_can_not_answer-<xfer_id>1","type":"custom"}`;
+  - node ACTION `TRANSFER_CALL`: runtime `data:{"ids":["<agent_id>"],"actionType":"Extension","sip_number":"<ext>","transfer_collected_info":true,"transfer_customize_info":false}`; org `datas.selected` = `{"sipNumber":"<ext>","gender":"male","fullName":"<tên>","avatar":"","label":"<ext> - <tên>","contact_id":"<contact_id>","value":"<agent_id>","email":""}`, `typeOptions.Extension=[<cùng option>]`, `transferType:"Extension"`, `isTransferCollectedInfo:true`.
 - Lời báo trước khi chuyển máy cũng cần bằng tiếng Việt đầy đủ, ví dụ: “Em xin phép kết nối anh hoặc chị với nhân viên phụ trách.” Không hứa thời gian liên hệ khi chưa có dữ liệu.
 
 ### Thao tác với trình biên tập OMiCRM
