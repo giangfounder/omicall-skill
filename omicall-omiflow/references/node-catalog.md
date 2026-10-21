@@ -1,6 +1,6 @@
 # OMIFlow — Danh mục module (trigger, nút, hành động, điều kiện)
 
-Danh mục này là của **nền tảng**, áp dụng cho mọi tenant (xem `concepts.md` để hiểu cơ chế đối tượng, biến, trigger). Nguồn: (1) enum và nhãn tiếng Việt trích từ mã giao diện OMICRM (bản stg, 10/2026); (2) tài liệu chính thức `omicrm.io/post/topic/omiflow-7`; (3) JSON thật của các flow đang chạy, đọc qua `GET /omi_v2/campaign/get/{id}`. Mục có nhãn **[verify JSON]** đã thấy JSON thật; mục **[enum]** đã biết công dụng nhưng chưa có JSON mẫu: khi dùng thì dựng thử một lần (hoặc Ctrl+C một nút cùng loại trên canvas để xem định dạng clipboard), GET lại để lấy schema rồi bổ sung vào đây.
+Danh mục này là của **nền tảng**, áp dụng cho mọi tenant (xem `concepts.md` để hiểu cơ chế đối tượng, biến, trigger). Nguồn: (1) enum và nhãn tiếng Việt trích từ mã giao diện OMICRM (bản stg, 10/2026); (2) tài liệu chính thức `omicrm.io/post/topic/omiflow-7`; (3) JSON thật của các flow đang chạy, đọc qua `GET /omi_v2/campaign/get/{id}`. Mục có nhãn **[verify JSON]** đã thấy JSON thật; **[UI đã dựng]** đã cấu hình và chạy thật qua editor (chưa có JSON mẫu, cách làm ở `ui-build-and-test.md`); mục **[enum]** đã biết công dụng nhưng chưa có JSON mẫu: khi dùng thì dựng thử một lần (hoặc Ctrl+C một nút cùng loại trên canvas để xem định dạng clipboard), GET lại để lấy schema rồi bổ sung vào đây.
 
 Id trong ví dụ đã thay bằng `<...>`. Mã biến thật là chuỗi ngẫu nhiên 10 ký tự (ví dụ `{{MpQxWEiLis}}`).
 
@@ -14,7 +14,7 @@ Trigger KHÔNG phải node riêng: nó là **node `CONDITION` đầu tiên** (`i
 |---|---|---|---|
 | `WEB_HOOK` | API | Hệ thống ngoài, Callbot, Chatbot gọi vào URL để chạy flow, truyền biến qua body | [verify JSON] |
 | `GENERAL` | Điều kiện | Đối tượng (khách, phiếu, cuộc gọi, cuộc gọi AI phân tích, hội thoại) được thêm mới hoặc cập nhật và thoả thuộc tính; hoặc **sự kiện mở rộng** (cuộc gọi kết thúc, phím IVR, phiếu mới, khách quan tâm OA, đánh giá ZNS…) kèm điều kiện thuộc tính | [verify JSON] |
-| `FORM` | Biểu mẫu | Khách hoàn thành hoặc sửa Biểu mẫu | [enum] |
+| `FORM` | Biểu mẫu | Khách hoàn thành hoặc sửa Biểu mẫu. Chỉ liệt kê biểu mẫu đã xuất bản | [UI đã dựng] |
 | `PERIOD` | Xảy ra định kỳ | Hằng ngày, tuần, tháng; **trước hoặc sau** một thuộc tính thời gian (sinh nhật, hạn phiếu, ngày hẹn); thời điểm cụ thể | [enum] |
 | `EXCEL` | Kích hoạt bằng File Excel | Chạy hàng loạt, mỗi dòng Excel là một đối tượng, định nghĩa giá trị biến | [enum] |
 | `THIRD_PARTY` | Đối tác | Nhận sự kiện hoặc webhook từ đối tác tích hợp | [enum] |
@@ -90,6 +90,10 @@ Mọi node có chung khung: `id, is_first_node, description, description_type, c
  "next_nodes":["<nodeElse>"],
  "collapse_obj":{"<caseA>":false,"<caseB>":false,"NEXT_STEP":false}}
 ```
+**Mở rộng → "Kiểm tra tương tác khách hàng"** [UI đã dựng]: chọn *Tương tác mới* hoặc *Không có tương tác*; loại tương tác (Cuộc gọi, SMS, ZBS, Email Marketing, Ghi chú, Chuyển trạng thái, Log, Phiếu ghi, Đánh giá); người tương tác (bắt buộc: Nhân viên cụ thể, Nhóm, Nhân viên phụ trách KH, Nhân viên liên quan, Hệ thống — chip "Nhân viên phụ trách KH" để trống bị báo thiếu, dùng chip Nhân viên + chọn người); "Thời điểm tương tác gần nhất" N phút/giờ. Cửa sổ tính lùi từ lúc nút chạy. Dùng cho mọi SLA "không gọi / không ghi chú trong N phút": DELAY N → điều kiện này → cảnh báo/thu hồi; không cần biến tự đếm cuộc gọi.
+
+Các mục Mở rộng khác (35): Kiểm tra khách hàng tồn tại, Khách hàng được thêm mới, Khung giờ, Kiểm tra biến liên kết đã tồn tại, trạng thái SMS/ZBS/Email/AutoCall/AI Callbot/ZCC, Khách hàng được cập nhật, Khách hàng/Phiếu ghi thay đổi người phụ trách, Kiểm tra tương tác Phiếu ghi, Nhân viên rời/tham gia hội thoại, Kiểm tra khung giờ làm việc, đánh giá ZBS, Kiểm tra trạng thái nhân viên.
+
 Kiểu `data[].type` trong một trường hợp: `COMPARE` (so sánh), `CALL` (thuộc tính cuộc gọi), `CUSTOM` (`TIME_FRAME`, `NEW_TICKET`…), `TICKET` (trạng thái phiếu), `CONTACT`, `SOCIAL`, `FORM`, `COLLECT_INFO`, `AGENT`, `VOUCHER`, `VOICE_VERIFICATION`, `AI_CALL_TRANSACTION`, `CALL_ASSISTANT`, `AI_ASSISTANT_MULTI_CHANNEL`, `CHAT_INSIGHT`.
 
 `target_type` của `COMPARE`: `CUSTOM_VARIABLE` (biến liên kết), `CALL`, `CONTACT`, `TICKET`, `COLLECT_INFO`, …
@@ -133,8 +137,8 @@ Ngăn "Hành động" trên UI có 22 mục (nhãn và mô tả chính thức):
 
 | Mã | Nhãn UI | Mô tả chính thức | Trạng thái |
 |---|---|---|---|
-| `ADD_NEW_CONTACT` | Thêm khách hàng | Gán cho nhân viên cụ thể hoặc cấu hình Phân Sale | [enum] |
-| `UPDATE_INFO_CONTACT` | Cập nhật khách hàng | Cập nhật thuộc tính khách hàng nếu đã tồn tại | [enum] |
+| `ADD_NEW_CONTACT` | Thêm khách hàng | Gán cho nhân viên cụ thể hoặc cấu hình Phân Sale. SĐT đã có → `CONTACT_EXIST`, không tạo trùng | [UI đã dựng] |
+| `UPDATE_INFO_CONTACT` | Cập nhật khách hàng | Cập nhật thuộc tính khách hàng nếu đã tồn tại (phụ trách + ghi chú log, trạng thái pipeline + ghi chú…; chỉ đổi đúng thuộc tính đã khai báo). Giá trị trùng hiện tại → `NO_CHANGE` | [UI đã dựng] |
 | `ADD_TICKET` | Tạo phiếu ghi | Dùng thuộc tính từ biểu mẫu hoặc tự định nghĩa | [verify JSON] |
 | `UPDATE_INFO_TICKET` | Cập nhật phiếu ghi | Cập nhật thuộc tính phiếu ghi đã tồn tại (lưu thành các `ASSIGN_TICKET_*`) | [verify JSON] |
 | `PUSH_NOTIFICATION` | Tạo thông báo | Gửi thông báo đẩy đến nhân viên hoặc nhóm | [verify JSON] |

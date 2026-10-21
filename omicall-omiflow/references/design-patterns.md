@@ -108,12 +108,32 @@ WEB_HOOK(digits, customer_phone, ct_transaction_id)  ← tổng đài hoặc cal
 ### B6. Zalo cá nhân: gửi lời mời kết bạn khi chưa có hội thoại [đã chạy]
 `WEB_HOOK(contactPhone, phoneAcountZalo)` → node `ZALO_PERSONAL_MESSAGE` hành động `REQUEST_FRIEND`.
 
+### B7. Phân lead có bước duyệt + SLA gọi + thu hồi (2 flow nối bằng trạng thái) [đã chạy]
+Khung dùng chung cho mọi bài toán "giao việc cho người, quá hạn không xử lý thì nhắc rồi thu hồi" (lead, phiếu, yêu cầu).
+```
+Flow A — FORM (hoặc WEB_HOOK / sự kiện kênh) · không giới hạn lượt
+ → ACTION: ADD_NEW_CONTACT (ánh xạ biến form) + UPDATE_INFO_CONTACT (phụ trách = người duyệt, trạng thái = "chờ duyệt" + ghi chú)
+           + PUSH_NOTIFICATION cho người duyệt
+        ↓ người duyệt đổi trạng thái pipeline sang "đã duyệt"  (mốc nối, không cần tag/form mới)
+Flow B — GENERAL: thuộc tính trạng thái = "đã duyệt" · giới hạn lượt có chủ đích
+ → ACTION: UPDATE_INFO_CONTACT (phụ trách = người xử lý hoặc cấu hình phân bổ) + PUSH_NOTIFICATION "xử lý trong N phút"
+ → DELAY N → CONDITION Mở rộng "Kiểm tra tương tác khách hàng": Không có tương tác [Cuộc gọi] trong N phút
+       ├─ thoả → PUSH_NOTIFICATION cảnh báo → DELAY M → CONDITION: Không có tương tác [Cuộc gọi, Ghi chú] trong N+M phút
+       │            ├─ thoả → UPDATE_INFO_CONTACT (phụ trách = admin/phân bổ lại, ghi chú "thu hồi") + PUSH_NOTIFICATION
+       │            └─ Bước tiếp theo → kết thúc
+       └─ Bước tiếp theo (đã gọi) → kết thúc
+```
+- Trigger theo trạng thái chỉ bắt lúc chuyển vào trạng thái: sửa thông tin khác không làm Flow B chạy lại; người dùng chỉ cần một thao tác (đổi trạng thái) để chuyển giai đoạn.
+- Chọn rõ người tương tác ở điều kiện (nhân viên cụ thể/tất cả), không tick "Hệ thống" nếu flow tự ghi log.
+- Phải xác nhận với KH: thu hồi khi "không gọi VÀ không ghi chú" hay "thiếu một trong hai"; "ghi chú trạng thái" là Ghi chú hay Chuyển trạng thái; giới hạn lượt Flow B; đối tượng đang trong SLA mà kích hoạt lại Flow A thì xử lý thế nào (lượt SLA cũ vẫn chạy).
+- Flow A cập nhật khách cũ: khai báo cả các thuộc tính cần làm mới (tên…) trong UPDATE_INFO_CONTACT, nếu không khách cũ chỉ được đổi phụ trách/trạng thái.
+
 ## C. Mẫu mở rộng theo năng lực [suy luận]
 
 | Lĩnh vực / bài toán | Thiết kế |
 |---|---|
 | **Chatbot hoặc callbot cần tra CRM giữa hội thoại** | `WEB_HOOK(sđt)` → `GET_RELATED CLOSEST_CONTACT` (SĐT = biến) → `CONDITION` có hay không → `SEND_RESPONSE_WEBHOOK_API` trả JSON gồm thuộc tính khách. Không tìm thấy → `ADD_NEW_CONTACT` → trả `{"is_new":true}`. Bot khai URL ở mục Truy vấn API. |
-| **Lead từ biểu mẫu hoặc quảng cáo** | `FORM` hoặc `WEB_HOOK` → `ADD_NEW_CONTACT` (phân sale theo cấu hình) → `PUSH_NOTIFICATION` cho sale → `DELAY 15 phút` → `CONDITION` (cuộc gọi gần nhất của khách chưa có) → `PUSH_REMINDER` + `MARKETING CALLBOT` gọi chào. |
+| **Lead từ biểu mẫu hoặc quảng cáo** | Khung đã chạy: B7. Biến thể: bỏ bước duyệt (Flow A phân sale thẳng bằng cấu hình phân bổ), hoặc nhánh quá hạn → `PUSH_REMINDER` + `MARKETING CALLBOT` gọi chào thay vì thu hồi. |
 | **Nhắc lịch hẹn, tái khám, bảo dưỡng** | `PERIOD` hằng ngày (hoặc `EXCEL`) → `CONDITION` ngày hẹn = ngày mai → `MARKETING SEND_ZNS` → `DELAY` → `CONDITION` trạng thái gửi ZNS thất bại → `MARKETING CALLBOT` (gọi nhắc) → `ADD_CLASSIFY` kết quả. |
 | **Chăm sóc sau bán, khảo sát CSAT** | Trigger `TICKET` (phiếu sang "Hoàn tất") → `DELAY 1 ngày` trong khung 8h–20h → `MARKETING CALLBOT` khảo sát → callbot gọi lại `WEB_HOOK` gửi điểm → `CONDITION` điểm ≤ 2 → `ADD_TICKET` "Khách không hài lòng" + `PUSH_NOTIFICATION` cho trưởng nhóm. |
 | **SLA phiếu ghi, leo thang** | Trigger `TICKET` (trạng thái "Mới") → `DELAY 2 giờ` → `GET_RELATED` lại phiếu → `CONDITION` vẫn "Mới" → `ASSIGN_TICKET_PRIORITY` cao + `ASSIGN_TICKET_ASSIGNEE` trưởng nhóm + `PUSH_NOTIFICATION`. |
@@ -129,3 +149,5 @@ WEB_HOOK(digits, customer_phone, ct_transaction_id)  ← tổng đài hoặc cal
 - Prompt AI tham chiếu một mã biến đã bị xoá → cảnh báo "biến liên kết có vấn đề", AI nhận chuỗi rỗng.
 - Hai trường hợp trùng nghĩa (`"2"` và `"02"`) do phím IVR có thể được ghi khác nhau: gộp bằng `IN` hoặc `CONTAIN`, hoặc giữ cả hai có chủ đích.
 - Nhiều nút ACTION y hệt nhau (cùng tạo một loại phiếu) ở các nhánh: gom bằng cách cho các trường hợp trỏ cùng một nút để giảm số nút.
+- Kiểm tra "chưa gọi trong N phút" bằng cách tự đếm (chụp `interactive_call` vào biến, so `last_call_transaction_time` với mốc giao): phức tạp và dễ sai → dùng điều kiện Mở rộng "Kiểm tra tương tác khách hàng".
+- Để giới hạn số lần đi qua mặc định (2) mà không cân nhắc: đối tượng được duyệt/giao lại lần 3 bị flow bỏ qua im lặng.

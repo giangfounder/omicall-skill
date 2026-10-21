@@ -59,6 +59,7 @@ Khung 8 câu (design-patterns mục A): sự kiện kích hoạt · đối tư�
 
 ### Bước 4 — Verify, test, giao
 - Checklist trong api-reference; test webhook bằng cURL; xem tab Lịch sử từng nút.
+- Test không chỉ luồng chính: đối tượng đã tồn tại kích hoạt lại, sửa đối tượng đang ở trạng thái trigger, từng nhánh điều kiện, số lượt còn lại theo giới hạn (`references/ui-build-and-test.md` mục 5).
 - **Kiểm thử bằng MCP** thay vì mở giao diện:
   - flow tạo phiếu → `search_tickets`, `get_ticket`;
   - flow cập nhật khách → `get_contact_by_phone`;
@@ -83,6 +84,7 @@ Khung 8 câu (design-patterns mục A): sự kiện kích hoạt · đối tư�
 - Sau cuộc gọi AI: `{{ca_summarize}}` (tóm tắt) và `{{ca_ai_assistant}}` (kết quả phân tích) dùng làm đầu vào cho ChatGPT phân loại hoặc chèn vào mô tả phiếu.
 
 ## Thao tác UI (khi phải dựng bằng tay)
+- Playbook đầy đủ, đã làm thật (biểu mẫu, trigger, cấu hình từng nút, Lịch sử, kịch bản test): `references/ui-build-and-test.md`.
 - Tab "Thông tin Flow": tên, hoạt động hoặc ngưng, thời gian hiệu lực, mô tả, tag, giới hạn số lần đối tượng đi qua (`iteration_config`), cách bắt đầu: độc lập hoặc phụ thuộc flow khác (`dependent_config`).
 - Tab "Kịch bản": chuột phải canvas → bảng chọn nút (Logic, Tương tác, Trò chuyện, Khác). Chọn node (một lần bấm) → thanh công cụ: thêm nút liền kề, sao chép, lưu vào kho nút, xoá (`button[aria-label="Xóa node"]`).
 - Nối cạnh bằng chuột hay thất bại vì handle đích không hiện; dùng PointerEvent qua JS (`references/react-flow-selectors.md`).
@@ -101,14 +103,26 @@ Khung 8 câu (design-patterns mục A): sự kiện kích hoạt · đối tư�
 - **Gọi flow khác**: flow đích phải là loại phụ thuộc; kết quả của flow đích không quay về webhook của flow gọi.
 - **Quota**: số flow theo gói, số nút mỗi flow (ví dụ 16/20) — gom nhánh trùng để tiết kiệm.
 - **Ô nhập trong drawer nối thêm thay vì thay thế**: Ctrl+A trước khi gõ; body JSON editor tự bọc `{}`. Không dùng Escape trong drawer.
+- **Trigger Biểu mẫu chỉ liệt kê biểu mẫu đã Xuất bản** (xuất bản = link công khai → hỏi user trước).
+- **Mã biến form ngẫu nhiên dễ lẫn `I`/`l`**: lấy mã bằng JS hoặc chip biến, không gõ theo ảnh chụp. Biến sai vẫn hiện `{{...}}` thô trên thẻ nút.
+- **Nút vừa tạo chưa có "Nút kế tiếp"**: Lưu → mở lại nút (hoặc ←/→ trên ngăn). Điều kiện: "Nút kế tiếp" phải = trường hợp, trái = mặc định.
+- **Xuất bản đổi id trong URL editor**: mở flow từ danh sách, đừng giữ URL cũ.
+- **Trigger theo trạng thái chỉ bắt lúc chuyển vào trạng thái**, sửa thuộc tính khác không chạy lại → dùng đổi trạng thái làm mốc nối flow (ví dụ bước "duyệt/verify" do người làm).
+- **SLA "không gọi trong N phút"**: điều kiện Mở rộng "Kiểm tra tương tác khách hàng" (Không có tương tác + Cuộc gọi/Ghi chú + N phút), không tự đếm cuộc gọi.
+- **Khách đã tồn tại**: "Thêm khách hàng" → `CONTACT_EXIST` (không trùng); "Cập nhật khách hàng" vẫn áp lên khách cũ nhưng chỉ đúng các thuộc tính đã khai báo. Gán phụ trách trùng người hiện tại → `NO_CHANGE`. Cả hai là chấm đỏ vô hại, luồng chạy tiếp.
+- **Giới hạn số lần đi qua (mặc định 2)** làm trigger im lặng khi hết lượt, kể cả lúc test.
+- **Test trì hoãn**: không dùng "Tiếp tục kịch bản" (cảnh báo mơ hồ). Chờ thật bằng `sleep` nền, hoặc tạm đặt 1 phút rồi trả lại giá trị thật và xuất bản.
+- **Flow có thể bị người/phiên khác sửa**: đọc Phiên bản và cấu hình trước mỗi lần test.
+- **Pane chậm, ảnh chụp trễ 1–2 thao tác**: kiểm tra bằng `get_page_text`/JS, bấm theo `ref` từ `find`.
 - **Browser pane không bắt XHR khác domain** trong `read_network_requests`; dùng `performance.getEntriesByType('resource')` để tìm endpoint. Pane hẹp làm canvas tràn ngang → ưu tiên API thay vì bấm UI.
 
 ## Tài liệu tham khảo
 - `references/concepts.md` — cơ chế nền tảng: đối tượng và vị trí, trigger, biến, cú pháp truy vấn JSON, trì hoãn, AI, marketing, trò chuyện, dán JSON vào canvas, Google Sheet.
 - `references/node-catalog.md` — mọi trigger, nút, hành động, điều kiện, biến; JSON đã kiểm chứng.
-- `references/design-patterns.md` — khung suy luận 8 câu, 6 mẫu đã chạy, mẫu mở rộng theo lĩnh vực, lỗi thiết kế cần tránh.
+- `references/design-patterns.md` — khung suy luận 8 câu, 7 mẫu đã chạy (B7: phân lead có duyệt + SLA + thu hồi), mẫu mở rộng theo lĩnh vực, lỗi thiết kế cần tránh.
 - `references/api-reference.md` — endpoint, schema flow, DUAL node và edge, khung lưu, checklist.
 - `references/omi-mcp.md` — MCP OMI: cài đặt, đăng nhập, công cụ cho từng bước, cách tiết kiệm token (bản giống hệt trong 3 skill OMI).
 - `scripts/omi_session.py` — token từ phiên MCP; `scripts/flow_outline.py` — liệt kê và tóm tắt flow.
 - `references/webhook-examples.md` — mẫu cURL và response.
 - `references/react-flow-selectors.md` — selector DOM để thao tác canvas bằng JS.
+- `references/ui-build-and-test.md` — dựng và kiểm thử flow hoàn toàn qua giao diện: biểu mẫu, trigger, cấu hình nút, biến, Lịch sử, chiến lược test trì hoãn.
