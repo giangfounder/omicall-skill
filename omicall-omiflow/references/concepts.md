@@ -65,7 +65,7 @@ Kiểm tra: tab **Lịch sử** của flow hiển thị các đối tượng (it
 ## 3. Biến liên kết
 Cú pháp `{{ten_bien}}`, dùng được ở mọi ô nhập văn bản.
 - **Thuộc tính hệ thống** (tên có nghĩa): `{{full_name}}`, `{{age}}`, `{{gender1}}` (Anh hoặc Chị theo giới tính), `{{current_time}}`, `{{ticket_unique_id}}`, `{{ct_transaction_id}}`, `{{ct_phone_number}}`, `{{social_customer_name}}`, `{{social_zalo_user_id}}`, `{{haravan-order_number}}`, `{{sapo_customer-name}}`, `{{ca_summarize}}`, `{{ca_ai_assistant}}`…
-- **Thuộc tính động**: thuộc tính doanh nghiệp tự thêm cho khách, phiếu, hội thoại; mã ngẫu nhiên. Xem bằng công cụ "Biến liên kết đã sử dụng" trên canvas.
+- **Thuộc tính động**: thuộc tính doanh nghiệp tự thêm cho khách, phiếu, hội thoại; mã ngẫu nhiên. Xem bằng công cụ "Biến liên kết đã sử dụng" trên canvas. Cách tạo, kiểu trường, bộ trạng thái: `crm-config.md`.
 - **Biến tuỳ chỉnh và dữ liệu thu thập**: mã ngẫu nhiên; **chỉ có hiệu lực trong flow hiện tại**, không truyền sang flow được gọi bằng *Gọi đến kịch bản khác*. Nguồn tạo: hành động Biến liên kết tuỳ chỉnh (API, Random, Phép toán, ChatGPT, Ảnh thư mời), cột Excel, nút Thu thập thông tin hoặc phần thu thập trong nút gửi tin nhắn (AI bóc thực thể).
 - **Biến đối tác chưa khai báo**: vẫn dùng được với cú pháp `{{<doitac>_<loai>-<duong_dan>}}`, trong đó loai là `order`, `customer` hoặc `invoice`. Ví dụ: `{{haravan_order-billing_address-ward_code}}`, `{{kiotviet_invoice-branchName}}`. So sánh bằng điều kiện "Tuỳ chỉnh".
 - Biến đối tác đã khai báo được OMI định dạng lại (thời gian → `10:13 03/07/2023`, giới tính 1 → Nam).
