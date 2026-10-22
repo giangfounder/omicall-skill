@@ -24,7 +24,7 @@ Callbot **SmartAgent** (`type:"AI_AGENT"`): STT → LLM(+RAG/API) → TTS; tự 
 
 Có đủ 3 thứ này thì **không hỏi thêm**. Việc phân tích nghiệp vụ, đặt tên kịch bản (`SCRIPT_NAME` lấy theo doanh nghiệp + mục đích cuộc gọi), thiết kế intent/biến/phân loại, soạn prompt, dựng payload, lưu `add_v2`, verify, xuất thư mục giao đều do agent tự làm. Chỗ nghiệp vụ còn trống thì ghi "Cần xác nhận" trong báo cáo, không bịa và không dừng lại hỏi. Tenant đã có script phù hợp → dùng làm baseline qua `list-by-tenant`; tenant trống → dựng từ schema trong `references/api-reference.md`.
 
-**Đăng nhập — ưu tiên MCP OMI** (chi tiết `references/omi-mcp.md`). Agent tự kiểm tra, tự cài và tự cấu hình MCP OMI ở phạm vi người dùng khi chưa có. Dùng thông tin đăng nhập đã được cung cấp mà không hỏi lại; không in mật khẩu/token và không ghi bí mật vào repo hoặc file tạm. Thứ tự:
+**Đăng nhập — ưu tiên MCP OMI** (chi tiết `references/omi-mcp.md`). Agent tự kiểm tra, tự cài và tự cấu hình MCP OMI ở phạm vi người dùng khi chưa có, trên mọi agent/client hỗ trợ MCP chứ không mặc định Codex hay Claude. Dùng thông tin đăng nhập đã được cung cấp mà không hỏi lại; không in mật khẩu/token và không ghi bí mật vào repo hoặc file tạm. Thứ tự:
 - **(a) MCP OMI**: nếu chưa có thì tự cài theo `omi-mcp.md` mục 1; sau đó gọi `login_omicall_mcp` (+ `select_tenant` nếu nhiều tenant). Token cho API callbot lấy bằng `python scripts/omi_session.py` (đọc phiên `~/.omicall-mcp/session.json`, không in token).
 - **(b) Phiên có sẵn**: biến `OMI_TOKEN_FILE`, hoặc cookie `{domain}_omicrm_io` trong browser pane.
 - **(c) Dự phòng**: mở trang đăng nhập trong browser pane, nhờ user bấm đăng nhập đúng một lần, rồi lấy token từ cookie và làm tiếp.

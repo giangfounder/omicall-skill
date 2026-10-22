@@ -23,7 +23,7 @@ Nghiệp vụ cần tư vấn tự do thì đề xuất AI_AGENT.
 3. **Dùng lại trước khi tạo mới**: ưu tiên ý định/thực thể hệ thống (`omi_intent_*`, `omi_entity_*`, `khach_can_gap/*`).
 4. **Kho tri thức dùng chung cho mọi kịch bản NORMAL của tenant**, mỗi lần nhập dữ liệu là một lần huấn luyện lại toàn bộ (10–20 phút) → gom dữ liệu vào **một file**, gửi user duyệt, **đẩy một lần qua giao diện**. Không xoá dữ liệu có sẵn khi user chưa yêu cầu.
 5. Không bấm **Xuất bản**, không gắn kịch bản vào hotline/chiến dịch, không gọi thử khi user chưa yêu cầu và chưa đưa số.
-6. Agent ưu tiên MCP OMI và **tự kiểm tra, tự cài, tự cấu hình** MCP ở phạm vi người dùng theo `references/omi-mcp.md`. Nếu thông tin đăng nhập đã có thì dùng luôn, không hỏi lại; không in mật khẩu/token và không ghi bí mật vào repo hoặc file tạm. Chỉ dùng browser pane khi client chưa nạp được MCP trong phiên hiện tại.
+6. Agent ưu tiên MCP OMI và **tự kiểm tra, tự cài, tự cấu hình** MCP ở phạm vi người dùng theo `references/omi-mcp.md`. Quy tắc này áp dụng cho mọi agent/client hỗ trợ MCP, không mặc định Codex hay Claude. Nếu thông tin đăng nhập đã có thì dùng luôn, không hỏi lại; không in mật khẩu/token và không ghi bí mật vào repo hoặc file tạm. Chỉ dùng browser pane khi client chưa nạp được MCP trong phiên hiện tại.
 
 ## Input contract (hỏi MỘT LẦN rồi tự làm hết)
 1. **Domain tenant** (`<tên>.omicrm.io` hoặc `.omicrm.com`).

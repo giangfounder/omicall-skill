@@ -23,7 +23,7 @@ Hỏi một lần: (1) **domain doanh nghiệp**; (2) **tài khoản và thông 
 # Workflow
 
 ## Bước 0 — Đăng nhập (MCP OMI trước) & lấy token — chi tiết `references/omi-mcp.md`
-- **MCP OMI**: nếu chưa có thì agent tự cài và tự cấu hình ở phạm vi người dùng theo `omi-mcp.md` mục 1; sau đó gọi `login_omicall_mcp` (+ `select_tenant`) → `python scripts/omi_session.py` (đọc phiên MCP, in tenant/domain/hạn, không in token); script khác import `omi_session.headers()`.
+- **MCP OMI**: nếu chưa có thì agent tự cài và tự cấu hình ở phạm vi người dùng theo `omi-mcp.md` mục 1 trên mọi agent/client hỗ trợ MCP, không mặc định Codex hay Claude; sau đó gọi `login_omicall_mcp` (+ `select_tenant`) → `python scripts/omi_session.py` (đọc phiên MCP, in tenant/domain/hạn, không in token); script khác import `omi_session.headers()`.
 - **Tra một lần bằng MCP**, lưu `tenant_context.json` ở scratchpad: `get_service_package` (module `integrated`, `ai`), `get_all_channels` (oa_id, page_id, widget, bot_id để gắn bot), `list_agents` (nhân viên nhận chuyển hội thoại).
 - Dự phòng không có MCP: user đăng nhập một lần trong browser pane → cookie `{domain}_omicrm_io` → key `"2"` = JWT (URL-encode → unquote). Xem mục *Đăng nhập an toàn*.
 - Base API (MCP không có công cụ chatbot): `https://chatbot-gateway-v1-stg.omicrm.com` (`Authorization: Bearer <token>`).
