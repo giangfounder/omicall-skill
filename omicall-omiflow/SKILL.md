@@ -26,8 +26,8 @@ Tài liệu chính thức: `https://omicrm.io/post/topic/omiflow-7` (tổng quan
 2. **Tài khoản đăng nhập**.
 3. **Bài toán nghiệp vụ**: file hoặc prompt mô tả (sự kiện gì, cần ra kết quả gì, ai nhận, hệ thống ngoài nào).
 
-**Đăng nhập — ưu tiên MCP OMI** (chi tiết `references/omi-mcp.md`). Agent không tự gõ mật khẩu vào form hay gọi API đăng nhập bằng mật khẩu. Thứ tự:
-- **(a)** `login_omicall_mcp` (+ `select_tenant`): mật khẩu nằm trong cấu hình MCP do user tự cài. Token cho API OMIFlow lấy bằng `scripts/omi_session.py` (đọc phiên MCP, không in token). MCP chưa cài cho domain này → đưa user lệnh `claude mcp add …` (omi-mcp.md mục 1).
+**Đăng nhập — ưu tiên MCP OMI** (chi tiết `references/omi-mcp.md`). Agent tự kiểm tra, tự cài và tự cấu hình MCP OMI ở phạm vi người dùng khi chưa có. Dùng thông tin đăng nhập đã được cung cấp mà không hỏi lại; không in mật khẩu/token và không ghi bí mật vào repo hoặc file tạm. Thứ tự:
+- **(a)** Nếu MCP chưa có thì tự cài theo `omi-mcp.md` mục 1; sau đó gọi `login_omicall_mcp` (+ `select_tenant`). Token cho API OMIFlow lấy bằng `scripts/omi_session.py` (đọc phiên MCP, không in token).
 - **(b)** Phiên có sẵn (`OMI_TOKEN_FILE`).
 - **(c)** Dự phòng: mở trang đăng nhập trong browser pane để user bấm đăng nhập **một lần**, rồi lấy token từ cookie `{domain}_omicrm_io` (JSON, key `"2"`, có thể URL-encode) và lưu vào file scratchpad, đặt `OMI_TOKEN_FILE`. Không chuyển trang khi user đang đăng nhập.
 

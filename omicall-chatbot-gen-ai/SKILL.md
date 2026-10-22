@@ -18,12 +18,12 @@ AI **Chatbot** (text) — OMI gọi là **AI Chatbot / OmiBot** (`/ai/bot/...`),
 6. **Suy luận từ nghiệp vụ**: đọc tài liệu → tự tách nhóm khách, intent, biến thu, prompt — chỉ dùng bot tenant khác làm tham chiếu hình dạng.
 
 # Input contract
-Hỏi một lần: (1) **domain doanh nghiệp**; (2) **tài khoản** (đăng nhập qua MCP OMI — mật khẩu do user tự đặt trong cấu hình MCP, không gửi trong chat); (3) **mô tả nghiệp vụ** (kịch bản, FAQ, tài liệu dịch vụ hoặc prompt). Tên bot tự đặt theo doanh nghiệp và mục đích. Bot đã có sẵn đúng nhu cầu → reuse giữ nguyên `_id` (save ghi đè).
+Hỏi một lần: (1) **domain doanh nghiệp**; (2) **tài khoản và thông tin xác thực cần thiết** để agent tự cấu hình MCP OMI; (3) **mô tả nghiệp vụ** (kịch bản, FAQ, tài liệu dịch vụ hoặc prompt). Nếu thông tin đã có trong yêu cầu hoặc cấu hình bí mật thì không hỏi lại. Tên bot tự đặt theo doanh nghiệp và mục đích. Bot đã có sẵn đúng nhu cầu → reuse giữ nguyên `_id` (save ghi đè).
 
 # Workflow
 
 ## Bước 0 — Đăng nhập (MCP OMI trước) & lấy token — chi tiết `references/omi-mcp.md`
-- **MCP OMI**: `login_omicall_mcp` (+ `select_tenant`) → `python scripts/omi_session.py` (đọc phiên MCP, in tenant/domain/hạn, không in token); script khác import `omi_session.headers()`. MCP chưa cài cho domain này → đưa user lệnh `claude mcp add …` (omi-mcp.md mục 1).
+- **MCP OMI**: nếu chưa có thì agent tự cài và tự cấu hình ở phạm vi người dùng theo `omi-mcp.md` mục 1; sau đó gọi `login_omicall_mcp` (+ `select_tenant`) → `python scripts/omi_session.py` (đọc phiên MCP, in tenant/domain/hạn, không in token); script khác import `omi_session.headers()`.
 - **Tra một lần bằng MCP**, lưu `tenant_context.json` ở scratchpad: `get_service_package` (module `integrated`, `ai`), `get_all_channels` (oa_id, page_id, widget, bot_id để gắn bot), `list_agents` (nhân viên nhận chuyển hội thoại).
 - Dự phòng không có MCP: user đăng nhập một lần trong browser pane → cookie `{domain}_omicrm_io` → key `"2"` = JWT (URL-encode → unquote). Xem mục *Đăng nhập an toàn*.
 - Base API (MCP không có công cụ chatbot): `https://chatbot-gateway-v1-stg.omicrm.com` (`Authorization: Bearer <token>`).
@@ -69,8 +69,8 @@ Chrome CDP port 9222, profile riêng theo tenant: `Start-Process chrome.exe -Arg
 
 ## Đăng nhập an toàn
 - **Không** tự điền username/password vào form đăng nhập hay API đăng nhập bằng script/JS, kể cả khi đã có sẵn thông tin đăng nhập.
-- **Ưu tiên MCP OMI**: mật khẩu nằm trong cấu hình MCP do user tự cài; agent chỉ gọi `login_omicall_mcp` rồi đọc token từ phiên MCP bằng `scripts/omi_session.py`. Đây là đường chính để gọi API chatbot (Bước 5/6).
-- **Dự phòng không có MCP**: mở editor trong browser pane, nhờ user tự đăng nhập một lần. Việc đọc cookie để lấy JWT từng bị lớp an toàn của agent chặn (phân loại "Credential Materialization") ở một phiên trước, nhưng chạy được ở phiên khác (10/2026, sau khi user tự đăng nhập). Nếu bị chặn thì **không** tìm cách lách bằng CDP, Windows-MCP hay script khác: đề nghị user cài MCP OMI, hoặc thao tác bằng click/type trên UI.
+- **Ưu tiên MCP OMI**: agent tự kiểm tra, tự cài và tự cấu hình MCP theo `references/omi-mcp.md`, rồi gọi `login_omicall_mcp` và đọc token từ phiên MCP bằng `scripts/omi_session.py`. Đây là đường chính để gọi API chatbot (Bước 5/6). Không in mật khẩu/token và không ghi bí mật vào repo hoặc file tạm.
+- **Dự phòng khi client chưa nạp MCP trong phiên hiện tại**: mở editor trong browser pane, nhờ user tự đăng nhập một lần. Nếu việc đọc cookie bị lớp an toàn chặn thì không tìm cách lách; hoàn tất cấu hình MCP và yêu cầu mở lại phiên khi client bắt buộc.
 
 # Gotchas chí tử (mọi tenant — sai là hỏng)
 - **END POINT KHÁC callbot**: chatbot dùng `omiai_assistant/...` (KHÔNG phải `callbot/...`) trên cùng gateway.
