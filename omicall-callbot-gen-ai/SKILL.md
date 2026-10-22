@@ -1,7 +1,7 @@
 ---
 name: omicall-callbot-gen-ai
 description: >-
-  Shared skill to build OMiCall/OMiCRM Callbot Gen AI (SmartAgent) scripts end-to-end — works for ANY tenant and ANY Kịch bản/Callbot. Use when wiring intents, adding ACTION/collect-info/ADD_CLASSIFY/API nodes, calling external APIs (knowledge.apis), using RAG (knowledge.files), forwarding calls, building a Callbot script from business docs/PDF/Kịch bản, editing the Callbot editor (…/ai/callbot/script/update/{scriptId}), verifying via the chatbot-gateway API, or showing work live on OMiCRM. The AI reasons the intents, handling, routing, and the agent-guiding prompt from the business content itself (no copy from other tenants). Schemas: read references/api-reference.md before building. Logs in via the OMI MCP server (omicall-mcp: login_omicall_mcp) when available and uses its tools for lookups/testing — see references/omi-mcp.md.
+  Xây dựng và chỉnh sửa toàn bộ kịch bản Callbot Gen AI (SmartAgent) của OMiCall/OMiCRM cho mọi đơn vị và nghiệp vụ. Dùng khi cần thiết kế ý định, thêm nút hành động, thu thập thông tin, phân loại hoặc gọi API; sử dụng RAG, chuyển máy, dựng kịch bản từ tài liệu nghiệp vụ hoặc PDF, chỉnh sửa tại …/ai/callbot/script/update/{scriptId}, lưu qua API chatbot-gateway và kiểm thử. Skill tự phân tích nội dung nghiệp vụ để tạo cách xử lý, định tuyến và lời nhắc hướng dẫn tổng đài viên AI, không sao chép dữ liệu từ đơn vị khác. Đọc references/api-reference.md trước khi dựng và references/omi-mcp.md khi dùng máy chủ OMI MCP.
 ---
 
 # OMiCALL Callbot Gen AI — Generic Builder Playbook (all tenants / all scripts)

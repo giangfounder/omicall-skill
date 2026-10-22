@@ -1,7 +1,7 @@
 ---
 name: omicall-omiflow
 description: >-
-  Shared skill to design and build OMICall/OMICRM OMIFlow automations (workflow /flow/list) for ANY tenant and ANY business problem — triggers (API webhook, call events, IVR keys, tickets, schedule, Excel, partners), conditions, delays, AI classification, external API lookups, ticket/contact/call updates, agent popups, marketing (SMS/ZNS/Callbot), linking with Callbot/Chatbot. The agent reasons from the business problem to a flow using the module catalog; reads/saves flows via campaign-v1 API. Read references/node-catalog.md and references/design-patterns.md before designing. Logs in via the OMI MCP server (omicall-mcp: login_omicall_mcp) when available and uses its tools for lookups/testing — see references/omi-mcp.md.
+  Thiết kế, xây dựng và chỉnh sửa quy trình tự động OMIFlow của OMICall/OMICRM cho mọi đơn vị và bài toán nghiệp vụ. Dùng khi quy trình có điểm kích hoạt từ API webhook, cuộc gọi, phím IVR, phiếu ghi, lịch, Excel hoặc đối tác; có điều kiện, trì hoãn, phân loại bằng AI, tra cứu API bên ngoài, cập nhật khách hàng, phiếu ghi hoặc cuộc gọi, bật cửa sổ cho nhân viên, gửi SMS/ZNS, chạy Callbot hoặc liên kết Callbot/Chatbot. Skill phân tích yêu cầu thành luồng theo danh mục mô-đun và đọc hoặc lưu qua API campaign-v1. Đọc references/node-catalog.md, references/design-patterns.md và references/omi-mcp.md khi phù hợp.
 ---
 
 # OMICall OMIFlow — Builder Playbook (mọi tenant, mọi bài toán)
