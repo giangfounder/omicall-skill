@@ -1,0 +1,99 @@
+{
+  "_ghi_chu": "Spec mẫu trung tính cho build_callflow.py (gọi ra nhắc lịch hẹn dịch vụ). Thay tenant_id, id ý định/thực thể (lấy sau khi nhập Kho tri thức), nhân viên chuyển máy. Lời thoại viết 'anh/chị' sẽ tự đổi thành {{gender1_ai}}. Bước có common:true tự thêm nhánh chung theo quy tắc mặc định.",
+  "name": "<Tên doanh nghiệp> - Nhắc lịch hẹn dịch vụ (Call flow)",
+  "tenant_id": "<tenant_id>",
+  "voice": "northern_female_ngocanh",
+  "speed": 1.0,
+  "use_gender_var": true,
+  "campaign_vars": ["var_ten_khach_hang", "var_dich_vu", "var_han_cuoi"],
+  "agent": {"id": "<agent_id>", "contact_id": "<contact_id>", "ext": "100", "name": "<Tên nhân viên>", "email": ""},
+  "intents": {
+    "omi_intent_confirm_right": {"id": "<id>", "name": "Câu xác nhận đúng", "system_intent_id": "654c4bbfafd622652cde5a99"},
+    "omi_intent_confirm_wrong": {"id": "<id>", "name": "Câu xác nhận sai", "system_intent_id": "654c4bbfafd622652cde5a9e"},
+    "omi_intent_agree": {"id": "<id>", "name": "Khách đồng ý", "system_intent_id": "654c4bbfafd622652cde5a9d"},
+    "omi_intent_promise": {"id": "<id>", "name": "Câu đưa ra lời hẹn", "system_intent_id": "634d6c0142d14f7ec2df006e"},
+    "omi_intent_recall": {"id": "<id>", "name": "Khách muốn gọi lại sau", "system_intent_id": "654c4bbfafd622652cde5a98"},
+    "omi_intent_deny": {"id": "<id>", "name": "Khách từ chối", "system_intent_id": "634d6c0142d14f7ec2df0075"},
+    "omi_intent_disagree_service": {"id": "<id>", "name": "Câu từ chối dịch vụ", "system_intent_id": "654c4bbfafd622652cde5aa1"},
+    "omi_intent_repeat": {"id": "<id>", "name": "Khách hàng muốn lặp lại", "system_intent_id": "654c4bbfafd622652cde5a9c"},
+    "omi_intent_question": {"id": "<id>", "name": "Khách đặt câu hỏi", "system_intent_id": "634d6c0142d14f7ec2df0073"},
+    "omi_intent_angry": {"id": "<id>", "name": "Khách tức giận", "system_intent_id": "654c4bbfafd622652cde5a9f"},
+    "khach_can_gap/nhan_vien_kinh_doanh": {"id": "<id>", "name": "Khách cần gặp Nhân viên kinh doanh", "system_intent_id": "<id>"}
+  },
+  "entities": {
+    "hoi_chi_phi": {"id": "<entity_type_id>", "name": "Hỏi chi phí"},
+    "hoi_dia_chi": {"id": "<entity_type_id>", "name": "Hỏi địa chỉ"}
+  },
+  "collect": [
+    {"code": "var_ngay_hen", "name": "Ngày hẹn", "entity": "omi_entity_datetime"},
+    {"code": "var_ngay_hen_cau", "name": "Câu khách hẹn"}
+  ],
+  "classifies": ["Đã đặt lịch", "Khách bận cần nhắc lại", "Từ chối", "Sai người nghe máy"],
+  "faq": {
+    "question_intent": "omi_intent_question",
+    "answers": {
+      "hoi_chi_phi": "Dạ chi phí cụ thể nhân viên sẽ báo khi anh/chị qua cửa hàng ạ.",
+      "hoi_dia_chi": "Dạ địa chỉ cửa hàng em sẽ gửi tin nhắn cho anh/chị sau cuộc gọi ạ."
+    }
+  },
+  "common": {
+    "transfer_step": "CHUYEN",
+    "transfer_intents": ["khach_can_gap/nhan_vien_kinh_doanh"],
+    "angry_intent": "omi_intent_angry", "angry_step": "XIN_LOI",
+    "repeat_intent": "omi_intent_repeat",
+    "no_response_end": "KET_NR",
+    "no_response_text": "Dạ anh/chị còn nghe em nói không ạ?",
+    "wrong_prefix": "Dạ em chưa nghe rõ ý anh/chị. "
+  },
+  "start": "XAC_NHAN",
+  "steps": [
+    {"key": "XAC_NHAN", "name": "Xác nhận số điện thoại", "common": true, "faq": false,
+     "text": "Dạ alo, cho em hỏi đây có phải số điện thoại của anh/chị {{var_ten_khach_hang}} không ạ?",
+     "reprompt": "Cho em hỏi đây có phải số của anh/chị {{var_ten_khach_hang}} không ạ?",
+     "branches": [
+       {"intent": "omi_intent_confirm_right", "to": "MOI"}, {"intent": "omi_intent_agree", "to": "MOI"},
+       {"intent": "omi_intent_confirm_wrong", "to": "CLF_SAI"}, {"intent": "omi_intent_deny", "to": "CLF_SAI"},
+       {"intent": "omi_intent_recall", "to": "CLF_BAN"}, {"intent": "omi_intent_disagree_service", "to": "CLF_TC"}]},
+    {"key": "MOI", "name": "Thông báo và mời đặt lịch", "common": true, "collect": true,
+     "text": "Dạ em gọi nhắc anh/chị đã đến lịch {{var_dich_vu}}, hạn cuối là ngày {{var_han_cuoi}}. Anh/chị muốn em đặt lịch vào ngày nào ạ?",
+     "reprompt": "Anh/chị muốn em đặt lịch vào ngày nào ạ?",
+     "branches": [
+       {"intent": "omi_intent_promise", "to": "CLF_HEN"}, {"intent": "omi_intent_agree", "to": "CLF_HEN"},
+       {"intent": "omi_intent_recall", "to": "CLF_BAN"}, {"intent": "omi_intent_deny", "to": "CLF_TC"},
+       {"intent": "omi_intent_disagree_service", "to": "CLF_TC"}]},
+    {"key": "BAN", "name": "Khách bận", "common": true, "collect": true,
+     "text": "Dạ nếu anh/chị đang bận thì mình ghé giúp em trước ngày {{var_han_cuoi}} nhé. Anh/chị tiện ngày nào để em ghi lịch ạ?",
+     "reprompt": "Anh/chị tiện ngày nào để em ghi lịch ạ?",
+     "branches": [
+       {"intent": "omi_intent_promise", "to": "CLF_HEN"}, {"intent": "omi_intent_agree", "to": "CLF_HEN"},
+       {"intent": "omi_intent_recall", "to": "HOI_THEM"}, {"intent": "omi_intent_deny", "to": "HOI_THEM"},
+       {"intent": "omi_intent_disagree_service", "to": "HOI_THEM"}]},
+    {"key": "XAC_NHAN_LICH", "name": "Xác nhận lịch, hỏi thêm", "common": true,
+     "text": "Dạ em đã ghi nhận lịch hẹn của anh/chị. Anh/chị còn cần em hỗ trợ thêm gì không ạ?",
+     "reprompt": "Anh/chị còn cần em hỗ trợ thêm gì không ạ?",
+     "branches": [
+       {"intent": "omi_intent_deny", "to": "KET"}, {"intent": "omi_intent_agree", "to": "KET"},
+       {"intent": "omi_intent_confirm_right", "to": "KET"}, {"intent": "omi_intent_disagree_service", "to": "KET"},
+       {"intent": "omi_intent_promise", "say": "Dạ em đã ghi nhận lại lịch hẹn của anh/chị ạ. Anh/chị còn cần em hỗ trợ thêm gì không ạ?", "to": "CLF_HEN"}]},
+    {"key": "HOI_THEM", "name": "Hỏi còn cần hỗ trợ", "common": true,
+     "text": "Dạ em xin lỗi đã làm phiền anh/chị. Anh/chị còn cần em hỗ trợ thêm gì không ạ?",
+     "reprompt": "Anh/chị còn cần em hỗ trợ thêm gì không ạ?",
+     "branches": [
+       {"intent": "omi_intent_deny", "to": "KET"}, {"intent": "omi_intent_agree", "to": "KET"},
+       {"intent": "omi_intent_disagree_service", "to": "KET"}, {"intent": "omi_intent_promise", "to": "CLF_HEN"}]},
+    {"key": "SAI", "name": "Sai người", "end": true, "text": "Dạ em xin lỗi vì đã làm phiền anh/chị, em xin phép ngắt máy ạ."},
+    {"key": "KET", "name": "Chào cuối", "end": true, "text": "Em cảm ơn anh/chị, chúc anh/chị một ngày tốt lành. Em chào anh/chị ạ."},
+    {"key": "KET_NR", "name": "Không phản hồi - kết thúc", "end": true, "text": "Dạ có lẽ đường truyền chưa tốt, em xin phép liên hệ lại sau. Em chào anh/chị ạ."},
+    {"key": "XIN_LOI", "name": "Khách khó chịu - xin lỗi", "end": true, "text": "Dạ em thành thật xin lỗi vì đã làm phiền anh/chị. Em xin phép kết thúc cuộc gọi ạ."},
+    {"key": "CHUYEN", "name": "Báo chuyển máy", "text": "Dạ em xin phép kết nối anh/chị với nhân viên phụ trách để hỗ trợ mình ạ.", "next": "XFER"}
+  ],
+  "actions": [
+    {"key": "XFER", "type": "TRANSFER_CALL"},
+    {"key": "CLF_HEN", "type": "ADD_CLASSIFY", "label": "Đã đặt lịch", "next": "XAC_NHAN_LICH"},
+    {"key": "CLF_BAN", "type": "ADD_CLASSIFY", "label": "Khách bận cần nhắc lại", "next": "BAN"},
+    {"key": "CLF_TC", "type": "ADD_CLASSIFY", "label": "Từ chối", "next": "HOI_THEM"},
+    {"key": "CLF_SAI", "type": "ADD_CLASSIFY", "label": "Sai người nghe máy", "next": "SAI"}
+  ],
+  "routes": [],
+  "layout": {"last_column": ["KET", "KET_NR", "XIN_LOI", "CHUYEN"], "final_column": ["XFER"]}
+}

@@ -1,0 +1,68 @@
+{
+  "_ghi_chu": "Spec mẫu trung tính cho gen_training.py (cuộc gọi ra nhắc lịch hẹn dịch vụ). Dự án thật: mỗi ý định >=30 lõi câu, mỗi thực thể >=15 mẫu, viết theo câu trả lời của khách ở từng bước gọi. {s}=khách tự xưng, {b}=khách gọi bot, {x}=chủ ngữ hỏi, {v}=giá trị thực thể, {ten_slot}=danh sách trong slots. [..]=đoạn thực thể.",
+  "seed": 1,
+  "min_per_intent": 200,
+  "min_per_entity": 200,
+  "noisy_ratio": 0.65,
+  "augment_existing_en": true,
+  "personas": [["anh", "em"], ["chị", "em"], ["tui", "em"], ["tôi", "em"], ["chú", "con"], ["cô", "con"]],
+  "slots": {"dich_vu": ["kiểm tra", "bảo trì", "vệ sinh máy", "bảo dưỡng"]},
+  "en_vi_extra": [["\\bservice\\b", ["sơ vịt", "sơ vít"]]],
+  "confuse_extra": [["\\bbảo trì\\b", ["bảo chì"]]],
+  "intents": {
+    "omi_intent_confirm_right": {"name": "Câu xác nhận đúng", "kind": "s", "openers": ["", "", "dạ", "ừ", "ờ", "à"], "cores": [
+      "đúng rồi", "{s} đây", "{s} nghe nè", "đúng số {s} đó", "phải rồi có gì không", "ừ đúng là {s}", "đúng tên {s} rồi", "{s} đang nghe đây",
+      "dạ đúng", "chuẩn rồi", "đúng người rồi", "số này của {s} mà", "phải {s} nè", "đúng rồi nói đi", "{s} nghe đây {b} nói đi"]},
+    "omi_intent_confirm_wrong": {"name": "Câu xác nhận sai", "kind": "s", "openers": ["", "", "dạ", "à", "ờ", "ủa"], "cores": [
+      "không phải {s} đâu", "nhầm số rồi", "gọi lộn số rồi", "sai người rồi", "{s} không biết người này", "số này {s} mới dùng",
+      "không có ai tên đó", "{s} chỉ nghe máy giùm", "người đó không còn dùng số này", "{s} không có đặt lịch nào hết",
+      "đây là số cơ quan", "không đúng người", "{s} đâu có tên đó", "ai vậy {s} không biết", "lộn người rồi"]},
+    "omi_intent_agree": {"name": "Khách đồng ý", "kind": "s", "cores": [
+      "được nói đi", "ok {s} nghe", "ừ có thời gian", "được luôn", "ok để {s} sắp xếp", "được đặt lịch giùm {s}", "ừ {s} sẽ qua",
+      "ok cứ ghi lịch", "đồng ý", "vậy cũng được", "được không sao", "ừ vậy đặt lịch đi", "ok chốt vậy đi", "nói đi {s} nghe nè", "được có gì nói đi"]},
+    "omi_intent_recall": {"name": "Khách muốn gọi lại sau", "kind": "s", "openers": ["", "", "dạ", "ờ", "thôi", "à"], "cores": [
+      "{s} đang bận gọi lại sau", "{s} đang lái xe", "để lát {s} gọi lại", "giờ không tiện nói", "{s} đang họp", "tối gọi lại cho {s}",
+      "{s} đang làm gọi sau đi", "để mai rồi tính", "{s} đang đi đường gọi lại sau", "đang ăn cơm gọi lại sau", "chừng nào rảnh {s} báo",
+      "giờ {s} đang kẹt việc", "gọi lại sau giùm {s}", "{s} đang đón con", "lát nữa gọi lại nha"]},
+    "omi_intent_disagree_service": {"name": "Câu từ chối dịch vụ", "kind": "s", "openers": ["", "", "thôi", "dạ", "ờ"], "cores": [
+      "{s} không có nhu cầu {dich_vu}", "{s} làm chỗ khác rồi", "{s} ở xa quá không qua được", "máy {s} còn mới không cần",
+      "{s} tự làm được", "thôi khỏi đừng gọi nữa", "{s} không cần dịch vụ này", "tốn thời gian lắm thôi", "{s} chuyển nhà rồi",
+      "{s} bán máy rồi", "{s} không quan tâm", "đừng mời {s} nữa", "{s} không muốn nghe quảng cáo", "{s} hết dùng rồi", "để {s} tự lo"]},
+    "omi_intent_deny": {"name": "Khách từ chối", "kind": "s", "open_ratio": 0.4, "cores": [
+      "không", "không em", "hông có", "không cần", "chưa đâu", "không có đâu", "thôi khỏi", "không luôn", "chưa cần đâu", "hông",
+      "chưa có", "không muốn", "thôi không", "không nha", "khỏi đi"]},
+    "omi_intent_repeat": {"name": "Khách hàng muốn lặp lại", "kind": "s", "openers": ["", "", "dạ", "ờ", "ủa", "alo"], "cores": [
+      "nói lại coi", "nghe không rõ", "mất sóng rồi nói lại đi", "nói rõ lại giùm", "hồi nãy nói gì vậy", "tiếng nhỏ quá", "nghe rè rè nói lại",
+      "lặp lại giùm {s} cái", "nói từ từ thôi", "{s} nghe không kịp", "chưa nghe hết nói lại", "nói chậm chậm giùm", "cái gì cơ", "hả nói lại đi",
+      "đọc lại cái ngày đó"]},
+    "omi_intent_angry": {"name": "Khách tức giận", "kind": "s", "open_ratio": 0.4, "openers": ["", "trời", "thôi"], "cores": [
+      "phiền quá trời", "gọi hoài vậy", "đã bảo đừng gọi mà", "{s} bực rồi đó", "làm ơn đừng gọi nữa", "mệt mấy người quá", "tối ngày gọi",
+      "chặn số luôn cho rồi", "nói hoài không hiểu", "phiền chết đi được", "khó chịu quá", "lần nào cũng gọi", "{s} nói rồi mà", "thôi đi", "gọi gì gọi hoài"]},
+    "khach_can_gap/nhan_vien_kinh_doanh": {"name": "Khách cần gặp Nhân viên kinh doanh", "kind": "s", "cores": [
+      "cho {s} gặp người thật", "chuyển cho nhân viên đi", "{s} muốn nói chuyện với nhân viên", "nối máy cho nhân viên tư vấn",
+      "cho {s} gặp quản lý", "{s} muốn gặp người phụ trách", "có nhân viên nào nghe máy không", "{s} không muốn nói chuyện với máy",
+      "cho gặp tổng đài viên", "chuyển cho người biết rõ", "nói chuyện với người đi", "cho {s} gặp bên tư vấn", "có ai tư vấn trực tiếp không",
+      "nối máy giùm {s}", "{s} cần gặp nhân viên"]},
+    "omi_intent_question": {"name": "Khách đặt câu hỏi"},
+    "omi_intent_promise": {"name": "Câu đưa ra lời hẹn"}
+  },
+  "entities": {
+    "hoi_chi_phi": {"name": "Hỏi chi phí", "intent": "omi_intent_question", "type": "STRING", "kind": "q",
+      "x": ["{dich_vu}", "lần này", "qua đó", "làm lần này"],
+      "patterns": ["{x} [có mất tiền không]", "{x} [tốn bao nhiêu tiền]", "{x} có [tính phí không]", "{x} có [miễn phí không]",
+        "{x} [hết bao nhiêu]", "[chi phí] là bao nhiêu", "{x} [phải trả bao nhiêu]", "{x} [có tốn đồng nào không]", "[phí] sao",
+        "{x} [có thu phí] gì không", "[giá] bao nhiêu", "{x} [free] không", "{x} [bao nhiêu tiền]", "[tiền công] bao nhiêu",
+        "{x} [có mất phí] gì không"]},
+    "hoi_dia_chi": {"name": "Hỏi địa chỉ", "intent": "omi_intent_question", "type": "STRING", "kind": "q",
+      "x": ["cửa hàng", "chỗ làm", "bên mình", "trung tâm"],
+      "patterns": ["{x} [ở đâu]", "[địa chỉ] {x} là gì", "{x} [nằm ở đâu]", "cho {s} xin [địa chỉ]", "[đường nào]", "{x} [chỗ nào]",
+        "{x} [gần đâu]", "[đi đường nào] tới", "{x} [có mấy chi nhánh]", "[chi nhánh gần nhất] ở đâu", "{x} [số nhà mấy]",
+        "[ghé chỗ nào]", "{x} [ở quận nào]", "[chỉ đường] giùm {s}", "[địa chỉ cụ thể] sao"]},
+    "omi_entity_datetime": {"name": "Thời gian ngày tháng", "intent": "omi_intent_promise", "type": "STRING", "kind": "s", "open_ratio": 0.5,
+      "values": ["mai", "sáng mai", "chiều mai", "thứ bảy này", "chủ nhật tuần sau", "ngày mốt", "tuần sau", "cuối tuần này", "chiều nay",
+        "9 giờ sáng mai", "ngày 25", "ngày hai mươi lăm", "đầu tháng sau", "trưa thứ năm", "tối thứ sáu", "sáng thứ hai"],
+      "patterns": ["[{v}] {s} ghé", "[{v}] {s} qua", "để [{v}] {s} qua luôn", "đặt lịch [{v}] giùm {s}", "hẹn {b} [{v}] nha",
+        "chắc [{v}] {s} mới qua được", "{s} qua vào [{v}]", "ghi lịch [{v}] cho {s}", "[{v}] {s} tranh thủ qua", "[{v}] được không {b}",
+        "[{v}] {s} mới rảnh", "[{v}] nha", "để {s} qua [{v}]", "[{v}] {s} ghé làm luôn", "lịch [{v}] cho {s}"]}
+  }
+}

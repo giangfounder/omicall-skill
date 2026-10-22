@@ -1,6 +1,6 @@
 # MCP OMI (`omicall-mcp`) — cài đặt, đăng nhập, bản đồ công cụ, tiết kiệm token
 
-File dùng chung cho 3 skill: `omicall-callbot-gen-ai`, `omicall-chatbot-gen-ai`, `omicall-omiflow` (mỗi skill giữ một bản giống nhau — sửa một bản thì chép sang hai bản kia).
+File dùng chung cho 4 skill: `omicall-callbot-gen-ai`, `omicall-callbot-flow`, `omicall-chatbot-gen-ai`, `omicall-omiflow` (mỗi skill giữ một bản giống nhau — sửa một bản thì chép sang các bản kia).
 
 Package npm `omicall-mcp` của VIHAT (bản 1.3.1, server "OMICall MCP", **85 công cụ**, đã kiểm bằng `tools/list`). MCP **không** có công cụ dựng Callbot, Chatbot hay OMIFlow: phần dựng vẫn gọi API `chatbot-gateway` hoặc `campaign-v1` theo skill. MCP lo **đăng nhập, tra cứu id, kiểm thử** — những việc trước đây tốn nhiều lượt trình duyệt và token.
 
