@@ -1,6 +1,7 @@
 ---
 name: omicall-callbot-flow
-description: Shared end-to-end skill to build OMiCall/OMiCRM classic Callbot call flows (script type NORMAL — fixed lines in STAFF nodes, branches by the tenant's NLU intents/entities, actions) for ANY tenant and ANY business (nhắc lịch, nhắc nợ, xác nhận đơn, khảo sát, mời dịch vụ, CSKH...). Input — tenant domain, account, a business script file or description. The agent analyses the business into a conversation tree, decides which intents/entities the flow needs (reusing system ones), generates realistic phone-STT-style training data (≥200 new sentences per intent and per entity) in the system Excel template, pushes it ONCE through Kho tri thức (AI → Kho tri thức → Huấn luyện AI Callbot), builds the flow from a JSON spec while the model trains, saves via the callbot gateway API, verifies and test-calls. Use for intents/entities/training-sentence work too, or for editing …/ai/callbot/script/update/{id} when the script is not AI_AGENT. For LLM SmartAgent scripts use omicall-callbot-gen-ai. Read references/data-rules.md and references/api-reference.md before building.
+description: >-
+  Build and edit OMiCall/OMiCRM classic Callbot flows (script type NORMAL) for any tenant and business. Use for conversation-tree design, NLU intents and entities, realistic phone-STT training data, Knowledge Base training, JSON flow generation, gateway saves, verification, and test calls, including work in …/ai/callbot/script/update/{id} when the script is not AI_AGENT. For LLM SmartAgent scripts use omicall-callbot-gen-ai. Read references/data-rules.md and references/api-reference.md before building.
 ---
 
 # OMiCALL Callbot luồng cổ điển (NORMAL) + Kho tri thức — Generic Builder Playbook

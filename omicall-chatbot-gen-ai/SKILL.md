@@ -1,6 +1,7 @@
 ---
 name: omicall-chatbot-gen-ai
-description: Shared skill to build/edit OMiCALL/OMiCRM AI Chatbot (OmiBot, text bot for Zalo OA / Facebook / LiveTalk) for ANY tenant — system prompt, intents (Ngữ cảnh bắt đầu), RAG "Dữ liệu khác", API "Truy vấn" (api_knowledge, e.g. OMICall Public API contact/search by {{social_phone_number_linked}}), save_draft_v2/publish_v2 via chatbot-gateway, editor …/ai/bot/edit/{bot_id}. Use when the user gives an omicrm.io /ai/bot/ URL or asks to build/configure an OMI chatbot. Read references/api-reference.md before building. Logs in via the OMI MCP server (omicall-mcp: login_omicall_mcp) when available and uses its tools for lookups/testing — see references/omi-mcp.md.
+description: >-
+  Shared skill to build/edit OMiCALL/OMiCRM AI Chatbot (OmiBot, text bot for Zalo OA / Facebook / LiveTalk) for ANY tenant — system prompt, intents (Ngữ cảnh bắt đầu), RAG "Dữ liệu khác", API "Truy vấn" (api_knowledge, e.g. OMICall Public API contact/search by {{social_phone_number_linked}}), save_draft_v2/publish_v2 via chatbot-gateway, editor …/ai/bot/edit/{bot_id}. Use when the user gives an omicrm.io /ai/bot/ URL or asks to build/configure an OMI chatbot. Read references/api-reference.md before building. Logs in via the OMI MCP server (omicall-mcp: login_omicall_mcp) when available and uses its tools for lookups/testing — see references/omi-mcp.md.
 ---
 
 # OMiCALL/OMiCRM AI Chatbot (OmiBot) Gen AI — Generic Builder Playbook (mọi tenant / mọi bot)
