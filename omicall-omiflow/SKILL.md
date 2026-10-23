@@ -1,18 +1,13 @@
 ---
 name: omicall-omiflow
 description: >-
-  [v1.8.0] Thiết kế, xây dựng và chỉnh sửa quy trình tự động OMIFlow của OMICall/OMICRM cho mọi đơn vị và bài toán nghiệp vụ. Dùng khi quy trình có điểm kích hoạt từ API webhook, cuộc gọi, phím IVR, phiếu ghi, lịch, Excel hoặc đối tác; có điều kiện, trì hoãn, phân loại bằng AI, tra cứu API bên ngoài, cập nhật khách hàng, phiếu ghi hoặc cuộc gọi, bật cửa sổ cho nhân viên, gửi SMS/ZNS, chạy Callbot hoặc liên kết Callbot/Chatbot. Skill phân tích yêu cầu thành luồng theo danh mục mô-đun và đọc hoặc lưu qua API campaign-v1. Đọc references/node-catalog.md, references/design-patterns.md và references/omi-mcp.md khi phù hợp.
+  [v1.9.0] Thiết kế, dựng và sửa quy trình tự động OMIFlow của OMICall/OMICRM: trigger webhook API, cuộc gọi, phím IVR, phiếu ghi, lịch, Excel, đối tác; điều kiện, trì hoãn, AI phân loại, gọi API ngoài, cập nhật khách/phiếu/cuộc gọi, popup nhân viên, SMS/ZNS, chạy hoặc liên kết Callbot/Chatbot; đọc và lưu qua API campaign-v1.
 ---
 
 # OMICall OMIFlow — Builder Playbook (mọi tenant, mọi bài toán)
 
-## Bước bắt buộc khi gọi skill: cập nhật bản mới nhất
-Phiên bản skill: **v1.8.0**. Câu đầu tiên trả lời user khi skill được gọi phải là: `Đang dùng omicall-omiflow v<phiên bản>` (lấy từ dòng `SKILL_VERSION` của script dưới; không chạy được script thì dùng v1.8.0).
-Trước mọi bước khác, chạy: `python "<thư mục skill>/scripts/self_update.py"` (`<thư mục skill>` = thư mục chứa file SKILL.md này).
-- Báo user dòng cuối `SKILL_VERSION=...` (phiên bản đang dùng).
-- Script báo **SKILL.md đã thay đổi** → đọc lại SKILL.md (và file tham chiếu được nêu) từ đĩa rồi mới làm tiếp; nội dung đã nạp là bản cũ.
-- Không cập nhật được hoặc có bản mới nhưng cài không phải git clone → báo user lý do, làm tiếp với bản hiện có; không tự sửa, xoá hay commit trong thư mục skill.
-- Phiên bản ghi ở file `VERSION`, lịch sử thay đổi ở `CHANGELOG.md` gốc repo (https://github.com/giangfounder/omicall-skill).
+## Bước bắt buộc: cập nhật skill
+Chạy `python "<thư mục skill>/scripts/self_update.py"` trước mọi bước khác (`<thư mục skill>` = thư mục chứa SKILL.md này). Câu đầu tiên trả lời user: `Đang dùng omicall-omiflow v<phiên bản>` (lấy từ dòng `SKILL_VERSION`; script lỗi thì dùng v1.9.0). Script báo **SKILL.md đã thay đổi** → đọc lại SKILL.md từ đĩa rồi mới làm tiếp. Không cập nhật được → báo lý do, làm tiếp bằng bản hiện có; không sửa, xoá hay commit trong thư mục skill.
 
 ## Overview
 **OMIFlow** (menu OMIFlow, path `/flow/list`, editor `/flow/edit/{id}`) là bộ máy tự động hoá của OMICRM, cùng loại N8N, Zapier, Make, nhưng gắn sẵn với tổng đài, Callbot, Chatbot, đa kênh, phiếu ghi, khách hàng. Một flow = **điều kiện bắt đầu** → chuỗi **nút** (điều kiện, trì hoãn, hành động, cửa sổ tương tác, marketing, kênh chat) → kết quả nghiệp vụ.
@@ -111,19 +106,12 @@ Khung 8 câu (design-patterns mục A): sự kiện kích hoạt · đối tư�
 - **`response_config` của webhook là cố định**; trả dữ liệu động dùng hành động "Trả kết quả qua API". `status_code` 9999 trong body không phải HTTP status.
 - **Gọi flow khác**: flow đích phải là loại phụ thuộc; kết quả của flow đích không quay về webhook của flow gọi.
 - **Quota**: số flow theo gói, số nút mỗi flow (ví dụ 16/20) — gom nhánh trùng để tiết kiệm.
-- **Ô nhập trong drawer nối thêm thay vì thay thế**: Ctrl+A trước khi gõ; body JSON editor tự bọc `{}`. Không dùng Escape trong drawer.
-- **Trigger Biểu mẫu chỉ liệt kê biểu mẫu đã Xuất bản** (xuất bản = link công khai → hỏi user trước).
-- **Mã biến form ngẫu nhiên dễ lẫn `I`/`l`**: lấy mã bằng JS hoặc chip biến, không gõ theo ảnh chụp. Biến sai vẫn hiện `{{...}}` thô trên thẻ nút.
-- **Nút vừa tạo chưa có "Nút kế tiếp"**: Lưu → mở lại nút (hoặc ←/→ trên ngăn). Điều kiện: "Nút kế tiếp" phải = trường hợp, trái = mặc định.
-- **Xuất bản đổi id trong URL editor**: mở flow từ danh sách, đừng giữ URL cũ.
 - **Trigger theo trạng thái chỉ bắt lúc chuyển vào trạng thái**, sửa thuộc tính khác không chạy lại → dùng đổi trạng thái làm mốc nối flow (ví dụ bước "duyệt/verify" do người làm).
 - **SLA "không gọi trong N phút"**: điều kiện Mở rộng "Kiểm tra tương tác khách hàng" (Không có tương tác + Cuộc gọi/Ghi chú + N phút), không tự đếm cuộc gọi.
 - **Khách đã tồn tại**: "Thêm khách hàng" → `CONTACT_EXIST` (không trùng); "Cập nhật khách hàng" vẫn áp lên khách cũ nhưng chỉ đúng các thuộc tính đã khai báo. Gán phụ trách trùng người hiện tại → `NO_CHANGE`. Cả hai là chấm đỏ vô hại, luồng chạy tiếp.
 - **Giới hạn số lần đi qua (mặc định 2)** làm trigger im lặng khi hết lượt, kể cả lúc test.
-- **Test trì hoãn**: không dùng "Tiếp tục kịch bản" (cảnh báo mơ hồ). Chờ thật bằng `sleep` nền, hoặc tạm đặt 1 phút rồi trả lại giá trị thật và xuất bản.
-- **Flow có thể bị người/phiên khác sửa**: đọc Phiên bản và cấu hình trước mỗi lần test.
-- **Pane chậm, ảnh chụp trễ 1–2 thao tác**: kiểm tra bằng `get_page_text`/JS, bấm theo `ref` từ `find`.
-- **Browser pane không bắt XHR khác domain** trong `read_network_requests`; dùng `performance.getEntriesByType('resource')` để tìm endpoint. Pane hẹp làm canvas tràn ngang → ưu tiên API thay vì bấm UI.
+
+- **Dựng hoặc test bằng giao diện**: đọc `references/ui-build-and-test.md` (mục 5–6) trước — ô nhập nối thêm, biểu mẫu phải xuất bản, mã biến form, nút kế tiếp, xuất bản đổi id, test trì hoãn, flow bị người khác sửa, browser pane chậm hoặc không bắt XHR.
 
 ## Tài liệu tham khảo
 - `references/concepts.md` — cơ chế nền tảng: đối tượng và vị trí, trigger, biến, cú pháp truy vấn JSON, trì hoãn, AI, marketing, trò chuyện, dán JSON vào canvas, Google Sheet.

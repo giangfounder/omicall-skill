@@ -1,9 +1,14 @@
 # -*- coding: utf-8 -*-
-# goto.py <script_id> — navigate the OMiCRM page tab to the callbot editor of the given script id
+# goto.py <script_id> [domain] — navigate the OMiCRM page tab to the callbot editor (domain mặc định lấy từ phiên MCP)
 import json, sys, socket, base64, hashlib, struct, urllib.request
 
+import os
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from omi_session import claims, get_token
+
 script_id = sys.argv[1]
-url = 'https://giangnh2.omicrm.io/ai/callbot/script/update/%s?lng=vi' % script_id
+domain = sys.argv[2] if len(sys.argv) > 2 else claims(get_token()).get('domain')
+url = 'https://%s.omicrm.io/ai/callbot/script/update/%s?lng=vi' % (domain, script_id)
 
 tabs = json.loads(urllib.request.urlopen('http://127.0.0.1:9222/json', timeout=5).read().decode())
 target = None

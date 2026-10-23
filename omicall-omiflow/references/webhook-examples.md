@@ -54,17 +54,9 @@ curl -X POST 'https://external-v1-stg.omicrm.com/api/campaign/webhook/{tenant_id
 {
   "status_code": 200,
   "data": {
-    "hotel_id": "25539435",
-    "ten_khach_san": "Ha Long Hotel",
-    "ly_do_lien_he": "lượng phòng bán ra giảm 20.9%",
-    "co_van_de_phong": "Có",
-    "muc_thieu_phong": "chua_ro",
-    "hang_phong_dong": "Single With Private Bathroom",
-    "co_van_de_gia": "Có",
-    "chenh_lech_gia": "20.6%",
-    "san_pham_de_xuat": "Private Sale",
-    "muc_giam_de_xuat": "giảm thêm khoảng 10% so với giá BAR",
-    "bang_gia_chat": "..."
+    "<ma_thuoc_tinh_1>": "{{<biến thuộc tính 1>}}",
+    "<ma_thuoc_tinh_2>": "{{<biến thuộc tính 2>}}",
+    "...": "..."
   }
 }
 ```

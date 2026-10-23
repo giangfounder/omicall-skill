@@ -61,7 +61,7 @@ org BEGIN: `data:{actionType:"CONDITION",startCallInstruction,personality:<instr
 ### Intent — (A) Runtime `nodes[].ai_agent_config.ai_analyze.conditions[]`
 ```json
 {"id":"<handle>","type":"CUSTOM_INTENT","intent_code":null,"intent_name":null,"name":"<label>","keywords":null,
- "operator":null,"compare_operator":null,"percent":40,"next_node":"<target node id|begin id>",
+ "operator":null,"compare_operator":null,"percent":40,"next_node":null,
  "repeat_contents":null,"repeat_time":null,"apply_targets":null,"attachment":null,"limit":null,"limit_ai_config":null,
  "data":[{"id":"<data_id>","type":"OMI_BOT_INTENT","content":"<câu khách nói chính xác>"}],
  "operator_type":"AND","action_steps":null}
@@ -74,7 +74,7 @@ org BEGIN: `data:{actionType:"CONDITION",startCallInstruction,personality:<instr
  "name":"<label>","id":"<handle>","operatorType":"AND","type":"CUSTOM_INTENT","webhookParam":{"bot_id":"","conv_id":""}}
 ```
 - `data[].type` (runtime) / `isCustomComp:true`+`targetType` (editor) — thiếu → editor hiện ô "Nhận diện ý định" TRỐNG. `content` = câu khách hiển thị (đừng dựa `name`).
-- CUSTOM_INTENT đặt TRƯỚC 2 system; min **5 intent**; intent nối node → `next_node` + connection + entry `collapseObj`.
+- CUSTOM_INTENT đặt TRƯỚC 2 system; min **5 intent**; intent nối node hành động/kết thúc → `next_node` + connection + entry `collapseObj`. Intent được xử lý trong BEGIN dùng `next_node:null` và không có connection. Không bao giờ dùng id BEGIN làm `next_node`.
 
 ### System conditions (luôn ở cuối)
 Runtime: `{"data":[],"id":"bot_can_not_answer","type":"bot_can_not_answer",...null}` và `{"id":"customer_not_response","type":"customer_not_response",...,"operator_type":null,"action_steps":null}` (full: intent_code/intent_name/name/keywords/operator/compare_operator/percent/next_node/repeat_contents/repeat_time/apply_targets/attachment/limit/limit_ai_config/operator_type/action_steps — hệ thống để null).
@@ -89,6 +89,11 @@ Editor: `{"data":[],"id":"bot_can_not_answer","type":"bot_can_not_answer"}` và 
 ```
 org ACTION: `data:{variables:[{"variable":"var_","selected":{}}],count:1,name:"",description:"",type:"ACTION",actions:[{objVariables:{},datas:{selected:<agent_option>,typeOptions:{Extension:[<option>],Ring_group:[],Outer_group:[]},isTransferCustomizeInfo:false,isTransferCollectedInfo:true,customizeInfo:[],type:"TRANSFER_CALL",transferType:"Extension"},id:"<action_id>",type:"TRANSFER_CALL"}],content:"",collapseObj:{NEXT_STEP:{isCollapse:false}}}`; `orgDatas:[{datas:{...không id},"type":"TRANSFER_CALL"}]`; `width:332,height:202`.
 `agent_id/contact_id/sip_user`: `omicall_list_agents`/`omicall_list_extensions`. Agent option: `{"contact_id":"","avatar":"","gender":"male","value":"<agent._id>","label":"<ext> - <full_name>","sipNumber":"<ext>","fullName":"<full_name>","email":""}`.
+#### Nối `bot_can_not_answer` → TRANSFER_CALL (ba chỗ phải khớp)
+- runtime `ai_analyze.conditions[id=bot_can_not_answer].next_node = "<xfer_id>"` **và** `ai_analyze.bot_can_not_answer.next_node = "<xfer_id>"`;
+- connection `{"source":"<begin_id>","sourceHandle":"bot_can_not_answer","target":"<xfer_id>","targetHandle":"1","id":"reactflow__edge-<begin_id>bot_can_not_answer-<xfer_id>1","type":"custom"}`;
+- node ACTION `TRANSFER_CALL`: runtime `data:{"ids":["<agent_id>"],"actionType":"Extension","sip_number":"<ext>","transfer_collected_info":true,"transfer_customize_info":false}`; org `datas.selected` = `{"sipNumber":"<ext>","gender":"male","fullName":"<tên>","avatar":"","label":"<ext> - <tên>","contact_id":"<contact_id>","value":"<agent_id>","email":""}`, `typeOptions.Extension=[<cùng option>]`, `transferType:"Extension"`, `isTransferCollectedInfo:true`.
+
 Action types AI_AGENT: `TRANSFER_CALL`, `PUSH_NOTIFICATION`, `SEND_WEBHOOK`, `ADD_CLASSIFY`, `START_OTHER_CAMPAIGN`.
 
 ### ADD_CLASSIFY — phân loại khách sau intent (runtime key **`data`**, editor key **`datas`**)
@@ -98,7 +103,7 @@ Action types AI_AGENT: `TRANSFER_CALL`, `PUSH_NOTIFICATION`, `SEND_WEBHOOK`, `AD
  "description":"Phân loại khách: ...","variables":[],"is_collapse":false}
 ```
 org: `{"id":"clf_x","type":"ACTION","width":332,"height":205,"position":{"x":400,"y":200},"data":{"type":"ACTION","content":"","actions":[{"id":"o_u_clf_x_1","type":"ADD_CLASSIFY","datas":{"ids":[...],"classifies":[{"name":...}]}}],"handlers":{"SOURCE":{"id":"1","type":"target","position":"left"},"NEXT_STEP":{"id":"2","type":"source","position":"right"}},"count":1,"description":"Phân loại: ...","name":"Phân loại <nhóm>","statusActions":[],"variables":[],"collapseObj":{"NEXT_STEP":{"isCollapse":false}},"pos":{"x":400.0,"y":200.0,"h":205.0}},"orgDatas":[{"datas":{"ids":[...],"classifies":[...]},"type":"ADD_CLASSIFY"}]}`
-- Top-level `classifies`: `[{"name":"<Nhãn>"},...]` (server thêm `previous_staff_node_id:null`). Wire: intent → clf node → TRANSFER/END. Traps: runtime `datas`/editor `data` → editor không hiện phân loại, runtime `data:null`.
+- Top-level `classifies`: `[{"name":"<Nhãn>"},...]` (server thêm `previous_staff_node_id:null`). Wire: intent → clf node. Nếu cần chuyển/cúp thì nối tiếp clf → TRANSFER/END; nếu xử lý xong và vẫn tiếp tục hội thoại thì clf là node cuối, không có cạnh đi ra. Traps: runtime `datas`/editor `data` → editor không hiện phân loại, runtime `data:null`.
 
 ### END_CALL — bắt buộc mô tả cách kết thúc cho agent
 Runtime: `{"id":"<end_id>","node_type":"END_CALL","description":"Kết thúc cuộc gọi: bot cảm ơn khách đã gọi, chúc sức khỏe, lịch sự tạm biệt rồi kết thúc cuộc gọi.","actions":[],"variables":[],"is_collapse":false}`
@@ -110,6 +115,12 @@ org: `data:{id,type:"END_CALL",content:"<câu TTS chào: Cảm ơn Anh/Chị đ�
  "id":"reactflow__edge-<source><intentHandle>-<target><targetHandle>1","source":"<begin_id>","type":"custom","targetHandle":"1","target":"<action_or_end_id>"}
 ```
 targetHandle `"1"` cho cả ACTION và END_CALL.
+
+### Bất biến: không có cạnh ngược về BEGIN
+- `connections` chỉ mô tả chiều đi từ intent ở BEGIN sang node xử lý và các bước xử lý tiếp theo. **Cấm mọi connection có `target == <begin_id>`.**
+- **Cấm mọi condition có `next_node == <begin_id>`.** Intent xử lý ngay trong BEGIN dùng `next_node:null`; nhánh ACTION xử lý xong dừng ở node cuối, không có connection đi ra.
+- Sau node cuối không terminal, hệ thống tự động quay về ngữ cảnh chính BEGIN. Không biểu diễn hành vi tự động này bằng cạnh hoặc `next_node`.
+- Trước khi gọi `add_v2`, xác định `begin_id` rồi từ chối payload nếu có `connections.some(c => c.target === begin_id)` hoặc condition có `next_node === begin_id`.
 
 ## Thu thập thông tin theo intent (collect-variables) — 1 intent thu NHIỀU biến
 - Runtime condition: `"action_steps":[{"action":"collect_variables","prompt":null,"variables_code":["var_a","var_b"]}]`
@@ -141,17 +152,18 @@ Assert TẤT CẢ:
 3. Mỗi org intent `data[]` có `isCustomComp==true` && `targetType=="OMI_BOT_INTENT"` (không → editor trống).
 4. Mỗi runtime intent `data[]` có `content` = câu khách nói.
 5. Intent chuyển/cúp: runtime `next_node` = id ACTION/END + `connections` chứa `reactflow__edge-<begin><intent_handle>-<target_id>1` (targetHandle "1").
-6. `collapseObj` BEGIN org có 1 entry mỗi intent id.
-7. Intent collect: `action_steps`(runtime) + `actionStep`(editor) ✓; ACTION node `variables`(runtime+org) ✓.
-8. ADD_CLASSIFY: runtime `actions[].data.classifies` == editor `actions[].datas.classifies`; top-level `classifies` đủ nhãn.
-9. END_CALL: runtime `description` + org `data.description`/`data.content` (cách kết thúc).
-10. `is_newest_version:true`, `is_publish:true`, `version` đã tăng.
+6. **Không có cạnh ngược**: mọi `connections[].target != begin_id`; mọi condition `next_node != begin_id`; node cuối của nhánh không terminal không có connection đi ra.
+7. `collapseObj` BEGIN org có 1 entry mỗi intent id.
+8. Intent collect: `action_steps`(runtime) + `actionStep`(editor) ✓; ACTION node `variables`(runtime+org) ✓.
+9. ADD_CLASSIFY: runtime `actions[].data.classifies` == editor `actions[].datas.classifies`; top-level `classifies` đủ nhãn.
+10. END_CALL: runtime `description` + org `data.description`/`data.content` (cách kết thúc).
+11. `is_newest_version:true`, `is_publish:true`, `version` đã tăng.
 
 ## Bài học tenant trống (không có script baseline) — đã verify
 - `list-by-tenant` trả `payload:[]` vẫn tạo được script mới bằng `add_v2` KHÔNG cần `id`/`uuid`/`public_key`; server sinh `id`, `uuid`, `version:1`. Muốn cập nhật tiếp thì truyền `id` cũ.
 - Gửi `is_publish:false` nhưng server trả `is_publish:true` — không dựa vào trường này để biết đã xuất bản.
 - Biến đầu vào chiến dịch gọi ra (tên, xe, hạn...) khai báo trong `variables` (type COLLECT_INFO, is_dynamic_attribute true) và nhúng `{{var_x}}` vào prompt; chỉ biến cần thu mới đưa vào BEGIN `collect_variables`. Chưa xác nhận cơ chế nạp giá trị từ chiến dịch.
 - Đăng nhập là việc của user (không nhập mật khẩu hộ). Sau khi user đăng nhập trong browser pane, lấy token từ cookie `{domain}_omicrm_io` key "2".
-- Ví dụ add_v2 tối thiểu đã chạy: xem payload gồm `nodes`(BEGIN + ACTION ADD_CLASSIFY + END_CALL), `org_nodes`, `connections` (intent→clf→END), `classifies`.
+- Ví dụ add_v2 tối thiểu đã chạy: xem payload gồm `nodes`(BEGIN + ACTION ADD_CLASSIFY + END_CALL), `org_nodes`, `connections` (intent→clf; clf là node cuối nếu cuộc gọi tiếp tục), `classifies`.
 - **Cập nhật phiên bản mới**: `add_v2` phải gửi CẢ `id` lẫn `uuid` của script cũ. Chỉ gửi `id` → server tạo script trùng (uuid mới, version 1). Gửi cả hai → version tăng và `id` đổi sang id mới (ví dụ v1 `6ad5c47f…` → v2 `6ad5c5b3…`, cùng uuid); luôn lấy `id` mới từ response.
 - **Xoá script**: `POST /callbot/script/delete` JSON `{"ids":["<script_id>"]}` (trả `payload:["<id>"]`). Body `{"id":...}` trả 9999 nhưng KHÔNG xoá. Chỉ xoá khi user đồng ý.

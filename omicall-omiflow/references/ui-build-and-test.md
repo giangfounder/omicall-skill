@@ -91,3 +91,5 @@ Dùng khi không gọi được API lưu flow (không có token, MCP chưa cài,
 - Pane đổi kích thước thì toạ độ cũ bị từ chối ("page, zoom or size has changed") → chụp lại hoặc dùng `ref`.
 - Phiên đăng nhập hết hạn sau một đêm: mở trang đăng nhập để user tự đăng nhập lại.
 - Đọc cookie lấy token có thể bị bộ lọc an toàn chặn: không tìm cách lách, chuyển sang dựng bằng UI.
+- **Ô nhập trong drawer nối thêm thay vì thay thế**: Ctrl+A trước khi gõ; body JSON editor tự bọc `{}`. Không dùng Escape trong drawer.
+- **Browser pane không bắt XHR khác domain** trong `read_network_requests`; dùng `performance.getEntriesByType('resource')` để tìm endpoint. Pane hẹp làm canvas tràn ngang → ưu tiên API thay vì bấm UI.

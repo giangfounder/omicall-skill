@@ -93,7 +93,7 @@ Response: `{"status_code": 9999, "payload": true/false}`
 
 ### cURL
 ```bash
-curl -X POST https://api.omicall.com/api/v2/contact/add \
+curl -X POST https://public-v1-stg.omicall.com/api/v2/contact/add \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -115,14 +115,14 @@ Body: `refId` HOẶC `_id` (để identify) + các field cần update. Đặc bi
 
 ### cURL
 ```bash
-curl -X POST https://api.omicall.com/api/v2/contact/update \
+curl -X POST https://public-v1-stg.omicall.com/api/v2/contact/update \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
     "_id": "contact_id_here",
     "otherDynamicUpdates": {
-      "hotel_id": "25539435",
-      "co_van_de_phong": "Có"
+      "<ma_thuoc_tinh_1>": "<giá trị>",
+      "<ma_thuoc_tinh_2>": "Có"
     }
   }'
 ```

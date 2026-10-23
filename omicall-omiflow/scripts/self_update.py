@@ -6,10 +6,12 @@
   và nhắc ĐỌC LẠI SKILL.md nếu file này vừa đổi (nội dung agent đã nạp là bản cũ).
 - Skill không phải git clone (chép tay): so `VERSION` với bản trên GitHub, báo nếu có bản mới và cách cập nhật.
 - Không cập nhật được (mất mạng, có sửa đổi chưa commit...): báo lý do, vẫn cho làm tiếp với bản hiện có.
+- Đã kiểm tra thành công trong 6 giờ gần nhất: bỏ qua, không gọi mạng (thêm `--force` để kiểm tra lại).
 Không sửa, xoá hay commit gì trong thư mục skill. Dòng cuối luôn là `SKILL_VERSION=<tên skill> <phiên bản>`.
 """
 import subprocess
 import sys
+import time
 import urllib.request
 from pathlib import Path
 
@@ -17,6 +19,8 @@ REPO = "https://github.com/giangfounder/omicall-skill"
 RAW = "https://raw.githubusercontent.com/giangfounder/omicall-skill/main"
 SKILL_DIR = Path(__file__).resolve().parent.parent
 NAME = SKILL_DIR.name
+STAMP = Path.home() / ".cache" / "omicall-skill" / f"{NAME}.last"  # ngoài thư mục skill để không bẩn git
+TTL = 6 * 3600
 
 
 def run(args, timeout=60):
@@ -47,8 +51,27 @@ def remote_version():
         return None
 
 
+def recently_checked():
+    try:
+        return time.time() - STAMP.stat().st_mtime < TTL
+    except OSError:
+        return False
+
+
+def mark_checked():
+    try:
+        STAMP.parent.mkdir(parents=True, exist_ok=True)
+        STAMP.touch()
+    except OSError:
+        pass
+
+
 def main():
     old = version()
+    if "--force" not in sys.argv and recently_checked():
+        print(f"{NAME} đã kiểm tra cập nhật lúc {time.strftime('%H:%M', time.localtime(STAMP.stat().st_mtime))} (dưới 6 giờ) — bỏ qua.")
+        print(f"SKILL_VERSION={NAME} {old}")
+        return
     code, top, _ = run(["git", "-C", str(SKILL_DIR), "rev-parse", "--show-toplevel"], 15)
     if code == 0 and top:
         _, before, _ = run(["git", "-C", top, "rev-parse", "HEAD"], 15)
@@ -71,6 +94,8 @@ def main():
             print(f"Xem thay đổi: {Path(top) / 'CHANGELOG.md'}")
         else:
             print(f"{NAME} đang ở bản mới nhất: {new}")
+        if code == 0:
+            mark_checked()
     else:
         remote = remote_version()
         if remote is None:
@@ -83,6 +108,8 @@ def main():
             print(f"{NAME} trên máy ({old}) mới hơn GitHub ({remote}) — bản gốc đang chỉnh, chưa đẩy lên.")
         else:
             print(f"{NAME} đang ở bản mới nhất: {old}")
+        if remote is not None:
+            mark_checked()
     print(f"SKILL_VERSION={NAME} {version()}")
 
 

@@ -41,7 +41,7 @@ function render(d){
   const pub=p.is_publish?'<span class="live">PUBLISHED</span>':'<span class="bad">draft</span>';
   document.getElementById('meta').innerHTML=
     'id: <b>'+p.id+'</b> &nbsp;·&nbsp; '+pub+' &nbsp;·&nbsp; cập nhật: '+d.ts+
-    '<br>Editor: <a style="color:#7fd1ff" href="https://giangnh2.omicrm.io/ai/callbot/script/update/'+p.id+'?lng=vi" target="_blank">mở editor</a>';
+    '<br>Editor: <a style="color:#7fd1ff" href="https://'+(d.domain||'<domain>')+'.omicrm.io/ai/callbot/script/update/'+p.id+'?lng=vi" target="_blank">mở editor</a>';
   const nodes=p.nodes||[];
   const orgs=p.org_nodes||[];
   const conns=p.connections||[];
@@ -61,7 +61,7 @@ function render(d){
   if(nodes[0]&&nodes[0].ai_agent_config) an=nodes[0].ai_agent_config.ai_analyze;
   if(an){
     h+='<div class="card"><h2>Ý định → next node</h2><table><tr><th>ID</th><th>next_node</th></tr>';
-    const name={WpXN6XFW9x:'BEGIN (vòng kịch bản)',sgxA1Fwd:'Chuyển NV 100',SO1vyn4EUb:'CÚP MÁY'};
+    const name={WpXN6XFW9x:'BEGIN (không được dùng làm next_node)',sgxA1Fwd:'Chuyển NV 100',SO1vyn4EUb:'CÚP MÁY'};
     for(const c of an.conditions||[]){
       const nn=c.next_node?name[c.next_node]||c.next_node:'—';
       h+='<tr><td>'+c.id+'</td><td>'+nn+'</td></tr>';

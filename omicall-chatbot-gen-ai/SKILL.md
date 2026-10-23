@@ -1,18 +1,13 @@
 ---
 name: omicall-chatbot-gen-ai
 description: >-
-  [v1.4.0] Xây dựng và chỉnh sửa Chatbot AI của OMiCALL/OMiCRM (OmiBot dạng văn bản cho Zalo OA, Facebook và LiveTalk) cho mọi đơn vị. Dùng khi cần cấu hình lời nhắc hệ thống, ý định trong “Ngữ cảnh bắt đầu”, RAG trong “Dữ liệu khác”, API trong “Truy vấn”, lưu bản nháp hoặc xuất bản qua chatbot-gateway, hay chỉnh sửa tại …/ai/bot/edit/{bot_id}; gắn bot vào kênh LiveTalk để chat thử, chạy bộ câu hỏi thử, chấm điểm và tối ưu so sánh trước/sau. Kích hoạt khi người dùng cung cấp đường dẫn omicrm.io/ai/bot/ hoặc yêu cầu dựng, cấu hình, kiểm thử hay tối ưu chatbot OMI. Đọc references/api-reference.md trước khi dựng, references/livetalk-test-optimize.md khi gắn kênh/kiểm thử/tối ưu và references/omi-mcp.md khi dùng máy chủ OMI MCP.
+  [v1.5.0] Dựng, kiểm thử và tối ưu Chatbot AI (OmiBot) của OMiCALL/OMiCRM cho Zalo OA, Facebook, LiveTalk: lời nhắc hệ thống, ý định trong Ngữ cảnh bắt đầu, RAG Dữ liệu khác, Truy vấn API, lưu nháp hoặc xuất bản qua chatbot-gateway, chat thử trên LiveTalk, chấm điểm trước/sau. Kích hoạt khi có đường dẫn omicrm.io/ai/bot/.
 ---
 
 # OMiCALL/OMiCRM AI Chatbot (OmiBot) Gen AI — Generic Builder Playbook (mọi tenant / mọi bot)
 
-## Bước bắt buộc khi gọi skill: cập nhật bản mới nhất
-Phiên bản skill: **v1.4.0**. Câu đầu tiên trả lời user khi skill được gọi phải là: `Đang dùng omicall-chatbot-gen-ai v<phiên bản>` (lấy từ dòng `SKILL_VERSION` của script dưới; không chạy được script thì dùng v1.4.0).
-Trước mọi bước khác, chạy: `python "<thư mục skill>/scripts/self_update.py"` (`<thư mục skill>` = thư mục chứa file SKILL.md này).
-- Báo user dòng cuối `SKILL_VERSION=...` (phiên bản đang dùng).
-- Script báo **SKILL.md đã thay đổi** → đọc lại SKILL.md (và file tham chiếu được nêu) từ đĩa rồi mới làm tiếp; nội dung đã nạp là bản cũ.
-- Không cập nhật được hoặc có bản mới nhưng cài không phải git clone → báo user lý do, làm tiếp với bản hiện có; không tự sửa, xoá hay commit trong thư mục skill.
-- Phiên bản ghi ở file `VERSION`, lịch sử thay đổi ở `CHANGELOG.md` gốc repo (https://github.com/giangfounder/omicall-skill).
+## Bước bắt buộc: cập nhật skill
+Chạy `python "<thư mục skill>/scripts/self_update.py"` trước mọi bước khác (`<thư mục skill>` = thư mục chứa SKILL.md này). Câu đầu tiên trả lời user: `Đang dùng omicall-chatbot-gen-ai v<phiên bản>` (lấy từ dòng `SKILL_VERSION`; script lỗi thì dùng v1.5.0). Script báo **SKILL.md đã thay đổi** → đọc lại SKILL.md từ đĩa rồi mới làm tiếp. Không cập nhật được → báo lý do, làm tiếp bằng bản hiện có; không sửa, xoá hay commit trong thư mục skill.
 
 # Overview
 AI **Chatbot** (text) — OMI gọi là **AI Chatbot / OmiBot** (`/ai/bot/...`), khác **Callbot** (`/ai/callbot/...`). Bot nhắn tin qua **Zalo OA / Fanpage FB / website (OMI LiveTalk)**; `type:"SCENARIO_HANDLER"`, LLM `gpt-4o-mini`. Điểm khác callbot: KHÔNG có STT/TTS, không có node chuyển máy dạng cuộc gọi — thay vào đó là **hội thoại văn bản + training/RAG** (`question_answer`, `vector_store`, `api_knowledge`) + **intents** trong `campaign` (BEGIN_CONTEXT). System Prompt nằm ở top-level `system_prompt` (UI: Kịch bản → Ngữ cảnh bắt đầu). Skill này là **bộ dùng chung**: thiết kế prompt/intent/routing/RAG do bạn (LLM) tự tư duy từ nghiệp vụ user — không chép từ tenant khác.
@@ -61,7 +56,7 @@ Hỏi một lần: (1) **domain doanh nghiệp**; (2) **tài khoản và thông 
 - Các ý định mô tả NGẮN ở file riêng (kịch bản intent), prompt chính mô tả luồng chung.
 
 ## Bước 5 — Dựng payload & intent (schema: api-reference.md — đọc TRƯỚC khi build)
-- Lấy GET làm baseline → overwrite `system_prompt`, `assistant_name/description`, `history_config`, intents trong BEGIN_CONTEXT (`campaign.name_mappings[0].conditions` + `campaign.nodes[0].ai_analyze.conditions`) khi schema intent đã xác minh. Nếu intent schema chưa rõ → **dùng UI trên Chrome + bắt mạng (captor)** để học trước khi build API.
+- Lấy GET làm baseline → overwrite `system_prompt`, `assistant_name/description`, `history_config`, intents trong BEGIN_CONTEXT (`campaign.name_mappings[0].conditions` + `campaign.nodes[0].ai_analyze.conditions`) khi schema intent đã xác minh. Nếu intent schema chưa rõ → **dùng UI trên Chrome + bắt mạng (captor)** để học trước khi build API (`references/ui-gotchas.md`).
 - Save: `POST /omiai_assistant/save_draft_v2` (multipart field `file`=JSON). Publish: `POST /omiai_assistant/publish_v2` (chỉ khi user yêu cầu).
 
 ## Bước 6 — RAG/Training + Verify + Giao (luồng VERIFIED)
@@ -79,11 +74,7 @@ Hỏi một lần: (1) **domain doanh nghiệp**; (2) **tài khoản và thông 
 5. **Tối ưu** theo bảng triệu chứng → chỗ sửa; snapshot trước khi sửa, mỗi vòng một nhóm nguyên nhân, `save_draft_v2`, chạy lại toàn bộ bộ câu hỏi, tối đa 3 vòng.
 6. **Báo cáo** trước/sau bằng `scripts/eval_report.py`; báo cáo chứa dữ liệu khách → để ngoài repo skill.
 
-# Interactive OMiCRM (user xem realtime)
-Chrome CDP port 9222, profile riêng theo tenant: `Start-Process chrome.exe -ArgumentList '--remote-debugging-port=9222',"--user-data-dir=%TEMP%\omicrm-<profile>",'--no-first-run','https://<domain>.omicrm.io/ai/bot/edit/<bot_id>?lng=vi'`. Dùng `cdp.py` (`find_omicrm_tab()` + `CDP(ws).eval_js/navigate`).
-**Học schema từ UI**: inject fetch/XHR captor vào trang editor (ghi `POST body`/`response` vào `window.__omiCaps`) → user thao tác trong Chrome → đọc `window.__omiCaps` → ghi schema học được vào api-reference.md.
-
-## Đăng nhập an toàn
+# Đăng nhập an toàn
 - **Không** tự điền username/password vào form đăng nhập hay API đăng nhập bằng script/JS, kể cả khi đã có sẵn thông tin đăng nhập.
 - **Ưu tiên MCP OMI**: agent tự kiểm tra, tự cài và tự cấu hình MCP theo `references/omi-mcp.md`, rồi gọi `login_omicall_mcp` và đọc token từ phiên MCP bằng `scripts/omi_session.py`. Đây là đường chính để gọi API chatbot (Bước 5/6). Không in mật khẩu/token và không ghi bí mật vào repo hoặc file tạm.
 - **Dự phòng khi client chưa nạp MCP trong phiên hiện tại**: mở editor trong browser pane, nhờ user tự đăng nhập một lần. Nếu việc đọc cookie bị lớp an toàn chặn thì không tìm cách lách; hoàn tất cấu hình MCP và yêu cầu mở lại phiên khi client bắt buộc.
@@ -97,13 +88,9 @@ Chrome CDP port 9222, profile riêng theo tenant: `Start-Process chrome.exe -Arg
 - **DUAL trí**: nếu intent phải khai CẢ `name_mappings[0].conditions` (editor) LẪN `nodes[].ai_analyze.conditions` (runtime) như callbot — xác minh bằng captor, không tự đoán.
 - **RAG cần training xong** mới trả lời đúng; `vector_store`/`question_answer` rỗng thì bot chỉ dựa `system_prompt`.
 - Không bấm **Xuất bản** trên UI trừ khi user yêu cầu (`is_publish` giữ nguyên).
+- **Làm trên giao diện** (Chrome CDP, captor, Escape, autosave tab Đào tạo, tải file, thêm ý định, ô nhập nối thêm, kiểm chứng sau khi lưu): đọc `references/ui-gotchas.md` trước khi thao tác.
 - Chỉ dùng token đúng tenant: kiểm tra `domain`/`tenant_id` bằng `python scripts/omi_session.py` trước khi ghi; nhiều tenant thì mỗi tenant một server MCP hoặc `logout` rồi đăng nhập lại. Xem mục "Đăng nhập an toàn".
-- **Không dùng phím Escape** trong editor Kịch bản để đóng drawer/dialog — có thể kích hoạt reset state cục bộ (mất sạch ý định chưa lưu) hoặc dialog "Xác nhận rời trang". Luôn đóng bằng nút X/"Đóng" hiển thị rõ trên UI.
-- **Tab "Đào tạo" tự động lưu ngay** (mọi thao tác thêm/xoá "Dữ liệu khác", "Bộ câu hỏi" áp dụng tức thì, hiện toast "Cập nhật thành công"/"Đã lưu") — khác tab **"Kịch bản"** cần bấm **"Lưu lại"** thủ công. Nếu tab Kịch bản đang có state cục bộ bị lỗi/mất dữ liệu (do thao tác nhầm), **tuyệt đối không** chuyển sang tab Đào tạo trước khi xử lý xong, vì autosave của Đào tạo có thể không đụng tới campaign — nhưng để chắc chắn, luôn **F5 reload lại toàn trang và xác nhận qua `get_page_text`** sau mỗi thao tác quan trọng trước khi tin state hiện tại là đúng.
-- **Trước khi sửa nhiều node**: chụp/đọc lại state hiện có (số lượng ý định, tên) TRƯỚC khi bắt đầu; sau khi sửa xong và bấm "Lưu lại", **luôn reload trang (navigate lại đúng URL) rồi đọc `get_page_text`** để xác nhận server thực sự giữ đúng — không tin tưởng UI ngay sau khi bấm lưu.
-- **Upload file "Dữ liệu khác" qua UI** (không phải API): nút thật để mở dialog chọn file là ô pill xanh **"Dung lượng mỗi file tối đa là Xmb 📎"** — **không phải** ô "+ BOT được đào tạo" (đó là picker chọn bot áp dụng, click nhầm sẽ mở dropdown tìm bot). Dialog "Open" mở ra là **cửa sổ OS thật** (không phải phần tử DOM) — cách an toàn nhất là gõ thẳng **đường dẫn tuyệt đối** vào ô "File name" rồi Enter/Open, tránh click điều hướng thư mục bằng toạ độ (rủi ro cao trên máy nhiều màn hình/độ phân giải lớn, có thể click nhầm sang cửa sổ khác của user như Zalo/Chrome cá nhân).
 - **Giới hạn gói (plan) của tenant**: có thể chỉ cho 1 "File văn bản" mỗi lúc (`0/1`). Phải xoá/gỡ file cũ khỏi "Dữ liệu khác" (tab Đào tạo) trước khi thêm file mới nếu báo "đã đạt giới hạn cho phép".
-- **UI thêm ý định (bản mới, đơn giản hơn schema cũ)**: nút **"Thêm trường hợp"** trong drawer "Ngữ cảnh bắt đầu" tạo 1 case mới (tự đặt tên "Trường hợp N", không có ô đổi tên riêng trong flow nhanh này) với 2 chế độ — **"Nhận dạng ý định"** (1 ô textarea tự do "Hướng dẫn BOT": viết mô tả + câu ví dụ khách nói gộp chung, KHÔNG phải chip từng câu như schema `campaign.name_mappings[].conditions[].data[]` cũ) và **"Chủ đề / Ý định mong muốn"** (chưa khảo sát — có thể là chỗ đặt tên tuỳ chỉnh, cần xác minh thêm lần sau). Bot vẫn nhận diện tốt với guidance dạng văn xuôi (đã verify: 9 ý định dạng này + build thành công, hiển thị đúng sau reload).
 
 ## Chỉ liệt kê intent nào cần flow xử lý riêng
 Hệ thống này chạy tương tự N8N: **chỉ những ý định cần rẽ nhánh/flow xử lý riêng (gọi API, thu biến, chuyển bước) mới cần khai báo trong Ngữ cảnh bắt đầu**. Ý định thuần Q&A (khách hỏi kiến thức chung) — bot đã tự trả lời qua system_prompt + RAG, KHÔNG cần liệt kê thành Trường hợp riêng. Trước khi thêm 1 Trường hợp, hỏi: "ý định này có phải bot làm gì đặc biệt ngoài việc trả lời văn bản không?" — nếu chỉ trả lời từ RAG thì bỏ qua.
@@ -113,102 +100,10 @@ Drawer "Ngữ cảnh bắt đầu" có mục **"Truy vấn"** (cạnh "Hướng 
 - Body dùng biến động qua `{{tên_biến}}` — biến Đa kênh chuẩn: `{{social_phone_number_linked}}` (SĐT khách đã link), `{{social_customer_name_linked}}` (tên khách đã link), `{{social_session_id}}`. Danh sách đầy đủ 106 thuộc tính Đa kênh xem trong picker khi bấm "Đa kênh" ở footer drawer.
 - Node "Hành động → API" (mở qua right-click canvas → Hành động) dùng cho trường hợp khác: chỉ chạy khi 1 case cụ thể match. Đừng nhầm 2 chỗ này.
 
-## Kiến trúc gọi API — 2 hướng
-
-### Hướng A (khuyên dùng): Chatbot gọi thẳng OMICall Public API
-OMICall có API public `POST https://public-v1-stg.omicall.com/api/v2/contact/search` (⚠ `api.omicall.com` chỉ là trang docs, KHÔNG gọi API vào đó; token lấy bằng `GET /api/auth?apiKey=`, hết hạn 24h — xem references/omicall-public-api.md) (docs: https://api.omicall.com/omicall-api/khach-hang#tim-kiem-khach-hang) — cho phép tìm Contact theo SĐT/email/tên và trả về `attribute_structure` đầy đủ (bao gồm cả custom attributes). Chatbot cấu hình 1 "Truy vấn" trỏ thẳng URL này:
-- Method: POST
-- URL: `https://public-v1-stg.omicall.com/api/v2/contact/search?page=1&size=1`
-- Header: `Authorization: Bearer <API_TOKEN>` (token của tenant, KHÔNG phải cookie JWT của user)
-- Body raw JSON: `{"keyword": "{{social_phone_number_linked}}"}`
-- Response chứa `payload.items[0].attribute_structure[]` (mảng `{field_code, value[0].display_value}`) với mọi field KH → bot đọc trực tiếp để tư vấn.
-
-**Ưu điểm**: không tốn quota OMIFlow; response chuẩn OMI, đầy đủ dữ liệu. **Nhược**: cần user cung cấp API Token (Bearer) hợp lệ — token này khác với JWT session user, thường lấy từ menu Cấu hình → API Key.
-
-Các endpoint khác của OMICall Public API (base `https://public-v1-stg.omicall.com`):
-- `POST /api/v2/contact/add` — tạo 1 KH
-- `POST /api/v2/contact/addMany` — tạo nhiều KH
-- `POST /api/v2/contact/search?page=&size=` — search theo keyword (SĐT/email/tên)
-- `GET  /api/v2/contact/get/:id` — chi tiết KH theo id (nhanh hơn search nếu đã có contact_id)
-- `POST /api/v2/contact/update` — cập nhật KH (có `otherDynamicUpdates` cho custom attributes)
-- `DELETE /api/contacts/delete/:id` — xóa
-- `POST /api/contacts/add-note` — thêm note interaction
-- `GET  /api/v2/contact/layout/list` — danh sách attribute definitions (custom fields)
-- `GET  /api/v2/contact/filterContact/list` — customer status pipelines
-
-Response chung: `{"status_code": 9999, "payload": ...}` — status_code 9999 = success (không phải HTTP status).
-
-### Hướng B: Chatbot gọi OMIFlow (webhook trigger)
-Dùng khi cần workflow phức tạp (tạo Contact có phân bổ agent, tích hợp thêm, đa hành động...). Chi tiết trong skill **`omicall-omiflow`**. Ưu điểm: cấu hình visual, không cần code; hỗ trợ chain flow. Nhược điểm: tốn quota flow, response schema tự cấu hình.
-
-### Khi nào dùng hướng nào
-- Chỉ cần **đọc data KH** để bot tư vấn → **Hướng A** (đơn giản, 1 API call).
-- Cần **tạo KH mới nếu chưa có, phân bổ agent, tích hợp Google Sheet/API bên thứ 3** → Hướng B (OMIFlow).
-- **Hybrid**: dùng OMIFlow cho tạo/cập nhật (idempotent qua điều kiện Kiểm tra tồn tại), dùng OMICall Public API để đọc data — mỗi bên làm việc tối ưu của mình.
-
-### Nguyên tắc chung
-- **Đối chiếu tự động dùng field "Số điện thoại" CHUẨN của khách hàng** (không phải thuộc tính tùy chỉnh). Khi import hồ sơ, đặt SĐT thật vào field chuẩn.
-- **Quota Flow theo gói**: Trial thường chỉ 1 flow — cân nhắc Hướng A trước khi tạo flow.
-- **Không tự đoán API token**: hỏi user, không tự trích xuất từ cookie/session (bị chặn bởi safety).
-
-## Kiến trúc chuẩn: 2 OMIFlow riêng (khi đủ quota)
-Cho luồng "định danh + đọc data KH" từ chatbot, thiết kế đúng là **2 flow riêng biệt**, KHÔNG gộp:
-- **Flow A — "Tạo hồ sơ KH nếu chưa có"**: Trigger API nhận `so_dien_thoai_khach` + `ten_khach_da_kenh` → Điều kiện #1 so SĐT → Điều kiện #2 "Kiểm tra KH tồn tại". Nhánh `else` (chưa tồn tại) → Hành động "Tạo mới khách hàng" (điền Tên = biến `ten_khach_da_kenh`, SĐT = biến `so_dien_thoai_khach`, phân bổ Nhân viên cụ thể/Cấu hình phân bố). Nhánh `đã tồn tại` không cần làm gì. Trả về `{message:"success", status_code:200}`.
-- **Flow B — "Lấy data KH từ CRM"**: Trigger API nhận SĐT → tìm KH đã tồn tại (Điều kiện) → Trả về JSON body chứa toàn bộ thuộc tính KH (hotel_id, ten_khach_san, ly_do_lien_he, co_van_de_phong, muc_thieu_phong, hang_phong_dong, co_van_de_gia, chenh_lech_gia, nhan_xet_gia, san_pham_de_xuat, muc_giam_de_xuat, loi_ich_san_pham, ngay_bang_gia, bang_gia_chat, chu_thich_thue, ...). Field "Kết quả trả về" trong trigger API cho phép cấu hình JSON schema trả về, dùng biến `{{...}}` để chèn giá trị thuộc tính KH.
-- **Chatbot gọi cả 2**: 2 mục "Truy vấn" riêng trong drawer "Ngữ cảnh bắt đầu" — Truy vấn #1 trỏ Flow A (chỉ tạo nếu chưa có, response không dùng), Truy vấn #2 trỏ Flow B (đọc data → bot dùng để tư vấn). Bot gọi cả 2 mỗi lượt; Flow A idempotent nhờ Điều kiện #2 tự skip khi KH đã có.
-- **Tại sao không gộp 1 flow**: gộp làm response schema phức tạp hóa cho cả 2 nhánh (tồn tại + mới tạo), và Truy vấn chatbot chỉ hiểu 1 response schema cố định. Chỉ gộp khi quota gói chỉ cho 1 flow.
-
-## OMIFlow — Trigger API chi tiết
-Cấu hình trigger:
-- **Method**: POST (mặc định GET, đổi sang POST khi gửi Body JSON).
-- **URL** (auto-generated): copy vào cấu hình bên chatbot.
-- **Request Headers**: có ô thêm Key/Value (thường không cần cho webhook nội bộ).
-- **Khai báo biến liên kết**: tạo các biến (`so_dien_thoai_khach`, `ten_khach_da_kenh`, ...) — mỗi biến có mã liên kết dạng `{{cX7BecmQK8}}` tự sinh, dùng ở các node sau. Chọn **"Truy vấn từ Body"** (mặc định) để hệ thống tự parse Body request và gán vào biến theo tên khớp; hoặc **"Toàn bộ Body"** nếu muốn cả body vào 1 biến JSON.
-- **Điều kiện truy vấn**: mỗi biến có 1 hàng "Value" — nhập tên field trong body (VD `so_dien_thoai_khach`) để lấy giá trị.
-- **Kết quả trả về**: JSON schema webhook trả cho caller khi kích hoạt thành công. Mặc định `{"message":"success","status_code":9999}`. Sửa thành schema chứa các biến `{{...}}` khi cần trả data (như Flow B).
-- **Thời gian chờ**: 60s mặc định (giới hạn thời gian OMIFlow chạy trước khi timeout).
-
-## OMIFlow — Điều kiện chi tiết
-Node "Điều kiện" có 5 nhóm điều kiện so sánh:
-- **Khách hàng**: các field chuẩn của Contact (Tên, SĐT, Email, ...).
-- **Đa kênh** (106 thuộc tính): `{{social_phone_number_linked}}`, `{{social_customer_name_linked}}`, `{{social_customer_name}}`, `{{social_session_id}}`, ...
-- **Dữ liệu thu thập**: biến bot tự thu qua node "Thu thập thông tin".
-- **Chat Insights**: metrics từ Chat Insights.
-- **Biến liên kết tùy chỉnh**: biến khai báo trong trigger API hoặc "Biến liên kết tùy chỉnh" của node Hành động.
-
-Phép toán: `=`, `>`, `<`, `>=`, `<=`, `!=`, `IN`, `NOT IN`, `BETWEEN`, `CONTAIN`, `NOT CONTAIN`, `STARTWITH`, `ENDWITH`, `NOTSTARTWITH`, `NOTENDWITH`. Value là **giá trị cố định gõ tay HOẶC dùng biến `{{...}}`** — không có nút "so khớp thuộc tính này với thuộc tính khác của contact khác".
-
-**Điều kiện "Kiểm tra khách hàng tồn tại"** đặc biệt trong nhóm Đa kênh: 2 giá trị chọn `Là | Không là` × `Khách hàng đã tồn tại | Khách hàng chưa tồn tại`. Cơ chế: hệ thống tự tra Contact theo giá trị field "Số điện thoại" chuẩn khớp SĐT nhận từ webhook (đã set ở Điều kiện trước — thường là Điều kiện #1). Vì thế **thứ tự Điều kiện #1 (so SĐT) → Điều kiện #2 (kiểm tra tồn tại) BẮT BUỘC** — bỏ #1 thì #2 không biết tra ai.
-
-## OMIFlow — Node Hành động "Thêm khách hàng" / "Cập nhật khách hàng"
-- **Nhân viên cụ thể**: chọn 1 nhân viên (agent) sẽ được phân bổ khi tạo/cập nhật KH. Cấu hình phân bố: theo % / theo round-robin.
-- **Ưu tiên nhân viên thực hiện cuộc gọi** / **Ưu tiên nhân viên tiếp nhận cuộc trò chuyện**: 2 toggle, ưu tiên phân bổ khi khớp.
-- **Tên đầy đủ**, **Số điện thoại** (có prefix +84), **Email**: 3 ô input cơ bản. Click ô → footer hiện các chip "Khách hàng | Đa kênh | Dữ liệu thu thập | Biểu mẫu | Cuộc gọi | ... | Biến liên kết tùy chỉnh" — chọn chip tương ứng → picker biến hiện ra → chọn biến để chèn `{{...}}` vào ô.
-- Node này chỉ update **đối tượng gốc đã identify** — không tạo KH mới nếu đã identify được KH khác (dùng "Thêm khách hàng" thay vì "Cập nhật khách hàng" khi cần tạo).
-
-## OMIFlow — Trạng thái hành động (nhánh success/fail)
-Node Hành động có mục "**Trạng thái hành động**" bên dưới "Danh sách hành động" — có thể thêm nhánh xử lý riêng cho `success` và `fail` của hành động đó. Nếu bỏ qua, mặc định đi tiếp qua "Bước tiếp theo".
-
-## Cấu hình Truy vấn chatbot trỏ OMIFlow
-Trong drawer Ngữ cảnh bắt đầu → tab "Truy vấn" → nút "+" → điền:
-- **Tên truy vấn** (bắt buộc): tên ngắn để LLM hiểu mục đích.
-- **Hướng dẫn BOT** (bắt buộc): mô tả khi nào bot cần gọi. Trên bản UI hiện tại bot gọi mỗi lượt bất kể mô tả — nhưng vẫn viết rõ để mai này thay đổi/audit.
-- **Cấu hình truy vấn**: bấm mở drawer con → chọn GET/POST → điền URL webhook OMIFlow → Body Type = `raw` → Body JSON dùng biến `{{social_phone_number_linked}}`, `{{social_customer_name_linked}}`. **Chú ý**: editor JSON tự động thêm `{}` bao ngoài — không paste thêm `{}` gây nested. Xoá sạch trước khi type (Ctrl+A → Delete).
-- **Thời gian chờ**: 60s mặc định.
-- **Hướng dẫn BOT lấy kết quả về từ API** (bắt buộc): schema JSON trả về (liệt kê từng field) + cách bot xử lý khi các field trống hoặc status_code != 200.
-
-## Test webhook OMIFlow bằng cURL trước khi nối vào chatbot
-Trên trang cấu hình trigger API có nút "Test API" — nhưng cách chắc chắn là dùng cURL/Postman gửi POST tới webhook URL với body mẫu, xác nhận:
-1. Response về đúng schema.
-2. KH mới thực sự được tạo trong CRM (nếu Flow A) hoặc data KH trả đúng (nếu Flow B).
-3. Log flow trong tab "Lịch sử" của flow hiển thị đã chạy qua các bước đúng.
-Sau khi cURL pass mới nối vào chatbot — tránh debug lồng nhau.
-
-## Kết nối edge / xóa node trong React Flow
-UI OMIFlow và một số phần của Chatbot editor dựng bằng React Flow. Kéo edge từ output handle bên phải → input handle bên trái KHÔNG luôn hoạt động qua chuột (do target handle không hover-visible cho tới khi source active). Cách chắc chắn: dispatch `PointerEvent` qua JS. Nút "Xóa node" (`button[aria-label="Xóa node"]`) chỉ hiện khi node được select. Chi tiết code + selectors → xem skill **`omicall-omiflow`** (`references/react-flow-selectors.md`).
-
-## OMIFlow — skill riêng
-Các nội dung sau đã tách sang skill **`omicall-omiflow`**: trigger types (API/Biểu mẫu/Định kỳ/...), Điều kiện chi tiết (5 nhóm, phép toán, Kiểm tra tồn tại), node Hành động (Thêm/Cập nhật KH, API, Gọi flow khác), test webhook cURL, gotchas. Khi làm luồng chatbot ↔ CRM, gọi skill đó song song.
+## Bot cần dữ liệu CRM — chọn hướng (chi tiết `references/crm-integration.md`)
+- **Hướng A (mặc định)**: một Truy vấn gọi thẳng OMICall Public API `POST https://public-v1-stg.omicall.com/api/v2/contact/search?page=1&size=1`, body `{"keyword": "{{social_phone_number_linked}}"}`, header Bearer **API token của tenant** (khác JWT phiên; hỏi user, không tự trích từ cookie). Không tốn quota flow. Endpoint, cURL, cấu hình Truy vấn: `references/omicall-public-api.md`.
+- **Hướng B**: Truy vấn trỏ webhook OMIFlow khi cần tạo khách nếu chưa có, phân bổ nhân viên, tích hợp bên thứ ba; tốn quota flow (gói Trial thường 1 flow). Dựng flow bằng skill `omicall-omiflow`.
+- **Kết hợp**: OMIFlow để tạo/cập nhật, Public API để đọc. Đối chiếu khách theo trường "Số điện thoại" chuẩn, không theo thuộc tính tuỳ chỉnh.
 
 # Quy ước biên soạn
 - Prompt chính (`system_prompt`) viết bằng tiếng Việt tự nhiên, KHÔNG chứa mô tả ý định chi tiết; ý định liệt kê riêng (file kịch bản intent) để user tự mô tả ngữ cảnh.
@@ -224,15 +119,10 @@ Khi user gửi tài liệu nghiệp vụ (docx, xlsx, txt) có sẵn cấu trúc
 - File `.docx` kiến thức phân theo chủ đề — gộp thành 1 file RAG duy nhất, giữ **nguyên văn**.
 
 ## CRM cho phép thuộc tính động — không lăn tăn nếu chưa có sẵn
-Bộ thuộc tính miniCRM CRM của OMICall cho phép cấu hình động. Khi thiết kế bot cần thuộc tính mới (VD `hotel_id`, `bang_gia_chat`), tự đặt mã trường theo spec — không cần chờ tenant có sẵn thuộc tính đó rồi mới viết flow. User sẽ tự tạo/import thuộc tính theo spec đã cho.
+Bộ thuộc tính miniCRM CRM của OMICall cho phép cấu hình động. Khi thiết kế bot cần thuộc tính mới (ví dụ `<ma_truong_moi>`), tự đặt mã trường theo spec — không cần chờ tenant có sẵn thuộc tính đó rồi mới viết flow. User sẽ tự tạo/import thuộc tính theo spec đã cho.
 
 ## Không thu SĐT từ khách chat — lấy từ Đa kênh
 Với Zalo OA/Fanpage: SĐT khách đã được platform trả về qua trigger tin (nếu khách đã ghép SĐT với Zalo ID). Bot đọc từ biến `{{social_phone_number_linked}}` (nhóm Đa kênh) thay vì hỏi khách "cho em số điện thoại" — nhanh hơn, đỡ phiền, tránh sai chính tả. Nếu SĐT trong Đa kênh trống (khách chưa ghép) mới rơi vào flow hỏi thủ công.
-
-## Cẩn thận reload/thao tác nhầm làm mất dữ liệu
-- Thao tác click nhầm/Escape trong tab Kịch bản có thể xóa các "Trường hợp" khỏi state cục bộ. Nếu **chưa lưu** thì reload trang lấy lại được (dữ liệu server còn nguyên); nhưng nếu bấm "Lưu lại" khi state đang thiếu → **mất data server**.
-- Sau mỗi lần bấm "Lưu lại", đổi tab qua "Đào tạo" rồi quay lại là cách ép reload nhẹ để kiểm chứng nhanh; nhưng cách chắc nhất vẫn là `navigate` full URL bot editor rồi `get_page_text` verify.
-- Ô "Tên nút" trong drawer khi type text mới sẽ **APPEND vào tên cũ** thay vì thay thế — luôn Ctrl+A trước khi type để clear.
 
 ## Trước khi dựng flow — kiểm tra quota gói dịch vụ
 Trước khi tạo OMIFlow/file dữ liệu đào tạo mới, luôn xem đèn quota ở nút "Thêm mới N/M" (M = tổng, N = đã dùng). Gói Trial thường:
@@ -246,8 +136,6 @@ Bảng creds + bot mẫu từng tenant: **`references/credentials.md`**. Tenant 
 
 # Reference
 Endpoint, schema bot top-level + campaign + ví dụ đã verify, checklist validation, captor script: **`references/api-reference.md`**.
+Chatbot ↔ CRM (Public API, OMIFlow, cấu hình Truy vấn, test cURL): **`references/crm-integration.md`**. Thao tác giao diện: **`references/ui-gotchas.md`**.
 Gắn LiveTalk, bộ câu hỏi thử, tiêu chí chấm, bảng lỗi → chỗ sửa, báo cáo trước/sau: **`references/livetalk-test-optimize.md`** + `scripts/eval_report.py`.
 MCP OMI — cài đặt, đăng nhập, công cụ cho từng bước, cách tiết kiệm token: **`references/omi-mcp.md`** (bản giống hệt trong 3 skill OMI). Token cho API: `scripts/omi_session.py`.
-
-Base directory for this skill: C:\Users\User\.agents\skills\omicall-chatbot-gen-ai
-Relative paths in this skill (e.g., scripts/, references/) are relative to this base directory.

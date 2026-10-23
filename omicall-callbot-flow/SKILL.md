@@ -1,18 +1,13 @@
 ---
 name: omicall-callbot-flow
 description: >-
-  [v1.2.2] Xây dựng và chỉnh sửa luồng Callbot cổ điển của OMiCall/OMiCRM (kịch bản loại NORMAL) cho mọi đơn vị và nghiệp vụ. Dùng khi cần thiết kế cây hội thoại, ý định và thực thể NLU, tạo dữ liệu huấn luyện theo giọng nói điện thoại, huấn luyện Kho tri thức, sinh luồng từ JSON, lưu qua cổng dịch vụ, kiểm tra hoặc gọi thử; bao gồm trang …/ai/callbot/script/update/{id} khi kịch bản không phải AI_AGENT. Với kịch bản SmartAgent, dùng omicall-callbot-gen-ai. Đọc references/data-rules.md và references/api-reference.md trước khi dựng.
+  [v1.3.0] Dựng và sửa Callbot luồng cổ điển (kịch bản NORMAL) của OMiCall/OMiCRM: cây hội thoại, ý định và thực thể NLU, dữ liệu huấn luyện giọng điện thoại, Kho tri thức, sinh luồng từ JSON, lưu và gọi thử. Dùng cho trang …/ai/callbot/script/update/{id} khi kịch bản không phải AI_AGENT; SmartAgent dùng omicall-callbot-gen-ai.
 ---
 
 # OMiCALL Callbot luồng cổ điển (NORMAL) + Kho tri thức — Generic Builder Playbook
 
-## Bước bắt buộc khi gọi skill: cập nhật bản mới nhất
-Phiên bản skill: **v1.2.2**. Câu đầu tiên trả lời user khi skill được gọi phải là: `Đang dùng omicall-callbot-flow v<phiên bản>` (lấy từ dòng `SKILL_VERSION` của script dưới; không chạy được script thì dùng v1.2.2).
-Trước mọi bước khác, chạy: `python "<thư mục skill>/scripts/self_update.py"` (`<thư mục skill>` = thư mục chứa file SKILL.md này).
-- Báo user dòng cuối `SKILL_VERSION=...` (phiên bản đang dùng).
-- Script báo **SKILL.md đã thay đổi** → đọc lại SKILL.md (và file tham chiếu được nêu) từ đĩa rồi mới làm tiếp; nội dung đã nạp là bản cũ.
-- Không cập nhật được hoặc có bản mới nhưng cài không phải git clone → báo user lý do, làm tiếp với bản hiện có; không tự sửa, xoá hay commit trong thư mục skill.
-- Phiên bản ghi ở file `VERSION`, lịch sử thay đổi ở `CHANGELOG.md` gốc repo (https://github.com/giangfounder/omicall-skill).
+## Bước bắt buộc: cập nhật skill
+Chạy `python "<thư mục skill>/scripts/self_update.py"` trước mọi bước khác (`<thư mục skill>` = thư mục chứa SKILL.md này). Câu đầu tiên trả lời user: `Đang dùng omicall-callbot-flow v<phiên bản>` (lấy từ dòng `SKILL_VERSION`; script lỗi thì dùng v1.3.0). Script báo **SKILL.md đã thay đổi** → đọc lại SKILL.md từ đĩa rồi mới làm tiếp. Không cập nhật được → báo lý do, làm tiếp bằng bản hiện có; không sửa, xoá hay commit trong thư mục skill.
 
 ## Overview
 Kịch bản `type:"NORMAL"` là **luồng cố định**: bot đọc lời soạn sẵn ở node `STAFF`, nghe khách, **mô hình NLU của tenant** (học từ Kho tri thức) nhận ra **ý định** + **thực thể** để rẽ sang nhánh `CONDITION`. Không có LLM sinh câu: mọi câu bot nói phải viết sẵn, và mô hình chỉ hiểu đúng những gì đã được dạy.
