@@ -1,13 +1,13 @@
 ---
 name: omicall-omiflow
 description: >-
-  [v1.7.2] Thiết kế, xây dựng và chỉnh sửa quy trình tự động OMIFlow của OMICall/OMICRM cho mọi đơn vị và bài toán nghiệp vụ. Dùng khi quy trình có điểm kích hoạt từ API webhook, cuộc gọi, phím IVR, phiếu ghi, lịch, Excel hoặc đối tác; có điều kiện, trì hoãn, phân loại bằng AI, tra cứu API bên ngoài, cập nhật khách hàng, phiếu ghi hoặc cuộc gọi, bật cửa sổ cho nhân viên, gửi SMS/ZNS, chạy Callbot hoặc liên kết Callbot/Chatbot. Skill phân tích yêu cầu thành luồng theo danh mục mô-đun và đọc hoặc lưu qua API campaign-v1. Đọc references/node-catalog.md, references/design-patterns.md và references/omi-mcp.md khi phù hợp.
+  [v1.8.0] Thiết kế, xây dựng và chỉnh sửa quy trình tự động OMIFlow của OMICall/OMICRM cho mọi đơn vị và bài toán nghiệp vụ. Dùng khi quy trình có điểm kích hoạt từ API webhook, cuộc gọi, phím IVR, phiếu ghi, lịch, Excel hoặc đối tác; có điều kiện, trì hoãn, phân loại bằng AI, tra cứu API bên ngoài, cập nhật khách hàng, phiếu ghi hoặc cuộc gọi, bật cửa sổ cho nhân viên, gửi SMS/ZNS, chạy Callbot hoặc liên kết Callbot/Chatbot. Skill phân tích yêu cầu thành luồng theo danh mục mô-đun và đọc hoặc lưu qua API campaign-v1. Đọc references/node-catalog.md, references/design-patterns.md và references/omi-mcp.md khi phù hợp.
 ---
 
 # OMICall OMIFlow — Builder Playbook (mọi tenant, mọi bài toán)
 
 ## Bước bắt buộc khi gọi skill: cập nhật bản mới nhất
-Phiên bản skill: **v1.7.2**. Câu đầu tiên trả lời user khi skill được gọi phải là: `Đang dùng omicall-omiflow v<phiên bản>` (lấy từ dòng `SKILL_VERSION` của script dưới; không chạy được script thì dùng v1.7.2).
+Phiên bản skill: **v1.8.0**. Câu đầu tiên trả lời user khi skill được gọi phải là: `Đang dùng omicall-omiflow v<phiên bản>` (lấy từ dòng `SKILL_VERSION` của script dưới; không chạy được script thì dùng v1.8.0).
 Trước mọi bước khác, chạy: `python "<thư mục skill>/scripts/self_update.py"` (`<thư mục skill>` = thư mục chứa file SKILL.md này).
 - Báo user dòng cuối `SKILL_VERSION=...` (phiên bản đang dùng).
 - Script báo **SKILL.md đã thay đổi** → đọc lại SKILL.md (và file tham chiếu được nêu) từ đĩa rồi mới làm tiếp; nội dung đã nạp là bản cũ.

@@ -56,6 +56,7 @@ Các bản trước 2026-10-23 được đánh số lại theo lịch sử commi
 ## omicall-omiflow
 | Phiên bản | Ngày | Commit | Thay đổi |
 |---|---|---|---|
+| 1.8.0 | 2026-10-23 | tag `omicall-omiflow/v1.8.0` | Mẫu đón tin nhắn LiveTalk giao cho AI Chatbot (lọc đúng widget test) |
 | 1.7.2 | 2026-10-23 | tag `omicall-omiflow/v1.7.2` | Hiện phiên bản trong mô tả skill ([vX.Y.Z], thấy khi gõ /) và câu đầu tiên agent trả lời; release.py tự cập nhật |
 | 1.7.1 | 2026-10-23 | tag `omicall-omiflow/v1.7.1` | omi-mcp.md: thêm nguồn gói npm và yêu cầu Node 18+, đường dẫn cấu hình Claude Desktop, danh mục công cụ theo module cần bật, xử lý lỗi thường gặp |
 | 1.7.0 | 2026-10-23 | tag `omicall-omiflow/v1.7.0` | Bước bắt buộc tự cập nhật skill khi gọi, file `VERSION` |
