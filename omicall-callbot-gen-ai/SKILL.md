@@ -6,6 +6,13 @@ description: >-
 
 # OMiCALL Callbot Gen AI — Generic Builder Playbook (all tenants / all scripts)
 
+## Bước bắt buộc khi gọi skill: cập nhật bản mới nhất
+Trước mọi bước khác, chạy: `python "<thư mục skill>/scripts/self_update.py"` (`<thư mục skill>` = thư mục chứa file SKILL.md này).
+- Báo user dòng cuối `SKILL_VERSION=...` (phiên bản đang dùng).
+- Script báo **SKILL.md đã thay đổi** → đọc lại SKILL.md (và file tham chiếu được nêu) từ đĩa rồi mới làm tiếp; nội dung đã nạp là bản cũ.
+- Không cập nhật được hoặc có bản mới nhưng cài không phải git clone → báo user lý do, làm tiếp với bản hiện có; không tự sửa, xoá hay commit trong thư mục skill.
+- Phiên bản ghi ở file `VERSION`, lịch sử thay đổi ở `CHANGELOG.md` gốc repo (https://github.com/giangfounder/omicall-skill).
+
 ## Overview
 Callbot **SmartAgent** (`type:"AI_AGENT"`): STT → LLM(+RAG/API) → TTS; tự đối thoại, nhận diện ý định, thu biến, chuyển/cúp máy. ≠ **Call Flow** (IVR/Rasa). Skill này là **bộ dùng chung**: mọi tenant, mọi kịch bản; intent, xử lý, routing, prompt hướng dẫn agent đều **do bạn (LLM) tự tư duy từ nghiệp vụ user cung cấp** — không bê nguyên từ script tenant khác hay từ ví dụ trong skill.
 

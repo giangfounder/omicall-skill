@@ -6,6 +6,13 @@ description: >-
 
 # OMiCALL Callbot luồng cổ điển (NORMAL) + Kho tri thức — Generic Builder Playbook
 
+## Bước bắt buộc khi gọi skill: cập nhật bản mới nhất
+Trước mọi bước khác, chạy: `python "<thư mục skill>/scripts/self_update.py"` (`<thư mục skill>` = thư mục chứa file SKILL.md này).
+- Báo user dòng cuối `SKILL_VERSION=...` (phiên bản đang dùng).
+- Script báo **SKILL.md đã thay đổi** → đọc lại SKILL.md (và file tham chiếu được nêu) từ đĩa rồi mới làm tiếp; nội dung đã nạp là bản cũ.
+- Không cập nhật được hoặc có bản mới nhưng cài không phải git clone → báo user lý do, làm tiếp với bản hiện có; không tự sửa, xoá hay commit trong thư mục skill.
+- Phiên bản ghi ở file `VERSION`, lịch sử thay đổi ở `CHANGELOG.md` gốc repo (https://github.com/giangfounder/omicall-skill).
+
 ## Overview
 Kịch bản `type:"NORMAL"` là **luồng cố định**: bot đọc lời soạn sẵn ở node `STAFF`, nghe khách, **mô hình NLU của tenant** (học từ Kho tri thức) nhận ra **ý định** + **thực thể** để rẽ sang nhánh `CONDITION`. Không có LLM sinh câu: mọi câu bot nói phải viết sẵn, và mô hình chỉ hiểu đúng những gì đã được dạy.
 
@@ -63,7 +70,10 @@ Từ tài liệu: mục tiêu cuộc gọi, biến đầu vào (chiến dịch),
 
 ### Bước 6 — Kiểm tra và giao
 - GET lại: số node/dây khớp, nhánh hỏi đáp/lặp lại/phản hồi sai trỏ đúng bước báo chuyển, chuyển máy có `ids` nhân viên, mọi câu dùng `{{gender1_ai}}` (§6 browser-snippets). Mở trình biên tập bản mới (đóng/chuyển tab bản cũ).
-- Đợi huấn luyện `SUCCESS` → **gọi thử khi user đưa số**: trình biên tập → "Gọi thử nghiệm" (giả lập cuộc gọi đến, chỉ nhập số; biến chiến dịch để trống) hoặc MCP `click_to_call`; xem kết quả `search_calls`/`get_call_detail` hoặc lịch sử cuộc gọi.
+- Đợi huấn luyện `SUCCESS` (7–8 nghìn câu mất khoảng 25 phút) → **gọi thử**:
+  - Trình biên tập → "Gọi thử nghiệm": **không gọi ra điện thoại**; mở cuộc gọi giả lập ngay trên trình duyệt (khung "Gọi đi"), người thử nói qua **micro máy tính**, số nhập chỉ là số khách giả lập, biến chiến dịch để trống. Browser pane của agent bị chặn micro → cuộc gọi đứng 00:00 → hướng dẫn **user tự bấm trên trình duyệt của họ** (đã đăng nhập tenant, cho phép micro). "Đóng và lưu lại" lưu bản ghi cuộc gọi thử vào lịch sử.
+  - Muốn bot gọi tới điện thoại thật (và truyền biến chiến dịch): cần chiến dịch Callbot/OMIFlow gọi ra với hotline, kịch bản đã xuất bản, có phát sinh cước → chỉ làm khi user đồng ý rõ (skill `omicall-omiflow`).
+  - Xem kết quả: lịch sử cuộc gọi hoặc MCP `search_calls`, `get_call_detail` (nội dung hội thoại, ý định từng lượt, nhãn, biến thu được).
 - Giao: link editor, file dữ liệu, spec, bảng ý định/thực thể, các điểm "Cần xác nhận".
 
 ## Quy tắc kịch bản mặc định (user đã chốt, áp mọi dự án trừ khi user đổi)

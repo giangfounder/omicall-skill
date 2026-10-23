@@ -6,6 +6,13 @@ description: >-
 
 # OMiCALL/OMiCRM AI Chatbot (OmiBot) Gen AI — Generic Builder Playbook (mọi tenant / mọi bot)
 
+## Bước bắt buộc khi gọi skill: cập nhật bản mới nhất
+Trước mọi bước khác, chạy: `python "<thư mục skill>/scripts/self_update.py"` (`<thư mục skill>` = thư mục chứa file SKILL.md này).
+- Báo user dòng cuối `SKILL_VERSION=...` (phiên bản đang dùng).
+- Script báo **SKILL.md đã thay đổi** → đọc lại SKILL.md (và file tham chiếu được nêu) từ đĩa rồi mới làm tiếp; nội dung đã nạp là bản cũ.
+- Không cập nhật được hoặc có bản mới nhưng cài không phải git clone → báo user lý do, làm tiếp với bản hiện có; không tự sửa, xoá hay commit trong thư mục skill.
+- Phiên bản ghi ở file `VERSION`, lịch sử thay đổi ở `CHANGELOG.md` gốc repo (https://github.com/giangfounder/omicall-skill).
+
 # Overview
 AI **Chatbot** (text) — OMI gọi là **AI Chatbot / OmiBot** (`/ai/bot/...`), khác **Callbot** (`/ai/callbot/...`). Bot nhắn tin qua **Zalo OA / Fanpage FB / website (OMI LiveTalk)**; `type:"SCENARIO_HANDLER"`, LLM `gpt-4o-mini`. Điểm khác callbot: KHÔNG có STT/TTS, không có node chuyển máy dạng cuộc gọi — thay vào đó là **hội thoại văn bản + training/RAG** (`question_answer`, `vector_store`, `api_knowledge`) + **intents** trong `campaign` (BEGIN_CONTEXT). System Prompt nằm ở top-level `system_prompt` (UI: Kịch bản → Ngữ cảnh bắt đầu). Skill này là **bộ dùng chung**: thiết kế prompt/intent/routing/RAG do bạn (LLM) tự tư duy từ nghiệp vụ user — không chép từ tenant khác.
 

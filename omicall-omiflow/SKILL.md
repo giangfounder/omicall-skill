@@ -6,6 +6,13 @@ description: >-
 
 # OMICall OMIFlow — Builder Playbook (mọi tenant, mọi bài toán)
 
+## Bước bắt buộc khi gọi skill: cập nhật bản mới nhất
+Trước mọi bước khác, chạy: `python "<thư mục skill>/scripts/self_update.py"` (`<thư mục skill>` = thư mục chứa file SKILL.md này).
+- Báo user dòng cuối `SKILL_VERSION=...` (phiên bản đang dùng).
+- Script báo **SKILL.md đã thay đổi** → đọc lại SKILL.md (và file tham chiếu được nêu) từ đĩa rồi mới làm tiếp; nội dung đã nạp là bản cũ.
+- Không cập nhật được hoặc có bản mới nhưng cài không phải git clone → báo user lý do, làm tiếp với bản hiện có; không tự sửa, xoá hay commit trong thư mục skill.
+- Phiên bản ghi ở file `VERSION`, lịch sử thay đổi ở `CHANGELOG.md` gốc repo (https://github.com/giangfounder/omicall-skill).
+
 ## Overview
 **OMIFlow** (menu OMIFlow, path `/flow/list`, editor `/flow/edit/{id}`) là bộ máy tự động hoá của OMICRM, cùng loại N8N, Zapier, Make, nhưng gắn sẵn với tổng đài, Callbot, Chatbot, đa kênh, phiếu ghi, khách hàng. Một flow = **điều kiện bắt đầu** → chuỗi **nút** (điều kiện, trì hoãn, hành động, cửa sổ tương tác, marketing, kênh chat) → kết quả nghiệp vụ.
 

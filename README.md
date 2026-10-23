@@ -61,10 +61,20 @@ Callbot luồng cổ điển (call flow):
 ```
 Agent gửi bảng ý định/thực thể và file dữ liệu huấn luyện để bạn duyệt, đẩy file một lần qua Kho tri thức, dựng kịch bản trong lúc hệ thống huấn luyện, rồi gọi thử khi bạn đưa số điện thoại.
 
-## Cập nhật
+## Phiên bản và cập nhật
+- **Tự cập nhật khi gọi skill**: bước đầu tiên của mọi skill là chạy `scripts/self_update.py`. Cài theo Bước 3 (junction/symlink vào bản git clone) thì skill tự `git pull` bản mới nhất, báo phiên bản đang dùng và đọc lại hướng dẫn nếu vừa đổi. Cài bằng cách chép tay thì skill chỉ báo khi có bản mới.
+- Cập nhật tay: `cd omicall-skill && git pull`.
+- Phiên bản từng skill nằm ở file `VERSION` (dạng MAJOR.MINOR.PATCH); lịch sử ở [CHANGELOG.md](CHANGELOG.md); mỗi bản có tag `<tên skill>/v<phiên bản>`.
+- Quay về bản cũ của một skill: `git checkout omicall-omiflow/v1.4.0 -- omicall-omiflow` (thay tên skill và phiên bản).
+
+### Phát hành bản mới (người bảo trì)
+Sửa nội dung skill xong (chưa commit), ở gốc repo chạy:
 ```bash
-cd omicall-skill && git pull
+python tools/release.py minor "Mô tả thay đổi" omicall-callbot-flow --push
 ```
+- `major`: đổi quy trình/đầu vào; `minor`: thêm quy tắc, bước, script; `patch`: sửa lỗi, sửa chữ.
+- Nhiều skill cùng lúc: liệt kê tên skill, hoặc `--all` khi sửa file dùng chung (`references/omi-mcp.md`, `scripts/self_update.py` — giữ giống hệt ở mọi skill).
+- Script tăng `VERSION`, ghi dòng vào `CHANGELOG.md`, commit, gắn tag và push kèm tag.
 
 ## Lưu ý bảo mật
 - Không commit mật khẩu, token hay thông tin tenant của khách hàng. `references/credentials.md` chỉ là mẫu.
