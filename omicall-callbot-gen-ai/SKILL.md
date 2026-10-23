@@ -1,12 +1,13 @@
 ---
 name: omicall-callbot-gen-ai
 description: >-
-  Xây dựng và chỉnh sửa toàn bộ kịch bản Callbot Gen AI (SmartAgent) của OMiCall/OMiCRM cho mọi đơn vị và nghiệp vụ. Dùng khi cần thiết kế ý định, thêm nút hành động, thu thập thông tin, phân loại hoặc gọi API; sử dụng RAG, chuyển máy, dựng kịch bản từ tài liệu nghiệp vụ hoặc PDF, chỉnh sửa tại …/ai/callbot/script/update/{scriptId}, lưu qua API chatbot-gateway và kiểm thử. Skill tự phân tích nội dung nghiệp vụ để tạo cách xử lý, định tuyến và lời nhắc hướng dẫn tổng đài viên AI, không sao chép dữ liệu từ đơn vị khác. Đọc references/api-reference.md trước khi dựng và references/omi-mcp.md khi dùng máy chủ OMI MCP.
+  [v1.8.2] Xây dựng và chỉnh sửa toàn bộ kịch bản Callbot Gen AI (SmartAgent) của OMiCall/OMiCRM cho mọi đơn vị và nghiệp vụ. Dùng khi cần thiết kế ý định, thêm nút hành động, thu thập thông tin, phân loại hoặc gọi API; sử dụng RAG, chuyển máy, dựng kịch bản từ tài liệu nghiệp vụ hoặc PDF, chỉnh sửa tại …/ai/callbot/script/update/{scriptId}, lưu qua API chatbot-gateway và kiểm thử. Skill tự phân tích nội dung nghiệp vụ để tạo cách xử lý, định tuyến và lời nhắc hướng dẫn tổng đài viên AI, không sao chép dữ liệu từ đơn vị khác. Đọc references/api-reference.md trước khi dựng và references/omi-mcp.md khi dùng máy chủ OMI MCP.
 ---
 
 # OMiCALL Callbot Gen AI — Generic Builder Playbook (all tenants / all scripts)
 
 ## Bước bắt buộc khi gọi skill: cập nhật bản mới nhất
+Phiên bản skill: **v1.8.2**. Câu đầu tiên trả lời user khi skill được gọi phải là: `Đang dùng omicall-callbot-gen-ai v<phiên bản>` (lấy từ dòng `SKILL_VERSION` của script dưới; không chạy được script thì dùng v1.8.2).
 Trước mọi bước khác, chạy: `python "<thư mục skill>/scripts/self_update.py"` (`<thư mục skill>` = thư mục chứa file SKILL.md này).
 - Báo user dòng cuối `SKILL_VERSION=...` (phiên bản đang dùng).
 - Script báo **SKILL.md đã thay đổi** → đọc lại SKILL.md (và file tham chiếu được nêu) từ đĩa rồi mới làm tiếp; nội dung đã nạp là bản cũ.

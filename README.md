@@ -74,7 +74,8 @@ python tools/release.py minor "Mô tả thay đổi" omicall-callbot-flow --push
 ```
 - `major`: đổi quy trình/đầu vào; `minor`: thêm quy tắc, bước, script; `patch`: sửa lỗi, sửa chữ.
 - Nhiều skill cùng lúc: liệt kê tên skill, hoặc `--all` khi sửa file dùng chung (`references/omi-mcp.md`, `scripts/self_update.py` — giữ giống hệt ở mọi skill).
-- Script tăng `VERSION`, ghi dòng vào `CHANGELOG.md`, commit, gắn tag và push kèm tag.
+- Script tăng `VERSION`, sửa version hiển thị trong `SKILL.md` (`[vX.Y.Z]` đầu mô tả — hiện khi gõ `/`, và dòng "Phiên bản skill"), ghi dòng vào `CHANGELOG.md`, commit, gắn tag và push kèm tag.
+- Khi gọi skill, câu đầu tiên agent trả lời là `Đang dùng <tên skill> v<phiên bản>`.
 
 ## Lưu ý bảo mật
 - Không commit mật khẩu, token hay thông tin tenant của khách hàng. `references/credentials.md` chỉ là mẫu.

@@ -54,6 +54,15 @@ def main():
         old = vf.read_text(encoding="utf-8").strip() if vf.exists() else "0.0.0"
         new = bump(old, part)
         vf.write_text(new + "\n", encoding="utf-8")
+        # version hiển thị trong mô tả skill (danh sách /) và bước bắt buộc
+        sk = ROOT / t / "SKILL.md"
+        s = sk.read_text(encoding="utf-8")
+        s, k1 = re.subn(r"\[v\d+\.\d+\.\d+\]", f"[v{new}]", s, count=1)
+        s = re.sub(r"(Phiên bản skill: \*\*v)\d+\.\d+\.\d+(\*\*)", rf"\g<1>{new}\g<2>", s)
+        s = re.sub(r"(dùng v)\d+\.\d+\.\d+(\))", rf"\g<1>{new}\g<2>", s)
+        if not k1:
+            print(f"CẢNH BÁO: {t}/SKILL.md chưa có [vX.Y.Z] trong mô tả — thêm tay đầu dòng description")
+        sk.write_text(s, encoding="utf-8")
         row = f"| {new} | {today} | tag `{t}/v{new}` | {note} |\n"
         m = re.search(rf"## {re.escape(t)}\n\| Phiên bản .*?\n\|---.*?\n", text)
         if m:
