@@ -1,13 +1,13 @@
 ---
 name: omicall-chatbot-gen-ai
 description: >-
-  [v1.3.2] Xây dựng và chỉnh sửa Chatbot AI của OMiCALL/OMiCRM (OmiBot dạng văn bản cho Zalo OA, Facebook và LiveTalk) cho mọi đơn vị. Dùng khi cần cấu hình lời nhắc hệ thống, ý định trong “Ngữ cảnh bắt đầu”, RAG trong “Dữ liệu khác”, API trong “Truy vấn”, lưu bản nháp hoặc xuất bản qua chatbot-gateway, hay chỉnh sửa tại …/ai/bot/edit/{bot_id}. Kích hoạt khi người dùng cung cấp đường dẫn omicrm.io/ai/bot/ hoặc yêu cầu dựng, cấu hình hay kiểm thử chatbot OMI. Đọc references/api-reference.md trước khi dựng và references/omi-mcp.md khi dùng máy chủ OMI MCP.
+  [v1.4.0] Xây dựng và chỉnh sửa Chatbot AI của OMiCALL/OMiCRM (OmiBot dạng văn bản cho Zalo OA, Facebook và LiveTalk) cho mọi đơn vị. Dùng khi cần cấu hình lời nhắc hệ thống, ý định trong “Ngữ cảnh bắt đầu”, RAG trong “Dữ liệu khác”, API trong “Truy vấn”, lưu bản nháp hoặc xuất bản qua chatbot-gateway, hay chỉnh sửa tại …/ai/bot/edit/{bot_id}; gắn bot vào kênh LiveTalk để chat thử, chạy bộ câu hỏi thử, chấm điểm và tối ưu so sánh trước/sau. Kích hoạt khi người dùng cung cấp đường dẫn omicrm.io/ai/bot/ hoặc yêu cầu dựng, cấu hình, kiểm thử hay tối ưu chatbot OMI. Đọc references/api-reference.md trước khi dựng, references/livetalk-test-optimize.md khi gắn kênh/kiểm thử/tối ưu và references/omi-mcp.md khi dùng máy chủ OMI MCP.
 ---
 
 # OMiCALL/OMiCRM AI Chatbot (OmiBot) Gen AI — Generic Builder Playbook (mọi tenant / mọi bot)
 
 ## Bước bắt buộc khi gọi skill: cập nhật bản mới nhất
-Phiên bản skill: **v1.3.2**. Câu đầu tiên trả lời user khi skill được gọi phải là: `Đang dùng omicall-chatbot-gen-ai v<phiên bản>` (lấy từ dòng `SKILL_VERSION` của script dưới; không chạy được script thì dùng v1.3.2).
+Phiên bản skill: **v1.4.0**. Câu đầu tiên trả lời user khi skill được gọi phải là: `Đang dùng omicall-chatbot-gen-ai v<phiên bản>` (lấy từ dòng `SKILL_VERSION` của script dưới; không chạy được script thì dùng v1.4.0).
 Trước mọi bước khác, chạy: `python "<thư mục skill>/scripts/self_update.py"` (`<thư mục skill>` = thư mục chứa file SKILL.md này).
 - Báo user dòng cuối `SKILL_VERSION=...` (phiên bản đang dùng).
 - Script báo **SKILL.md đã thay đổi** → đọc lại SKILL.md (và file tham chiếu được nêu) từ đĩa rồi mới làm tiếp; nội dung đã nạp là bản cũ.
@@ -70,6 +70,14 @@ Hỏi một lần: (1) **domain doanh nghiệp**; (2) **tài khoản và thông 
 3. Test chat: `POST /omiai_assistant/bot_testing_v2` hoặc nút "Trò chuyện thử".
 4. Verify: `GET bot` (chỉ in trường cần kiểm tra) + reload editor + test tin nhắn. Giao: editor URL `https://{domain}.omicrm.io/ai/bot/edit/{bot_id}?lng=vi`.
 5. **Kiểm thử bằng MCP**: `get_contact_by_phone` hoặc `search_contacts` để kiểm tra dữ liệu bot tra cứu; `search_conversations` + `search_channel_messages` để xem hội thoại thật bot đã trả lời; `create_contact` để tạo khách mẫu (dọn bằng `delete_contact` khi user đồng ý). `send_*_message` gửi cho người thật — chỉ khi user đồng ý.
+
+## Bước 7 — Gắn LiveTalk, kiểm thử, tối ưu — chi tiết `references/livetalk-test-optimize.md`
+1. **Gắn kênh**: chỉ dùng widget LiveTalk test riêng (không gắn vào kênh đang phục vụ khách thật). Chọn bot ngay trên kênh, hoặc OMIFlow `GENERAL` (hội thoại mới, lọc đúng widget test) → `OMI_BOT_AI` (skill `omicall-omiflow`; tốn quota flow → hỏi user).
+2. **Chat thử**: "Trò chuyện thử" trong editor hoặc đóng vai khách trên widget test. Xác minh bản nháp hay bản xuất bản đang trả lời trước khi kết luận.
+3. **Bộ câu hỏi**: phủ 14 nhóm (mở đầu, FAQ, từng ý định, thu thông tin, API, ngoài dữ liệu, ngoài phạm vi, gặp nhân viên, khiếu nại, dữ liệu nhạy cảm, chống dẫn dắt, nhiều lượt, nhiều ý, kết thúc). Kỳ vọng chỉ lấy từ dữ liệu của bot.
+4. **Chấm** 5 tiêu chí 0–2 (nội dung, ý định, không bịa, giọng văn, chuyển nhân viên) + đánh dấu lỗi nghiêm trọng; đạt khi không lỗi nghiêm trọng và ≥ 85%.
+5. **Tối ưu** theo bảng triệu chứng → chỗ sửa; snapshot trước khi sửa, mỗi vòng một nhóm nguyên nhân, `save_draft_v2`, chạy lại toàn bộ bộ câu hỏi, tối đa 3 vòng.
+6. **Báo cáo** trước/sau bằng `scripts/eval_report.py`; báo cáo chứa dữ liệu khách → để ngoài repo skill.
 
 # Interactive OMiCRM (user xem realtime)
 Chrome CDP port 9222, profile riêng theo tenant: `Start-Process chrome.exe -ArgumentList '--remote-debugging-port=9222',"--user-data-dir=%TEMP%\omicrm-<profile>",'--no-first-run','https://<domain>.omicrm.io/ai/bot/edit/<bot_id>?lng=vi'`. Dùng `cdp.py` (`find_omicrm_tab()` + `CDP(ws).eval_js/navigate`).
@@ -238,6 +246,7 @@ Bảng creds + bot mẫu từng tenant: **`references/credentials.md`**. Tenant 
 
 # Reference
 Endpoint, schema bot top-level + campaign + ví dụ đã verify, checklist validation, captor script: **`references/api-reference.md`**.
+Gắn LiveTalk, bộ câu hỏi thử, tiêu chí chấm, bảng lỗi → chỗ sửa, báo cáo trước/sau: **`references/livetalk-test-optimize.md`** + `scripts/eval_report.py`.
 MCP OMI — cài đặt, đăng nhập, công cụ cho từng bước, cách tiết kiệm token: **`references/omi-mcp.md`** (bản giống hệt trong 3 skill OMI). Token cho API: `scripts/omi_session.py`.
 
 Base directory for this skill: C:\Users\User\.agents\skills\omicall-chatbot-gen-ai
