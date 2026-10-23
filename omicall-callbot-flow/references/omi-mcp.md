@@ -4,6 +4,8 @@ File dùng chung cho 4 skill: `omicall-callbot-gen-ai`, `omicall-callbot-flow`, 
 
 Package npm `omicall-mcp` của VIHAT (bản 1.3.1, server "OMICall MCP", **85 công cụ**, đã kiểm bằng `tools/list`). MCP **không** có công cụ dựng Callbot, Chatbot hay OMIFlow: phần dựng vẫn gọi API `chatbot-gateway` hoặc `campaign-v1` theo skill. MCP lo **đăng nhập, tra cứu id, kiểm thử** — những việc trước đây tốn nhiều lượt trình duyệt và token.
 
+Nguồn: https://www.npmjs.com/package/omicall-mcp (mã nguồn https://github.com/VIHATTeam/OMICALL-MCP, giấy phép MIT). Phụ thuộc `@modelcontextprotocol/sdk`, `axios`, `zod`. **Yêu cầu Node.js 18+** (`node --version`); bản cũ hơn thì server thoát ngay khi khởi động. Kiểm tra bản mới nhất: `npm view omicall-mcp version`.
+
 ## 1. Agent tự cài và cấu hình MCP
 
 Khi bắt đầu một tác vụ OMI, agent phải tự kiểm tra MCP OMI. Nếu chưa có, agent tự cài và cấu hình ở phạm vi người dùng; không dừng lại để đưa lệnh rồi yêu cầu người dùng tự chạy.
@@ -24,7 +26,7 @@ Khi bắt đầu một tác vụ OMI, agent phải tự kiểm tra MCP OMI. Nế
 6. Nếu client không có lệnh quản lý MCP, agent tự cập nhật cấu hình **phạm vi người dùng** theo định dạng mà client hỗ trợ; phải đọc và trộn với cấu hình hiện có, không ghi đè các server khác:
    - VS Code/Copilot: ưu tiên `code --add-mcp <JSON>` hoặc User Profile `mcp.json`; Copilot CLI dùng `~/.copilot/mcp-config.json`.
    - Cursor: `~/.cursor/mcp.json`.
-   - Claude Desktop: file cấu hình người dùng `claude_desktop_config.json` của hệ điều hành.
+   - Claude Desktop: `%APPDATA%\Claude\claude_desktop_config.json` (Windows) hoặc `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS).
    - Windsurf: `~/.codeium/windsurf/mcp_config.json`.
    - Gemini CLI không có CLI quản lý: `~/.gemini/settings.json`.
    - Agent khác: tìm cấu hình MCP phạm vi người dùng trong tài liệu/cài đặt của chính client rồi thêm server theo schema của client. Không tạo file chứa mật khẩu trong thư mục dự án.
@@ -120,3 +122,26 @@ Kịch bản callbot (`chatbot-gateway …/callbot/script/*`), chatbot (`…/bot
 5. **Ưu tiên văn bản hơn ảnh**: `get_page_text`, `read_page` thay cho screenshot; nếu cần ảnh thì `scale` 0.4–0.6.
 6. **Dùng lại script trong `scripts/` của skill**, không viết lại mỗi lần; script mới hữu ích thì thêm vào skill.
 7. **Kiểm thử bằng MCP** (`search_calls`, `search_tickets`, `get_contact_by_phone`) thay vì mở giao diện để xem kết quả.
+
+## 5. Danh mục công cụ theo nhóm và module cần bật
+Mỗi công cụ tự kiểm tra gói dịch vụ; module chưa bật trả lỗi *"Module X is not enabled in your service package."* → đọc `get_service_package` trước khi thiết kế.
+
+| Nhóm | Module cần bật | Công cụ |
+|---|---|---|
+| Auth | — | `login_omicall_mcp`, `select_tenant`, `logout`, `get_balance`, `get_service_package` |
+| Tổng đài (Call Center) | `switchboard` | `search_calls`, `get_call_detail`, `update_call` (tag, ghi chú), `evaluate_call`, `list_eval_criteria`, `click_to_call`; máy lẻ `list_extensions`/`get_extension`/`update_extension`/`update_extension_status`; hotline `list_hotlines`/`get_hotline`/`update_hotline`; nhóm đổ chuông `list_groups`/`create_group`/`update_group`/`delete_group`/`add_group_members`/`remove_group_members`; IVR `list_ivr`/`create_ivr`/`update_ivr`/`delete_ivr`; kịch bản gọi `list_scripts`/`create_script`/`update_script`/`delete_script`; âm thanh `list_audio`/`generate_tts_audio`/`delete_audio` |
+| Gọi tự động | `switchboard` | `autocall_by_phone` (TTS, file ghi âm, IVR), `autocall_by_extension` |
+| Phiếu ghi | `ticket` | `search_tickets`, `get_ticket`, `create_ticket`, `update_ticket`, `delete_ticket`, `update_ticket_status`, `create_ticket_note`/`update_ticket_note`/`delete_ticket_note`, `list_ticket_interactions`, `create_ticket_evaluation`, `get_ticket_eval_criteria`, `get_ticket_categories`, `ticket_statistics`, `transfer_tickets` |
+| Đa kênh | `integrated` (+ từng kênh: `zalo`, `facebook`, `telegram`, `livetalk`…) | `search_conversations`, `get_conversation`, `get_all_channels`, `search_channel_messages`, `send_zalo_message`, `send_zalo_personal_message`, `send_facebook_message`, `send_facebook_comment`, `send_telegram_message`, `send_livetalk_message`, `mark_conversation_read`, `transfer_conversation` |
+| Nhân viên, thông báo | — | `list_agents`, `get_agent`, `invite_agent`, `get_agent_pbx_info`, `list_notifications`, `count_unread_notifications`, `mark_notification_read`, `mark_all_notifications_read` |
+| Webhook | — | `list_webhooks`, `register_webhook`, `destroy_webhook` (chỉ nhận HTTPS) |
+| AI | `ai` | `text_to_speech` (4 giọng tiếng Việt), `register_stt_webhook` |
+| Khách hàng | — | `get_contact_by_phone`, `search_contacts`, `get_contact`, `create_contact`, `delete_contact`, `get_source_contacts` |
+
+**Công cụ ghi** (tạo/sửa/xoá IVR, nhóm, hotline, phiếu, khách, webhook; gửi tin; gọi ra; mời nhân viên) tác động lên tenant thật hoặc khách thật → chỉ chạy khi user đồng ý từng việc. Công cụ đọc (`list_*`, `get_*`, `search_*`) dùng thoải mái nhưng vẫn gom một lần mỗi phiên (mục 4).
+
+## 6. Xử lý lỗi thường gặp
+- `npm error code ETARGET` / "No matching version found": npm giữ metadata cũ sau khi gói vừa ra bản mới → xoá cache npx (`rm -rf ~/.npm/_npx`, Windows: `%LOCALAPPDATA%\npm-cache\_npx`) rồi chạy `npx omicall-mcp@latest`.
+- Server ngắt ngay khi khởi động: kiểm tra Node.js 18+.
+- Công cụ MCP không xuất hiện trong phiên: MCP được nạp khi mở phiên → cài xong phải mở phiên mới; kiểm tra bằng `claude mcp list` hoặc danh sách connector của ứng dụng.
+- Lỗi 401 / hết phiên: gọi lại `login_omicall_mcp` (mục 2).

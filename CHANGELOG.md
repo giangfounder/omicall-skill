@@ -12,6 +12,7 @@ Các bản trước 2026-10-23 được đánh số lại theo lịch sử commi
 ## omicall-callbot-flow
 | Phiên bản | Ngày | Commit | Thay đổi |
 |---|---|---|---|
+| 1.2.1 | 2026-10-23 | tag `omicall-callbot-flow/v1.2.1` | omi-mcp.md: thêm nguồn gói npm và yêu cầu Node 18+, đường dẫn cấu hình Claude Desktop, danh mục công cụ theo module cần bật, xử lý lỗi thường gặp |
 | 1.2.0 | 2026-10-23 | tag `omicall-callbot-flow/v1.2.0` | Bước bắt buộc tự cập nhật skill khi gọi (`scripts/self_update.py`), file `VERSION`; ghi chú "Gọi thử nghiệm" là cuộc gọi giả lập trên trình duyệt qua micro máy tính, gọi ra số thật cần chiến dịch Callbot |
 | 1.1.0 | 2026-10-22 | f29cdb6 | Agent tự cài và cấu hình MCP OMI cho nhiều loại agent |
 | 1.0.2 | 2026-10-22 | 43ca6b2 | Dịch mô tả skill sang tiếng Việt |
@@ -21,6 +22,7 @@ Các bản trước 2026-10-23 được đánh số lại theo lịch sử commi
 ## omicall-callbot-gen-ai
 | Phiên bản | Ngày | Commit | Thay đổi |
 |---|---|---|---|
+| 1.8.1 | 2026-10-23 | tag `omicall-callbot-gen-ai/v1.8.1` | omi-mcp.md: thêm nguồn gói npm và yêu cầu Node 18+, đường dẫn cấu hình Claude Desktop, danh mục công cụ theo module cần bật, xử lý lỗi thường gặp |
 | 1.8.0 | 2026-10-23 | tag `omicall-callbot-gen-ai/v1.8.0` | Bước bắt buộc tự cập nhật skill khi gọi, file `VERSION` |
 | 1.7.0 | 2026-10-22 | f29cdb6 | Agent tự cài và cấu hình MCP OMI cho nhiều loại agent |
 | 1.6.4 | 2026-10-22 | 43ca6b2 | Dịch mô tả skill sang tiếng Việt |
@@ -38,6 +40,7 @@ Các bản trước 2026-10-23 được đánh số lại theo lịch sử commi
 ## omicall-chatbot-gen-ai
 | Phiên bản | Ngày | Commit | Thay đổi |
 |---|---|---|---|
+| 1.3.1 | 2026-10-23 | tag `omicall-chatbot-gen-ai/v1.3.1` | omi-mcp.md: thêm nguồn gói npm và yêu cầu Node 18+, đường dẫn cấu hình Claude Desktop, danh mục công cụ theo module cần bật, xử lý lỗi thường gặp |
 | 1.3.0 | 2026-10-23 | tag `omicall-chatbot-gen-ai/v1.3.0` | Bước bắt buộc tự cập nhật skill khi gọi, file `VERSION` |
 | 1.2.0 | 2026-10-22 | f29cdb6 | Agent tự cài và cấu hình MCP OMI cho nhiều loại agent |
 | 1.1.3 | 2026-10-22 | 43ca6b2 | Dịch mô tả skill sang tiếng Việt |
@@ -49,6 +52,7 @@ Các bản trước 2026-10-23 được đánh số lại theo lịch sử commi
 ## omicall-omiflow
 | Phiên bản | Ngày | Commit | Thay đổi |
 |---|---|---|---|
+| 1.7.1 | 2026-10-23 | tag `omicall-omiflow/v1.7.1` | omi-mcp.md: thêm nguồn gói npm và yêu cầu Node 18+, đường dẫn cấu hình Claude Desktop, danh mục công cụ theo module cần bật, xử lý lỗi thường gặp |
 | 1.7.0 | 2026-10-23 | tag `omicall-omiflow/v1.7.0` | Bước bắt buộc tự cập nhật skill khi gọi, file `VERSION` |
 | 1.6.0 | 2026-10-22 | f29cdb6 | Agent tự cài và cấu hình MCP OMI cho nhiều loại agent |
 | 1.5.2 | 2026-10-22 | 43ca6b2 | Dịch mô tả skill sang tiếng Việt |
