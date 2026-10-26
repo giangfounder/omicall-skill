@@ -60,6 +60,7 @@ Các bản trước 2026-10-23 được đánh số lại theo lịch sử commi
 ## omicall-omiflow
 | Phiên bản | Ngày | Commit | Thay đổi |
 |---|---|---|---|
+| 1.11.0 | 2026-10-26 | tag `omicall-omiflow/v1.11.0` | Mẫu B4b hiện phím khách bấm theo chi nhánh; gắn webhook flow vào Tương tác phím (xuất bản trước); xuất bản đổi id flow; lưu flow ngay sau chọn trigger; cách học payload từ flow có sẵn; lưu ý Browser pane dùng chung |
 | 1.10.0 | 2026-10-26 | tag `omicall-omiflow/v1.10.0` | Trường hợp bot mô tả tự nhiên (CUSTOM_INTENT); bot thu SĐT gọi webhook OMIFlow; /end khi test; khác biệt Trò chuyện thử và kênh thật; biến LiveTalk social_lt_phone_number; mã kiểu phân bổ; bẫy giao diện editor |
 | 1.9.0 | 2026-10-23 | tag `omicall-omiflow/v1.9.0` | Tối ưu token: rút mô tả, tách phần ít dùng sang references, cache self_update 6 giờ; sửa script và xoá dữ liệu khách |
 | 1.8.0 | 2026-10-23 | tag `omicall-omiflow/v1.8.0` | Mẫu đón tin nhắn LiveTalk giao cho AI Chatbot (lọc đúng widget test) |

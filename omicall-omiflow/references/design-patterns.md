@@ -102,6 +102,16 @@ WEB_HOOK(digits, customer_phone, ct_transaction_id)  ← tổng đài hoặc cal
                            └─Bước tiếp theo→ ADD_TICKET "TƯ VẤN" → DELAY chờ cuộc gọi kết thúc (tối đa 30 phút) → GET_RELATED cuộc gọi → gắn
 ```
 
+### B4b. Hiện cho nhân viên "khách bấm phím nào, thuộc chi nhánh/phòng ban nào" (nhiều phím → nhiều nơi) [đã dựng, chờ test cuộc gọi thật]
+```
+Tương tác phím (TTP): bật "Kích hoạt Webhook" → URL trigger API của flow; mỗi phím N → nhóm nội bộ của nơi N
+WEB_HOOK(digits, customer_phone, ct_transaction_id)
+ → CONDITION digits CONTAIN "1".."M" (CONTAIN để nhận cả "01"), nhánh mặc định "Bước tiếp theo"
+ → mỗi trường hợp 1 INFO_DIALOG "Khách {{customer_phone}} bấm phím N - <tên nơi N>" (nhân viên nhận: chỉ định người hoặc "trong luồng")
+ → nhánh mặc định: INFO_DIALOG "Phím không xác định {{digits}}"
+```
+Quota: M nơi = M+3 nút (trigger, điều kiện, M cửa sổ, 1 cửa sổ mặc định). Điều kiện cần có: TTP đã khai báo đủ phím 1..M, mỗi phím trỏ tới một nhóm nội bộ riêng; flow đã xuất bản trước khi gắn URL vào TTP (xem Gotchas). Tên nơi lấy từ user, thiếu thì ghi "Cần xác nhận", không bịa.
+
 ### B5. Ghi kết quả AI Assistant vào phiếu [đã chạy]
 `GENERAL` (cuộc gọi kết thúc) → `DELAY 5 giây` → `GET_RELATED CLOSEST_TICKET` (thuộc tính phiếu "mã cuộc gọi" = `{{ct_transaction_id}}`) → `ASSIGN_TICKET_DESCRIPTION` chèn `{{ca_ai_assistant}}` vào cuối mô tả.
 

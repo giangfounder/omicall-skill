@@ -1,13 +1,13 @@
 ---
 name: omicall-omiflow
 description: >-
-  [v1.10.0] Thiết kế, dựng và sửa quy trình tự động OMIFlow của OMICall/OMICRM: trigger webhook API, cuộc gọi, phím IVR, phiếu ghi, lịch, Excel, đối tác; điều kiện, trì hoãn, AI phân loại, gọi API ngoài, cập nhật khách/phiếu/cuộc gọi, popup nhân viên, SMS/ZNS, chạy hoặc liên kết Callbot/Chatbot; đọc và lưu qua API campaign-v1.
+  [v1.11.0] Thiết kế, dựng và sửa quy trình tự động OMIFlow của OMICall/OMICRM: trigger webhook API, cuộc gọi, phím IVR, phiếu ghi, lịch, Excel, đối tác; điều kiện, trì hoãn, AI phân loại, gọi API ngoài, cập nhật khách/phiếu/cuộc gọi, popup nhân viên, SMS/ZNS, chạy hoặc liên kết Callbot/Chatbot; đọc và lưu qua API campaign-v1.
 ---
 
 # OMICall OMIFlow — Builder Playbook (mọi tenant, mọi bài toán)
 
 ## Bước bắt buộc: cập nhật skill
-Chạy `python "<thư mục skill>/scripts/self_update.py"` trước mọi bước khác (`<thư mục skill>` = thư mục chứa SKILL.md này). Câu đầu tiên trả lời user: `Đang dùng omicall-omiflow v<phiên bản>` (lấy từ dòng `SKILL_VERSION`; script lỗi thì dùng v1.10.0). Script báo **SKILL.md đã thay đổi** → đọc lại SKILL.md từ đĩa rồi mới làm tiếp. Không cập nhật được → báo lý do, làm tiếp bằng bản hiện có; không sửa, xoá hay commit trong thư mục skill.
+Chạy `python "<thư mục skill>/scripts/self_update.py"` trước mọi bước khác (`<thư mục skill>` = thư mục chứa SKILL.md này). Câu đầu tiên trả lời user: `Đang dùng omicall-omiflow v<phiên bản>` (lấy từ dòng `SKILL_VERSION`; script lỗi thì dùng v1.11.0). Script báo **SKILL.md đã thay đổi** → đọc lại SKILL.md từ đĩa rồi mới làm tiếp. Không cập nhật được → báo lý do, làm tiếp bằng bản hiện có; không sửa, xoá hay commit trong thư mục skill.
 
 ## Overview
 **OMIFlow** (menu OMIFlow, path `/flow/list`, editor `/flow/edit/{id}`) là bộ máy tự động hoá của OMICRM, cùng loại N8N, Zapier, Make, nhưng gắn sẵn với tổng đài, Callbot, Chatbot, đa kênh, phiếu ghi, khách hàng. Một flow = **điều kiện bắt đầu** → chuỗi **nút** (điều kiện, trì hoãn, hành động, cửa sổ tương tác, marketing, kênh chat) → kết quả nghiệp vụ.
@@ -110,6 +110,16 @@ Khung 8 câu (design-patterns mục A): sự kiện kích hoạt · đối tư�
 - **SLA "không gọi trong N phút"**: điều kiện Mở rộng "Kiểm tra tương tác khách hàng" (Không có tương tác + Cuộc gọi/Ghi chú + N phút), không tự đếm cuộc gọi.
 - **Khách đã tồn tại**: "Thêm khách hàng" → `CONTACT_EXIST` (không trùng); "Cập nhật khách hàng" vẫn áp lên khách cũ nhưng chỉ đúng các thuộc tính đã khai báo. Gán phụ trách trùng người hiện tại → `NO_CHANGE`. Cả hai là chấm đỏ vô hại, luồng chạy tiếp.
 - **Giới hạn số lần đi qua (mặc định 2)** làm trigger im lặng khi hết lượt, kể cả lúc test.
+- **Flow mới trên giao diện**: chưa bấm "Lưu lại" mà đóng hộp thoại trigger hoặc rời trang thì mất cả flow → lưu ngay sau khi chọn trigger. "Lưu lại" hiện hộp thoại "Thông tin về URL" (tick xác nhận rồi Cập nhật). URL webhook của trigger API sinh lại mỗi lần tạo trigger mới và không xem lại được sau khi xuất bản → ghi lại lúc hiện. Xoá khoảng hiệu lực: bấm nút x ở từng ô ngày.
+- **Xuất bản đổi id flow** (URL `/flow/edit/{id}` mới): sau xuất bản phải mở lại bằng id mới và kiểm tra lại các nơi đã gắn flow (webhook TTP, bot).
+- **Gắn webhook flow vào Tương tác phím (TTP)**: ô "URL nhận kết quả từ hook" của TTP không lưu được (nút Cập nhật không báo lỗi, ngày sửa đổi không đổi) khi flow đích còn là bản nháp; sau khi xuất bản flow thì lưu được → xuất bản trước, gắn sau, rồi tải lại để kiểm chứng. Gõ xong ô nhập phải click ra ngoài rồi mới bấm Cập nhật (click đầu chỉ làm mất focus). Payload TTP gửi: `digits`, `customer_phone`, `ct_transaction_id` (mẫu B4).
+- **Cửa sổ thông tin (INFO_DIALOG)**: mục Nhân viên có hai loại — "Nhân viên trong luồng kịch bản" và "Nhân viên" chỉ định (chọn người cụ thể); phải kiểm từng nút vì các nút có thể lệch nhau. Chọn người gồm hai bước: thêm loại Nhân viên rồi chọn người.
+- **Học payload từ tenant/flow đã có**: cột "Điều kiện kích hoạt" ở danh sách flow của trigger API liệt kê tên biến → đọc nó thay vì đoán tên trường webhook. Trước khi kết luận "tenant chưa có flow nhận webhook X", phải mở danh sách flow và đọc flow đích; đoán từ cấu hình phía gửi (TTP, callbot) là sai cách.
+- **Mặc định mọi flow mới**: Hoạt động, Không giới hạn lượt, không đặt khoảng hiệu lực (trừ khi user nói khác).
+- **Cấu hình TTP** (Cấu hình > Tổng đài > Tương tác phím, `/config/switchboard/key-interaction/list`): tên, nhạc chờ bắt đầu, số lần cho nhấn sai, thời gian chờ, kịch bản kết thúc, công tắc "Chuyển tiếp… khi nhấn đúng số nội bộ" (đừng bật nhầm), Kích hoạt Webhook + URL, bảng Thao tác phím (phím → kịch bản/nhóm nội bộ). Chỉ tạo/sửa khi user đồng ý; mỗi phím phải có sẵn nhóm nội bộ.
+- **Giao việc cho tiến trình nền (fork)**: mỗi flow chỉ một tiến trình ghi tại một thời điểm; sau mỗi tiến trình phải tự mở lại flow kiểm từng nút trước khi báo xong (báo cáo của fork có thể thiếu hoặc lệch).
+- **Browser pane dùng chung với user**: user thao tác song song (xuất bản, mở hộp thoại, bật công tắc) làm đổi phiên bản và trạng thái giữa chừng; khung xem co nhỏ làm danh sách chọn bị cắt → đặt lại kích thước (resize preset desktop) và không giao hai việc cùng chạm một flow cho nhiều tiến trình nền.
+- **Xuất bản bằng agent có thể bị chặn bởi hệ thống phân quyền** → để user tự bấm Xuất bản, rồi agent làm tiếp phần gắn webhook.
 
 - **LiveTalk**: SĐT khách điền ở form trước chat = biến Đa kênh `{{social_lt_phone_number}}` (email `{{social_lt_email}}`); dùng được trực tiếp trong "Thêm khách hàng" của flow trigger LiveTalk.
 - **Bot ↔ flow**: flow phụ thuộc gọi từ bot (`START_OTHER_CAMPAIGN`) không nhận biến hội thoại; cần truyền dữ liệu thì cho bot gọi flow `WEB_HOOK` qua hành động API với body chứa biến. Log flow webhook "2 lượt cùng giây" = bước CONDITION + ACTION của một lượt.
