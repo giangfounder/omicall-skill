@@ -1,13 +1,13 @@
 ---
 name: omicall-chatbot-gen-ai
 description: >-
-  [v1.5.0] Dựng, kiểm thử và tối ưu Chatbot AI (OmiBot) của OMiCALL/OMiCRM cho Zalo OA, Facebook, LiveTalk: lời nhắc hệ thống, ý định trong Ngữ cảnh bắt đầu, RAG Dữ liệu khác, Truy vấn API, lưu nháp hoặc xuất bản qua chatbot-gateway, chat thử trên LiveTalk, chấm điểm trước/sau. Kích hoạt khi có đường dẫn omicrm.io/ai/bot/.
+  [v1.6.0] Dựng, kiểm thử và tối ưu Chatbot AI (OmiBot) của OMiCALL/OMiCRM cho Zalo OA, Facebook, LiveTalk: lời nhắc hệ thống, ý định trong Ngữ cảnh bắt đầu, RAG Dữ liệu khác, Truy vấn API, lưu nháp hoặc xuất bản qua chatbot-gateway, chat thử trên LiveTalk, chấm điểm trước/sau. Kích hoạt khi có đường dẫn omicrm.io/ai/bot/.
 ---
 
 # OMiCALL/OMiCRM AI Chatbot (OmiBot) Gen AI — Generic Builder Playbook (mọi tenant / mọi bot)
 
 ## Bước bắt buộc: cập nhật skill
-Chạy `python "<thư mục skill>/scripts/self_update.py"` trước mọi bước khác (`<thư mục skill>` = thư mục chứa SKILL.md này). Câu đầu tiên trả lời user: `Đang dùng omicall-chatbot-gen-ai v<phiên bản>` (lấy từ dòng `SKILL_VERSION`; script lỗi thì dùng v1.5.0). Script báo **SKILL.md đã thay đổi** → đọc lại SKILL.md từ đĩa rồi mới làm tiếp. Không cập nhật được → báo lý do, làm tiếp bằng bản hiện có; không sửa, xoá hay commit trong thư mục skill.
+Chạy `python "<thư mục skill>/scripts/self_update.py"` trước mọi bước khác (`<thư mục skill>` = thư mục chứa SKILL.md này). Câu đầu tiên trả lời user: `Đang dùng omicall-chatbot-gen-ai v<phiên bản>` (lấy từ dòng `SKILL_VERSION`; script lỗi thì dùng v1.6.0). Script báo **SKILL.md đã thay đổi** → đọc lại SKILL.md từ đĩa rồi mới làm tiếp. Không cập nhật được → báo lý do, làm tiếp bằng bản hiện có; không sửa, xoá hay commit trong thư mục skill.
 
 # Overview
 AI **Chatbot** (text) — OMI gọi là **AI Chatbot / OmiBot** (`/ai/bot/...`), khác **Callbot** (`/ai/callbot/...`). Bot nhắn tin qua **Zalo OA / Fanpage FB / website (OMI LiveTalk)**; `type:"SCENARIO_HANDLER"`, LLM `gpt-4o-mini`. Điểm khác callbot: KHÔNG có STT/TTS, không có node chuyển máy dạng cuộc gọi — thay vào đó là **hội thoại văn bản + training/RAG** (`question_answer`, `vector_store`, `api_knowledge`) + **intents** trong `campaign` (BEGIN_CONTEXT). System Prompt nằm ở top-level `system_prompt` (UI: Kịch bản → Ngữ cảnh bắt đầu). Skill này là **bộ dùng chung**: thiết kế prompt/intent/routing/RAG do bạn (LLM) tự tư duy từ nghiệp vụ user — không chép từ tenant khác.
@@ -90,6 +90,12 @@ Hỏi một lần: (1) **domain doanh nghiệp**; (2) **tài khoản và thông 
 - Không bấm **Xuất bản** trên UI trừ khi user yêu cầu (`is_publish` giữ nguyên).
 - **Làm trên giao diện** (Chrome CDP, captor, Escape, autosave tab Đào tạo, tải file, thêm ý định, ô nhập nối thêm, kiểm chứng sau khi lưu): đọc `references/ui-gotchas.md` trước khi thao tác.
 - Chỉ dùng token đúng tenant: kiểm tra `domain`/`tenant_id` bằng `python scripts/omi_session.py` trước khi ghi; nhiều tenant thì mỗi tenant một server MCP hoặc `logout` rồi đăng nhập lại. Xem mục "Đăng nhập an toàn".
+- **Trường hợp trong Ngữ cảnh bắt đầu = mô tả ngôn ngữ tự nhiên** (chế độ "Nhận dạng ý định" → `CUSTOM_INTENT`, ô "Hướng dẫn BOT" ghi khi nào chọn / khi nào KHÔNG chọn / câu ví dụ). Không chọn ý định hệ thống ở "Chủ đề / Ý định mong muốn". Schema: `references/api-reference.md`.
+- **Test lại sau mỗi lần sửa bot: gõ `/end` trong khung chat** để đóng phòng cũ; phòng đang mở giữ phiên bản bot cũ. Chưa `/end` thì không kết luận được.
+- **Hành động trong bot chạy khác nhau theo đường vào**: chat "Trò chuyện thử" → bot gọi webhook/flow bình thường; bot được OMIFlow giao qua nút `OMI_BOT_AI` (kênh thật, vd. LiveTalk) → bot trả lời nhưng hành động trong kịch bản bot có thể không chạy. Luôn test qua đúng kênh thật trước khi giao. Flow phụ thuộc gọi bằng `START_OTHER_CAMPAIGN` **không nhận biến hội thoại** (`{{social_content}}`… rỗng).
+- **Nút Thu thập thông tin**: case theo biến được xét ở **tin nhắn kế tiếp** của khách, không phải ngay tin chứa dữ liệu → hành động (webhook tạo lead) chạy trễ một lượt.
+- **Editor kịch bản (UI)**: tạo nút con từ "Nút kế tiếp" rồi đi tiếp sang nút cháu trong cùng chuỗi ngăn kéo → cấu hình nút con bị mất khi lưu. Mỗi nút: điền → đóng hết ngăn kéo → Lưu lại → GET kiểm tra. Nút X của ngăn kéo cuối nằm trùng menu "Tổng đài": đóng ngăn kéo cuối bằng cách bấm vùng mờ bên trái, không bấm X. Chỉ tính là đã lưu khi thấy "Cập nhật thành công".
+- **Kiểm tra `history_config.enable`** khi tối ưu (có bot mặc định `false` → quên lượt trước). Số liệu chốt (giá, điều kiện) đưa thẳng vào prompt, RAG lo phần chi tiết.
 - **Giới hạn gói (plan) của tenant**: có thể chỉ cho 1 "File văn bản" mỗi lúc (`0/1`). Phải xoá/gỡ file cũ khỏi "Dữ liệu khác" (tab Đào tạo) trước khi thêm file mới nếu báo "đã đạt giới hạn cho phép".
 
 ## Chỉ liệt kê intent nào cần flow xử lý riêng

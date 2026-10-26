@@ -44,6 +44,7 @@ Các bản trước 2026-10-23 được đánh số lại theo lịch sử commi
 ## omicall-chatbot-gen-ai
 | Phiên bản | Ngày | Commit | Thay đổi |
 |---|---|---|---|
+| 1.6.0 | 2026-10-26 | tag `omicall-chatbot-gen-ai/v1.6.0` | Trường hợp bot mô tả tự nhiên (CUSTOM_INTENT); bot thu SĐT gọi webhook OMIFlow; /end khi test; khác biệt Trò chuyện thử và kênh thật; biến LiveTalk social_lt_phone_number; mã kiểu phân bổ; bẫy giao diện editor |
 | 1.5.0 | 2026-10-23 | tag `omicall-chatbot-gen-ai/v1.5.0` | Tối ưu token: rút mô tả, tách phần ít dùng sang references, cache self_update 6 giờ; sửa script và xoá dữ liệu khách |
 | 1.4.0 | 2026-10-23 | tag `omicall-chatbot-gen-ai/v1.4.0` | Bước 7: gắn bot vào LiveTalk test, bộ câu hỏi thử 14 nhóm, chấm 5 tiêu chí, bảng lỗi → chỗ sửa, vòng tối ưu trước/sau (references/livetalk-test-optimize.md, scripts/eval_report.py) |
 | 1.3.2 | 2026-10-23 | tag `omicall-chatbot-gen-ai/v1.3.2` | Hiện phiên bản trong mô tả skill ([vX.Y.Z], thấy khi gõ /) và câu đầu tiên agent trả lời; release.py tự cập nhật |
@@ -59,6 +60,7 @@ Các bản trước 2026-10-23 được đánh số lại theo lịch sử commi
 ## omicall-omiflow
 | Phiên bản | Ngày | Commit | Thay đổi |
 |---|---|---|---|
+| 1.10.0 | 2026-10-26 | tag `omicall-omiflow/v1.10.0` | Trường hợp bot mô tả tự nhiên (CUSTOM_INTENT); bot thu SĐT gọi webhook OMIFlow; /end khi test; khác biệt Trò chuyện thử và kênh thật; biến LiveTalk social_lt_phone_number; mã kiểu phân bổ; bẫy giao diện editor |
 | 1.9.0 | 2026-10-23 | tag `omicall-omiflow/v1.9.0` | Tối ưu token: rút mô tả, tách phần ít dùng sang references, cache self_update 6 giờ; sửa script và xoá dữ liệu khách |
 | 1.8.0 | 2026-10-23 | tag `omicall-omiflow/v1.8.0` | Mẫu đón tin nhắn LiveTalk giao cho AI Chatbot (lọc đúng widget test) |
 | 1.7.2 | 2026-10-23 | tag `omicall-omiflow/v1.7.2` | Hiện phiên bản trong mô tả skill ([vX.Y.Z], thấy khi gõ /) và câu đầu tiên agent trả lời; release.py tự cập nhật |

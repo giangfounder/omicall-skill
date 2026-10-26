@@ -106,6 +106,7 @@ Phép toán (UI → API): `=`→`EQUAL`, `!=`→`NOT_EQUAL`, `>`→`GT`, `<`→`
 ```json
 {"id":"<a>","type":"DELAY","data":{"type":"after","value_string":"10","unit":"second","use_time_slot":false,"days_in_week":null}}
 ```
+Thời gian cụ thể [verify JSON]: `{"type":"DELAY","data":{"type":"specific","value_string":"{{<bien>}}"}}` + `variables:[{"name":"<bien>","type":"CUSTOM",...}]` ở node. Ô UI có mặt nạ `HH:mm dd/MM/yyyy` nhưng nhận gõ tay `{{mã biến}}`, nên mốc chờ lấy được từ webhook hoặc biến tính toán (biến phải đúng định dạng đó).
 - 4 tuỳ chọn: **sau khoảng thời gian** (`type:"after"`, giây, phút, giờ, ngày); **thời gian cụ thể** (mốc trong quá khứ thì bỏ qua nút); **khung giờ tiếp tục** (`use_time_slot` + `days_in_week`, ví dụ 08:00–17:30 thứ 2–6 trước khi gọi hoặc gửi ZNS); **hoặc điều kiện đến trước** (`conditions`).
 - Lượt chạy đang trì hoãn vẫn chờ kể cả khi flow bị ngưng; trong Lịch sử có thể Tiếp tục hoặc Huỷ hàng loạt.
 - **Chờ có điều kiện**: thêm `conditions` (cùng schema CONDITION). Ví dụ: chờ tối đa 30 phút cho đến khi cuộc gọi có `ct_transaction_id` = biến và đã kết thúc:
@@ -128,6 +129,18 @@ Kiểu AI bóc thực thể (chọn nội dung cần phân tích + Đối tượ
 
 ### 2.5 ZALO_PERSONAL_MESSAGE → REQUEST_FRIEND [verify JSON]
 `{"type":"REQUEST_FRIEND","data":{"message_type":"REQUEST_FRIEND","message":"<lời mời kết bạn>","target":"","quick_reply":[]}}`
+
+### 2.6 MARKETING → AUTOCALL (Gọi tự động, đọc TTS) [verify JSON]
+```json
+{"node_type":"MARKETING","actions":[{"id":"<a>","type":"AUTOCALL","data":{"name":"<tên phiên>",
+  "autocall_detail":{"phone_number":"<đầu số>","public_number_of_tenant_id":"<id đầu số>","num_per_call":10,"distance_per_call":30,
+    "num_retry":0,"distance_retry":0,"timeSlots":[],"ringTimeoutSeconds":30,"allocation_type":"fixed",
+    "templateDialplans":[{"target":"Nội dung có {{<mã biến>}}","target_type":"Text_variable","voice":"banmai","speed":0}]},
+  "sending_option":{"contact":false,"other":true,"phone_numbers":["{{<mã biến SĐT>}}"],"send_to_agent_contact":false,"agent_contact_ids":null}}}]}
+```
+- **Đầu số** liệt kê cả hotline lẫn **đầu số Zalo** (logo Zalo, mã ~19 số): chọn đầu số Zalo = gọi qua Zalo OA (ZCC), người nhận phải đã đồng ý yêu cầu gọi (Marketing → "Yêu cầu cuộc gọi ZCC": đồng ý trong 24h, gọi được 30 ngày).
+- Thành phần cuộc gọi: Lời chào, **Robot đọc** (TTS, chèn biến; nút "Biến liên kết (ký tự)" đọc từng ký tự, "(chữ)" đọc thành từ), AI Callbot, Tương tác nhấn phím, Nhóm nội bộ.
+- Người nhận: Khách hàng (cần khách trong luồng) / **Số điện thoại tuỳ chỉnh** (biến) / nhân viên. Tuỳ chọn gọi lại khi không nghe máy, phân bổ N cuộc mỗi 30s.
 
 ---
 
@@ -235,6 +248,10 @@ CHAT_GPT [verify JSON]:
 ```
 Mô hình chọn được: `gpt-3.5-turbo`, `gpt-4`, `gpt-4o-mini`.
 
+- Tab UI (10/2026): **API · Random · Phép toán · Thư mời · LLM** (LLM = `CHAT_GPT`). **Phép toán chỉ + - * / trên số**, không cộng trừ ngày giờ.
+- **Mỗi nút ACTION chỉ chứa một hành động "Biến liên kết tuỳ chỉnh"** (danh sách "Thêm hành động" ẩn mục này khi đã có): cần 2 biến tính toán → 2 nút.
+- **Tính mốc giờ** (ví dụ ETA − 10 phút cho Trì hoãn "thời gian cụ thể"): LLM với `{{current_date_time}}` (HH:mm dd/MM/yyyy) + biến giờ, prompt bắt trả DUY NHẤT chuỗi `HH:mm dd/MM/yyyy`. Biến hệ thống nhóm *Khác*: `{{current_date}}`, `{{current_date_time}}`, `{{current_day_of_week}}`, `{{current_time}}`.
+
 ### 3.6 GET_RELATED (Gán đối tượng liên quan) [verify JSON]
 ```json
 {"type":"GET_RELATED","data":{"options":["CLOSEST_CALL"],"sort_by_created_date":true,
@@ -284,3 +301,45 @@ Giá trị nhân viên nhập vào biểu mẫu thành biến `{{<field_code>}}`
 7. **Biến từ biểu mẫu trong cửa sổ**: `{{<field_code>}}` của `FORM_DIALOG`.
 
 Top-level `variables` liệt kê mọi biến đã dùng (`{"name":"<code10>","type":"CUSTOM"|"COLLECT_INFO"|...}`). UI báo "N biến liên kết có vấn đề" khi văn bản tham chiếu một mã không còn được khai báo.
+
+---
+
+## 7. Cấu trúc đã kiểm chứng bằng GET sau khi dựng trên editor (10/2026) — trigger theo trạng thái khách, SLA, thu hồi
+
+Cách học nhanh: dựng **một** flow mẫu trên editor (mỗi loại nút một lần), lưu, `GET /omi_v2/campaign/get/{id}`, rồi sinh các flow còn lại bằng script từ chính JSON đó và lưu bằng `save_draft_v2` (multipart `file`; flow mới thì bỏ `_id`, `uuid`, `created_date`, `last_updated_date`). Mỗi flow lưu **hai bản**: `nodes[]` (runtime, snake_case) và `name_mappings[]` (editor, camelCase, nút đầu loại `BEGIN`). Sửa nút phải sửa cả hai, nếu không editor hiển thị "Chưa có dữ liệu".
+
+**Trigger Điều kiện theo trạng thái khách** (node đầu, `kick_off.event:"GENERAL"`; mỗi trường hợp một nhánh, có thể chọn nhiều trạng thái):
+```json
+{"id":"<case>","type":"GENERAL","operator_type":"AND","data":[{"type":"CONTACT","filter_contacts":[
+  {"pos":null,"not_contain":false,"id":"<statusSetId>","index":[{"first_index":2,"second_index":[]},{"first_index":3,"second_index":[]}],"operator_type":"OR"}]}],
+ "next_nodes":["<nodeId>"],"execute_for_exist":false,"iteration_config":{"is_limit":false,"number_of_times":0,"time_range":"none","apply_for_branch":false}}
+```
+`first_index` = số thứ tự trạng thái (bắt đầu từ 1) trong bộ trạng thái (`POST contact-v1-stg…/filter_contacts/get_list` trả `values[].index`, `values[].name`). Nút Điều kiện giữa luồng dùng cùng khối `data` (không có `iteration_config`).
+
+**Điều kiện "Không có tương tác"** (Mở rộng → Kiểm tra tương tác khách hàng), một trường hợp có thể ghép nhiều mục `data` (AND), ví dụ "vẫn đang ở trạng thái X" + "không có tương tác":
+```json
+{"type":"CUSTOM","custom_data":[{"target_type":"NOT_HAVE_CONTACT_INTERACTIVE",
+  "agent_option":{"assignee":true,"related":false,"system":false,"customer":false,"anonymous":false,"agent_ids":[],"agent_groups":[],"internal_groups":[],"agent_emails":[]},
+  "time_range":{"value":"718","unit":"minute"},"sources":["note","call"]}]}
+```
+`sources`: `note`, `call`, `change_status` (bản editor ghi `call_interactive` thay cho `call`). `assignee:true` = nhân viên phụ trách khách. Cửa sổ tính lùi từ lúc nút chạy: để cửa sổ ngắn hơn trì hoãn 1–2 phút để log ghi lúc vào trạng thái không bị tính.
+
+**Delay** (nút `DELAY`): `actions:[{"id":"<id>","type":"DELAY","data":{"type":"after","value_string":"12","unit":"hour","use_time_slot":false,"days_in_week":null}}]`, `unit`: `minute|hour|day`.
+
+**Hành động khách hàng** (nút `ACTION`, runtime):
+- `ADD_CONTACT` `{phone,email,full_name,country_code:"+84"}` (UI "Thêm khách hàng" tách thành 2 hành động) + `ASSIGN_SALE_ALLOCATION` `{ids:["<allocId>"],assign_priority:{agent_of_call:false,agent_join_conv:false},assign_criteria:{use_criteria:false,re_assign_when_match_previous:false,match_all:false,criteria:[]}}`.
+- Đổi người phụ trách: `ASSIGN_USER_OWNER_ID` `{ids:["<agentContactId>"],swap_owner_to_related:false,transfer_agent_note:"<ghi chú>",assign_criteria:{...}}`.
+- Đổi trạng thái: `ASSIGN_FILTER_CONTACT` `{filter_contacts:[{id:"<statusSetId>",index:1,note:"<ghi chú log>",opportunity_expired:{type:"SPECIFIC",time:""},total_deals_string:"",products:null}]}`.
+- Ghi vào Mô tả khách: `ASSIGN_ATTRIBUTE_STRUCTURE` với `field_code:"note"`, `field_type:"multi_text"`, `update_types[0].type:"INSERT"`, `position:"START"`.
+- Bản editor tương ứng: `UPDATE_INFO_CONTACT` `{assign:[{name:"assignUserOwner",...},{name:"assignStatus",value:"fc-<statusSetId>",targetType:"filter_contacts",values:{selectOpt:{label,value:<index>},content:"<ghi chú>",...}}]}` và `ADD_NEW_CONTACT` `{type:"ASSIGN_SALE_ALLOCATION",fullName,phone,email,selected:{value:"<allocId>"}}`.
+
+**Cạnh (edges)**: trường hợp của CONDITION/trigger dùng `sourceHandle:<case id>`; nhánh còn lại và nút tuần tự dùng `"2"`; `targetHandle:"1"`; id cạnh `reactflow__edge-<src><handle>-<tgt>1`.
+
+**Bẫy khi dựng bằng giao diện** (đã gặp):
+- Trigger thật là thẻ trong màn "Điều kiện bắt đầu OMIFlow này" (nút đầu có tiêu đề "Điều kiện" + mô tả "Kịch bản bắt đầu khi thỏa…"). Bấm nhầm chữ "Điều kiện" bằng JS chỉ thêm một nút Điều kiện giữa luồng và trigger vẫn trống → "Kịch bản không hợp lệ".
+- Nút Delay/Điều kiện cuối chuỗi không có nút kế tiếp cũng làm lưu thất bại: kết thúc bằng nút Hành động. Nút mới chưa có mục "Nút kế tiếp" trong ngăn → dùng nút "Thêm nút liền kề" trên thanh công cụ của nút (gọi bằng `.click()` JS được).
+- Lưu thất bại thì editor tự mở ngăn của nút đầu tiên bị lỗi.
+- Chip chọn trạng thái trong trigger là hộp tick; tick bằng `click` chuột theo `ref` (JS `click` không tick được).
+- Hệ thống chặn "Xuất bản" flow (triển khai chạy thật) khi chưa được người dùng xác nhận trực tiếp trong chat.
+
+**LiveTalk → tạo khách từ form trước chat (đã chạy thật 10/2026)**: trigger Điều kiện LiveTalk (`social_channel=widget_v2`, `social_send_by=customer`, `social_content` != "", `social_chatbot_waiting=available`, giới hạn 1 lần/đối tượng) → ACTION `ADD_CONTACT` `{phone:"{{social_lt_phone_number}}", full_name:"{{social_customer_name}}"}` + `ASSIGN_SALE_ALLOCATION` + ghi Mô tả + `ASSIGN_FILTER_CONTACT` → `OMI_BOT_AI`. Một nhánh điều kiện nối được nhiều nút (`next_nodes` mảng + nhiều edge cùng `sourceHandle`) để chạy song song.

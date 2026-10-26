@@ -129,3 +129,11 @@ Ghi kết quả từng vòng vào `results.json` (mỗi ca: `reply`, `scores`, `
 python scripts/eval_report.py <testcases.json> <before.json kết quả> [<after.json kết quả>] -o report.md
 ```
 Báo cáo gồm: tổng quan (điểm trung bình, số ca đạt, số lỗi nghiêm trọng, trước → sau), điểm theo tiêu chí, theo nhóm, bảng chi tiết (câu hỏi, câu trả lời, điểm, lỗi trước/sau), danh sách thay đổi đã làm và lý do, link editor `https://{domain}.omicrm.io/ai/bot/edit/{bot_id}?lng=vi`, trạng thái bản nháp/xuất bản. Báo cáo chứa nội dung của khách → để trong thư mục của user, không đưa vào repo skill.
+
+## 8. Đã kiểm chứng (10/2026)
+- **Mã nhúng widget test**: `<script id="omiLiveTalk" src="https://cdn.omicrm.com/script/livetalk/main.js#domain=<tên miền tổng đài>" async></script>` — **bắt buộc `id="omiLiveTalk"`** (script tìm thẻ theo id để đọc tham số sau `#`; thiếu id thì chỉ log "initialize..." rồi không hiện gì). Tham số thêm: `name=`, `phone=`, `email=`, `uuid=` (ngăn cách bằng `;`). Phục vụ bằng `python -m http.server` → `localhost` chạy được.
+- Cấu hình widget (form trước chat, trường bắt buộc): `GET https://livetalk-v2-stg.omicrm.com/widget/config/get/<domain>` → `payload.require` (vd. `["fullName","phoneNumber"]`).
+- SĐT khách điền ở form trước chat LiveTalk = biến Đa kênh **`{{social_lt_phone_number}}`** (email: `{{social_lt_email}}`), dùng được trong nút Thêm khách hàng của OMIFlow trigger LiveTalk — không cần bot hỏi số hay nhận dạng ý định.
+- **Mỗi lần cập nhật bot (lưu/xuất bản), trong khung chat thử phải gửi `/end` để kết thúc phòng cũ rồi chat lại** — phòng chat đang mở giữ phiên bản bot cũ, nên trả lời theo cấu hình cũ dù bot đã đổi (chỉ dẫn của user, 10/2026). Chưa `/end` thì không được kết luận bản mới chạy sai hay đúng. Việc khung thử chạy bản nháp hay bản xuất bản: kiểm lại sau khi đã `/end`.
+- `history_config.enable` mặc định có thể là `false` → bot quên lượt trước (hỏi lại, xưng hô sai). Kiểm và bật khi tối ưu.
+- RAG file hỏi–đáp dài (~28KB) có thể không kéo được câu hỏi về số liệu (giá, mức phí, điều kiện độ tuổi…). Cách chắc: đưa các số liệu chốt (chép nguyên từ nguồn) vào khối "thông tin chính" trong prompt, để RAG lo phần chi tiết.

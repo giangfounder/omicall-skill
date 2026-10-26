@@ -1,22 +1,29 @@
 # -*- coding: utf-8 -*-
-"""Inject a fetch/XHR captor into the chatbot editor page to learn request/response schemas."""
-import os, tempfile, sys, time, json, urllib.request
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # cdp.py cùng thư mục
+"""Inject a fetch/XHR captor into the chatbot editor page to learn request/response schemas.
+
+    python inject_captor.py [domain]   # domain mặc định lấy từ phiên MCP (omi_session.py)
+"""
+import os, sys, json, urllib.request
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # cdp.py, omi_session.py cùng thư mục
 from cdp import CDP
 
+if len(sys.argv) > 1:
+    domain = sys.argv[1]
+else:
+    from omi_session import claims, get_token
+    domain = claims(get_token()).get('domain')
+
 tabs = json.loads(urllib.request.urlopen("http://127.0.0.1:9222/json", timeout=5).read().decode())
-tab = None
-for t in tabs:
-    if t["type"] == "page" and "oanhtesting" in t["url"]:
-        tab = t
-        break
+tab = next((t for t in tabs if t["type"] == "page" and "%s.omicrm.io" % domain in t["url"]), None)
+if not tab:
+    sys.exit("Không thấy tab %s.omicrm.io trong Chrome CDP cổng 9222" % domain)
 
 c = CDP(tab["webSocketDebuggerUrl"])
 sniff = r"""
 (() => {
   if (window.__omiCapsInjected) return {already:true};
   window.__omiCaps = [];
-  const want = u => /omiai_assistant|omiai_v2|chatbot-gateway|training|/i.test(u) && !/\.png|\.svg|\.js|\.css|\.woff/.test(u);
+  const want = u => /omiai_assistant|omiai_v2|chatbot-gateway|training/i.test(u) && !/\.png|\.svg|\.js|\.css|\.woff/.test(u);
   const push = (kind, url, body, resp) => {
     try {
       if (window.__omiCaps.length > 200) window.__omiCaps.shift();

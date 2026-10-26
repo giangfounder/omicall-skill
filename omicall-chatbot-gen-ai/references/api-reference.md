@@ -3,7 +3,7 @@
 ## Base URL & Auth
 `https://chatbot-gateway-v1-stg.omicrm.com` (cùng gateway callbot). Header `Authorization: Bearer <accessToken>`. Token: cookie `{domain}_omicrm_io` → URL-decode → JSON → key `"2"` = JWT (HttpOnly → CDP). Login qua UI: `https://{domain}.omicrm.io` form `input[name=username]`/`input[name=password]`.
 
-> Đã verify tenant `oanhtesting.omicrm.io` — bot "Zalo OA Bot" `_id 6ab9d5fc82ddf2619521d99a`, gpt-4o-mini, SCENARIO_HANDLER.
+> Đã verify trên tenant thật — bot kênh Zalo OA, gpt-4o-mini, SCENARIO_HANDLER.
 
 ## Endpoints (prefix `omiai_assistant/` — KHÁC callbot)
 | Method | Path | Purpose |
@@ -230,3 +230,36 @@ Rồi: `c.eval_js("JSON.stringify(window.__omiCaps.filter(x=>x.kind!=='fetch-res
 - After temporarily fixing a phone for a test, restore the exact pre-test variable and re-read the saved draft. Preserve unrelated intents, query references, and publish state.
 
 Public implementation evidence: `_app-577b9e01f73ca56b.js` (module 92318), `pages/omi-bot-chat-live-talk-ec86399a5e373422.js`, and `https://cdn.omicrm.com/script/livetalk/main.js`. No credential values or private customer data are included here.
+
+## Tạo bot mới + nạp RAG hoàn toàn bằng API (10/2026, đã chạy)
+1. Tạo bot nháp: `/ai/bot/create` → điền Tên, chọn chế độ "Xử lý theo kịch bản" (`SCENARIO_HANDLER`) → "Lưu lại" → URL đổi thành `/ai/bot/edit/<_id>`.
+2. File văn bản: `.txt` UTF-8 gọn nhất; upload `filestore…/put_v2` field `file_0` (Blob từ chuỗi trong trang, không cần đọc file máy), `object_info.content_type:"text/plain"`, `file_type:"txt"`.
+3. Sau `other/add`, bản ghi hiện `status:"not_training"` và `bots_use_file:[]` trong `other/search` dù UI tab Đào tạo đã hiện "Đã đào tạo"; gọi `POST external…/omi_v2/warehouse_of_knowledge/other/training/<record _id>` (trả `payload:true`) để chạy huấn luyện. Nhớ gắn bot bằng cách ghi `vector_store` + `ai_analyze.vector_store_ids` rồi `save_draft_v2`.
+4. Kiểm tra bằng UI: tab Đào tạo → "Dữ liệu khác (1)" + trạng thái; tab Kịch bản → "Dữ liệu đào tạo" liệt kê tên file.
+5. Cửa sổ "Trò chuyện thử" trong browser pane dễ đóng/lệch khi pane đổi kích thước; nên cho người dùng tự thử.
+
+### Bot gọi kịch bản OMIFlow theo ý định (đã kiểm chứng 2026-10)
+- BEGIN_CONTEXT `name_mappings[].conditions[]` thêm case `{id, type:"INTENT", intent:{value:<intentId>, label, code:"omi_intent_phone", is_tenant:true, is_system:true}, data:[]}`; edge `sourceHandle` = case id → node ACTION.
+- Node ACTION: `actions:[{type:"START_OTHER_CAMPAIGN", datas:{selected:{value:<flow uuid>, _id:<flow _id>, label, isDependent:true}}}]`. Chỉ liệt kê flow có `dependent_config.is_dependent:true`; flow phải xuất bản mới chạy.
+- Gotcha UI: nút X đóng ngăn kéo nằm trùng icon menu "Tổng đài" — cú bấm X cuối cùng xuyên qua và rời trang (mất thay đổi). Đóng ngăn kéo ngoài cùng bằng cách bấm vùng mờ bên trái (vd. x≈150,y≈300); Esc không đóng.
+
+### Trường hợp mô tả bằng ngôn ngữ tự nhiên (CUSTOM_INTENT) — MẶC ĐỊNH dùng kiểu này (đã kiểm chứng 2026-10)
+Quy ước của user: trường hợp trong Ngữ cảnh bắt đầu **luôn** dùng chế độ **"Nhận dạng ý định"** + ô "Hướng dẫn BOT" viết bằng ngôn ngữ tự nhiên (khi nào chọn, khi nào KHÔNG chọn, ví dụ câu khách). **Không** dùng chế độ "Chủ đề / Ý định mong muốn" (chọn ý định hệ thống như `omi_intent_phone`).
+- Runtime `campaign.nodes[0].ai_analyze.conditions[]`: `{"id":"<case>","type":"CUSTOM_INTENT","intent_code":null,"intent_name":"<mô tả tự nhiên>","percent":40,"next_node":"<node id>"}`
+- Editor `name_mappings[BEGIN_CONTEXT].conditions[]`: `{"id":"<case>","type":"CUSTOM_INTENT","name":"","personality":"<mô tả tự nhiên>","data":[]}` (đổi chế độ trên UI có thể để sót object `intent` cũ — vô hại).
+- Đổi chế độ trên UI giữ nguyên "Nút kế tiếp". Sau khi bấm "Lưu lại" phải thấy toast "Cập nhật thành công" và nút chuyển "Đã lưu"; nếu không thấy thì GET lại — cú bấm đầu sau khi đóng ngăn kéo có thể không ăn.
+
+### Bot → ACTION `START_OTHER_CAMPAIGN` (gọi flow phụ thuộc): flow KHÔNG nhận biến hội thoại (đã chạy thật 10/2026)
+- Bot nhận đúng trường hợp và flow phụ thuộc chạy ("Hoàn thành"), nhưng trong log flow mọi biến đều trống: `{{social_content}}`, `{{social_customer_name}}`, biến COLLECT_INFO → "-".
+- Nút "Thêm khách hàng" khi đó tạo khách từ danh tính hội thoại (tên/SĐT/email khách điền ở form LiveTalk), KHÔNG phải số khách nhắn trong chat.
+- Nút ACTION không có "Bước tiếp theo" → bot không trả lời tin nhắn đã kích hoạt trường hợp. Nối tiếp một bước (vd. quay lại hội thoại/gửi tin) nếu cần bot tiếp tục.
+- Muốn truyền SĐT khách nhắn: cho bot thu biến (nút Thu thập thông tin trong bot) rồi truyền giá trị qua hành động có tham số (vd. API → webhook OMIFlow với body chứa biến), không dựa vào biến hội thoại trong flow phụ thuộc.
+
+### Bot thu SĐT rồi gọi webhook OMIFlow (đã chạy thật end-to-end 10/2026)
+Luồng: Trường hợp (CUSTOM_INTENT) → `OMI_BOT_COLLECT_INFO` → (case biến != "") → `ACTION` `SEND_WEBHOOK` → flow `WEB_HOOK` tạo khách. Lead nhận đúng số khách nhắn.
+- Nút thu thập — runtime: `ai_analyze.content` = hướng dẫn; `ai_analyze.collect_variables:[{"variable_code":"var_sodienthoai","variable_name":"so_dien_thoai","variable_value":"<mô tả biến>","option":"ENTITY","save_to_conv":false}]`. Editor (`name_mappings`): `{"type":"OMI_BOT_COLLECT_INFO","collect_data":[{"variable_code","variable_name","variable_value","save_to_conv"}]}`. Mã biến sinh từ tên (`var_<tên bỏ dấu, bỏ _>`) → tham chiếu `{{var_sodienthoai}}`.
+- Case theo dữ liệu thu thập — runtime: `{"id":"<case>","type":"CUSTOM_INTENT","next_node":"<action>","data":[{"type":"COMPARE","compare_conditions":[{"operator":"NOT_EQUAL","values":[{"start_value":"","end_value":""}],"target_type":"COLLECT_INFO","is_dynamic_field":true,"field_code":"var_sodienthoai"}]}],"operator_type":"AND"}`; node `next_nodes:[action]`; edge `sourceHandle`=case id, `targetHandle:"1"`.
+- Hành động API — runtime `{"type":"SEND_WEBHOOK","data":{"url","method":"POST","headers":[{"key":"Content-Type","value":"application/json"}],"param_type":"json","body_type":"raw","body_json":"<chuỗi JSON có {{var_...}}, {{social_customer_name}}>"}}`; editor `datas.bodyJson.text` = cùng chuỗi. Trình soạn body không tự đóng `}`.
+- Thời điểm: nút thu thập trả lời khách (theo hướng dẫn) rồi ở trạng thái `waiting_reply`; case được xét và webhook chạy **ở tin nhắn kế tiếp của khách**, không phải ngay tin có số. Lượt test ghi nhận 2 lần gọi webhook cùng giây (lần 2 trùng khách → CONTACT_EXIST).
+- Gotcha UI: tạo nút con bằng "Nút kế tiếp" ngay trong ngăn kéo cha rồi đi tiếp sang nút cháu → cấu hình nút con bị mất khi lưu. Mỗi nút: điền → đóng hết ngăn kéo → "Lưu lại" → GET kiểm tra, rồi mới mở nút kế. Nối cạnh còn thiếu thì sửa bằng API (`save_draft_v2`).
+- **Khác biệt kênh thật (10/2026)**: cùng bot, chat qua "Trò chuyện thử" thì SEND_WEBHOOK chạy; chat qua widget LiveTalk đi qua OMIFlow (`OMI_BOT_AI` node) thì bot trả lời bình thường nhưng **webhook không được gọi** sau 3 lượt khách (log flow ở `waiting_reply`, flow webhook không có lượt chạy). Chưa xác định nguyên nhân; trước khi dựa vào hành động trong bot cho kênh thật phải test qua đúng kênh. ("2 lượt chạy cùng giây" trong log flow webhook = bước CONDITION + ACTION của một lượt, không phải gọi trùng.)

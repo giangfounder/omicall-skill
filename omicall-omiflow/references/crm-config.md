@@ -41,3 +41,9 @@ Ca làm việc: **Cấu hình → Doanh nghiệp → Khác → Ca làm việc** 
 - Bài toán pipeline/lead → dùng bộ trạng thái khách hàng (WIN/LOST cho báo cáo), đổi trạng thái làm mốc nối flow.
 - Bài toán SLA phiếu → ưu tiên cấu hình sẵn của Chủ đề (hạn theo độ ưu tiên, ca làm việc, nhắc trước) trước khi dựng OMIFlow; OMIFlow chỉ bù phần thiếu (vd. hạn phản hồi đầu tiên, leo thang).
 - Tạo/sửa cấu hình là thao tác ghi trên tenant khách → hỏi user trước.
+
+## Cấu hình phân bổ (Cấu hình → Doanh nghiệp → Khác → Cấu hình phân bổ) — đã kiểm chứng 10/2026
+- API đọc: `POST tenant-v1-stg.omicrm.com/sale_allocation/search?page=1&size=50` body `{}` → `payload.items[]` `{_id,name,type,staffs:[{contact_id,full_name,percent}]}`.
+- `type`: `split_evenly` (Phân chia đồng đều) · `prioritize_employees_with_fewer_customers` (Ưu tiên nhân viên có ít dữ liệu nhất) · `specific_division` (Phân chia cụ thể theo %; `staffs[].percent`, tổng phải = 100, form hiện "Phần trăm hiện tại"). Tuỳ chọn áp dụng: nhân viên cụ thể / nhóm nhân viên / nhóm nội bộ (chọn nhóm thì mất lựa chọn "theo %").
+- Flow dùng qua hành động `ASSIGN_SALE_ALLOCATION` `data.ids:[<_id>]`. Đổi cơ chế cho mọi flow cùng lúc: sửa "Hình thức" của chính cấu hình đang gắn; đổi riêng từng flow: chọn cấu hình khác trong nút Thêm khách hàng rồi xuất bản.
+- Gotcha UI: ô "Nhóm nhân viên" nằm ngay dưới danh sách chọn nhân viên — bấm ra ngoài để đóng danh sách dễ trúng ô này và reset form; đóng danh sách bằng Esc.

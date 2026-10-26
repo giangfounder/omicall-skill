@@ -10,7 +10,7 @@ Base: `https://campaign-v1-stg.omicrm.com` (môi trường stg; bản production
 | GET | `/omi_v2/campaign/get_by_uuid/{uuid}` · `/omi_v2/campaign/draft/get_by_uuid/{uuid}` | Theo uuid, bản nháp | mã UI |
 | POST | `/omi_v2/campaign/add_v2` | Tạo flow mới — multipart field `file` = JSON | mã UI, chưa chạy |
 | POST | `/omi_v2/campaign/update_v2/{id}` | Cập nhật (tạo phiên bản mới) — multipart `file` | mã UI, chưa chạy |
-| POST | `/omi_v2/campaign/save_draft_v2` | Lưu nháp — multipart `file` | mã UI, chưa chạy |
+| POST | `/omi_v2/campaign/save_draft_v2` | Lưu nháp — multipart `file` = toàn bộ object GET (giữ `_id`) đã sửa `nodes`/`edges`/`custom_variables`; trả `status_code` 9999 + payload | ✔ (10/2026, flow chưa xuất bản) |
 | GET | `/campaign/update_status/{id}?status=<...>` | Bật hoặc tắt flow | mã UI |
 | POST | `/omi_v2/campaign/delete/{id}` · `/omi_v2/campaign/delete_many` | Xoá | mã UI — chỉ khi user yêu cầu |
 | GET | `/omi_v2/campaign/search_version` | Lịch sử phiên bản | mã UI |
