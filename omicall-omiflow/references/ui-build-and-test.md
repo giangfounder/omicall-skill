@@ -98,3 +98,31 @@ Dùng khi không gọi được API lưu flow (không có token, MCP chưa cài,
 - Bấm ra ngoài hộp xác nhận có thể mở nhầm ngăn khác (ví dụ ngăn Ghi chú) và trình duyệt có thể tự điền ô; đọc lại nội dung trước khi lưu.
 - **Ô nhập trong drawer nối thêm thay vì thay thế**: Ctrl+A trước khi gõ; body JSON editor tự bọc `{}`. Không dùng Escape trong drawer.
 - **Browser pane không bắt XHR khác domain** trong `read_network_requests`; dùng `performance.getEntriesByType('resource')` để tìm endpoint. Pane hẹp làm canvas tràn ngang → ưu tiên API thay vì bấm UI.
+
+
+---
+
+## 7. AI điền CRM sau cuộc gọi: bóc trường bằng LLM rồi gán thuộc tính (dựng thật qua UI, 10/2026)
+
+**Mẫu**: trigger Điều kiện → Cuộc gọi → *Trạng thái cuộc gọi* = Trả lời (không dùng "Cuộc gọi được cập nhật", đó là sự kiện cập nhật cửa sổ/lịch sử, không phải kết thúc) → Trì hoãn vài phút (AI Assistant ghi kết quả trễ) → các nút LLM → Cập nhật khách hàng. Nguồn dữ liệu là `{{ca_ai_assistant}}`: một trường văn bản mô tả mọi thuộc tính theo mẫu cấu hình ở AI Assistant. Cần AI Assistant của cuộc gọi đó đã bật, nếu không biến rỗng.
+
+- **Yêu cầu cho AI Assistant**: Cấu hình > AI > AI Assistant (`/config/ai/call-assistant/config-criteria/edit/<id>`), ô "Hướng dẫn các bước tổng hợp". Mẫu mặc định theo cú pháp `- Tên trường: (mô tả)`, mỗi trường một dòng; giữ nguyên các dòng cũ, thêm dòng mới cùng cú pháp. Trường kiểu danh sách: ghi rõ "Chỉ ghi MỘT trong các giá trị: …, không có thì ghi: Không xác định". Đây là cấu hình dùng chung cho cả tổng đài: ghi lại nội dung gốc trước khi sửa để hoàn tác.
+- **Biến LLM**: nút Hành động → *Biến liên kết tuỳ chỉnh* có 5 tab (API, Random, Phép toán, Thư mời, **LLM**). Tab LLM: tên biến + ô Giá trị (prompt) + model. Mỗi nút Hành động chỉ thêm được **một** hành động Biến liên kết tuỳ chỉnh (mục đã dùng biến mất khỏi danh sách "Thêm hành động") → mỗi trường một nút, nối chuỗi.
+- **Biến chỉ hiện sau khi Lưu**: chip "Biến liên kết tuỳ chỉnh" ở nút sau chỉ liệt kê biến đã lưu; trong nút Điều kiện còn phải **tải lại trang** mới thấy. Chọn biến từ chip (chèn đúng mã 10 ký tự), không gõ tên.
+- **Kiểu thuộc tính khách quyết định cách gán**: thuộc tính kiểu *danh sách* (biểu tượng danh sách) **không nhận biến**, chỉ chọn một giá trị cố định; thuộc tính kiểu văn bản/văn bản giàu định dạng nhận biến; *Số điện thoại* là "Thêm giá trị mới" (có thể trùng số đã có). Kiểm từng thuộc tính trước khi thiết kế.
+- **Trường danh sách → rẽ nhánh theo giá trị**: LLM bị ép trả đúng nguyên văn một giá trị của danh sách; nút Điều kiện mỗi giá trị một trường hợp (biến, CONTAIN, giá trị); mỗi trường hợp có "Nút kế tiếp" → Hành động → Cập nhật khách hàng gán đúng giá trị. Cẩn thận chuỗi con ("Xe tải" nằm trong "Xe tải Van": dùng `=` cho chuỗi ngắn hơn). **Các nhánh không gộp lại được** nên mỗi trường danh sách một flow riêng (cùng trigger, LLM chạy lại), mỗi flow = 4 + số giá trị nút. Biến không truyền giữa các flow.
+- **Cú pháp thao tác trong ngăn**: nút Điều kiện: trường hợp mới bằng "Thêm trường hợp" (nút dịch xuống ~47px mỗi trường hợp), chọn biến, toán tử, ô giá trị; **phải chờ ~1s sau khi bấm ô rồi mới gõ**, gõ ngay thì giá trị rỗng (`=""`) mà không báo lỗi. Đóng ngăn con bằng nút ✕ ngoài cùng; ngăn Hành động có thuộc tính rỗng thì không đóng được ("Vui lòng điền đầy đủ thông tin").
+- **Duyệt ngăn**: ✕ đóng ngăn hiện tại và quay về ngăn node trước (xếp chồng); nút ←/→ đầu ngăn đi sang node kề; node vừa tạo chỉ có "Bước tiếp theo" sau khi đóng rồi mở lại qua →.
+
+### Thao tác canvas đã kiểm chứng
+- Bấm vào thân node mở ngăn, không chỉ chọn. Phím tắt: Ctrl+C sao chép node, Delete xoá node.
+- Xoá node bằng JS: `document.querySelectorAll('.react-flow__node')` → tìm theo text → `button[aria-label="Xóa node"]` `.click()`. Xoá node **giữa chuỗi làm đứt cạnh**.
+- **Nối lại cạnh bằng chuột hoạt động**: `left_click_drag` từ chấm nguồn (vòng tròn cuối node trước) tới chấm đích (chấm đầu node sau) khi hai node cùng thấy trên màn hình. Lưu lại rồi mở lại để kiểm.
+- Xoá ngày hiệu lực khi tạo flow: rê chuột lên ô ngày thì hiện nút ✕ ở từng ô; bấm lần lượt.
+
+### Chạy song song bằng subagent (fork)
+Mỗi subagent tự tạo **tab riêng** (`tabs_create`, rồi truyền `tabId` ở mọi lệnh), không dùng tab của agent chính; mỗi flow một subagent, không hai bên cùng chạm một flow. Dặn trước: chờ trước khi gõ, kiểm từng trường hợp sau khi lưu, không xuất bản. Subagent báo thiếu kiểm sau tải lại thì agent chính tự mở lại kiểm.
+
+### Giới hạn công cụ
+- `browser_batch` tối đa 25 thao tác; ảnh chụp trễ 1–2 thao tác (dùng `wait` rồi chụp lại, hoặc `zoom` vùng nhỏ để đọc tóm tắt điều kiện).
+- Đọc cookie token qua JS bị bộ lọc an toàn chặn: không vòng qua, dựng bằng UI.
