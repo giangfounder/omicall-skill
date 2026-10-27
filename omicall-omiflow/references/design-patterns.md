@@ -1,6 +1,6 @@
 # OMIFlow — Tư duy thiết kế và thư viện mẫu
 
-Module là của nền tảng, dùng chung mọi tenant; mẫu chỉ khác nhau ở **nghiệp vụ**. Mẫu **[tài liệu OMI]** lấy từ hướng dẫn chính thức; mẫu **[đã chạy]** rút từ flow thật (ví dụ ở một tenant y tế, đã ẩn danh; khung áp dụng cho mọi ngành có tổng đài và hệ thống ngoài); mẫu **[suy luận]** ghép từ danh mục module, logic đúng theo năng lực, nhưng schema của module [enum] phải dựng thử một lần để lấy JSON.
+Module là của nền tảng, dùng chung mọi tenant; mẫu chỉ khác nhau ở **nghiệp vụ**. Mẫu **[tài liệu OMI]** lấy từ hướng dẫn chính thức; mẫu **[đã chạy]** rút từ flow thật (đã ẩn danh, đổi tên trường và nhãn sang ví dụ trung tính; khung áp dụng cho mọi ngành có tổng đài và hệ thống ngoài); mẫu **[suy luận]** ghép từ danh mục module, logic đúng theo năng lực, nhưng schema của module [enum] phải dựng thử một lần để lấy JSON.
 
 ## A. Khung suy luận: từ bài toán đến flow
 
@@ -21,8 +21,8 @@ Quy tắc ghép:
 - **Một flow, một mục đích**. Chuỗi việc dài hoặc dùng chung → tách flow con *phụ thuộc* và gọi bằng `START_OTHER_CAMPAIGN`. Nhưng nếu caller cần nhận dữ liệu tổng hợp qua webhook thì giữ trong một flow.
 - **Luôn có nhánh lỗi**: API không trả dữ liệu, AI trả mã lạ, ngoài giờ → tạo phiếu "cần xử lý tay" hoặc thông báo nhân viên, không để luồng chết im.
 - **Gom nhánh**: nhiều trường hợp cùng kết thúc giống nhau (gắn cuộc gọi, gán người liên quan) thì nối về **một** nút ACTION chung để tiết kiệm quota nút.
-- **Ghi chú trên canvas** (`DESCRIPTION`): URL webhook, cURL mẫu, nguồn gọi ("nhận từ kịch bản callbot số 4").
-- Đặt tên flow có số thứ tự và mục đích: `5 - [AI CALL BOT TẠO TICKET SAU GIỜ LÀM VIỆC]`.
+- **Ghi chú trên canvas** (`DESCRIPTION`): URL webhook, cURL mẫu, nguồn gọi ("nhận từ kịch bản callbot <tên kịch bản>").
+- Đặt tên flow có số thứ tự và mục đích: `<số> - [MỤC ĐÍCH]`, ví dụ `5 - [CALLBOT TẠO PHIẾU NGOÀI GIỜ]`.
 
 ## B0. Mẫu trong tài liệu chính thức [tài liệu OMI]
 
@@ -51,30 +51,30 @@ Trigger của flow 1 có thể thay bằng: khách bấm menu OA, quét QR, nh�
 ### B0.4 Vận hành — sự kiện từ Google Sheet
 App Script trên sheet POST vào trigger API khi cột "Trạng thái" = "Xác nhận" → flow nhận `data[]`, `action` → tạo phiếu, gửi ZNS hoặc gọi Callbot cho dòng đó.
 
-## B. Mẫu đã chạy trong flow thật (ví dụ ngành y tế, khung dùng chung)
+## B. Mẫu đã chạy trong flow thật (đã ẩn danh, khung dùng chung)
 
 ### B1. Callbot → webhook → tra hệ thống ngoài (CRM, ERP, HIS…) → phiếu ghi gắn cuộc gọi [đã chạy]
 Bài toán: ngoài giờ, callbot tiếp nhận; bot không xử lý được thì tạo phiếu cho nhân viên gọi lại.
 ```
 WEB_HOOK(full_name, phone_number, summary, call_id)
- → ACTION: CREATE_CUSTOM_VARIABLE API_V2 (POST HIS /BenhNhan, phoneNumber) → biến Tên/Mã bệnh nhân
- → CONDITION: Tên bệnh nhân != ""  ──có──→ ACTION ADD_TICKET "[YÊU CẦU NGOÀI GIỜ]"
+ → ACTION: CREATE_CUSTOM_VARIABLE API_V2 (POST hệ thống ngoài /<tra_cuu_khach>, phoneNumber) → biến Tên/Mã khách
+ → CONDITION: Tên khách != ""  ──có──→ ACTION ADD_TICKET "[YÊU CẦU NGOÀI GIỜ]"
                     └─Bước tiếp theo→ COLLECT_INFO "Khách hàng mới" ─┘
  → DELAY 10 giây → ACTION GET_RELATED CLOSEST_CALL (ct_transaction_id = {{call_id}})
  → (tìm thấy) ACTION ASSIGN_TICKET_PIN_OBJECT (gắn cuộc gọi) + ASSIGN_TICKET_REPORTER
 ```
-Biến thể: cấp cứu ngoài giờ (tạo phiếu danh mục Cấp cứu), cuộc gọi nhỡ (tạo phiếu "[GỌI NHỠ]").
+Biến thể: yêu cầu khẩn ngoài giờ (tạo phiếu danh mục Khẩn), cuộc gọi nhỡ (tạo phiếu "[GỌI NHỠ]").
 
 ### B2. Sự kiện cuộc gọi + phím IVR + giờ làm việc + AI phân loại → phiếu đúng danh mục [đã chạy]
 ```
 GENERAL: cuộc gọi vào, đã kết thúc, ct_key_action ∈ {1..4}
- → API_V2 tra bệnh nhân theo {{ct_phone_number}} → DELAY 10 giây
- → CONDITION mã bệnh nhân rỗng? → (rỗng) COLLECT_INFO "Khách hàng mới"
+ → API_V2 tra khách theo {{ct_phone_number}} → DELAY 10 giây
+ → CONDITION mã khách rỗng? → (rỗng) COLLECT_INFO "Khách hàng mới"
  → CONDITION TIME_FRAME (trong giờ | ngoài giờ)
- → CONDITION theo phím: 4 = khiếu nại · 3 = cấp cứu · 2 = tư vấn
+ → CONDITION theo phím: 4 = khiếu nại · 3 = khẩn · 2 = tư vấn
      4 → CHAT_GPT(intent từ {{ca_summarize}}) → CONDITION 17 mã intent → ADD_TICKET theo danh mục khiếu nại
-                                                └ "thái độ nhân viên" → CHAT_GPT(đối tượng: lễ tân, bác sĩ…) → CONDITION → ADD_TICKET
-     3 → ADD_TICKET "CẤP CỨU KHẨN CẤP - {{tên}} - {{sđt}}"
+                                                └ "thái độ nhân viên" → CHAT_GPT(bộ phận liên quan: <bộ phận 1>, <bộ phận 2>…) → CONDITION → ADD_TICKET
+     3 → ADD_TICKET "YÊU CẦU KHẨN - {{tên}} - {{sđt}}"
      2 → CHAT_GPT(dịch vụ hay vấn đề chung) → ADD_TICKET "TƯ VẤN …"
  → mọi nhánh dồn về 1 ACTION: ASSIGN_TICKET_REPORTER + ASSIGN_TICKET_PIN_OBJECT
 ```
@@ -82,23 +82,23 @@ Bài học: AI trả **mã** (snake_case) và điều kiện so `CONTAIN` mã đ
 
 ### B3. Đồng bộ hai chiều với hệ thống ngoài: tạo, sửa, huỷ một bản ghi (lịch hẹn, đơn, hợp đồng…) [đã chạy]
 ```
-WEB_HOOK(… status, appointmentID, patientID …)  ← callbot gọi
+WEB_HOOK(… status, <ma_ban_ghi>, <ma_khach> …)  ← callbot gọi
  → API_V2 GET hồ sơ theo SĐT
  → CONDITION status: new | update | cancel | (khác → PUSH_NOTIFICATION "CÓ LỖI")
-   new    → GET_RELATED CLOSEST_CALL → ADD_TICKET "ĐĂNG KÝ KHÁM MỚI" (created_by CAMPAIGN_CALLBOT_CREATOR)
-            → DELAY 5 giây → gắn cuộc gọi, người liên quan, chèn {{ca_ai_assistant}} vào mô tả → SEND_WEBHOOK POST /TaoLichKham
-   update → GET_RELATED CLOSEST_TICKET (trạng thái đang mở, của khách có SĐT) → ASSIGN_TICKET_TYPE/ATTRIBUTE/DESCRIPTION → SEND_WEBHOOK /CapNhatLichKham
-   cancel → GET_RELATED CLOSEST_TICKET → ASSIGN_TICKET_TYPE (trạng thái huỷ) → SEND_WEBHOOK /HuyLichKham
+   new    → GET_RELATED CLOSEST_CALL → ADD_TICKET "ĐĂNG KÝ MỚI" (created_by CAMPAIGN_CALLBOT_CREATOR)
+            → DELAY 5 giây → gắn cuộc gọi, người liên quan, chèn {{ca_ai_assistant}} vào mô tả → SEND_WEBHOOK POST /<tao_ban_ghi>
+   update → GET_RELATED CLOSEST_TICKET (trạng thái đang mở, của khách có SĐT) → ASSIGN_TICKET_TYPE/ATTRIBUTE/DESCRIPTION → SEND_WEBHOOK /<cap_nhat_ban_ghi>
+   cancel → GET_RELATED CLOSEST_TICKET → ASSIGN_TICKET_TYPE (trạng thái huỷ) → SEND_WEBHOOK /<huy_ban_ghi>
 ```
 Chiều ngược lại (nhân viên tự tạo phiếu lịch hẹn): `GENERAL` NEW_TICKET thuộc danh mục lịch hẹn → `SEND_WEBHOOK` đẩy sang hệ thống ngoài.
 
 ### B4. Popup thông tin cho nhân viên khi chuyển máy [đã chạy]
 ```
 WEB_HOOK(digits, customer_phone, ct_transaction_id)  ← tổng đài hoặc callbot gọi lúc chuyển máy
- → API_V2 tra hồ sơ → (không có) COLLECT_INFO "Bệnh nhân mới"
- → CONDITION digits: 2 → INFO_DIALOG "TƯ VẤN" · 3 → INFO_DIALOG "CẤP CỨU" · 4 → INFO_DIALOG "KHIẾU NẠI"
-                     1 → FORM_DIALOG "PHIẾU ĐĂNG KÝ KHÁM" (điền sẵn tên, SĐT từ biến)
-                           ├─hoàn thành→ ADD_TICKET "ĐĂNG KÝ KHÁM MỚI" từ dữ liệu form → DELAY 3 phút → gắn cuộc gọi, mô tả AI
+ → API_V2 tra hồ sơ → (không có) COLLECT_INFO "Khách hàng mới"
+ → CONDITION digits: 2 → INFO_DIALOG "TƯ VẤN" · 3 → INFO_DIALOG "KHẨN" · 4 → INFO_DIALOG "KHIẾU NẠI"
+                     1 → FORM_DIALOG "PHIẾU ĐĂNG KÝ" (điền sẵn tên, SĐT từ biến)
+                           ├─hoàn thành→ ADD_TICKET "ĐĂNG KÝ MỚI" từ dữ liệu form → DELAY 3 phút → gắn cuộc gọi, mô tả AI
                            └─Bước tiếp theo→ ADD_TICKET "TƯ VẤN" → DELAY chờ cuộc gọi kết thúc (tối đa 30 phút) → GET_RELATED cuộc gọi → gắn
 ```
 
@@ -116,7 +116,7 @@ Quota: M nơi = M+3 nút (trigger, điều kiện, M cửa sổ, 1 cửa sổ m�
 `GENERAL` (cuộc gọi kết thúc) → `DELAY 5 giây` → `GET_RELATED CLOSEST_TICKET` (thuộc tính phiếu "mã cuộc gọi" = `{{ct_transaction_id}}`) → `ASSIGN_TICKET_DESCRIPTION` chèn `{{ca_ai_assistant}}` vào cuối mô tả.
 
 ### B6. Zalo cá nhân: gửi lời mời kết bạn khi chưa có hội thoại [đã chạy]
-`WEB_HOOK(contactPhone, phoneAcountZalo)` → node `ZALO_PERSONAL_MESSAGE` hành động `REQUEST_FRIEND`.
+`WEB_HOOK(<sdt_khach>, <tai_khoan_zalo>)` → node `ZALO_PERSONAL_MESSAGE` hành động `REQUEST_FRIEND`.
 
 ### B7. Phân lead có bước duyệt + SLA gọi + thu hồi (2 flow nối bằng trạng thái) [đã chạy]
 Khung dùng chung cho mọi bài toán "giao việc cho người, quá hạn không xử lý thì nhắc rồi thu hồi" (lead, phiếu, yêu cầu).

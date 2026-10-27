@@ -65,12 +65,14 @@ Biến top-level: chiến dịch `{"field_name":"<mã>","field_code":"<mã>","ty
 - ACTION: `{"id","node_type":"ACTION","actions":[...],"next_nodes":["<tiếp>"]?,"variables":[],"is_collapse":false}`; action:
   - `ADD_CLASSIFY` `{"data":{"ids":["<nhãn>"]}}` (nhãn khai báo top-level `classifies`)
   - `TRANSFER_CALL` `{"data":{"actionType":"Extension","ids":["<agent_id>"],"sip_number":"<máy lẻ>","transfer_collected_info":true,"transfer_customize_info":false}}` (nhóm: `actionType:"Ring_group"`)
-  - `PUSH_NOTIFICATION`, `ADD_TICKET`, `ADD_CONTACT` + `ASSIGN_AGENT_CONTACT`, `HOLDING_CALL` (xem skill `omicall-callbot-gen-ai` cho dữ liệu chi tiết).
+  - `PUSH_NOTIFICATION`: runtime `data` như nhánh `PUSH_NOTIFICATION` trong `scripts/build_callflow.py` (`title`, `content`, `agent_contact_ids`, `enable_platforms:["web"]`, các cờ `send_to_*`); bản editor (org) chưa kiểm chứng → GET lại và soát trên editor.
+  - `ADD_TICKET`, `ADD_CONTACT` + `ASSIGN_AGENT_CONTACT`, `HOLDING_CALL`: chưa có JSON đã kiểm chứng ở skill nào → dựng trên UI rồi GET lại (Cần xác nhận cấu trúc trước khi sinh bằng script).
 
 ### Số lần trả lời/nhắc của nhánh (đã đối chiếu kịch bản thật)
 Runtime không có trường lặp: **số câu trong `return_contents` = số lần bot trả lời/nhắc**; dùng hết thì lần sau đi `next_nodes`. Nhánh có câu trả lời **luôn có `next_nodes`** (kịch bản thật không có ngoại lệ). Editor ghi kèm: INTENT có N câu → `"repeat":{"label":["times",{"t":"l","n":N-1}],"value":"N"}`; INTENT không câu → `{"label":"notRepeat","value":"0"}`; NOT_RESPONSE → `{"label":["times",{"t":"l","n":0}],"value":"1"}`; RESPONSE_WRONG → `"repeat":0` (số).
 
 ## 5. Kịch bản NORMAL — editor `org_nodes` + `connections`
+`scripts/build_callflow.py` sinh toàn bộ mục này; dùng builder thì không cần đọc. Chỉ đọc khi sửa tay hoặc dựng loại chưa có trong builder (`references/node-status.json`).
 - org types: `BEGIN`, `STAFF`, `ACTION`, `CONDITION` (chỉ node FROM_SYSTEM riêng), `COLLECT_INFO`. Nhánh INTENT/hệ thống của STAFF **nằm trong** `org_nodes[STAFF].data.conditions[]` (id = id node CONDITION runtime) → số org ít hơn nhiều so với nodes.
 - org STAFF: `{"id","type":"STAFF","width":332,"height","position":{"x":"<str>","y":"<str>"},"data":{"type":"STAFF","id","name","content","subContent","typeSay":"text","audio_file":null,"speed":{"label":"speedRead.normal","value":1},"notResponseTime":10000,"responseTime":10000,"count":1,"variables":[{"variable":"<mã>","selected":{}}],"objVariables":{"<mã>":""},"collectionInfo":[...],"conditions":[...],"collapseObj":{"NEXT_STEP":{"isCollapse":false},"<cond id>":{"isCollapsible":true,"isCollapse":false},"CUSTOMER_NOT_RESPONSE":{"isCollapse":false},"CUSTOMER_RESPONSE_WRONG":{"isCollapse":false},"COLLECT_INFO":{"isCollapsible":true,"isCollapse":false}},"pos":{"x","y","h"},"oldIdIem":{},"activeIdx":0,"isCallBot":true,"dataRpNumStep":[]}}`
 - Biến xưng hô trong org: `{"variable":"gender1_ai","selected":{"attributeType":"CONTACT","showTooltip":"c_config/ai.genderAiTip","label":[["gender1"]," (?)"],"value":"gender1_ai","desc":"{{gender1_ai}}"}}`, `objVariables.gender1_ai=[["gender1"]," (?)"]`. Editor hiển thị thành thẻ "Anh/Chị".
@@ -87,10 +89,11 @@ Runtime không có trường lặp: **số câu trong `return_contents` = số l
   - BEGIN → bước đầu: handle `"1"`. STAFF nhánh INTENT: handle = id điều kiện. Hệ thống: handle `CUSTOMER_NOT_RESPONSE`/`CUSTOMER_RESPONSE_WRONG` + `"conditionId"`. ACTION/STAFF→ACTION/FROM_SYSTEM còn lại: handle `"2"`. FROM_SYSTEM nhánh: handle = id điều kiện. STAFF → COLLECT_INFO: handle `COLLECT_INFO`, `"animated":true`, + `conditionId`.
 
 ## 6. Checklist sau mỗi lần lưu (GET lại)
-1. `next_nodes` mọi node trỏ tới node tồn tại; mỗi CONDITION của STAFF có trong `org_nodes[STAFF].data.conditions`.
-2. Nhánh có `return_contents` đều có `next_nodes`; hỏi đáp/lặp lại/phản hồi sai trỏ bước báo chuyển; repeat editor khớp số câu.
-3. Mỗi STAFF chờ khách có NOT_RESPONSE + RESPONSE_WRONG; STAFF kết thúc không `next_nodes`.
-4. Mọi `intent_code`/`entity_code` có trong Kho tri thức; huấn luyện mới nhất `SUCCESS`.
-5. TRANSFER có `ids` nhân viên khác rỗng; `transfer_collected_info:true`.
-6. Biến `{{...}}` khai báo ở node và top-level; không còn "anh/chị" trong lời (dùng `{{gender1_ai}}`).
-7. `connections` khớp `next_nodes`; `version` tăng, `is_newest_version:true`.
+Tự động: `scripts/verify_callflow.py <bản GET>.json --sent payload.json --context tenant_context.json --mode post --base <bản mới nhất trước khi sửa>.json` (mã C1..C7 dưới đây; X<n> là mục bổ sung: X3 còn placeholder `<...>`, X4 chỉ có một trong id/uuid, X5 số node/dây lệch payload đã gửi). `omi_save.py` tự chạy sau khi lưu nhưng chưa truyền `--context`/`--base` → C4 và version tăng chỉ ra WARN; chạy lại tay đủ tham số trên bản GET đã lưu. Dự phòng khi chỉ kiểm được trong trang: `references/browser-snippets.md` §6.
+1. **C1** `next_nodes` mọi node trỏ tới node tồn tại; mỗi CONDITION của STAFF có trong `org_nodes[STAFF].data.conditions`.
+2. **C2** Nhánh có `return_contents` đều có `next_nodes`; hỏi đáp/lặp lại/phản hồi sai trỏ bước báo chuyển (script in WARN, soát theo spec); repeat editor khớp số câu.
+3. **C3** Mỗi STAFF chờ khách có NOT_RESPONSE + RESPONSE_WRONG; STAFF kết thúc không `next_nodes`.
+4. **C4** Mọi `intent_code`/`entity_code` có trong Kho tri thức; huấn luyện mới nhất `SUCCESS`.
+5. **C5** TRANSFER có `ids` nhân viên khác rỗng; `transfer_collected_info:true`.
+6. **C6** Biến `{{...}}` khai báo ở node và top-level; không còn "anh/chị" trong lời (dùng `{{gender1_ai}}`).
+7. **C7** `connections` khớp `next_nodes`; `version` tăng, `is_newest_version:true`.

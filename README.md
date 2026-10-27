@@ -12,7 +12,7 @@ Bộ skill dùng chung cho Claude Code và các agent khác, dùng để dựng 
 ## Cài đặt
 
 ### Bước 1 — Chuẩn bị
-- Git, Python 3.10+ (`pip install requests openpyxl`), Node.js 18+ (cho MCP OMI).
+- Git, Python 3.10+ (`pip install requests openpyxl`; thêm `python-docx pymupdf` để `extract_text.py` đọc docx/pdf), Node.js 18+ (cho MCP OMI).
 - Claude Code (CLI, ứng dụng desktop hoặc extension IDE).
 
 ### Bước 2 — Tải repo
@@ -40,13 +40,15 @@ Agent khác: trỏ hoặc chép 4 thư mục vào thư mục skill của agent �
 Kiểm tra: mở Claude Code, gõ `/` và thấy `omicall-callbot-gen-ai`, `omicall-callbot-flow`, `omicall-chatbot-gen-ai`, `omicall-omiflow`.
 
 ### Bước 4 — Cài MCP OMI (đăng nhập tự động, tra cứu, kiểm thử)
-Mỗi người tự chạy với tài khoản của mình (mật khẩu chỉ nằm trên máy bạn):
+Mỗi người tự chạy với tài khoản của mình (mật khẩu chỉ nằm trên máy bạn; agent chỉ soạn sẵn lệnh với placeholder, không cầm mật khẩu):
 ```bash
-claude mcp add OMICall-mcp --scope user -e OMICALL_USERNAME=<email> -e OMICALL_PASSWORD=<mật khẩu> -e OMICALL_DOMAIN=<domain> -- npx omicall-mcp
+claude mcp add OMICall-<domain> --scope user -e OMICALL_USERNAME=<email> -e OMICALL_PASSWORD=<mật khẩu> -e OMICALL_DOMAIN=<domain> -- npx -y omicall-mcp
 ```
-- `<domain>` là phần trước `.omicrm.io`, ví dụ `congtyabc`.
-- Nhiều tenant: thêm mỗi tenant một server với tên khác, ví dụ `OMICall-congtyabc`.
-- Không chạy được MCP thì skill vẫn dùng được: agent mở trang đăng nhập để bạn tự đăng nhập một lần.
+- `<domain>` là phần trước `.omicrm.io`, ví dụ `congtyabc` → server `OMICall-congtyabc`.
+- Nhiều tenant: mỗi tenant một server (tên `OMICall-<domain>` khác nhau).
+- Client khác (Codex, Gemini CLI, OpenCode, Cursor, VS Code…): mẫu lệnh và cấu hình ở `references/omi-mcp.md` Phụ lục A. Cài xong mở phiên mới.
+- Kiểm nhanh trong phiên: `python <thư mục skill>/scripts/omi_preflight.py --domain <domain>` (in 1 dòng JSON, không in token).
+- Không chạy được MCP thì skill vẫn dùng được: agent mở trang đăng nhập để bạn tự đăng nhập một lần, hoặc bạn tự đặt biến `OMI_TOKEN_FILE`.
 
 ### Bước 5 — Dùng
 Gõ lệnh skill kèm 3 thông tin: domain, tài khoản, mô tả nghiệp vụ (file hoặc nội dung). Ví dụ:
@@ -61,6 +63,9 @@ Callbot luồng cổ điển (call flow):
 ```
 Agent gửi bảng ý định/thực thể và file dữ liệu huấn luyện để bạn duyệt, đẩy file một lần qua Kho tri thức, dựng kịch bản trong lúc hệ thống huấn luyện, rồi gọi thử khi bạn đưa số điện thoại.
 
+### Dựng nhiều artefact cùng lúc
+Bài toán gồm nhiều phần phụ thuộc nhau (ví dụ chatbot thu SĐT → flow webhook tạo phiếu → callbot gọi lại): agent khảo sát tenant một lần (`tenant_context.json`), giao mỗi artefact cho một subagent, ghi id/URL vào sổ chung `scripts/manifest.py` và chỉ nối các phần khi đã GET và kiểm lại. Quy trình và mẫu giao việc: `references/omi-mcp.md` mục 7–8. Xuất bản, gắn hotline, gọi thử vẫn chờ bạn đồng ý.
+
 ## Phiên bản và cập nhật
 - **Tự cập nhật khi gọi skill**: bước đầu tiên của mọi skill là chạy `scripts/self_update.py`. Cài theo Bước 3 (junction/symlink vào bản git clone) thì skill tự `git pull` bản mới nhất, báo phiên bản đang dùng và đọc lại hướng dẫn nếu vừa đổi. Cài bằng cách chép tay thì skill chỉ báo khi có bản mới.
 - Cập nhật tay: `cd omicall-skill && git pull`.
@@ -73,7 +78,9 @@ Sửa nội dung skill xong (chưa commit), ở gốc repo chạy:
 python tools/release.py minor "Mô tả thay đổi" omicall-callbot-flow --push
 ```
 - `major`: đổi quy trình/đầu vào; `minor`: thêm quy tắc, bước, script; `patch`: sửa lỗi, sửa chữ.
-- Nhiều skill cùng lúc: liệt kê tên skill, hoặc `--all` khi sửa file dùng chung (`references/omi-mcp.md`, `scripts/self_update.py` — giữ giống hệt ở mọi skill).
+- Nhiều skill cùng lúc: liệt kê tên skill, hoặc `--all` khi sửa file dùng chung.
+- **File dùng chung** (giữ giống hệt ở mọi skill): nguồn duy nhất nằm trong `shared/`, sửa ở đó rồi chạy `python tools/sync_shared.py` (kiểm: `--check`). Gồm `references/omi-mcp.md`, `references/tenant_context.template.json`, `scripts/self_update.py`, `scripts/omi_session.py`, `scripts/omi_preflight.py`, `scripts/omi_api.py`, `scripts/omi_save.py`, `scripts/tenant_survey.py`, `scripts/manifest.py`, `scripts/extract_text.py`, `scripts/extract_template.py`; `scripts/cdp.py` chỉ ở `omicall-callbot-gen-ai` và `omicall-chatbot-gen-ai`.
+- Kiểm trước khi phát hành (chạy offline): `python tools/check_skills.py` (Đường nhanh, cụm an toàn, đường dẫn, dữ liệu nhạy cảm; thêm `--baseline-dir <bản chụp>` để so với bản trước khi sửa) và `python tools/selftest.py` (test trong `tests/`, chặn mạng). `release.py` tự từ chối khi file dùng chung lệch, `check_skills` có FAIL, hoặc git theo dõi `credentials.md` ngoài bản mẫu. Commit phát hành gồm thư mục skill được nêu, `CHANGELOG.md` và hạ tầng chung (`shared/`, `tools/`, `tests/`, `README.md`, `.gitignore`). Sửa file dùng chung thì nên phát hành `--all`, vì `sync_shared.py` ghi bản mới vào mọi skill.
 - Script tăng `VERSION`, sửa version hiển thị trong `SKILL.md` (`[vX.Y.Z]` đầu mô tả — hiện khi gõ `/`, và dòng "Phiên bản skill"), ghi dòng vào `CHANGELOG.md`, commit, gắn tag và push kèm tag.
 - Khi gọi skill, câu đầu tiên agent trả lời là `Đang dùng <tên skill> v<phiên bản>`.
 

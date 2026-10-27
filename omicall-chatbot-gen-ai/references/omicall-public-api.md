@@ -17,7 +17,7 @@ Query params:
 Body raw JSON:
 ```json
 {
-  "keyword": "0989123456",
+  "keyword": "<so_dien_thoai>",
   "tags": ["VIP"],
   "business": ["..."],
   "categories": ["..."],
@@ -30,18 +30,18 @@ Body raw JSON:
 
 `keyword` chấp nhận SĐT / email / họ tên. Chỉ cần `keyword`, các field khác optional.
 
-Response:
-```json
+Response (minh hoạ có chú thích `//` và `...`, không phải JSON hợp lệ):
+```jsonc
 {
   "status_code": 9999,
   "payload": {"total_items": 1, "items": [   // ⚠ docs thật: payload là object phân trang, KH nằm ở payload.items[]
     {
       "_id": "...",
       "fullName": "...",
-      "phones": [{"data": "0989123456", "type": "personal"}],
+      "phones": [{"data": "<so_dien_thoai>", "type": "personal"}],
       "emails": [...],
       "address": "...",
-      "attribute_structure": {
+      "attribute_structure": {   // Cần xác nhận: object hay mảng — xem ghi chú ngay dưới khối này
         "field_ma_tuy_chinh_1": "value",
         "field_ma_tuy_chinh_2": "value",
         ...
@@ -54,14 +54,14 @@ Response:
 }
 ```
 
-⚠ Theo docs thật, `attribute_structure` là **MẢNG** `[{field_code, field_type, value:[{display_value,data_type,value_type}]}]` (field_code: full_name, gender, phone_number, mail, address, job_title, note, ...). `attribute_structure` chứa **toàn bộ** thuộc tính KH bao gồm custom attributes theo cấu hình tenant.
+⚠ **Cần xác nhận** dạng `attribute_structure`: ví dụ trên ghi dạng object, còn theo docs thật là **MẢNG** `[{field_code, field_type, value:[{display_value,data_type,value_type}]}]` (field_code: full_name, gender, phone_number, mail, address, job_title, note, ...). Chưa có lần gọi thật nào trong skill chốt dạng nào — gọi thử một lần với khách mẫu rồi ghi lại tại đây. `attribute_structure` chứa **toàn bộ** thuộc tính KH bao gồm custom attributes theo cấu hình tenant.
 
 ### cURL mẫu
 ```bash
 curl -X POST "https://public-v1-stg.omicall.com/api/v2/contact/search?page=1&size=1" \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
-  -d '{"keyword": "0989123456"}'
+  -d '{"keyword": "<so_dien_thoai>"}'
 ```
 
 ### Cấu hình trong chatbot "Truy vấn" (Ngữ cảnh bắt đầu)
@@ -99,7 +99,7 @@ curl -X POST https://public-v1-stg.omicall.com/api/v2/contact/add \
   -d '{
     "refId": "CUST001",
     "fullName": "Nguyen Van A",
-    "phones": [{"data": "0989123456", "type": "personal", "valueType": "Cá nhân"}]
+    "phones": [{"data": "<so_dien_thoai>", "type": "personal", "valueType": "Cá nhân"}]
   }'
 ```
 
@@ -146,8 +146,8 @@ Trả về cấu trúc custom fields của tenant — dùng khi cần biết tr�
 Header: `x-api-key` (khác Bearer). Body: `sourceEmail*`, `targetEmail*`, `previewChanges` (bool), `callbackResultConfig` (optional webhook). Async — trả `requestId`.
 
 ## Gotchas
-- **`status_code: 9999` không phải HTTP status**. HTTP luôn 200 nếu request nhận được. Check field `status_code` trong body.
-- **API Token khác JWT session**: JWT session trong cookie `{domain}_omicrm_io` chỉ dùng cho chatbot-gateway (internal). API `https://api.omicall.com` cần API Token riêng, tenant cấp qua menu Cấu hình → API Key.
+- **`status_code: 9999` không phải HTTP status**. HTTP luôn 200 nếu request nhận được. Check field `status_code` trong body. Ngoại lệ đã gặp: dùng API Key trần làm Bearer cho `/api/v2/contact/search` nhận **HTTP 401** (api-reference.md mục "Diagnostic checks") → kiểm cả HTTP status lẫn `status_code`.
+- **API Token khác JWT session**: JWT phiên đăng nhập chỉ dùng cho chatbot-gateway (internal). Public API (`https://public-v1-stg.omicall.com`; `api.omicall.com` chỉ là trang docs) cần access token đổi từ API Key của tenant (Cấu hình → Tích hợp → Quản lý API), hết hạn 24h.
 - **`keyword` search khớp SĐT ở nhiều dạng**: `0989...`, `+84989...`, `84989...` — search thường trả kết quả cho cả 3.
 - **`size=1` khi chatbot dùng**: chỉ cần 1 KH khớp, không cần phân trang.
 - **Custom attributes trong `attribute_structure`**: field name = mã trường (không phải tên hiển thị) — dùng đúng mã đã cấu hình khi tạo attribute.

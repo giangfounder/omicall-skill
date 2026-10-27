@@ -1,0 +1,515 @@
+[
+ {
+  "type": "WEB_HOOK",
+  "side": "runtime",
+  "status": "verified",
+  "template": null,
+  "source": "references/node-catalog.md:27",
+  "verified_on": null,
+  "ui_hint": "Trigger API: thẻ \"API\" khi tạo flow; URL lấy từ GET kick_off.id"
+ },
+ {
+  "type": "GENERAL/CALL",
+  "side": "runtime",
+  "status": "verified",
+  "template": null,
+  "source": "references/node-catalog.md:43",
+  "verified_on": null,
+  "ui_hint": "Trigger Điều kiện → Cuộc gọi"
+ },
+ {
+  "type": "GENERAL/NEW_TICKET",
+  "side": "runtime",
+  "status": "verified",
+  "template": null,
+  "source": "references/node-catalog.md:56",
+  "verified_on": null,
+  "ui_hint": "Trigger Điều kiện → phiếu ghi mới"
+ },
+ {
+  "type": "GENERAL/CONTACT_STATUS",
+  "side": "runtime",
+  "status": "verified",
+  "template": null,
+  "source": "references/node-catalog.md:311",
+  "verified_on": "2026-10",
+  "ui_hint": "Trigger Điều kiện → Khách hàng → trạng thái (hộp tick, bấm theo ref)"
+ },
+ {
+  "type": "FORM",
+  "side": "runtime",
+  "status": "ui_only",
+  "template": null,
+  "source": "references/node-catalog.md:17",
+  "verified_on": null,
+  "ui_hint": "Chỉ liệt kê biểu mẫu đã xuất bản (ui-build-and-test.md mục 1)"
+ },
+ {
+  "type": "PERIOD",
+  "side": "runtime",
+  "status": "enum",
+  "template": null,
+  "source": "references/node-catalog.md:18",
+  "verified_on": null,
+  "ui_hint": "Dựng thử 1 lần trên UI → GET → extract_template"
+ },
+ {
+  "type": "EXCEL",
+  "side": "runtime",
+  "status": "enum",
+  "template": null,
+  "source": "references/node-catalog.md:19",
+  "verified_on": null,
+  "ui_hint": "Dựng thử 1 lần trên UI → GET → extract_template"
+ },
+ {
+  "type": "THIRD_PARTY",
+  "side": "runtime",
+  "status": "enum",
+  "template": null,
+  "source": "references/node-catalog.md:20",
+  "verified_on": null,
+  "ui_hint": "Dựng thử 1 lần trên UI → GET → extract_template"
+ },
+ {
+  "type": "DIRECT_CALL",
+  "side": "runtime",
+  "status": "enum",
+  "template": null,
+  "source": "references/node-catalog.md:21",
+  "verified_on": null,
+  "ui_hint": "Dựng thử 1 lần trên UI → GET → extract_template"
+ },
+ {
+  "type": "HARAVAN/SAPO/KIOTVIET/... (đối tác)",
+  "side": "runtime",
+  "status": "enum",
+  "template": null,
+  "source": "references/node-catalog.md:22",
+  "verified_on": null,
+  "ui_hint": "Dựng thử 1 lần trên UI → GET"
+ },
+ {
+  "type": "CONDITION",
+  "side": "runtime",
+  "status": "verified",
+  "template": null,
+  "source": "references/node-catalog.md:82",
+  "verified_on": null,
+  "ui_hint": "Logic → Điều kiện; giá trị so sánh không có khoảng trắng thừa"
+ },
+ {
+  "type": "CONDITION/NOT_HAVE_CONTACT_INTERACTIVE",
+  "side": "runtime",
+  "status": "verified",
+  "template": null,
+  "source": "references/node-catalog.md:319",
+  "verified_on": "2026-10",
+  "ui_hint": "Mở rộng → Kiểm tra tương tác khách hàng"
+ },
+ {
+  "type": "DELAY",
+  "side": "runtime",
+  "status": "verified",
+  "template": null,
+  "source": "references/node-catalog.md:105",
+  "verified_on": null,
+  "ui_hint": "Logic → Trì hoãn; không để là nút cuối chuỗi"
+ },
+ {
+  "type": "DELAY/specific",
+  "side": "runtime",
+  "status": "verified",
+  "template": null,
+  "source": "references/node-catalog.md:109",
+  "verified_on": null,
+  "ui_hint": "Ô thời gian cụ thể nhận gõ tay {{mã biến}} dạng HH:mm dd/MM/yyyy"
+ },
+ {
+  "type": "COLLECT_INFO/FROM_DEFINED_VARIABLE",
+  "side": "runtime",
+  "status": "verified",
+  "template": null,
+  "source": "references/node-catalog.md:120",
+  "verified_on": null,
+  "ui_hint": "Kiểu gán giá trị cố định"
+ },
+ {
+  "type": "COLLECT_INFO/AI_ENTITY",
+  "side": "runtime",
+  "status": "enum",
+  "template": null,
+  "source": "references/node-catalog.md:121",
+  "verified_on": null,
+  "ui_hint": "Chưa có JSON mẫu: dựng thử trên UI → GET"
+ },
+ {
+  "type": "DESCRIPTION",
+  "side": "runtime",
+  "status": "verified",
+  "template": null,
+  "source": "references/node-catalog.md:127",
+  "verified_on": null,
+  "ui_hint": "Ghi chú trên canvas, không nối cạnh"
+ },
+ {
+  "type": "ZALO_PERSONAL_MESSAGE/REQUEST_FRIEND",
+  "side": "runtime",
+  "status": "verified",
+  "template": null,
+  "source": "references/node-catalog.md:130",
+  "verified_on": null,
+  "ui_hint": "Trò chuyện → Zalo cá nhân"
+ },
+ {
+  "type": "MARKETING/AUTOCALL",
+  "side": "runtime",
+  "status": "verified",
+  "template": null,
+  "source": "references/node-catalog.md:133",
+  "verified_on": null,
+  "ui_hint": "Marketing → Gọi tự động"
+ },
+ {
+  "type": "MARKETING (SMS, ZNS, ZCC, Email, CALLBOT, Viber)",
+  "side": "runtime",
+  "status": "enum",
+  "template": null,
+  "source": "references/node-catalog.md:74",
+  "verified_on": null,
+  "ui_hint": "Dựng thử 1 lần trên UI → GET"
+ },
+ {
+  "type": "RANDOM",
+  "side": "runtime",
+  "status": "enum",
+  "template": null,
+  "source": "references/node-catalog.md:71",
+  "verified_on": null,
+  "ui_hint": "Logic → Random"
+ },
+ {
+  "type": "AI_ANALYZE",
+  "side": "runtime",
+  "status": "enum",
+  "template": null,
+  "source": "references/node-catalog.md:72",
+  "verified_on": null,
+  "ui_hint": "Logic → Phân tích thông tin"
+ },
+ {
+  "type": "INFO_DIALOG",
+  "side": "runtime",
+  "status": "verified",
+  "template": null,
+  "source": "references/node-catalog.md:275",
+  "verified_on": null,
+  "ui_hint": "Cửa sổ tương tác → thông tin; kiểm mục Nhân viên từng nút"
+ },
+ {
+  "type": "FORM_DIALOG",
+  "side": "runtime",
+  "status": "verified",
+  "template": null,
+  "source": "references/node-catalog.md:283",
+  "verified_on": null,
+  "ui_hint": "Cửa sổ tương tác → biểu mẫu; nhánh success_action_step"
+ },
+ {
+  "type": "BUTTON_DIALOG/VARIABLE_DIALOG/VIEW_DETAIL_DIALOG/FEATURE_DIALOG",
+  "side": "runtime",
+  "status": "enum",
+  "template": null,
+  "source": "references/node-catalog.md:277",
+  "verified_on": null,
+  "ui_hint": "Dựng thử 1 lần trên UI → GET"
+ },
+ {
+  "type": "OMI_BOT_AI",
+  "side": "runtime",
+  "status": "enum",
+  "template": null,
+  "source": "references/node-catalog.md:77",
+  "verified_on": null,
+  "ui_hint": "Trò chuyện → AI Chatbot (đã chạy qua UI, chưa có JSON mẫu)"
+ },
+ {
+  "type": "Kênh chat khác (ZALO_MESSAGE, FACEBOOK_*, LIVE_TALK_MESSAGE...)",
+  "side": "runtime",
+  "status": "enum",
+  "template": null,
+  "source": "references/node-catalog.md:76",
+  "verified_on": null,
+  "ui_hint": "Chỉ Zalo cá nhân REQUEST_FRIEND có JSON"
+ },
+ {
+  "type": "ADD_TICKET",
+  "side": "action",
+  "status": "verified",
+  "template": null,
+  "source": "references/node-catalog.md:178",
+  "verified_on": null,
+  "ui_hint": "Hành động → Tạo phiếu ghi"
+ },
+ {
+  "type": "ASSIGN_TICKET_*",
+  "side": "action",
+  "status": "verified",
+  "template": null,
+  "source": "references/node-catalog.md:192",
+  "verified_on": null,
+  "ui_hint": "Hành động → Cập nhật phiếu ghi"
+ },
+ {
+  "type": "PUSH_NOTIFICATION",
+  "side": "action",
+  "status": "verified",
+  "template": null,
+  "source": "references/node-catalog.md:204",
+  "verified_on": null,
+  "ui_hint": "Hành động → Tạo thông báo; nội dung gõ tay mã biến"
+ },
+ {
+  "type": "SEND_WEBHOOK",
+  "side": "action",
+  "status": "verified",
+  "template": null,
+  "source": "references/node-catalog.md:210",
+  "verified_on": null,
+  "ui_hint": "Hành động → API (chỉ gửi, không đọc kết quả)"
+ },
+ {
+  "type": "CREATE_CUSTOM_VARIABLE/API_V2",
+  "side": "action",
+  "status": "verified",
+  "template": null,
+  "source": "references/node-catalog.md:228",
+  "verified_on": null,
+  "ui_hint": "Biến liên kết tuỳ chỉnh → tab API; mỗi nút Hành động một biến"
+ },
+ {
+  "type": "CREATE_CUSTOM_VARIABLE/CHAT_GPT (tab LLM)",
+  "side": "action",
+  "status": "enum",
+  "template": null,
+  "source": "references/node-catalog.md:251",
+  "verified_on": null,
+  "ui_hint": "Catalog có khối CHAT_GPT [verify JSON] (mục 3.5) nhưng tab LLM bản 10/2026 chưa đối chiếu GET: Cần xác nhận. Dựng 1 nút LLM trên UI → GET → extract_template"
+ },
+ {
+  "type": "CREATE_CUSTOM_VARIABLE/CALCULATION",
+  "side": "action",
+  "status": "enum",
+  "template": null,
+  "source": "references/node-catalog.md:224",
+  "verified_on": null,
+  "ui_hint": "Dựng thử 1 lần trên UI → GET"
+ },
+ {
+  "type": "CREATE_CUSTOM_VARIABLE/RANDOM (biến)",
+  "side": "action",
+  "status": "enum",
+  "template": null,
+  "source": "references/node-catalog.md:225",
+  "verified_on": null,
+  "ui_hint": "Dựng thử 1 lần trên UI → GET"
+ },
+ {
+  "type": "CREATE_CUSTOM_VARIABLE/COMBINE_IMAGE",
+  "side": "action",
+  "status": "enum",
+  "template": null,
+  "source": "references/node-catalog.md:226",
+  "verified_on": null,
+  "ui_hint": "Dựng thử 1 lần trên UI → GET"
+ },
+ {
+  "type": "GET_RELATED",
+  "side": "action",
+  "status": "verified",
+  "template": null,
+  "source": "references/node-catalog.md:255",
+  "verified_on": null,
+  "ui_hint": "Có DELAY trước CLOSEST_CALL khi đi sau ADD_TICKET"
+ },
+ {
+  "type": "ADD_CONTACT + ASSIGN_SALE_ALLOCATION / ASSIGN_USER_OWNER_ID / ASSIGN_FILTER_CONTACT / ASSIGN_ATTRIBUTE_STRUCTURE (note)",
+  "side": "action",
+  "status": "verified",
+  "template": null,
+  "source": "references/node-catalog.md:329",
+  "verified_on": "2026-10",
+  "ui_hint": "Runtime đã thấy qua GET; bản editor một phần"
+ },
+ {
+  "type": "ADD_NEW_CONTACT (bản editor)",
+  "side": "editor",
+  "status": "ui_only",
+  "template": null,
+  "source": "references/node-catalog.md:153",
+  "verified_on": null,
+  "ui_hint": "UI đã dựng; runtime verify ở mục 6, editor một phần"
+ },
+ {
+  "type": "UPDATE_INFO_CONTACT (bản editor)",
+  "side": "editor",
+  "status": "ui_only",
+  "template": null,
+  "source": "references/node-catalog.md:154",
+  "verified_on": null,
+  "ui_hint": "UI đã dựng; runtime verify ở mục 6, editor một phần"
+ },
+ {
+  "type": "UPDATE_INFO_CONTACT/thuộc tính kiểu danh sách",
+  "side": "action",
+  "status": "enum",
+  "template": null,
+  "source": "references/ui-build-and-test.md:112",
+  "verified_on": null,
+  "ui_hint": "Không nhận biến: rẽ nhánh theo giá trị, mỗi nhánh chọn một giá trị cố định trên UI; JSON chưa kiểm chứng"
+ },
+ {
+  "type": "SEND_RESPONSE_WEBHOOK_API",
+  "side": "action",
+  "status": "enum",
+  "template": null,
+  "source": "references/node-catalog.md:160",
+  "verified_on": null,
+  "ui_hint": "Trả dữ liệu động cho caller; chưa có JSON mẫu: dựng thử → GET"
+ },
+ {
+  "type": "START_OTHER_CAMPAIGN",
+  "side": "action",
+  "status": "enum",
+  "template": null,
+  "source": "references/node-catalog.md:172",
+  "verified_on": null,
+  "ui_hint": "Flow đích phải là loại phụ thuộc; chưa có JSON mẫu"
+ },
+ {
+  "type": "PUSH_REMINDER",
+  "side": "action",
+  "status": "enum",
+  "template": null,
+  "source": "references/node-catalog.md:158",
+  "verified_on": null,
+  "ui_hint": "Dựng thử 1 lần trên UI → GET → extract_template"
+ },
+ {
+  "type": "SEND_DATA_TO_FORM",
+  "side": "action",
+  "status": "enum",
+  "template": null,
+  "source": "references/node-catalog.md:159",
+  "verified_on": null,
+  "ui_hint": "Dựng thử 1 lần trên UI → GET → extract_template"
+ },
+ {
+  "type": "UPLOAD_GOOGLE_SHEET",
+  "side": "action",
+  "status": "enum",
+  "template": null,
+  "source": "references/node-catalog.md:163",
+  "verified_on": null,
+  "ui_hint": "Dựng thử 1 lần trên UI → GET → extract_template"
+ },
+ {
+  "type": "UPDATE_CONVERSATION",
+  "side": "action",
+  "status": "enum",
+  "template": null,
+  "source": "references/node-catalog.md:164",
+  "verified_on": null,
+  "ui_hint": "Dựng thử 1 lần trên UI → GET → extract_template"
+ },
+ {
+  "type": "UPDATE_CALL_TRANSACTION",
+  "side": "action",
+  "status": "enum",
+  "template": null,
+  "source": "references/node-catalog.md:165",
+  "verified_on": null,
+  "ui_hint": "Dựng thử 1 lần trên UI → GET → extract_template"
+ },
+ {
+  "type": "UPDATE_INFO_EMPLOYEE",
+  "side": "action",
+  "status": "enum",
+  "template": null,
+  "source": "references/node-catalog.md:166",
+  "verified_on": null,
+  "ui_hint": "Dựng thử 1 lần trên UI → GET → extract_template"
+ },
+ {
+  "type": "UPDATE_CUSTOM_DIALOG",
+  "side": "action",
+  "status": "enum",
+  "template": null,
+  "source": "references/node-catalog.md:167",
+  "verified_on": null,
+  "ui_hint": "Dựng thử 1 lần trên UI → GET → extract_template"
+ },
+ {
+  "type": "OMI_BOT_EVALUATION",
+  "side": "action",
+  "status": "enum",
+  "template": null,
+  "source": "references/node-catalog.md:168",
+  "verified_on": null,
+  "ui_hint": "Dựng thử 1 lần trên UI → GET → extract_template"
+ },
+ {
+  "type": "ADD_CLASSIFY",
+  "side": "action",
+  "status": "enum",
+  "template": null,
+  "source": "references/node-catalog.md:170",
+  "verified_on": null,
+  "ui_hint": "Dựng thử 1 lần trên UI → GET → extract_template"
+ },
+ {
+  "type": "TRANSFER_CALL",
+  "side": "action",
+  "status": "enum",
+  "template": null,
+  "source": "references/node-catalog.md:171",
+  "verified_on": null,
+  "ui_hint": "Dựng thử 1 lần trên UI → GET → extract_template"
+ },
+ {
+  "type": "HOLDING_CALL",
+  "side": "action",
+  "status": "enum",
+  "template": null,
+  "source": "references/node-catalog.md:174",
+  "verified_on": null,
+  "ui_hint": "Dựng thử 1 lần trên UI → GET → extract_template"
+ },
+ {
+  "type": "ORDER_*_ACTION / PANCAKEPOS_ACTION / LARK_BASE",
+  "side": "action",
+  "status": "enum",
+  "template": null,
+  "source": "references/node-catalog.md:173",
+  "verified_on": null,
+  "ui_hint": "Dựng thử 1 lần trên UI → GET"
+ },
+ {
+  "type": "edges.connections",
+  "side": "edge",
+  "status": "verified",
+  "template": null,
+  "source": "references/api-reference.md:54",
+  "verified_on": null,
+  "ui_hint": "sourceHandle: case id | \"2\" | success_action_step | fail_action_step; targetHandle \"1\""
+ },
+ {
+  "type": "name_mappings",
+  "side": "editor",
+  "status": "unverified",
+  "template": null,
+  "source": "references/node-catalog.md:309",
+  "verified_on": null,
+  "ui_hint": "Bản editor camelCase, nút đầu BEGIN; chưa có mẫu JSON: lấy từ GET thật, sửa song song với nodes"
+ }
+]

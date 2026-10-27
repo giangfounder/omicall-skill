@@ -1,0 +1,4 @@
+{"_ghi_chu": "Ghép từ khuôn top-level trong omicall-omiflow/references/api-reference.md (Đối tượng flow), giá trị placeholder; chỉ dùng cho test nội bộ.",
+ "_id": "<flow_id>", "uuid": "<flow_uuid>", "tenant_id": "<tenant_id>", "name": "1 - [NHẬN LEAD]", "version": 1,
+ "is_publish": false, "is_draft": true, "status": "<status>", "kick_off": {"event": "WEB_HOOK", "id": null},
+ "nodes": [], "edges": {"connections": []}, "custom_variables": [], "name_mappings": []}

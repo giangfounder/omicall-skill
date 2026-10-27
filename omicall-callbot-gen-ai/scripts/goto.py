@@ -1,53 +1,97 @@
 # -*- coding: utf-8 -*-
-# goto.py <script_id> [domain] — navigate the OMiCRM page tab to the callbot editor (domain mặc định lấy từ phiên MCP)
-import json, sys, socket, base64, hashlib, struct, urllib.request
+"""Mở trình biên tập Callbot cho user xem realtime trên Chrome CDP (port 9222).
 
+  python goto.py <script_id> [--domain <domain>] [--port 9222]
+
+- domain mặc định lấy từ phiên (omi_session, không in token);
+- chọn tab có URL chứa '/ai/callbot/script/' đúng domain; không có thì tab bất kỳ cùng domain;
+- điều hướng bằng scripts/cdp.py (cần `pip install websocket-client`) và đọc phản hồi Page.navigate.
+--help không gọi mạng.
+"""
+import argparse
+import json
 import os
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from omi_session import claims, get_token
+import sys
+import urllib.parse
+import urllib.request
 
-script_id = sys.argv[1]
-domain = sys.argv[2] if len(sys.argv) > 2 else claims(get_token()).get('domain')
-url = 'https://%s.omicrm.io/ai/callbot/script/update/%s?lng=vi' % (domain, script_id)
+HERE = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, HERE)
 
-tabs = json.loads(urllib.request.urlopen('http://127.0.0.1:9222/json', timeout=5).read().decode())
-target = None
-for t in tabs:
-    if t['type'] == 'page' and 'omicrm.io' in t['url']:
-        target = t
-        break
-if not target:
-    print('no omicrm tab')
-    sys.exit(1)
-ws = target['webSocketDebuggerUrl']
 
-# --- plain python websocket handshake ---
-host, port = ws.split('://')[1].split('/')[0].split(':')
-sock = socket.create_connection((host, int(port)), timeout=8)
-key = base64.b64encode(b'hotchilli!').decode()
-req = ("GET /devtools/page/%s HTTP/1.1\r\nHost: %s:%s\r\nUpgrade: websocket\r\nConnection: Upgrade\r\n"
-       "Sec-WebSocket-Key: %s\r\nSec-WebSocket-Version: 13\r\n\r\n") % (target['id'], host, port, key)
-sock.sendall(req.encode())
-buf = b''
-while b'\r\n\r\n' not in buf:
-    buf += sock.recv(4096)
+def utf8_stdout():
+    for s in (sys.stdout, sys.stderr):
+        try:
+            s.reconfigure(encoding="utf-8")
+        except (AttributeError, ValueError):
+            pass
 
-def send(js):
-    data = json.dumps(js).encode()
-    mask = b'\x11\x22\x33\x44'
-    head = b'\x81'
-    ln = len(data)
-    if ln < 126:
-        head += bytes([0x80 | ln])
-    elif ln < 65536:
-        head += bytes([0x80 | 126]) + struct.pack('>H', ln)
-    else:
-        head += bytes([0x80 | 127]) + struct.pack('>Q', ln)
-    masked = bytes(b ^ mask[i % 4] for i, b in enumerate(data))
-    sock.sendall(head + mask + masked)
 
-send({"id": 1, "method": "Page.navigate", "params": {"url": url}})
-try:
-    print('navigated to:', url)
-finally:
-    sock.close()
+def pick_tab(tabs, domain):
+    host = "%s.omicrm.io" % domain
+    same = []
+    for t in tabs:
+        if t.get("type") != "page":
+            continue
+        try:
+            h = urllib.parse.urlparse(t.get("url") or "").hostname
+        except ValueError:
+            continue
+        if h == host:
+            same.append(t)
+    for t in same:
+        if "/ai/callbot/script/" in (t.get("url") or ""):
+            return t
+    return same[0] if same else None
+
+
+def main(argv=None):
+    utf8_stdout()
+    ap = argparse.ArgumentParser(description="Điều hướng tab OMiCRM tới trình biên tập Callbot (Chrome CDP).")
+    ap.add_argument("script_id", help="id kịch bản (lấy id mới nhất sau mỗi lần lưu)")
+    ap.add_argument("--domain", help="tên miền tenant, phần trước .omicrm.io (mặc định lấy từ phiên MCP)")
+    ap.add_argument("--port", type=int, default=9222, help="cổng remote debugging của Chrome")
+    a = ap.parse_args(argv)
+
+    domain = a.domain
+    if not domain:
+        from omi_session import claims, get_token
+        domain = claims(get_token()).get("domain")
+    if not domain:
+        print("Không xác định được domain; truyền --domain <domain>", file=sys.stderr)
+        return 2
+    url = "https://%s.omicrm.io/ai/callbot/script/update/%s?lng=vi" % (domain, urllib.parse.quote(str(a.script_id), safe=""))
+
+    try:
+        raw = urllib.request.urlopen("http://127.0.0.1:%d/json" % a.port, timeout=5).read().decode("utf-8")
+        tabs = json.loads(raw)
+    except Exception as e:  # noqa: BLE001
+        print("Không kết nối được Chrome CDP ở cổng %d: %s" % (a.port, e), file=sys.stderr)
+        return 1
+    tab = pick_tab(tabs, domain)
+    if not tab:
+        print("Không có tab nào của %s.omicrm.io trong Chrome CDP" % domain, file=sys.stderr)
+        return 1
+    try:
+        import cdp
+    except ImportError as e:
+        print("Thiếu thư viện cho cdp.py (%s): pip install websocket-client" % e, file=sys.stderr)
+        return 1
+    cdp.PORT = a.port
+    c = cdp.CDP(tab["webSocketDebuggerUrl"])
+    try:
+        res = c.call("Page.navigate", {"url": url})
+    except Exception as e:  # noqa: BLE001
+        print("Page.navigate lỗi: %s" % e, file=sys.stderr)
+        return 1
+    finally:
+        c.close()
+    if isinstance(res, dict) and res.get("errorText"):
+        print("Page.navigate lỗi: %s" % res["errorText"], file=sys.stderr)
+        return 1
+    print("navigated to: %s" % url)
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

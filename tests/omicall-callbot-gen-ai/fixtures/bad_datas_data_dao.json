@@ -1,0 +1,1031 @@
+{
+ "_ghi_chu": "Biến thể hỏng của good.json: ADD_CLASSIFY runtime dùng datas, editor dùng data (X4)",
+ "id": "script_mau_1",
+ "uuid": "uuid_mau_1",
+ "tenant_id": "tenant_mau",
+ "name": "Kich ban mau tu van",
+ "variables": [
+  {
+   "field_name": "Tên khách",
+   "field_code": "var_ten",
+   "field_value": "",
+   "field_type": "",
+   "type": "COLLECT_INFO",
+   "is_dynamic_attribute": true
+  },
+  {
+   "field_name": "Nhu cầu",
+   "field_code": "var_nhu_cau",
+   "field_value": "",
+   "field_type": "",
+   "type": "COLLECT_INFO",
+   "is_dynamic_attribute": true
+  }
+ ],
+ "collect_info_variables": [
+  {
+   "variable_code": "var_ten",
+   "variable_name": "Tên khách"
+  },
+  {
+   "variable_code": "var_nhu_cau",
+   "variable_name": "Nhu cầu"
+  }
+ ],
+ "nodes": [
+  {
+   "id": "begin_1",
+   "node_type": "BEGIN",
+   "is_collapse": false,
+   "ai_agent_config": {
+    "instruction": "# VAI TRÒ\nEm là trợ lý tư vấn của công ty mẫu.\n# XƯNG HÔ\n- Khi chưa biết khách là nam hay nữ: gọi \"anh/chị\".\n- Tuyệt đối không nói \"anh hoặc chị\".\n# LUỒNG CUỘC GỌI\nChào khách, hỏi nhu cầu, thu tên và nhu cầu, phân loại rồi hỏi khách còn cần hỗ trợ gì không.",
+    "start_call_instruction": "Dạ em chào anh/chị, em gọi từ bộ phận tư vấn của công ty mẫu. Anh/chị cho em xin ít phút được không ạ?",
+    "knowledge": {
+     "files": [],
+     "apis": []
+    },
+    "collect_variables": [
+     {
+      "entity_type_code": null,
+      "variable_code": "var_ten",
+      "variable_name": "Tên khách",
+      "variable_value": "Hỏi tên khách",
+      "variable_value_format": null,
+      "entire_user_sentence": null,
+      "node_id": null,
+      "option": "ENTITY",
+      "available_variables_detail": null,
+      "collect_info_executed_time": null,
+      "save_to_conv": null,
+      "remember": false,
+      "intent_code": null
+     },
+     {
+      "entity_type_code": null,
+      "variable_code": "var_nhu_cau",
+      "variable_name": "Nhu cầu",
+      "variable_value": "Hỏi nhu cầu của khách",
+      "variable_value_format": null,
+      "entire_user_sentence": null,
+      "node_id": null,
+      "option": "ENTITY",
+      "available_variables_detail": null,
+      "collect_info_executed_time": null,
+      "save_to_conv": null,
+      "remember": false,
+      "intent_code": null
+     }
+    ],
+    "ai_analyze": {
+     "content": null,
+     "context": null,
+     "conditions": [
+      {
+       "id": "i_co_nhu_cau",
+       "type": "CUSTOM_INTENT",
+       "intent_code": null,
+       "intent_name": null,
+       "name": "Khách có nhu cầu",
+       "keywords": null,
+       "operator": null,
+       "compare_operator": null,
+       "percent": 40,
+       "next_node": "clf_co_nhu_cau",
+       "repeat_contents": null,
+       "repeat_time": null,
+       "apply_targets": null,
+       "attachment": null,
+       "limit": null,
+       "limit_ai_config": null,
+       "data": [
+        {
+         "id": "d_co_nhu_cau",
+         "type": "OMI_BOT_INTENT",
+         "content": "Khách nói có nhu cầu tìm hiểu sản phẩm, ví dụ: có em, anh đang cần; chị muốn tìm hiểu thêm."
+        }
+       ],
+       "operator_type": "AND",
+       "action_steps": [
+        {
+         "action": "collect_variables",
+         "prompt": null,
+         "variables_code": [
+          "var_ten",
+          "var_nhu_cau"
+         ]
+        }
+       ]
+      },
+      {
+       "id": "i_tu_choi",
+       "type": "CUSTOM_INTENT",
+       "intent_code": null,
+       "intent_name": null,
+       "name": "Từ chối",
+       "keywords": null,
+       "operator": null,
+       "compare_operator": null,
+       "percent": 40,
+       "next_node": "clf_tu_choi",
+       "repeat_contents": null,
+       "repeat_time": null,
+       "apply_targets": null,
+       "attachment": null,
+       "limit": null,
+       "limit_ai_config": null,
+       "data": [
+        {
+         "id": "d_tu_choi",
+         "type": "OMI_BOT_INTENT",
+         "content": "Khách từ chối, không có nhu cầu, ví dụ: thôi em, anh không cần; chị không quan tâm."
+        }
+       ],
+       "operator_type": "AND",
+       "action_steps": null
+      },
+      {
+       "id": "i_ban",
+       "type": "CUSTOM_INTENT",
+       "intent_code": null,
+       "intent_name": null,
+       "name": "Khách bận",
+       "keywords": null,
+       "operator": null,
+       "compare_operator": null,
+       "percent": 40,
+       "next_node": null,
+       "repeat_contents": null,
+       "repeat_time": null,
+       "apply_targets": null,
+       "attachment": null,
+       "limit": null,
+       "limit_ai_config": null,
+       "data": [
+        {
+         "id": "d_ban",
+         "type": "OMI_BOT_INTENT",
+         "content": "Khách đang bận, hẹn gọi lại sau, ví dụ: anh đang họp; chị đang lái xe."
+        }
+       ],
+       "operator_type": "AND",
+       "action_steps": null
+      },
+      {
+       "id": "i_gap_nhan_vien",
+       "type": "CUSTOM_INTENT",
+       "intent_code": null,
+       "intent_name": null,
+       "name": "Gặp nhân viên",
+       "keywords": null,
+       "operator": null,
+       "compare_operator": null,
+       "percent": 40,
+       "next_node": "xfer_1",
+       "repeat_contents": null,
+       "repeat_time": null,
+       "apply_targets": null,
+       "attachment": null,
+       "limit": null,
+       "limit_ai_config": null,
+       "data": [
+        {
+         "id": "d_gap_nhan_vien",
+         "type": "OMI_BOT_INTENT",
+         "content": "Khách muốn nói chuyện với nhân viên, ví dụ: cho anh gặp người thật; chị muốn nói với tư vấn viên."
+        }
+       ],
+       "operator_type": "AND",
+       "action_steps": null
+      },
+      {
+       "id": "i_hoan_tat",
+       "type": "CUSTOM_INTENT",
+       "intent_code": null,
+       "intent_name": null,
+       "name": "Hoàn tất cuộc trò chuyện",
+       "keywords": null,
+       "operator": null,
+       "compare_operator": null,
+       "percent": 40,
+       "next_node": "end_1",
+       "repeat_contents": null,
+       "repeat_time": null,
+       "apply_targets": null,
+       "attachment": null,
+       "limit": null,
+       "limit_ai_config": null,
+       "data": [
+        {
+         "id": "d_hoan_tat",
+         "type": "OMI_BOT_INTENT",
+         "content": "Khách xác nhận không còn nhu cầu nào khác, ví dụ: không còn gì nữa đâu; hết rồi, cảm ơn em."
+        }
+       ],
+       "operator_type": "AND",
+       "action_steps": null
+      },
+      {
+       "data": [],
+       "id": "bot_can_not_answer",
+       "type": "bot_can_not_answer",
+       "intent_code": null,
+       "intent_name": null,
+       "name": null,
+       "keywords": null,
+       "operator": null,
+       "compare_operator": null,
+       "percent": null,
+       "next_node": "xfer_1",
+       "repeat_contents": null,
+       "repeat_time": null,
+       "apply_targets": null,
+       "attachment": null,
+       "limit": null,
+       "limit_ai_config": null,
+       "operator_type": null,
+       "action_steps": null
+      },
+      {
+       "data": [],
+       "id": "customer_not_response",
+       "type": "customer_not_response",
+       "intent_code": null,
+       "intent_name": null,
+       "name": null,
+       "keywords": null,
+       "operator": null,
+       "compare_operator": null,
+       "percent": null,
+       "next_node": null,
+       "repeat_contents": null,
+       "repeat_time": null,
+       "apply_targets": null,
+       "attachment": null,
+       "limit": null,
+       "limit_ai_config": null,
+       "operator_type": null,
+       "action_steps": null
+      }
+     ],
+     "collect_variables": null,
+     "collect_position": null,
+     "customer_response_wrong": null,
+     "customer_not_response": {
+      "waiting_time": 10,
+      "next_node": null,
+      "id": "customer_not_response",
+      "repeat_contents": null,
+      "prompt_end_conv": "",
+      "action_steps": null
+     },
+     "customer_has_response": null,
+     "bot_can_not_answer": {
+      "waiting_time": null,
+      "next_node": "xfer_1",
+      "id": null,
+      "repeat_contents": null,
+      "prompt_end_conv": null,
+      "action_steps": null
+     }
+    }
+   }
+  },
+  {
+   "id": "clf_co_nhu_cau",
+   "node_type": "ACTION",
+   "actions": [
+    {
+     "id": "u_clf_co_nhu_cau_1",
+     "type": "ADD_CLASSIFY",
+     "data": {
+      "ids": [
+       "Có nhu cầu"
+      ],
+      "classifies": [
+       {
+        "name": "Có nhu cầu"
+       }
+      ]
+     }
+    }
+   ],
+   "description": "Phân loại khách: có nhu cầu",
+   "variables": [
+    {
+     "field_name": "Tên khách",
+     "field_code": "var_ten",
+     "field_value": "",
+     "field_type": "",
+     "type": "COLLECT_INFO",
+     "is_dynamic_attribute": false
+    },
+    {
+     "field_name": "Nhu cầu",
+     "field_code": "var_nhu_cau",
+     "field_value": "",
+     "field_type": "",
+     "type": "COLLECT_INFO",
+     "is_dynamic_attribute": false
+    }
+   ],
+   "is_collapse": false
+  },
+  {
+   "id": "clf_tu_choi",
+   "node_type": "ACTION",
+   "actions": [
+    {
+     "id": "u_clf_tu_choi_1",
+     "type": "ADD_CLASSIFY",
+     "datas": {
+      "ids": [
+       "Không có nhu cầu"
+      ],
+      "classifies": [
+       {
+        "name": "Không có nhu cầu"
+       }
+      ]
+     }
+    }
+   ],
+   "description": "Phân loại khách: không có nhu cầu",
+   "variables": [],
+   "is_collapse": false
+  },
+  {
+   "id": "xfer_1",
+   "node_type": "ACTION",
+   "actions": [
+    {
+     "id": "a_xfer_1",
+     "type": "TRANSFER_CALL",
+     "data": {
+      "ids": [
+       "nhan_vien_mau_1"
+      ],
+      "actionType": "Extension",
+      "sip_number": "101",
+      "transfer_collected_info": true,
+      "transfer_customize_info": false
+     }
+    }
+   ],
+   "variables": [],
+   "is_collapse": false
+  },
+  {
+   "id": "end_1",
+   "node_type": "END_CALL",
+   "description": "Kết thúc cuộc gọi: chỉ cúp sau khi khách đã xác nhận không còn nhu cầu. Bot cảm ơn khách, chúc sức khỏe, xin phép kết thúc, lịch sự tạm biệt rồi kết thúc cuộc gọi.",
+   "actions": [],
+   "variables": [],
+   "is_collapse": false
+  }
+ ],
+ "org_nodes": [
+  {
+   "id": "begin_1",
+   "type": "BEGIN",
+   "width": 332,
+   "height": 600,
+   "position": {
+    "x": 0,
+    "y": 0
+   },
+   "data": {
+    "actionType": "CONDITION",
+    "startCallInstruction": "Dạ em chào anh/chị, em gọi từ bộ phận tư vấn của công ty mẫu. Anh/chị cho em xin ít phút được không ạ?",
+    "personality": "# VAI TRÒ\nEm là trợ lý tư vấn của công ty mẫu.",
+    "selectedTraining": [],
+    "collectData": [
+     {
+      "saveToConv": false,
+      "oldName": "Tên khách",
+      "name": "Tên khách",
+      "id": "var_ten",
+      "uuid": "var_ten",
+      "content": "Hỏi tên khách"
+     },
+     {
+      "saveToConv": false,
+      "oldName": "Nhu cầu",
+      "name": "Nhu cầu",
+      "id": "var_nhu_cau",
+      "uuid": "var_nhu_cau",
+      "content": "Hỏi nhu cầu của khách"
+     }
+    ],
+    "type": "BEGIN",
+    "conditions": [
+     {
+      "actionStep": [
+       {
+        "variablesCode": [
+         {
+          "id": "var_ten",
+          "label": "Tên khách",
+          "labelUnsigned": "ten khach",
+          "value": "var_ten",
+          "tooltipParent": "Thu khi khách có nhu cầu"
+         },
+         {
+          "id": "var_nhu_cau",
+          "label": "Nhu cầu",
+          "labelUnsigned": "nhu cau",
+          "value": "var_nhu_cau",
+          "tooltipParent": "Thu khi khách có nhu cầu"
+         }
+        ],
+        "action": "collect_variables",
+        "labelUnsigned": "thu thap thong tin",
+        "id": "step_co_nhu_cau",
+        "value": "collect_variables"
+       }
+      ],
+      "webhookId": "tenant_mau-webhook_mau_1",
+      "selectedIntent": null,
+      "personality": "",
+      "data": [
+       {
+        "isCustomComp": true,
+        "targetType": "OMI_BOT_INTENT",
+        "id": "d_co_nhu_cau",
+        "content": "Khách nói có nhu cầu tìm hiểu sản phẩm, ví dụ: có em, anh đang cần; chị muốn tìm hiểu thêm.",
+        "selected": false,
+        "chosen": false
+       }
+      ],
+      "name": "Khách có nhu cầu",
+      "id": "i_co_nhu_cau",
+      "operatorType": "AND",
+      "type": "CUSTOM_INTENT",
+      "webhookParam": {
+       "bot_id": "",
+       "conv_id": ""
+      }
+     },
+     {
+      "actionStep": [],
+      "webhookId": "tenant_mau-webhook_mau_2",
+      "selectedIntent": null,
+      "personality": "",
+      "data": [
+       {
+        "isCustomComp": true,
+        "targetType": "OMI_BOT_INTENT",
+        "id": "d_tu_choi",
+        "content": "Khách từ chối, không có nhu cầu, ví dụ: thôi em, anh không cần; chị không quan tâm.",
+        "selected": false,
+        "chosen": false
+       }
+      ],
+      "name": "Từ chối",
+      "id": "i_tu_choi",
+      "operatorType": "AND",
+      "type": "CUSTOM_INTENT",
+      "webhookParam": {
+       "bot_id": "",
+       "conv_id": ""
+      }
+     },
+     {
+      "actionStep": [],
+      "webhookId": "tenant_mau-webhook_mau_3",
+      "selectedIntent": null,
+      "personality": "",
+      "data": [
+       {
+        "isCustomComp": true,
+        "targetType": "OMI_BOT_INTENT",
+        "id": "d_ban",
+        "content": "Khách đang bận, hẹn gọi lại sau, ví dụ: anh đang họp; chị đang lái xe.",
+        "selected": false,
+        "chosen": false
+       }
+      ],
+      "name": "Khách bận",
+      "id": "i_ban",
+      "operatorType": "AND",
+      "type": "CUSTOM_INTENT",
+      "webhookParam": {
+       "bot_id": "",
+       "conv_id": ""
+      }
+     },
+     {
+      "actionStep": [],
+      "webhookId": "tenant_mau-webhook_mau_4",
+      "selectedIntent": null,
+      "personality": "",
+      "data": [
+       {
+        "isCustomComp": true,
+        "targetType": "OMI_BOT_INTENT",
+        "id": "d_gap_nhan_vien",
+        "content": "Khách muốn nói chuyện với nhân viên, ví dụ: cho anh gặp người thật; chị muốn nói với tư vấn viên.",
+        "selected": false,
+        "chosen": false
+       }
+      ],
+      "name": "Gặp nhân viên",
+      "id": "i_gap_nhan_vien",
+      "operatorType": "AND",
+      "type": "CUSTOM_INTENT",
+      "webhookParam": {
+       "bot_id": "",
+       "conv_id": ""
+      }
+     },
+     {
+      "actionStep": [],
+      "webhookId": "tenant_mau-webhook_mau_5",
+      "selectedIntent": null,
+      "personality": "",
+      "data": [
+       {
+        "isCustomComp": true,
+        "targetType": "OMI_BOT_INTENT",
+        "id": "d_hoan_tat",
+        "content": "Khách xác nhận không còn nhu cầu nào khác, ví dụ: không còn gì nữa đâu; hết rồi, cảm ơn em.",
+        "selected": false,
+        "chosen": false
+       }
+      ],
+      "name": "Hoàn tất cuộc trò chuyện",
+      "id": "i_hoan_tat",
+      "operatorType": "AND",
+      "type": "CUSTOM_INTENT",
+      "webhookParam": {
+       "bot_id": "",
+       "conv_id": ""
+      }
+     },
+     {
+      "data": [],
+      "id": "bot_can_not_answer",
+      "type": "bot_can_not_answer"
+     },
+     {
+      "promptEndConv": "",
+      "repeatContent": [],
+      "data": [],
+      "repeat": {
+       "label": "notRepeat",
+       "value": "0"
+      },
+      "waitingTime": 10,
+      "id": "customer_not_response",
+      "type": "customer_not_response",
+      "waitingTimeUnit": "second"
+     }
+    ],
+    "collapseObj": {
+     "NEXT_STEP": {
+      "isCollapse": false
+     },
+     "i_co_nhu_cau": {
+      "isCollapsible": true,
+      "isCollapse": false
+     },
+     "i_tu_choi": {
+      "isCollapsible": true,
+      "isCollapse": false
+     },
+     "i_ban": {
+      "isCollapsible": true,
+      "isCollapse": false
+     },
+     "i_gap_nhan_vien": {
+      "isCollapsible": true,
+      "isCollapse": false
+     },
+     "i_hoan_tat": {
+      "isCollapsible": true,
+      "isCollapse": false
+     },
+     "customer_not_response": {
+      "isCollapse": false
+     },
+     "bot_can_not_answer": {
+      "isCollapse": false
+     }
+    },
+    "vision": {
+     "enable": false
+    },
+    "hearing": {
+     "enable": false
+    },
+    "queryData": [],
+    "collectVariables": {}
+   }
+  },
+  {
+   "id": "clf_co_nhu_cau",
+   "type": "ACTION",
+   "width": 332,
+   "height": 205,
+   "position": {
+    "x": 400,
+    "y": 0
+   },
+   "data": {
+    "type": "ACTION",
+    "content": "",
+    "actions": [
+     {
+      "id": "o_u_clf_co_nhu_cau_1",
+      "type": "ADD_CLASSIFY",
+      "datas": {
+       "ids": [
+        "Có nhu cầu"
+       ],
+       "classifies": [
+        {
+         "name": "Có nhu cầu"
+        }
+       ]
+      }
+     }
+    ],
+    "handlers": {
+     "SOURCE": {
+      "id": "1",
+      "type": "target",
+      "position": "left"
+     },
+     "NEXT_STEP": {
+      "id": "2",
+      "type": "source",
+      "position": "right"
+     }
+    },
+    "count": 1,
+    "description": "Phân loại: có nhu cầu",
+    "name": "Phân loại có nhu cầu",
+    "statusActions": [],
+    "variables": [
+     {
+      "variable": "var_ten",
+      "selected": {}
+     },
+     {
+      "variable": "var_nhu_cau",
+      "selected": {}
+     }
+    ],
+    "collapseObj": {
+     "NEXT_STEP": {
+      "isCollapse": false
+     }
+    },
+    "pos": {
+     "x": 400.0,
+     "y": 0.0,
+     "h": 205.0
+    }
+   },
+   "orgDatas": [
+    {
+     "datas": {
+      "ids": [
+       "Có nhu cầu"
+      ],
+      "classifies": [
+       {
+        "name": "Có nhu cầu"
+       }
+      ]
+     },
+     "type": "ADD_CLASSIFY"
+    }
+   ]
+  },
+  {
+   "id": "clf_tu_choi",
+   "type": "ACTION",
+   "width": 332,
+   "height": 205,
+   "position": {
+    "x": 400,
+    "y": 250
+   },
+   "data": {
+    "type": "ACTION",
+    "content": "",
+    "actions": [
+     {
+      "id": "o_u_clf_tu_choi_1",
+      "type": "ADD_CLASSIFY",
+      "data": {
+       "ids": [
+        "Không có nhu cầu"
+       ],
+       "classifies": [
+        {
+         "name": "Không có nhu cầu"
+        }
+       ]
+      }
+     }
+    ],
+    "handlers": {
+     "SOURCE": {
+      "id": "1",
+      "type": "target",
+      "position": "left"
+     },
+     "NEXT_STEP": {
+      "id": "2",
+      "type": "source",
+      "position": "right"
+     }
+    },
+    "count": 1,
+    "description": "Phân loại: không có nhu cầu",
+    "name": "Phân loại không có nhu cầu",
+    "statusActions": [],
+    "variables": [],
+    "collapseObj": {
+     "NEXT_STEP": {
+      "isCollapse": false
+     }
+    },
+    "pos": {
+     "x": 400.0,
+     "y": 250.0,
+     "h": 205.0
+    }
+   },
+   "orgDatas": [
+    {
+     "datas": {
+      "ids": [
+       "Không có nhu cầu"
+      ],
+      "classifies": [
+       {
+        "name": "Không có nhu cầu"
+       }
+      ]
+     },
+     "type": "ADD_CLASSIFY"
+    }
+   ]
+  },
+  {
+   "id": "xfer_1",
+   "type": "ACTION",
+   "width": 332,
+   "height": 202,
+   "position": {
+    "x": 400,
+    "y": 500
+   },
+   "data": {
+    "variables": [
+     {
+      "variable": "var_",
+      "selected": {}
+     }
+    ],
+    "count": 1,
+    "name": "",
+    "description": "",
+    "type": "ACTION",
+    "actions": [
+     {
+      "objVariables": {},
+      "datas": {
+       "selected": {
+        "contact_id": "",
+        "avatar": "",
+        "gender": "male",
+        "value": "nhan_vien_mau_1",
+        "label": "101 - Nhan vien mau",
+        "sipNumber": "101",
+        "fullName": "Nhan vien mau",
+        "email": ""
+       },
+       "typeOptions": {
+        "Extension": [
+         {
+          "contact_id": "",
+          "avatar": "",
+          "gender": "male",
+          "value": "nhan_vien_mau_1",
+          "label": "101 - Nhan vien mau",
+          "sipNumber": "101",
+          "fullName": "Nhan vien mau",
+          "email": ""
+         }
+        ],
+        "Ring_group": [],
+        "Outer_group": []
+       },
+       "isTransferCustomizeInfo": false,
+       "isTransferCollectedInfo": true,
+       "customizeInfo": [],
+       "type": "TRANSFER_CALL",
+       "transferType": "Extension"
+      },
+      "id": "a_xfer_1",
+      "type": "TRANSFER_CALL"
+     }
+    ],
+    "content": "",
+    "collapseObj": {
+     "NEXT_STEP": {
+      "isCollapse": false
+     }
+    }
+   },
+   "orgDatas": [
+    {
+     "datas": {
+      "selected": {
+       "contact_id": "",
+       "avatar": "",
+       "gender": "male",
+       "value": "nhan_vien_mau_1",
+       "label": "101 - Nhan vien mau",
+       "sipNumber": "101",
+       "fullName": "Nhan vien mau",
+       "email": ""
+      },
+      "typeOptions": {
+       "Extension": [],
+       "Ring_group": [],
+       "Outer_group": []
+      },
+      "isTransferCustomizeInfo": false,
+      "isTransferCollectedInfo": true,
+      "customizeInfo": [],
+      "type": "TRANSFER_CALL",
+      "transferType": "Extension"
+     },
+     "type": "TRANSFER_CALL"
+    }
+   ]
+  },
+  {
+   "id": "end_1",
+   "type": "END_CALL",
+   "width": 332,
+   "height": 128,
+   "position": {
+    "x": 400,
+    "y": 750
+   },
+   "data": {
+    "id": "end_1",
+    "type": "END_CALL",
+    "content": "Dạ em cảm ơn anh/chị đã dành thời gian. Chúc anh/chị nhiều sức khỏe, em xin phép kết thúc cuộc gọi, em chào anh/chị ạ.",
+    "actions": [],
+    "handlers": {
+     "SOURCE": {
+      "id": "1",
+      "type": "target",
+      "position": "left"
+     },
+     "NEXT_STEP": {
+      "id": "2",
+      "type": "source",
+      "position": "right"
+     }
+    },
+    "count": 1,
+    "description": "Kết thúc cuộc gọi: chỉ cúp sau khi khách đã xác nhận không còn nhu cầu. Bot cảm ơn khách, chúc sức khỏe, xin phép kết thúc, lịch sự tạm biệt rồi kết thúc cuộc gọi.",
+    "collapseObj": {
+     "NEXT_STEP": {
+      "isCollapse": false
+     }
+    },
+    "pos": {
+     "x": 400.0,
+     "y": 750.0,
+     "h": 128.0
+    }
+   }
+  }
+ ],
+ "connections": [
+  {
+   "sourceHandle": "i_co_nhu_cau",
+   "animated": false,
+   "style": {
+    "strokeWidth": 3,
+    "stroke": "#00B1FF"
+   },
+   "id": "reactflow__edge-begin_1i_co_nhu_cau-clf_co_nhu_cau1",
+   "source": "begin_1",
+   "type": "custom",
+   "targetHandle": "1",
+   "target": "clf_co_nhu_cau"
+  },
+  {
+   "sourceHandle": "i_tu_choi",
+   "animated": false,
+   "style": {
+    "strokeWidth": 3,
+    "stroke": "#00B1FF"
+   },
+   "id": "reactflow__edge-begin_1i_tu_choi-clf_tu_choi1",
+   "source": "begin_1",
+   "type": "custom",
+   "targetHandle": "1",
+   "target": "clf_tu_choi"
+  },
+  {
+   "sourceHandle": "i_gap_nhan_vien",
+   "animated": false,
+   "style": {
+    "strokeWidth": 3,
+    "stroke": "#00B1FF"
+   },
+   "id": "reactflow__edge-begin_1i_gap_nhan_vien-xfer_11",
+   "source": "begin_1",
+   "type": "custom",
+   "targetHandle": "1",
+   "target": "xfer_1"
+  },
+  {
+   "sourceHandle": "i_hoan_tat",
+   "animated": false,
+   "style": {
+    "strokeWidth": 3,
+    "stroke": "#00B1FF"
+   },
+   "id": "reactflow__edge-begin_1i_hoan_tat-end_11",
+   "source": "begin_1",
+   "type": "custom",
+   "targetHandle": "1",
+   "target": "end_1"
+  },
+  {
+   "source": "begin_1",
+   "sourceHandle": "bot_can_not_answer",
+   "target": "xfer_1",
+   "targetHandle": "1",
+   "id": "reactflow__edge-begin_1bot_can_not_answer-xfer_11",
+   "type": "custom"
+  }
+ ],
+ "is_draft": false,
+ "created_date": 0,
+ "last_updated_date": 0,
+ "created_by": {
+  "id": "nguoi_tao_mau",
+  "name": "Nguoi tao mau",
+  "contact_id": "lien_he_mau"
+ },
+ "public_key": "khoa_mau",
+ "last_updated_by": {
+  "id": "nguoi_tao_mau",
+  "name": "Nguoi tao mau",
+  "contact_id": "lien_he_mau"
+ },
+ "is_deleted": false,
+ "collect_authentication_data": "NONE",
+ "system_intent_ids": [],
+ "system_entity_type_ids": [],
+ "version": 2,
+ "is_newest_version": true,
+ "layouts": [],
+ "is_publish": true,
+ "custom_variables": [],
+ "classifies": [
+  {
+   "name": "Có nhu cầu"
+  },
+  {
+   "name": "Không có nhu cầu"
+  }
+ ],
+ "variables_with_order": [],
+ "variable_list": {
+  "contact": [],
+  "ticket": []
+ },
+ "speed": 1.0,
+ "voice": "northern_female_ngocanh",
+ "type": "AI_AGENT",
+ "model": "gpt-4o-mini",
+ "is_interrupt": false,
+ "parse_datetime": false,
+ "ai_assistant_config": {
+  "features": [
+   {
+    "type": "SUMMARY",
+    "items": [
+     {
+      "prompt": "",
+      "auto_assign": true
+     }
+    ]
+   }
+  ],
+  "enable": false
+ }
+}

@@ -1,7 +1,7 @@
 # OMiCALL AI Chatbot (OmiBot) — API Reference & Schemas
 
 ## Base URL & Auth
-`https://chatbot-gateway-v1-stg.omicrm.com` (cùng gateway callbot). Header `Authorization: Bearer <accessToken>`. Token: cookie `{domain}_omicrm_io` → URL-decode → JSON → key `"2"` = JWT (HttpOnly → CDP). Login qua UI: `https://{domain}.omicrm.io` form `input[name=username]`/`input[name=password]`.
+`https://chatbot-gateway-v1-stg.omicrm.com` (cùng gateway callbot). Header `Authorization: Bearer <accessToken>`. Token: chỉ lấy qua `scripts/omi_session.py` (phiên MCP OMI `login_omicall_mcp`, hoặc `OMI_TOKEN_FILE` do user tự đặt) — không đọc cookie bằng JS/CDP, không điền form đăng nhập hộ user (SKILL.md mục "Đăng nhập an toàn").
 
 > Đã verify trên tenant thật — bot kênh Zalo OA, gpt-4o-mini, SCENARIO_HANDLER.
 
@@ -29,15 +29,15 @@
 ## Save (save_draft_v2 / publish_v2) — multipart
 ```python
 import requests, json
-tok = json.load(open(r"...\oanh_session.json", encoding="utf-8"))["token"]  # cookie key "2"
-bot = requests.post(base + "/omiai_assistant/get/{bot_id}", json={"_id": bot_id}, headers={"Authorization": "Bearer "+tok}).json()["payload"]
+from omi_session import headers  # scripts/omi_session.py — không in token
+bot = requests.post(base + "/omiai_assistant/get/{bot_id}", json={"_id": bot_id}, headers=headers()).json()["payload"]
 bot["system_prompt"] = "<nội dung prompt mới>"
 r = requests.post(base + "/omiai_assistant/save_draft_v2",
-    headers={"Authorization": "Bearer " + tok},
+    headers=headers(),
     files={"file": ("blob", json.dumps(bot, ensure_ascii=False).encode("utf-8"), "application/json")}, timeout=120)
 # r.json()["payload"]["_id"] — GIỮ NGUYÊN id. is_draft:true, is_newest_version:false.
 ```
-Verifed: gửi lại nguyên payload + sửa `system_prompt` → lưu 200, id không đổi, GET lại thấy prompt mới.
+Verifed: gửi lại nguyên payload + sửa `system_prompt` → lưu 200, id không đổi, GET lại thấy prompt mới. Đường nhanh: `scripts/omi_save.py bot payload.json --domain <domain>` (lưu nháp → GET lại → `scripts/validate_bot.py --mode post --sent`).
 
 ## RAG — "Dữ liệu khác" (warehouse_of_knowledge/other) — VERIFIED end-to-end
 UI: **Đào tạo tab → Dữ liệu khác → Quản lý Dữ liệu khác → Thêm mới** (dropzone). Giới hạn: **mỗi file ≤ 15MB**; hỗ trợ `.xls,.xlsx,.doc,.docx,.pdf,.txt,.rtf`. Slot thông tin: Tên (bắt buộc), Mô tả, Ngôn ngữ (vi/en), "BOT được đào tạo" (linked bots).
@@ -68,7 +68,7 @@ r = requests.post("https://filestore-v1-stg.omicrm.com/file_store/put_v2"
    "url_file":"<object name bước 1>", "file_type":"docx"},
  "add_bot_uuids":["<bot uuid>"],"remove_bot_uuids":[]}
 ```
-⚠ `object_info.url_file` = object `name` từ bước 1 (KHÔNG phải URL); `file_type` = đuôi file ("docx"). Response payload: `{"_id":"<record_id>","file_id":"file-<uuid>","status":"not_training","bots_use_file":[{"uuid","id":"<bot_id>","name","status"}],"language":"vi",...}`. `add_bot_uuids` dùng **bot `uuid`**; record sẽ hiện `bots_use_file` link bot ngay.
+⚠ `object_info.url_file` = object `name` từ bước 1 (KHÔNG phải URL); `file_type` = đuôi file ("docx"). Response payload: `{"_id":"<record_id>","file_id":"file-<uuid>","status":"not_training","bots_use_file":[{"uuid","id":"<bot_id>","name","status"}],"language":"vi",...}`. `add_bot_uuids` dùng **bot `uuid`**; record sẽ hiện `bots_use_file` link bot ngay — **Cần xác nhận**: lần chạy 10/2026 (mục "Tạo bot mới + nạp RAG" bước 3) lại thấy `bots_use_file:[]` sau `add`. Không dựa vào trường này để kết luận đã gắn bot; gắn bằng `vector_store` + `vector_store_ids` (bước 5) rồi GET kiểm.
 
 4) **List/Kiểm tra**: `POST external/omi_v2/warehouse_of_knowledge/other/search?page=1&size=10&lng=vi&utm_source=web` (body `{}`) → `payload.items[]`. ⚠ `other/get_list` trả `payload:null` — phải dùng `search`. GET `.../other/total_training/get` → tổng. `delete`/`training`/`reload_file_online` = `other/<type>/<id>`.
 
@@ -80,12 +80,14 @@ r = requests.post("https://filestore-v1-stg.omicrm.com/file_store/put_v2"
    "file_training_status":"completed","ref_id":"<record _id>","language":"vi","total_website":null,"is_post":false}],
  "all_file_ref_ids":["<record _id>"]}
 ```
-- `campaign.nodes[0].ai_analyze.vector_store_ids = ["<record _id>"]`.
+- `campaign.nodes[BEGIN].ai_analyze.vector_store_ids = ["<record _id>"]`.
 - Frontend serializer (chunk 57015): `vector_store_ids = vector_store.vector_store_files.map(e=>e.ref_id)` — **`ref_id` = record `_id` của `other/add`** (KHÔNG phải `file_id`). Sau save, GET lại: `file_training_status:"completed"` = training xong; `vector_store_id`/`vector_store_file_id` server tự sinh.
 
-6) **Prompt trong Ngữ cảnh bắt đầu**: "Hướng dẫn & Tính cách BOT" = `campaign.nodes[0].ai_analyze.content` (verify: set qua API → editor hiển thị trong drawer); "Khách hàng bắt đầu cuộc trò chuyện" dùng luôn `content`. Top-level `system_prompt` bổ sung prompt chung (2 nơi đều được).
+6) **Prompt trong Ngữ cảnh bắt đầu**: "Hướng dẫn & Tính cách BOT" = `campaign.nodes[BEGIN].ai_analyze.content` (verify: set qua API → editor hiển thị trong drawer); "Khách hàng bắt đầu cuộc trò chuyện" dùng luôn `content`. Top-level `system_prompt` bổ sung prompt chung (2 nơi đều được).
 
-7) **Bot `uuid` cần cho `add_bot_uuids`** = top-level `uuid` của bot (vd `87e27f1f-32fa-44aa-aadd-7c3d561a03e8`), khác `_id`.
+7) **Bot `uuid` cần cho `add_bot_uuids`** = top-level `uuid` của bot (dạng `<bot uuid>`, UUID v4), khác `_id`.
+
+8) **Huấn luyện**: sau `add` gọi `POST external…/omi_v2/warehouse_of_knowledge/other/training/<record _id>` (mục "Tạo bot mới + nạp RAG" bước 3). Cả chuỗi 1→8 + poll `other/search` tới `completed`: `scripts/rag_upload.py <file> --bot <bot.json> [--dry-run]`.
 
 ## Bot object (top-level — 52 keys, từ GET thật)
 ```json
@@ -115,7 +117,7 @@ r = requests.post("https://filestore-v1-stg.omicrm.com/file_store/put_v2"
      "waitingTimeUnit":"minute","repeat":{"value":"0","label":"notRepeat"},"repeatContent":[],"intent":null,"data":[]}
   ]}]
 ```
-CUSTOM_INTENT sẽ chèn vào `conditions[]` cùng vị trí (TRƯỚC 2 system) — schema intent đang xác minh bằng captor (xem cuối).
+CUSTOM_INTENT chèn vào `conditions[]` TRƯỚC 2 system. Schema mặc định (đã kiểm chứng 10/2026): mục "Trường hợp mô tả bằng ngôn ngữ tự nhiên (CUSTOM_INTENT)" bên dưới.
 
 ### campaign.nodes[] — BEGIN_CONTEXT (runtime)
 ```json
@@ -143,29 +145,32 @@ CUSTOM_INTENT sẽ chèn vào `conditions[]` cùng vị trí (TRƯỚC 2 system)
 
 Editor là **React Flow canvas** (như callbot). Palette bot: Ngữ cảnh (BEGIN_CONTEXT) / Kích hoạt ngữ cảnh (KICK_OFF_CONTEXT) / Điều kiện (CONDITION) / Hành động (ACTION) / Gửi tin nhắn chung (SEND_MESSAGE) / Thu thập thông tin (`$Pl.OMI_BOT_COLLECT_INFO`) / Kết thúc trò chuyện (`$Pl.END`). Node BEGIN ("Ngữ cảnh bắt đầu") có 2 khu: **Khách hàng bắt đầu cuộc trò chuyện** (= `ai_analyze.content`) và **Các trường hợp BOT nhận dạng** (= intents). Tab này = "Kịch bản".
 
-### Intent custom — DUAL-SCHEMA (đã verify render + runtime accept)
-- **Editor** `campaign.name_mappings[0].conditions` (CUSTOM_INTENT, 2 system CUỐI cùng):
+> Ký hiệu `[BEGIN]` trong tài liệu này (vd. `campaign.nodes[BEGIN]`, `campaign.name_mappings[BEGIN]`) = phần tử BEGIN_CONTEXT tìm theo `node_type`/`type`, không dựa vào vị trí `[0]` (cách `validate_bot.py`/`build_bot.py` tìm).
+
+### Intent custom — DUAL-SCHEMA kiểu chip (đã verify render + runtime accept) — CHỈ ĐỂ ĐỌC BOT CŨ
+Bot mới dùng kiểu ngôn ngữ tự nhiên (mục "Trường hợp mô tả bằng ngôn ngữ tự nhiên (CUSTOM_INTENT)"); giữ schema chip dưới đây để đọc/hiểu bot cũ.
+- **Editor** `campaign.name_mappings[BEGIN].conditions` (CUSTOM_INTENT, 2 system CUỐI cùng):
 ```json
 {"id":"<hid>","type":"CUSTOM_INTENT","name":"<Tên ý định>","personality":"","actionStep":[],
  "selectedIntent":null,"webhookId":"<tenant_id>-<uuid4>","webhookParam":{"bot_id":"<bot_id>","conv_id":""},
  "data":[{"isCustomComp":true,"targetType":"OMI_BOT_INTENT","id":"<uuid4>","content":"<câu khách nói>","selected":false,"chosen":false},
          {"isCustomComp":true,"targetType":"OMI_BOT_INTENT","id":"<uuid4>","content":"<câu khác>",...}]}
 ```
-- **Runtime** `campaign.nodes[0].ai_analyze.conditions[]`:
+- **Runtime** `campaign.nodes[BEGIN].ai_analyze.conditions[]`:
 ```json
 {"id":"<hid>","type":"CUSTOM_INTENT","name":"<Tên ý định>","next_node":"",
  "data":[{"id":"<uuid4>","type":"OMI_BOT_INTENT","content":"<câu khách nói>"}]}
 ```
 - `hid` dùng CHUNG id cho cặp editor+runtime (trong quá trình làm: mỗi cái dùng uuid riêng vẫn render OK; dùng chung = sạch hơn).
-- `name_mappings[0].conditions` phải kết thúc bằng đúng 2 system: `bot_can_not_answer` rồi `customer_not_response` (đừng chèn sau).
+- `name_mappings[BEGIN].conditions` phải kết thúc bằng đúng 2 system: `bot_can_not_answer` rồi `customer_not_response` (đừng chèn sau).
 - Editor pre-fill: `"data":[{"isCustomComp":true,"targetType":"OMI_BOT_INTENT","id":...,"content":...}]` → hiển thị nhận diện; thiếu isCustomComp/targetType → hàng intent TRỐNG.
 - Frontend serializer (chunk 57015, hàm G): runtime C-entry custom = `{id,type,next_node:"",name}` — không kèm data; data ở editor (`k.conditions`). Camera: rảnh data runtime vẫn OK.
 - save_draft_v2 round-trip GIỮ NGUYÊN; `bot_testing_v2` trả `{"payload":true}` cho cấu hình hợp lệ (chỉ ACK, text thật chạy qua LiveTalk realtime).
 
 ### Quy trình build Kịch bản bằng API
-1. GET bot → sửa `campaign.name_mappings[0].conditions` (custom + 2 system cuối) và `campaign.nodes[0].ai_analyze.conditions` (custom).
+1. GET bot → sửa `campaign.name_mappings[BEGIN].conditions` (custom + 2 system cuối) và `campaign.nodes[BEGIN].ai_analyze.conditions` (custom).
 2. `save_draft_v2` (multipart file) → GET lại → reload editor page (CDP `Page.navigate` + sleep 4s) → đọc node text `.react-flow__node` để xác nhận.
-3. Người dùng sau đó wire hành động/action trong UI (schema ACTION/Gửi tin nhắn/Kết thúc đang xác minh qua captor).
+3. Hành động đã có JSON kiểm chứng: Thu thập thông tin, case COMPARE, ACTION `SEND_WEBHOOK`, `START_OTHER_CAMPAIGN` (mục "Bot gọi kịch bản OMIFlow theo ý định" → "Bot thu SĐT rồi gọi webhook OMIFlow" bên dưới). Gửi tin nhắn chung, Kết thúc trò chuyện, chuyển nhân viên, Kích hoạt ngữ cảnh: chưa có JSON → làm trên UI (xem `references/node-status.json`).
 
 ## UI mapping (đã thấy trên editor Zalo OA Bot)
 - **Kịch bản tab**: "Ngữ cảnh bắt đầu" (= `system_prompt`), "Khách hàng bắt đầu cuộc trò chuyện", "Các trường hợp BOT nhận dạng" (= intents: bot_can_not_answer + customer_not_response + custom intent), nút **Xuất bản** / **Lưu lại**.
@@ -174,9 +179,10 @@ Editor là **React Flow canvas** (như callbot). Palette bot: Ngữ cảnh (BEGI
 - Đường dẫn: `/ai/bot/edit/{bot_id}?lng=vi` (sửa bot), `/ai/bot/create` (tạo mới), `/ai/bot` (danh sách).
 
 ## Validation checklist (sau mỗi save — GET lại)
+Tự động: `scripts/validate_bot.py <GET.json> --mode post --sent <payload.json>` (mã C1–C7 = mục 1–7 dưới đây; X1–X9 bổ sung, mô tả trong đầu script).
 1. `system_prompt` = nội dung mới (đã ghi).
 2. `is_draft:true`, `_id` giữ nguyên.
-3. Intents (khi cấu hình): đủ ở `campaign.name_mappings[0].conditions` LẪN `campaign.nodes[0].ai_analyze.conditions`; 2 system CUỐI.
+3. Intents (khi cấu hình): đủ ở `campaign.name_mappings[BEGIN].conditions` LẪN `campaign.nodes[BEGIN].ai_analyze.conditions`; 2 system CUỐI.
 4. `history_config`, `max_characters_reply`, `mode_reply` đúng yêu cầu.
 5. `assistant_name`/`assistant_description` hiển thị trong editor.
 6. Nếu dùng RAG: `vector_store`/`question_answer`/`file_originals` có dữ liệu + training OK, test tin nhắn trả lời bằng kiến thức.
@@ -203,7 +209,7 @@ sniff = r"""(() => { if (window.__omiCapsInjected) return {already:true}; window
 ```
 Rồi: `c.eval_js("JSON.stringify(window.__omiCaps.filter(x=>x.kind!=='fetch-resp'&&x.kind!=='xhr-resp').slice(-15))")`. Ghi schema học được vào đây.
 ## API Knowledge ("Truy vấn" trong Kho tri thức) — VERIFIED (save_draft_v2 round-trip OK)
-- Khai ở top-level `bot.api_knowledge[]` + bật cho Ngữ cảnh bắt đầu bằng `campaign.nodes[0].ai_analyze.api_knowledge_ids` (list `ref_id`). Entry không nằm trong `api_knowledge_ids` = có trong kho nhưng node không dùng.
+- Khai ở top-level `bot.api_knowledge[]` + bật cho Ngữ cảnh bắt đầu bằng `campaign.nodes[BEGIN].ai_analyze.api_knowledge_ids` (list `ref_id`). Entry không nằm trong `api_knowledge_ids` = có trong kho nhưng node không dùng.
 - Biến đa kênh có sẵn ở `campaign.variables` (type `SOCIAL`): `social_phone_number_linked` (SĐT khách liên kết Zalo OA/FB), `social_customer_name_linked`. Dùng trong body dạng `{{social_phone_number_linked}}`.
 ```json
 {"ref_id":"request_lay_thong_tin_chi_tiet_khach_hang","name":"Lấy thông tin chi tiết khách hàng từ CRM",
@@ -215,7 +221,7 @@ Rồi: `c.eval_js("JSON.stringify(window.__omiCaps.filter(x=>x.kind!=='fetch-res
  "param_type":"json","time_out":60,"api_response_guide":[],"retrieve_data":null}
 ```
 - `ref_id` = `request_` + slug tên (không dấu, `_`). Header rỗng mặc định: `[{"id":..,"key":"","value":""}]`.
-- Gọi API từ trang editor đã đăng nhập (CDP `Runtime.evaluate` + `fetch` với token cookie) — không cần lưu token ra file.
+- Gọi API bằng token từ `scripts/omi_session.py` (phiên MCP OMI hoặc `OMI_TOKEN_FILE` do user đặt); không lấy token từ cookie trang editor.
 - Public API OMICall (contact search…): xem `omicall-public-api.md` (token hết hạn 24h → header Authorization phải thay định kỳ).
 
 ## Diagnostic checks for customer API and LiveTalk tester — verified 2026-10-01
@@ -245,7 +251,7 @@ Public implementation evidence: `_app-577b9e01f73ca56b.js` (module 92318), `page
 
 ### Trường hợp mô tả bằng ngôn ngữ tự nhiên (CUSTOM_INTENT) — MẶC ĐỊNH dùng kiểu này (đã kiểm chứng 2026-10)
 Quy ước của user: trường hợp trong Ngữ cảnh bắt đầu **luôn** dùng chế độ **"Nhận dạng ý định"** + ô "Hướng dẫn BOT" viết bằng ngôn ngữ tự nhiên (khi nào chọn, khi nào KHÔNG chọn, ví dụ câu khách). **Không** dùng chế độ "Chủ đề / Ý định mong muốn" (chọn ý định hệ thống như `omi_intent_phone`).
-- Runtime `campaign.nodes[0].ai_analyze.conditions[]`: `{"id":"<case>","type":"CUSTOM_INTENT","intent_code":null,"intent_name":"<mô tả tự nhiên>","percent":40,"next_node":"<node id>"}`
+- Runtime `campaign.nodes[BEGIN].ai_analyze.conditions[]`: `{"id":"<case>","type":"CUSTOM_INTENT","intent_code":null,"intent_name":"<mô tả tự nhiên>","percent":40,"next_node":"<node id>"}`
 - Editor `name_mappings[BEGIN_CONTEXT].conditions[]`: `{"id":"<case>","type":"CUSTOM_INTENT","name":"","personality":"<mô tả tự nhiên>","data":[]}` (đổi chế độ trên UI có thể để sót object `intent` cũ — vô hại).
 - Đổi chế độ trên UI giữ nguyên "Nút kế tiếp". Sau khi bấm "Lưu lại" phải thấy toast "Cập nhật thành công" và nút chuyển "Đã lưu"; nếu không thấy thì GET lại — cú bấm đầu sau khi đóng ngăn kéo có thể không ăn.
 

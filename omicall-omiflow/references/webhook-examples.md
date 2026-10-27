@@ -14,7 +14,7 @@
 curl -X POST 'https://external-v1-stg.omicrm.com/api/campaign/webhook/{tenant_id}-{token}' \
   -H 'Content-Type: application/json' \
   -d '{
-    "so_dien_thoai_khach": "0912345678",
+    "so_dien_thoai_khach": "<so_dien_thoai>",
     "ten_khach_da_kenh": "Test KH Mới"
   }'
 ```
@@ -46,10 +46,11 @@ curl -X POST 'https://external-v1-stg.omicrm.com/api/campaign/webhook/{tenant_id
 ```bash
 curl -X POST 'https://external-v1-stg.omicrm.com/api/campaign/webhook/{tenant_id}-{token_B}' \
   -H 'Content-Type: application/json' \
-  -d '{"so_dien_thoai_khach": "0912345678"}'
+  -d '{"so_dien_thoai_khach": "<so_dien_thoai>"}'
 ```
 
 ### Response schema dự kiến
+**Sai nếu đặt vào `response_config`**: `response_config` của trigger API là body cố định, không chèn được dữ liệu tra cứu. Trả dữ liệu động phải dùng hành động "Trả kết quả qua API" (`SEND_RESPONSE_WEBHOOK_API`, schema chưa kiểm chứng: dựng thử một lần trên UI rồi GET — `SKILL.md` Gotchas, `node-catalog.md` mục 1a). Khối dưới chỉ là hình dạng body mong muốn:
 ```json
 {
   "status_code": 200,
@@ -64,7 +65,7 @@ curl -X POST 'https://external-v1-stg.omicrm.com/api/campaign/webhook/{tenant_id
 ### Cấu trúc flow dự kiến
 1. **Trigger API** (POST) nhận `so_dien_thoai_khach`.
 2. **Điều kiện**: Đa kênh → Số điện thoại = `{{so_dien_thoai_khach}}`.
-3. Trả response chèn biến `{{...}}` cho từng thuộc tính KH đã identify.
+3. Hành động `SEND_RESPONSE_WEBHOOK_API` trả body chèn biến `{{...}}` cho từng thuộc tính KH đã identify (chưa kiểm chứng).
 
 ## Bài học verify webhook
 
@@ -77,4 +78,4 @@ curl -X POST 'https://external-v1-stg.omicrm.com/api/campaign/webhook/{tenant_id
 - HTTP 404: URL sai — copy lại từ nút "Copy cURL" trong UI.
 - HTTP 401/403: token trong URL hết hạn — mở lại flow → cấu hình trigger API → nút refresh URL.
 - HTTP 500: flow bị lỗi nội bộ — xem log ở tab Lịch sử.
-- Response `status_code: 9999`: default schema chưa custom — nếu là Flow B thì phải sửa response schema.
+- Response `status_code: 9999`: body cố định của `response_config` — nếu là Flow B thì phải thêm hành động `SEND_RESPONSE_WEBHOOK_API` (chưa kiểm chứng), sửa `response_config` không trả được dữ liệu động.

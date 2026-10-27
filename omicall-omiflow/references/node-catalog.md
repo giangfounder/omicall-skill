@@ -121,7 +121,7 @@ Thời gian cụ thể [verify JSON]: `{"type":"DELAY","data":{"type":"specific"
 Kiểu AI bóc thực thể (chọn nội dung cần phân tích + Đối tượng hoặc Thực thể) chưa có JSON mẫu. Kiểu gán cố định, dùng làm giá trị mặc định khi tra cứu không ra:
 ```json
 {"type":"COLLECT_INFO","data":{"content":"Khách hàng mới","variables":[
-  {"variable_code":"<code10>","variable_name":"Tên bệnh nhân","variable_value":"Khách hàng mới","option":"FROM_DEFINED_VARIABLE"}]}}
+  {"variable_code":"<code10>","variable_name":"Tên khách","variable_value":"Khách hàng mới","option":"FROM_DEFINED_VARIABLE"}]}}
 ```
 
 ### 2.4 DESCRIPTION [verify JSON]
@@ -150,8 +150,8 @@ Ngăn "Hành động" trên UI có 22 mục (nhãn và mô tả chính thức):
 
 | Mã | Nhãn UI | Mô tả chính thức | Trạng thái |
 |---|---|---|---|
-| `ADD_NEW_CONTACT` | Thêm khách hàng | Gán cho nhân viên cụ thể hoặc cấu hình Phân Sale. SĐT đã có → `CONTACT_EXIST`, không tạo trùng | [UI đã dựng] |
-| `UPDATE_INFO_CONTACT` | Cập nhật khách hàng | Cập nhật thuộc tính khách hàng nếu đã tồn tại (phụ trách + ghi chú log, trạng thái pipeline + ghi chú…; chỉ đổi đúng thuộc tính đã khai báo). Giá trị trùng hiện tại → `NO_CHANGE` | [UI đã dựng] |
+| `ADD_NEW_CONTACT` | Thêm khách hàng | Gán cho nhân viên cụ thể hoặc cấu hình Phân Sale. SĐT đã có → `CONTACT_EXIST`, không tạo trùng | [UI đã dựng]; runtime verify (mục 6, dòng 329-334), editor một phần |
+| `UPDATE_INFO_CONTACT` | Cập nhật khách hàng | Cập nhật thuộc tính khách hàng nếu đã tồn tại (phụ trách + ghi chú log, trạng thái pipeline + ghi chú…; chỉ đổi đúng thuộc tính đã khai báo). Giá trị trùng hiện tại → `NO_CHANGE` | [UI đã dựng]; runtime verify (mục 6, dòng 329-334), editor một phần |
 | `ADD_TICKET` | Tạo phiếu ghi | Dùng thuộc tính từ biểu mẫu hoặc tự định nghĩa | [verify JSON] |
 | `UPDATE_INFO_TICKET` | Cập nhật phiếu ghi | Cập nhật thuộc tính phiếu ghi đã tồn tại (lưu thành các `ASSIGN_TICKET_*`) | [verify JSON] |
 | `PUSH_NOTIFICATION` | Tạo thông báo | Gửi thông báo đẩy đến nhân viên hoặc nhóm | [verify JSON] |
@@ -178,7 +178,7 @@ Mã chi tiết hơn (lưu bên trong khi chọn trường trong "Cập nhật �
 ### 3.1 ADD_TICKET [verify JSON]
 ```json
 {"type":"ADD_TICKET","data":{
-  "ticket_detail":{"name":"ĐĂNG KÝ KHÁM MỚI - {{<tenVar>}} - {{<sdtVar>}}",
+  "ticket_detail":{"name":"ĐĂNG KÝ MỚI - {{<tenVar>}} - {{<sdtVar>}}",
     "ticket_category_id":"<categoryId>","priority":"from_topic","tags":["<tagId>"],
     "description":"<HTML được phép>","is_not_draft":true,"source":"crud",
     "assignee_config":{"sale_allocation_type":"allocate_according_to_configuration","sale_allocation_ids":["<allocId>"],
@@ -209,7 +209,7 @@ Mã chi tiết hơn (lưu bên trong khi chọn trường trong "Cập nhật �
 
 ### 3.4 SEND_WEBHOOK (gọi API ra ngoài) [verify JSON]
 ```json
-{"type":"SEND_WEBHOOK","data":{"url":"https://<he-thong-ngoai>/api/TaoLichKham","method":"POST",
+{"type":"SEND_WEBHOOK","data":{"url":"https://<he-thong-ngoai>/api/<tao_ban_ghi>","method":"POST",
   "headers":[{"id":"<id>","key":"Content-Type","value":"application/json"}],
   "param_type":"json","body_type":"raw",
   "body_json":"{\n  \"fullname\": \"{{<tenVar>}}\",\n  \"phonenumber\": \"{{<sdtVar>}}\"\n}"}}
@@ -228,13 +228,13 @@ Chỉ **gửi** dữ liệu. Muốn **đọc kết quả trả về vào biến*
 API_V2 [verify JSON]:
 ```json
 {"type":"CREATE_CUSTOM_VARIABLE","data":{"type":"API_V2","config":{
-  "url":"https://<he-thong-ngoai>/api/BenhNhan","method":"POST","time_out":10,
+  "url":"https://<he-thong-ngoai>/api/<tra_cuu_khach>","method":"POST","time_out":10,
   "headers":[{"id":"<id>","key":"Content-Type","value":"application/json"}],
   "variables":[{"id":"<id>","key":"phoneNumber","value":"{{ct_phone_number}}","type":"text"}],
   "multi_variables":[
-    {"field_code":"<code10>","field_name":"Mã bệnh nhân","whole_response":false,"shorthand_query":"data|1.mabenhnhan",
-     "query":[{"type":"array","key":"data","pos":1},{"key":"mabenhnhan","filter":"="}]},
-    {"field_code":"<code10>","field_name":"Toàn bộ kết quả","whole_response":true,"shorthand_query":"tenBenhNhan","query":[{"key":"tenBenhNhan","filter":"="}]}],
+    {"field_code":"<code10>","field_name":"Mã khách","whole_response":false,"shorthand_query":"data|1.ma_khach",
+     "query":[{"type":"array","key":"data","pos":1},{"key":"ma_khach","filter":"="}]},
+    {"field_code":"<code10>","field_name":"Toàn bộ kết quả","whole_response":true,"shorthand_query":"ten_khach","query":[{"key":"ten_khach","filter":"="}]}],
   "param_type":"array","body_type":"raw"}}}
 ```
 - GET: tham số đặt thẳng vào URL (`...?phoneNumber={{<sdtVar>}}`); POST: `variables` là cặp key, value của body (`param_type:"array"`), hoặc `param_type:"json"` + `body_json`.
@@ -280,12 +280,12 @@ Mô hình chọn được: `gpt-3.5-turbo`, `gpt-4`, `gpt-4o-mini`.
 | `FEATURE_DIALOG` | Mở chi tiết Khách hàng, Phiếu ghi, Đa kênh, Lịch sử cuộc gọi [enum] |
 
 ```json
-{"type":"FORM_DIALOG","data":{"title":"KHÁCH BẤM PHÍM 1 - PHIẾU ĐĂNG KÝ KHÁM",
+{"type":"FORM_DIALOG","data":{"title":"KHÁCH BẤM PHÍM 1 - PHIẾU ĐĂNG KÝ",
   "sending_option":{"send_to_agent_contact":true,"agent_contact_ids":["<agentContactId>"],"send_to_agent_in_session":true},
   "ui_config":{"bg_color":"#00B1FF","audio":{}},"auto_close":{"unit":"minute","value":5},"dialog_id":"<uuid>",
   "variables":[{"name":"<code10>","type":"CUSTOM"},{"name":"<code10>","type":"COLLECT_INFO"}],
   "attribute_structures":[{"field_code":"<f>","field_name":"Họ và tên","field_type":"single_text","default_value":"{{<tenVar>}}","values":[{"default_value":"{{<tenVar>}}"}]},
-                          {"field_code":"<f>","field_name":"Ngày đăng ký khám","field_type":"date"}]}}
+                          {"field_code":"<f>","field_name":"Ngày hẹn","field_type":"date"}]}}
 ```
 Giá trị nhân viên nhập vào biểu mẫu thành biến `{{<field_code>}}` dùng ở các nút sau (ví dụ tạo phiếu ghi). `INFO_DIALOG` dùng `info_dialog_data:[{"type":"multiText","text":"<HTML có {{biến}}>"}]`. `send_to_agent_in_session:true` = gửi cho nhân viên đang nghe máy hoặc đang ở hội thoại.
 
@@ -304,9 +304,9 @@ Top-level `variables` liệt kê mọi biến đã dùng (`{"name":"<code10>","t
 
 ---
 
-## 7. Cấu trúc đã kiểm chứng bằng GET sau khi dựng trên editor (10/2026) — trigger theo trạng thái khách, SLA, thu hồi
+## 6. Cấu trúc đã kiểm chứng bằng GET sau khi dựng trên editor (10/2026) — trigger theo trạng thái khách, SLA, thu hồi
 
-Cách học nhanh: dựng **một** flow mẫu trên editor (mỗi loại nút một lần), lưu, `GET /omi_v2/campaign/get/{id}`, rồi sinh các flow còn lại bằng script từ chính JSON đó và lưu bằng `save_draft_v2` (multipart `file`; flow mới thì bỏ `_id`, `uuid`, `created_date`, `last_updated_date`). Mỗi flow lưu **hai bản**: `nodes[]` (runtime, snake_case) và `name_mappings[]` (editor, camelCase, nút đầu loại `BEGIN`). Sửa nút phải sửa cả hai, nếu không editor hiển thị "Chưa có dữ liệu".
+Cách học nhanh: dựng **một** flow mẫu trên editor (mỗi loại nút một lần), lưu, `GET /omi_v2/campaign/get/{id}`, rồi sinh các flow còn lại bằng script từ chính JSON đó và lưu bằng `save_draft_v2` (multipart `file`; flow mới thì bỏ `_id`, `uuid`, `created_date`, `last_updated_date` — Cần xác nhận: `omi_save.py` chỉ lưu nháp vào flow có `_id`, nên tạo vỏ flow trên UI trước, `api-reference.md` mục Lưu flow). Mỗi flow lưu **hai bản**: `nodes[]` (runtime, snake_case) và `name_mappings[]` (editor, camelCase, nút đầu loại `BEGIN`). Sửa nút phải sửa cả hai, nếu không editor hiển thị "Chưa có dữ liệu".
 
 **Trigger Điều kiện theo trạng thái khách** (node đầu, `kick_off.event:"GENERAL"`; mỗi trường hợp một nhánh, có thể chọn nhiều trạng thái):
 ```json
@@ -326,7 +326,7 @@ Cách học nhanh: dựng **một** flow mẫu trên editor (mỗi loại nút m
 
 **Delay** (nút `DELAY`): `actions:[{"id":"<id>","type":"DELAY","data":{"type":"after","value_string":"12","unit":"hour","use_time_slot":false,"days_in_week":null}}]`, `unit`: `minute|hour|day`.
 
-**Hành động khách hàng** (nút `ACTION`, runtime):
+**Hành động khách hàng** (nút `ACTION`, runtime) [verify JSON — runtime; bản editor một phần]:
 - `ADD_CONTACT` `{phone,email,full_name,country_code:"+84"}` (UI "Thêm khách hàng" tách thành 2 hành động) + `ASSIGN_SALE_ALLOCATION` `{ids:["<allocId>"],assign_priority:{agent_of_call:false,agent_join_conv:false},assign_criteria:{use_criteria:false,re_assign_when_match_previous:false,match_all:false,criteria:[]}}`.
 - Đổi người phụ trách: `ASSIGN_USER_OWNER_ID` `{ids:["<agentContactId>"],swap_owner_to_related:false,transfer_agent_note:"<ghi chú>",assign_criteria:{...}}`.
 - Đổi trạng thái: `ASSIGN_FILTER_CONTACT` `{filter_contacts:[{id:"<statusSetId>",index:1,note:"<ghi chú log>",opportunity_expired:{type:"SPECIFIC",time:""},total_deals_string:"",products:null}]}`.

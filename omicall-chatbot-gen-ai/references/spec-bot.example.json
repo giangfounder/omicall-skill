@@ -1,0 +1,55 @@
+{
+ "_ghi_chu": "Mẫu spec cho scripts/build_bot.py (vá trên GET thật của bot, giữ _id). Mọi giá trị <...> là chỗ điền từ tài liệu nghiệp vụ; thiếu thì ghi 'Cần xác nhận', không bịa. Loại bước hỗ trợ: collect_info (Thu thập thông tin + case biến khác rỗng), send_webhook (ACTION SEND_WEBHOOK), start_other_campaign (ACTION gọi flow phụ thuộc) — base phải có sẵn 1 nút cùng loại làm mẫu. Không hỗ trợ (làm UI): send_message, end, handoff/chuyển nhân viên, kick_off_context, ý định hệ thống. Chỉ khai trường hợp cần hành động riêng; hỏi đáp thuần để system_prompt + RAG lo.",
+ "system_prompt": "<Vai trò; luồng hội thoại chung; quy tắc đối thoại; guardrails; BIẾN DỮ LIỆU; định dạng; Definition of Success — SKILL.md Bước 4>",
+ "begin_content": "<Hướng dẫn & Tính cách BOT ở Ngữ cảnh bắt đầu (ai_analyze.content)>",
+ "intents": [
+  {
+   "key": "dang_ky_tu_van",
+   "description": "<Chọn khi khách muốn đăng ký/được gọi lại tư vấn. KHÔNG chọn khi khách chỉ hỏi thông tin. Ví dụ: 'cho mình đăng ký', 'gọi lại cho em nhé'>",
+   "then": {
+    "type": "collect_info",
+    "instruction": "<Hỏi số điện thoại để nhân viên gọi lại; xác nhận lại số trước khi chốt>",
+    "variables": [
+     {"name": "so_dien_thoai", "description": "<Số điện thoại khách cung cấp trong hội thoại>"}
+    ],
+    "when_collected": {
+     "variable": "so_dien_thoai",
+     "then": {
+      "type": "send_webhook",
+      "url": "<URL webhook OMIFlow WEB_HOOK>",
+      "method": "POST",
+      "body_json": "{\"so_dien_thoai\": \"{{var_sodienthoai}}\", \"ten\": \"{{social_customer_name}}\"}"
+     }
+    }
+   }
+  },
+  {
+   "key": "can_xu_ly_bang_flow",
+   "description": "<Chọn khi ... ; KHÔNG chọn khi ... ; ví dụ câu khách>",
+   "then": {
+    "type": "start_other_campaign",
+    "flow": {"value": "<flow uuid>", "_id": "<flow _id>", "label": "<tên flow phụ thuộc>"}
+   }
+  },
+  {
+   "key": "chi_nhan_dang_chua_noi",
+   "description": "<Trường hợp chỉ cần nhận dạng, nối hành động sau trên UI>",
+   "then": null
+  }
+ ],
+ "api_knowledge": [
+  {
+   "name": "Lấy thông tin chi tiết khách hàng từ CRM",
+   "url": "https://public-v1-stg.omicall.com/api/v2/contact/search?page=1&size=1",
+   "method": "POST",
+   "headers": [
+    {"key": "Content-Type", "value": "application/json"},
+    {"key": "Authorization", "value": "Bearer <access_token>"}
+   ],
+   "body_json": "{\n  \"keyword\": \"{{social_phone_number_linked}}\"\n}",
+   "prompt": "<Hướng dẫn BOT: khi nào gọi>",
+   "query_prompt": "<Hướng dẫn BOT đọc kết quả: schema trả về, xử lý khi trống hoặc status_code khác 9999>",
+   "time_out": 60
+  }
+ ]
+}

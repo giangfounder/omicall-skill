@@ -1,0 +1,55 @@
+{
+ "_meta": "Fixture ghép từ các khối [verify JSON] trong omicall-omiflow/references: trigger WEB_HOOK (node-catalog.md mục 1a), CONDITION 2 trường hợp (2.1), DELAY (2.2, dạng nút ở mục 6), ADD_TICKET (3.1), edge (api-reference.md mục DUAL). Chỉ chứng minh nhất quán nội bộ với tài liệu, KHÔNG chứng minh nền tảng chấp nhận payload. Mọi id là placeholder.",
+ "_id": "<id>",
+ "uuid": "<uuid>",
+ "tenant_id": "<tenant_id>",
+ "name": "1 - [MẪU KIỂM VALIDATOR]",
+ "is_publish": false,
+ "is_draft": true,
+ "kick_off": {"event": "WEB_HOOK", "id": "<tenant_id>-<token20>"},
+ "kick_off_ids": ["<tenant_id>-<token20>"],
+ "iteration_config": {"is_limit": false, "number_of_times": 0, "time_range": "none", "apply_for_branch": false},
+ "custom_variables": [],
+ "variables": [{"name": "<code_sdt>", "type": "CUSTOM"}, {"name": "<code_status>", "type": "CUSTOM"}],
+ "nodes": [
+  {"id": "<node_trigger>", "is_first_node": true, "node_type": "CONDITION", "description": "", "position": {"x": 0, "y": 0},
+   "conditions": [
+    {"id": "<case_trigger>", "type": "WEB_HOOK", "operator_type": "AND",
+     "data": [{"type": "WEB_HOOK", "method": "POST", "web_hook_id": "<tenant_id>-<token20>",
+       "multi_variables": [
+        {"field_code": "<code_sdt>", "field_name": "phone_number", "shorthand_query": "phone_number", "query": [{"key": "phone_number", "filter": "="}]},
+        {"field_code": "<code_status>", "field_name": "status", "shorthand_query": "status", "query": [{"key": "status", "filter": "="}]}],
+       "response_config": "{\n  \"message\": \"success\",\n  \"status_code\": 9999\n}",
+       "time_out": 5000, "skip_time_out": true}],
+     "next_nodes": ["<node_cond>"],
+     "iteration_config": {"is_limit": false, "number_of_times": 0, "time_range": "none", "apply_for_branch": false}}],
+   "next_nodes": [], "collapse_obj": {"<case_trigger>": false, "NEXT_STEP": false}},
+  {"id": "<node_cond>", "is_first_node": false, "node_type": "CONDITION", "description": "Rẽ nhánh theo status", "position": {"x": 400, "y": 0},
+   "conditions": [
+    {"id": "<case_a>", "operator_type": "AND", "data": [{"type": "COMPARE", "compare_conditions": [
+      {"operator": "EQUAL", "operator_type": "AND", "values": [{"start_value": "new"}], "target_type": "CUSTOM_VARIABLE", "is_dynamic_field": true, "field_code": "<code_status>", "field_name": "status"}]}],
+     "next_nodes": ["<node_delay>"]},
+    {"id": "<case_b>", "operator_type": "AND", "data": [{"type": "COMPARE", "compare_conditions": [
+      {"operator": "EQUAL", "operator_type": "AND", "values": [{"start_value": "update"}], "target_type": "CUSTOM_VARIABLE", "is_dynamic_field": true, "field_code": "<code_status>", "field_name": "status"}]}],
+     "next_nodes": ["<node_ticket>"]}],
+   "next_nodes": [],
+   "collapse_obj": {"<case_a>": false, "<case_b>": false, "NEXT_STEP": false}},
+  {"id": "<node_delay>", "is_first_node": false, "node_type": "DELAY", "description": "", "position": {"x": 800, "y": 0},
+   "actions": [{"id": "<a_delay>", "type": "DELAY", "data": {"type": "after", "value_string": "10", "unit": "second", "use_time_slot": false, "days_in_week": null}}],
+   "next_nodes": ["<node_ticket>"]},
+  {"id": "<node_ticket>", "is_first_node": false, "node_type": "ACTION", "description": "", "position": {"x": 1200, "y": 0},
+   "actions": [{"id": "<a_ticket>", "type": "ADD_TICKET", "data": {
+     "ticket_detail": {"name": "YÊU CẦU MỚI - {{<code_sdt>}}", "ticket_category_id": "<categoryId>", "priority": "from_topic", "tags": [],
+       "description": "<p>Trạng thái: {{<code_status>}}</p>", "is_not_draft": true, "source": "crud",
+       "assignee_config": {"sale_allocation_type": "allocate_according_to_configuration", "sale_allocation_ids": ["<allocId>"],
+         "priority_option": {"agent_join_conv": true, "agent_of_call": true}, "assign_criteria": {}}},
+     "created_by": {"option": "SYSTEM"}}}],
+   "next_nodes": []}
+ ],
+ "edges": {"connections": [
+  {"id": "reactflow__edge-<node_trigger><case_trigger>-<node_cond>1", "source": "<node_trigger>", "sourceHandle": "<case_trigger>", "target": "<node_cond>", "targetHandle": "1", "type": "custom", "animated": false, "hidden": false, "data": {}, "style": {"stroke": "#1e3150", "strokeWidth": 3}, "markerEnd": {"type": "arrowclosed", "color": "#1e3150", "width": 10, "height": 10, "strokeWidth": 1}},
+  {"id": "reactflow__edge-<node_cond><case_a>-<node_delay>1", "source": "<node_cond>", "sourceHandle": "<case_a>", "target": "<node_delay>", "targetHandle": "1", "type": "custom", "animated": false, "hidden": false, "data": {}, "style": {"stroke": "#1e3150", "strokeWidth": 3}, "markerEnd": {"type": "arrowclosed", "color": "#1e3150", "width": 10, "height": 10, "strokeWidth": 1}},
+  {"id": "reactflow__edge-<node_cond><case_b>-<node_ticket>1", "source": "<node_cond>", "sourceHandle": "<case_b>", "target": "<node_ticket>", "targetHandle": "1", "type": "custom", "animated": false, "hidden": false, "data": {}, "style": {"stroke": "#1e3150", "strokeWidth": 3}, "markerEnd": {"type": "arrowclosed", "color": "#1e3150", "width": 10, "height": 10, "strokeWidth": 1}},
+  {"id": "reactflow__edge-<node_delay>2-<node_ticket>1", "source": "<node_delay>", "sourceHandle": "2", "target": "<node_ticket>", "targetHandle": "1", "type": "custom", "animated": false, "hidden": false, "data": {}, "style": {"stroke": "#1e3150", "strokeWidth": 3}, "markerEnd": {"type": "arrowclosed", "color": "#1e3150", "width": 10, "height": 10, "strokeWidth": 1}}
+ ]}
+}

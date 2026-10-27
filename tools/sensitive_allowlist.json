@@ -1,0 +1,31 @@
+{
+  "_ghi_chu": "Danh sách giá trị được phép xuất hiện dù khớp mẫu dữ liệu nhạy cảm của tools/check_skills.py mục (f) và scripts/extract_template.py. Mỗi dòng phải ghi rõ nguồn hoặc lý do. Không thêm SĐT, email, domain hay token thật của khách.",
+  "phones": [
+    {"value": "0989123456", "ly_do": "số mẫu dạng dãy tăng dần trong ví dụ Public API (omicall-chatbot-gen-ai/references/omicall-public-api.md)"},
+    {"value": "0912345678", "ly_do": "số mẫu dạng dãy tăng dần trong ví dụ webhook (omicall-omiflow/references/webhook-examples.md)"},
+    {"value": "0901234567", "ly_do": "số mẫu dạng dãy tăng dần dùng trong fixture test"}
+  ],
+  "emails": [
+    {"value": "email@x.com", "ly_do": "email mẫu trong omicall-chatbot-gen-ai/references/omicall-public-api.md"},
+    {"value": "user@example.com", "ly_do": "domain example.com dành cho ví dụ (RFC 2606)"}
+  ],
+  "tenant_domains": [
+    {"value": "congtyabc", "ly_do": "tên tenant ví dụ trong README.md"},
+    {"value": "form", "ly_do": "form.omicrm.io là host biểu mẫu của nền tảng, không phải tenant"},
+    {"value": "www", "ly_do": "trang chủ nền tảng"},
+    {"value": "example", "ly_do": "tên ví dụ"}
+  ],
+  "session_files": [
+    {"value": "session.json", "ly_do": "tên file phiên MCP chuẩn ~/.omicall-mcp/session.json"}
+  ],
+  "jwt": [],
+  "system_ids": [
+    {"value": "634d6c3042d14f7ec2df05e4", "ly_do": "id hệ thống entity omi_entity_datetime (omicall-callbot-flow/references/api-reference.md)"},
+    {"value": "634d6c0142d14f7ec2df0073", "ly_do": "id hệ thống intent omi_intent_question (omicall-callbot-flow/references/api-reference.md)"}
+  ],
+  "literal": [
+    {"value": "Bearer <token>", "ly_do": "chữ mẫu trong tài liệu"},
+    {"value": "Bearer <accessToken>", "ly_do": "chữ mẫu trong tài liệu"},
+    {"value": "Bearer <jwt>", "ly_do": "chữ mẫu trong tài liệu"}
+  ]
+}

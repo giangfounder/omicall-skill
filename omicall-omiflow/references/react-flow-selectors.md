@@ -32,7 +32,8 @@ Góc dưới trái canvas:
 - Fit view: `button[aria-label="fit view"]`
 - Toggle interactivity (khoá canvas): `button[aria-label="toggle interactivity"]`
 
-## Kéo edge qua JS (khi kéo chuột thất bại)
+## Kéo edge qua JS (KHÔNG khuyến nghị)
+Cách chính để nối hai nút có sẵn là `left_click_drag` của công cụ trình duyệt từ chấm nguồn tới chấm đích (`ui-build-and-test.md` mục 7, đã kiểm chứng); không được thì sửa `next_nodes` + `edges.connections` trong JSON rồi lưu nháp. Giả lập PointerEvent dưới đây thường không ăn (`ui-build-and-test.md` mục 6), chỉ giữ làm tham khảo khi cần đọc toạ độ handle.
 
 ```js
 function fire(el, type, x, y) {

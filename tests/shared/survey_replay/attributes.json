@@ -1,0 +1,5 @@
+{"_ghi_chu":"Endpoint attribute/get_all CHƯA kiểm chứng: khuôn phản hồi dưới đây là giả định để test bộ suy is_list (field_code/field_type lấy theo node-catalog, mã kiểu danh sách là giả định). Không dùng làm schema.",
+ "payload":[{"field_code":"<code10_a>","field_name":"Loại xe","field_type":"multi_select","options":[{"name":"Xe tải"},{"name":"Xe tải Van"}]},
+  {"field_code":"<code10_b>","field_name":"Ngày đăng ký khám","field_type":"date"},
+  {"field_code":"<code10_c>","field_name":"Họ và tên","field_type":"single_text"},
+  {"field_code":"<code10_d>","field_name":"Hạng hội viên","field_type":"<mã chưa biết>"}]}

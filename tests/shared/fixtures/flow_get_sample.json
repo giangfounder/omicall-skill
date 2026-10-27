@@ -1,0 +1,278 @@
+{
+ "_meta": "Fixture ghép từ các khối [verify JSON] trong omicall-omiflow/references: trigger WEB_HOOK (node-catalog.md mục 1a), CONDITION (2.1), ACTION với ADD_TICKET (3.1), edge (api-reference.md mục DUAL). Id/tenant_id là chuỗi giả có dạng giống thật để kiểm việc che. Phần name_mappings chỉ là khung tối thiểu {id, type, data} để kiểm việc ghép theo id: schema editor CHƯA kiểm chứng. Test cài thêm SĐT, 'Bearer eyJ...', URL tenant giả lúc chạy. Chỉ chứng minh nhất quán nội bộ, không chứng minh nền tảng chấp nhận.",
+ "_id": "65a1b2c3d4e5f60718290001",
+ "uuid": "0a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d",
+ "tenant_id": "65a1b2c3d4e5f60718293a4b",
+ "name": "1 - [MẪU RÚT TEMPLATE]",
+ "version": 1,
+ "is_publish": false,
+ "is_draft": true,
+ "kick_off": {
+  "event": "WEB_HOOK",
+  "id": "65a1b2c3d4e5f60718293a4b-AbCdEfGhIjKlMnOpQrSt"
+ },
+ "kick_off_ids": [
+  "65a1b2c3d4e5f60718293a4b-AbCdEfGhIjKlMnOpQrSt"
+ ],
+ "nodes": [
+  {
+   "id": "6f1c2a9e-3b4d-4c5e-8f70-1a2b3c4d5e6f",
+   "is_first_node": true,
+   "node_type": "CONDITION",
+   "description": "",
+   "position": {
+    "x": 0,
+    "y": 0
+   },
+   "conditions": [
+    {
+     "id": "k3x9q2",
+     "type": "WEB_HOOK",
+     "operator_type": "AND",
+     "data": [
+      {
+       "type": "WEB_HOOK",
+       "method": "POST",
+       "web_hook_id": "65a1b2c3d4e5f60718293a4b-AbCdEfGhIjKlMnOpQrSt",
+       "multi_variables": [
+        {
+         "field_code": "qwertyuiop",
+         "field_name": "phone_number",
+         "shorthand_query": "phone_number",
+         "query": [
+          {
+           "key": "phone_number",
+           "filter": "="
+          }
+         ]
+        },
+        {
+         "field_code": "asdfghjklz",
+         "field_name": "status",
+         "shorthand_query": "status",
+         "query": [
+          {
+           "key": "status",
+           "filter": "="
+          }
+         ]
+        }
+       ],
+       "response_config": "{\n  \"message\": \"success\",\n  \"status_code\": 9999\n}",
+       "time_out": 5000,
+       "skip_time_out": true
+      }
+     ],
+     "next_nodes": [
+      "n7d2p1q"
+     ],
+     "iteration_config": {
+      "is_limit": false,
+      "number_of_times": 0,
+      "time_range": "none",
+      "apply_for_branch": false
+     }
+    }
+   ],
+   "next_nodes": [],
+   "collapse_obj": {
+    "k3x9q2": false,
+    "NEXT_STEP": false
+   }
+  },
+  {
+   "id": "n7d2p1q",
+   "is_first_node": false,
+   "node_type": "CONDITION",
+   "description": "Kiểm tra trạng thái",
+   "position": {
+    "x": 400,
+    "y": 0
+   },
+   "conditions": [
+    {
+     "id": "c1aa",
+     "operator_type": "AND",
+     "data": [
+      {
+       "type": "COMPARE",
+       "compare_conditions": [
+        {
+         "operator": "EQUAL",
+         "operator_type": "AND",
+         "values": [
+          {
+           "start_value": "new"
+          }
+         ],
+         "target_type": "CUSTOM_VARIABLE",
+         "is_dynamic_field": true,
+         "field_code": "asdfghjklz",
+         "field_name": "status"
+        }
+       ]
+      }
+     ],
+     "next_nodes": [
+      "n9z8y7w"
+     ]
+    }
+   ],
+   "next_nodes": [
+    "n9z8y7w"
+   ],
+   "collapse_obj": {
+    "c1aa": false,
+    "NEXT_STEP": false
+   }
+  },
+  {
+   "id": "n9z8y7w",
+   "is_first_node": false,
+   "node_type": "ACTION",
+   "description": "",
+   "position": {
+    "x": 800,
+    "y": 0
+   },
+   "actions": [
+    {
+     "id": "act01x",
+     "type": "ADD_TICKET",
+     "data": {
+      "ticket_detail": {
+       "name": "ĐĂNG KÝ MỚI - {{qwertyuiop}}",
+       "ticket_category_id": "65a1b2c3d4e5f60718290002",
+       "priority": "from_topic",
+       "tags": [
+        "65a1b2c3d4e5f60718290003"
+       ],
+       "description": "<p>Mô tả phiếu</p>",
+       "is_not_draft": true,
+       "source": "crud",
+       "assignee_config": {
+        "sale_allocation_type": "allocate_according_to_configuration",
+        "sale_allocation_ids": [
+         "65a1b2c3d4e5f60718290004"
+        ],
+        "priority_option": {
+         "agent_join_conv": true,
+         "agent_of_call": true
+        },
+        "assign_criteria": {}
+       }
+      },
+      "created_by": {
+       "option": "SYSTEM"
+      }
+     }
+    }
+   ],
+   "next_nodes": []
+  }
+ ],
+ "edges": {
+  "connections": [
+   {
+    "id": "reactflow__edge-6f1c2a9e-3b4d-4c5e-8f70-1a2b3c4d5e6fk3x9q2-n7d2p1q1",
+    "source": "6f1c2a9e-3b4d-4c5e-8f70-1a2b3c4d5e6f",
+    "sourceHandle": "k3x9q2",
+    "target": "n7d2p1q",
+    "targetHandle": "1",
+    "type": "custom",
+    "animated": false,
+    "hidden": false,
+    "data": {},
+    "style": {
+     "stroke": "#1e3150",
+     "strokeWidth": 3
+    },
+    "markerEnd": {
+     "type": "arrowclosed",
+     "color": "#1e3150",
+     "width": 10,
+     "height": 10,
+     "strokeWidth": 1
+    }
+   },
+   {
+    "id": "reactflow__edge-n7d2p1qc1aa-n9z8y7w1",
+    "source": "n7d2p1q",
+    "sourceHandle": "c1aa",
+    "target": "n9z8y7w",
+    "targetHandle": "1",
+    "type": "custom",
+    "animated": false,
+    "hidden": false,
+    "data": {},
+    "style": {
+     "stroke": "#1e3150",
+     "strokeWidth": 3
+    },
+    "markerEnd": {
+     "type": "arrowclosed",
+     "color": "#1e3150",
+     "width": 10,
+     "height": 10,
+     "strokeWidth": 1
+    }
+   },
+   {
+    "id": "reactflow__edge-n7d2p1q2-n9z8y7w1",
+    "source": "n7d2p1q",
+    "sourceHandle": "2",
+    "target": "n9z8y7w",
+    "targetHandle": "1",
+    "type": "custom",
+    "animated": false,
+    "hidden": false,
+    "data": {},
+    "style": {
+     "stroke": "#1e3150",
+     "strokeWidth": 3
+    },
+    "markerEnd": {
+     "type": "arrowclosed",
+     "color": "#1e3150",
+     "width": 10,
+     "height": 10,
+     "strokeWidth": 1
+    }
+   }
+  ]
+ },
+ "name_mappings": [
+  {
+   "id": "6f1c2a9e-3b4d-4c5e-8f70-1a2b3c4d5e6f",
+   "type": "BEGIN",
+   "data": {
+    "label": "Điều kiện"
+   }
+  },
+  {
+   "id": "n7d2p1q",
+   "type": "CONDITION",
+   "data": {
+    "label": "Kiểm tra trạng thái"
+   }
+  },
+  {
+   "id": "n9z8y7w",
+   "type": "ACTION",
+   "data": {
+    "label": "Tạo phiếu"
+   }
+  }
+ ],
+ "custom_variables": [],
+ "variables": [
+  {
+   "name": "qwertyuiop",
+   "type": "CUSTOM"
+  },
+  {
+   "name": "asdfghjklz",
+   "type": "CUSTOM"
+  }
+ ]
+}

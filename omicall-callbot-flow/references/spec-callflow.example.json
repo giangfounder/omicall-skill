@@ -1,6 +1,7 @@
 {
-  "_ghi_chu": "Spec mẫu trung tính cho build_callflow.py (gọi ra nhắc lịch hẹn dịch vụ). Thay tenant_id, id ý định/thực thể (lấy sau khi nhập Kho tri thức), nhân viên chuyển máy. Lời thoại viết 'anh/chị' sẽ tự đổi thành {{gender1_ai}}. Bước có common:true tự thêm nhánh chung theo quy tắc mặc định.",
-  "name": "<Tên doanh nghiệp> - Nhắc lịch hẹn dịch vụ (Call flow)",
+  "_ghi_chu": "Spec mẫu trung tính cho build_callflow.py (gọi ra nhắc lịch hẹn dịch vụ). Đặt 'name' theo dự án. Thay tenant_id, id ý định/thực thể (lấy sau khi nhập Kho tri thức), nhân viên chuyển máy. Lời thoại viết 'anh/chị' sẽ tự đổi thành {{gender1_ai}}. Bước có common:true tự thêm nhánh chung theo quy tắc mặc định.",
+  "_ghi_chu_id": "Id trong file: system_intent_id dạng 634d6c01… và 654c4bbf… đều chép từ ví dụ tài liệu (api-reference.md §1, mà tài liệu ghi 'Id trong ví dụ là giả lập') hoặc từ kịch bản thật, chưa đối chiếu nhiều tenant — Cần xác nhận, luôn lấy lại từ intent/list-by-tenant (ghi vào kho_tri_thuc.intents[].system_intent_id của tenant_context.json). Chỉ id thực thể hệ thống 634d6c30…/63560… trong build_callflow.py SYSTEM_ENTITY được builder ghi là dùng chung mọi tenant. Mọi giá trị <...> (id ý định, id thực thể, tenant_id, agent) là giả lập: build_callflow.py --context tenant_context.json điền theo mã, còn sót thì dừng.",
+  "name": "Mẫu - Nhắc lịch hẹn dịch vụ (Call flow)",
   "tenant_id": "<tenant_id>",
   "voice": "northern_female_ngocanh",
   "speed": 1.0,

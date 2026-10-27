@@ -1,0 +1,6 @@
+{"_ghi_chu": "Ghép từ khuôn top-level trong omicall-callbot-gen-ai/references/api-reference.md (Script object), giá trị placeholder; chỉ dùng cho test nội bộ.",
+ "id": "<script_id>", "uuid": "<script_uuid>", "tenant_id": "<tenant_id>", "name": "<tên kịch bản>", "type": "AI_AGENT",
+ "model": "gpt-4o-mini", "voice": "northern_female_ngocanh", "speed": 1.0, "version": 3, "is_newest_version": true,
+ "is_publish": false, "is_draft": false, "public_key": "<public_key>", "last_updated_date": "<ngày giờ 1>",
+ "variables": [], "collect_info_variables": [], "classifies": [{"name": ""}], "custom_variables": [],
+ "nodes": [], "org_nodes": [], "connections": []}

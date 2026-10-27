@@ -73,7 +73,7 @@ Cú pháp `{{ten_bien}}`, dùng được ở mọi ô nhập văn bản.
 ## 4. Cú pháp truy vấn JSON (webhook, đối tác tự định nghĩa, API)
 - Trường ở gốc: `personName`.
 - Trường trong object: `today-checkinTime` (dấu `-` đi vào object con). Trong JSON lưu của API_V2: `query:[{"key":"data"},{"key":"game_url"}]`, `shorthand_query:"data.game_url"`.
-- Phần tử mảng: `month|1-checkinTime` (vị trí bắt đầu từ 1). Trong API_V2: `{"type":"array","key":"data","pos":1}`, `shorthand_query:"data|1.mabenhnhan"`.
+- Phần tử mảng: `month|1-checkinTime` (vị trí bắt đầu từ 1). Trong API_V2: `{"type":"array","key":"data","pos":1}`, `shorthand_query:"data|1.ma_khach"`.
 - Ghép nhiều trường: bật "Kết hợp nhiều biến", liệt kê `placeName, deviceName`.
 
 ## 5. Nút Logic và nút AI

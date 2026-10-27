@@ -12,6 +12,7 @@ Các bản trước 2026-10-23 được đánh số lại theo lịch sử commi
 ## omicall-callbot-flow
 | Phiên bản | Ngày | Commit | Thay đổi |
 |---|---|---|---|
+| 1.4.0 | 2026-10-27 | tag `omicall-callbot-flow/v1.4.0` | Đường nhanh: preflight token, khảo sát tenant trước thiết kế, trích tài liệu, builder và validator offline cho từng skill, omi_save lưu nháp kèm GET kiểm tự động, node-status.json, shared/ + sync_shared + check_skills, xoá dashboard realtime và dữ liệu khách sót |
 | 1.3.0 | 2026-10-23 | tag `omicall-callbot-flow/v1.3.0` | Tối ưu token: rút mô tả, tách phần ít dùng sang references, cache self_update 6 giờ; sửa script và xoá dữ liệu khách |
 | 1.2.2 | 2026-10-23 | tag `omicall-callbot-flow/v1.2.2` | Hiện phiên bản trong mô tả skill ([vX.Y.Z], thấy khi gõ /) và câu đầu tiên agent trả lời; release.py tự cập nhật |
 | 1.2.1 | 2026-10-23 | tag `omicall-callbot-flow/v1.2.1` | omi-mcp.md: thêm nguồn gói npm và yêu cầu Node 18+, đường dẫn cấu hình Claude Desktop, danh mục công cụ theo module cần bật, xử lý lỗi thường gặp |
@@ -24,6 +25,7 @@ Các bản trước 2026-10-23 được đánh số lại theo lịch sử commi
 ## omicall-callbot-gen-ai
 | Phiên bản | Ngày | Commit | Thay đổi |
 |---|---|---|---|
+| 1.10.0 | 2026-10-27 | tag `omicall-callbot-gen-ai/v1.10.0` | Đường nhanh: preflight token, khảo sát tenant trước thiết kế, trích tài liệu, builder và validator offline cho từng skill, omi_save lưu nháp kèm GET kiểm tự động, node-status.json, shared/ + sync_shared + check_skills, xoá dashboard realtime và dữ liệu khách sót |
 | 1.9.0 | 2026-10-23 | tag `omicall-callbot-gen-ai/v1.9.0` | Tối ưu token: rút mô tả, tách phần ít dùng sang references, cache self_update 6 giờ; sửa script và xoá dữ liệu khách |
 | 1.8.2 | 2026-10-23 | tag `omicall-callbot-gen-ai/v1.8.2` | Hiện phiên bản trong mô tả skill ([vX.Y.Z], thấy khi gõ /) và câu đầu tiên agent trả lời; release.py tự cập nhật |
 | 1.8.1 | 2026-10-23 | tag `omicall-callbot-gen-ai/v1.8.1` | omi-mcp.md: thêm nguồn gói npm và yêu cầu Node 18+, đường dẫn cấu hình Claude Desktop, danh mục công cụ theo module cần bật, xử lý lỗi thường gặp |
@@ -44,6 +46,7 @@ Các bản trước 2026-10-23 được đánh số lại theo lịch sử commi
 ## omicall-chatbot-gen-ai
 | Phiên bản | Ngày | Commit | Thay đổi |
 |---|---|---|---|
+| 1.7.0 | 2026-10-27 | tag `omicall-chatbot-gen-ai/v1.7.0` | Đường nhanh: preflight token, khảo sát tenant trước thiết kế, trích tài liệu, builder và validator offline cho từng skill, omi_save lưu nháp kèm GET kiểm tự động, node-status.json, shared/ + sync_shared + check_skills, xoá dashboard realtime và dữ liệu khách sót |
 | 1.6.0 | 2026-10-26 | tag `omicall-chatbot-gen-ai/v1.6.0` | Trường hợp bot mô tả tự nhiên (CUSTOM_INTENT); bot thu SĐT gọi webhook OMIFlow; /end khi test; khác biệt Trò chuyện thử và kênh thật; biến LiveTalk social_lt_phone_number; mã kiểu phân bổ; bẫy giao diện editor |
 | 1.5.0 | 2026-10-23 | tag `omicall-chatbot-gen-ai/v1.5.0` | Tối ưu token: rút mô tả, tách phần ít dùng sang references, cache self_update 6 giờ; sửa script và xoá dữ liệu khách |
 | 1.4.0 | 2026-10-23 | tag `omicall-chatbot-gen-ai/v1.4.0` | Bước 7: gắn bot vào LiveTalk test, bộ câu hỏi thử 14 nhóm, chấm 5 tiêu chí, bảng lỗi → chỗ sửa, vòng tối ưu trước/sau (references/livetalk-test-optimize.md, scripts/eval_report.py) |
@@ -60,6 +63,7 @@ Các bản trước 2026-10-23 được đánh số lại theo lịch sử commi
 ## omicall-omiflow
 | Phiên bản | Ngày | Commit | Thay đổi |
 |---|---|---|---|
+| 1.12.0 | 2026-10-27 | tag `omicall-omiflow/v1.12.0` | Đường nhanh: preflight token, khảo sát tenant trước thiết kế, trích tài liệu, builder và validator offline cho từng skill, omi_save lưu nháp kèm GET kiểm tự động, node-status.json, shared/ + sync_shared + check_skills, xoá dashboard realtime và dữ liệu khách sót |
 | 1.11.1 | 2026-10-26 | tag `omicall-omiflow/v1.11.1` | Mục 7 ui-build-and-test: AI điền CRM sau cuộc gọi (bóc trường bằng LLM từ ca_ai_assistant, thuộc tính danh sách không nhận biến nên rẽ nhánh theo giá trị), thao tác canvas xoá/nối cạnh, subagent song song dùng tab riêng |
 | 1.11.0 | 2026-10-26 | tag `omicall-omiflow/v1.11.0` | Mẫu B4b hiện phím khách bấm theo chi nhánh; gắn webhook flow vào Tương tác phím (xuất bản trước); xuất bản đổi id flow; lưu flow ngay sau chọn trigger; cách học payload từ flow có sẵn; lưu ý Browser pane dùng chung |
 | 1.10.0 | 2026-10-26 | tag `omicall-omiflow/v1.10.0` | Trường hợp bot mô tả tự nhiên (CUSTOM_INTENT); bot thu SĐT gọi webhook OMIFlow; /end khi test; khác biệt Trò chuyện thử và kênh thật; biến LiveTalk social_lt_phone_number; mã kiểu phân bổ; bẫy giao diện editor |

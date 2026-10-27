@@ -26,6 +26,7 @@ const HI=(await (await fetch(B+'callbot/training/history/search?page=1&size=2',{
 ```
 
 ## 3. Đếm câu huấn luyện theo ý định
+Dùng khi `scripts/tenant_survey.py` chưa đếm số câu theo ý định (Đường nhanh bước 2).
 Server trả tối đa 50 câu/trang → duyệt đủ `total_pages` (vài chục lượt nhẹ, chỉ làm khi cần quyết định bù câu).
 ```js
 let all=[],p=1;for(;;p++){const r=(await (await fetch(B+'callbot/training/search_v3?page='+p+'&size=100',{method:'POST',headers:H,body:JSON.stringify({keyword:'',tenantId:window.__T})})).json()).payload;all=all.concat(r.items||[]);if(!(r.items||[]).length||all.length>=r.total_items)break}
@@ -61,7 +62,8 @@ const r=await fetch(B+'callbot/script/add_v2',{method:'POST',headers:{Authorizat
 ```
 Sửa nhỏ (đổi câu, đổi đích, bố cục) không cần dán: GET bản mới nhất trong trang, sửa bằng JS, `add_v2` lại (giữ `id`+`uuid`).
 
-## 6. Kiểm tra kịch bản đã lưu
+## 6. Kiểm tra kịch bản đã lưu (dự phòng)
+Đường chính: `scripts/verify_callflow.py` (checklist C1..C7, `omi_save.py` tự chạy). Đoạn dưới chỉ dùng khi không có token ngoài trang; nó kiểm một phần (C1, C2, C5, C6, version).
 ```js
 const s=(await (await fetch(B+'callbot/script/get/<id>',{headers:H})).json()).payload;const N={};s.nodes.forEach(n=>N[n.id]=n);
 const bad=s.nodes.flatMap(n=>(n.next_nodes||[]).filter(t=>!N[t]).map(t=>n.id+'->'+t));

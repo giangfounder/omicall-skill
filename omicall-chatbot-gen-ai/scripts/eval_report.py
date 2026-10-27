@@ -1,12 +1,14 @@
 """Dựng báo cáo kiểm thử chatbot (Markdown) từ bộ câu hỏi và kết quả chấm, so sánh trước/sau tối ưu.
 
-  python eval_report.py <testcases.json> <ket_qua_truoc.json> [<ket_qua_sau.json>] [-o report.md]
+  python eval_report.py <testcases.json> <ket_qua_truoc.json> [<ket_qua_sau.json>] [-o report.md] [--strict]
 
 testcases.json: [{"id","group","turns":[...],"expected":{"intent","action","must","must_not","source"}}]
 ket_qua_*.json: {"label":"Trước tối ưu","changes":["<thay đổi đã làm>"],
                  "results":[{"id","reply","scores":{"content","intent","grounded","tone","handoff"},
                              "critical":false,"errors":["<lỗi ngắn>"]}]}
 Điểm mỗi tiêu chí 0/1/2, null = không áp dụng. Tiêu chí và ngưỡng: references/livetalk-test-optimize.md mục 5.
+Tổng số ca tính theo testcases.json: ca không có kết quả tính là trượt (0 điểm) và báo "thiếu N ca";
+còn ca thiếu thì kết luận luôn là "Chưa đạt". --strict: còn ca thiếu → exit 1.
 """
 import argparse
 import json
@@ -28,18 +30,21 @@ def case_score(r):
     return sum(vals) / (2 * len(vals)) if vals else None
 
 
-def summarize(run):
-    res = run["results"]
-    scores = [s for s in (case_score(r) for r in res) if s is not None]
+def summarize(run, case_ids):
+    """Tổng theo testcases: ca thiếu kết quả = trượt, 0 điểm."""
+    by_id = {r.get("id"): r for r in run["results"]}
+    res = [by_id[i] for i in case_ids if i in by_id]
+    missing = [i for i in case_ids if i not in by_id]
+    scores = [s for s in (case_score(r) for r in res) if s is not None] + [0.0] * len(missing)
     crit = sum(1 for r in res if r.get("critical"))
     passed = sum(1 for r in res if not r.get("critical") and (case_score(r) or 0) >= PASS)
     by_crit = {}
     for k in CRITERIA:
         vals = [r["scores"][k] for r in res if (r.get("scores") or {}).get(k) is not None]
         by_crit[k] = sum(vals) / (2 * len(vals)) if vals else None
-    return {"avg": sum(scores) / len(scores) if scores else 0, "critical": crit, "passed": passed,
-            "total": len(res), "by_crit": by_crit,
-            "ok": crit == 0 and scores and sum(scores) / len(scores) >= PASS}
+    avg = sum(scores) / len(scores) if scores else 0
+    return {"avg": avg, "critical": crit, "passed": passed, "total": len(case_ids), "missing": missing,
+            "by_crit": by_crit, "ok": crit == 0 and not missing and bool(scores) and avg >= PASS}
 
 
 def pct(x):
@@ -50,26 +55,41 @@ def cell(s):
     return str(s or "").replace("|", "/").replace("\n", "<br>")
 
 
-def main():
-    ap = argparse.ArgumentParser()
+def verdict(s):
+    if s["ok"]:
+        return "Đạt"
+    if s["missing"]:
+        return "Chưa đạt (thiếu %d ca)" % len(s["missing"])
+    return "Chưa đạt"
+
+
+def main(argv=None):
+    try:
+        sys.stdout.reconfigure(encoding="utf-8")
+    except (AttributeError, ValueError):
+        pass
+    ap = argparse.ArgumentParser(description="Báo cáo kiểm thử chatbot trước/sau tối ưu.")
     ap.add_argument("cases")
     ap.add_argument("runs", nargs="+")
     ap.add_argument("-o", "--out")
-    a = ap.parse_args()
+    ap.add_argument("--strict", action="store_true", help="còn ca thiếu kết quả → exit 1")
+    a = ap.parse_args(argv)
     if len(a.runs) > 2:
         sys.exit("Tối đa 2 file kết quả (trước, sau).")
     cases = load(a.cases)
     runs = [load(p) for p in a.runs]
     idx = [{r["id"]: r for r in run["results"]} for run in runs]
-    sums = [summarize(run) for run in runs]
+    case_ids = [c["id"] for c in cases]
+    sums = [summarize(run, case_ids) for run in runs]
     labels = [run.get("label") or f"Vòng {i + 1}" for i, run in enumerate(runs)]
 
     out = ["# Báo cáo kiểm thử chatbot", "", "## Tổng quan", "",
            "| Chỉ số | " + " | ".join(labels) + " |", "|---|" + "---|" * len(runs)]
-    out.append("| Điểm trung bình | " + " | ".join(pct(s["avg"]) for s in sums) + " |")
+    out.append("| Điểm trung bình (ca thiếu = 0) | " + " | ".join(pct(s["avg"]) for s in sums) + " |")
     out.append("| Ca đạt (≥ 85%, không lỗi nghiêm trọng) | " + " | ".join(f"{s['passed']}/{s['total']}" for s in sums) + " |")
+    out.append("| Ca thiếu kết quả (tính là trượt) | " + " | ".join(str(len(s["missing"])) for s in sums) + " |")
     out.append("| Lỗi nghiêm trọng | " + " | ".join(str(s["critical"]) for s in sums) + " |")
-    out.append("| Kết luận | " + " | ".join("Đạt" if s["ok"] else "Chưa đạt" for s in sums) + " |")
+    out.append("| Kết luận | " + " | ".join(verdict(s) for s in sums) + " |")
     for k, name in CRITERIA.items():
         out.append(f"| {name} | " + " | ".join(pct(s["by_crit"][k]) for s in sums) + " |")
 
@@ -80,7 +100,8 @@ def main():
     for g, ids in groups.items():
         row = []
         for ix in idx:
-            sc = [s for s in (case_score(ix[i]) for i in ids if i in ix) if s is not None]
+            sc = [(case_score(ix[i]) if i in ix else 0.0) for i in ids]
+            sc = [s for s in sc if s is not None]
             row.append(pct(sum(sc) / len(sc)) if sc else "—")
         out.append(f"| {g} | {len(ids)} | " + " | ".join(row) + " |")
 
@@ -97,7 +118,7 @@ def main():
         for ix in idx:
             r = ix.get(c["id"])
             if not r:
-                row += " — | — | — |"
+                row += " (thiếu kết quả) | 0% | thiếu kết quả — tính là trượt |"
                 continue
             mark = " ⚠" if r.get("critical") else ""
             row += f" {cell(r.get('reply'))} | {pct(case_score(r))}{mark} | {cell('; '.join(r.get('errors') or []))} |"
@@ -110,12 +131,20 @@ def main():
 
     text = "\n".join(out) + "\n"
     if a.out:
+        sys.path.insert(0, str(Path(__file__).resolve().parent))
+        import omi_bot_lib  # báo cáo chứa hội thoại thật của khách: không ghi vào thư mục skill hay repo
+        a.out = omi_bot_lib.guard_out_path(a.out)
         Path(a.out).write_text(text, encoding="utf-8")
         print(f"Đã ghi {a.out}")
     else:
-        sys.stdout.reconfigure(encoding="utf-8")
         print(text)
+    any_missing = False
+    for lb, s in zip(labels, sums):
+        if s["missing"]:
+            any_missing = True
+            print(f"⚠ {lb}: thiếu {len(s['missing'])} ca (tính là trượt): {', '.join(map(str, s['missing']))}")
+    return 1 if (a.strict and any_missing) else 0
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

@@ -1,6 +1,6 @@
 """Cập nhật skill OMI lên bản mới nhất trước khi dùng (file dùng chung cho mọi skill trong repo omicall-skill).
 
-  python <thư mục skill>/scripts/self_update.py
+  python <thư mục skill>/scripts/self_update.py [--force]
 
 - Skill nằm trong bản git clone (cài theo README bằng junction/symlink): `git pull --ff-only`, báo phiên bản cũ → mới
   và nhắc ĐỌC LẠI SKILL.md nếu file này vừa đổi (nội dung agent đã nạp là bản cũ).
@@ -8,7 +8,9 @@
 - Không cập nhật được (mất mạng, có sửa đổi chưa commit...): báo lý do, vẫn cho làm tiếp với bản hiện có.
 - Đã kiểm tra thành công trong 6 giờ gần nhất: bỏ qua, không gọi mạng (thêm `--force` để kiểm tra lại).
 Không sửa, xoá hay commit gì trong thư mục skill. Dòng cuối luôn là `SKILL_VERSION=<tên skill> <phiên bản>`.
+`--help` chỉ in hướng dẫn (không gọi git hay mạng); tham số lạ -> exit 2; thư mục không có VERSION (ví dụ shared/) -> exit 2.
 """
+import argparse
 import subprocess
 import sys
 import time
@@ -66,9 +68,16 @@ def mark_checked():
         pass
 
 
-def main():
+def main(argv=None):
+    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("--force", action="store_true", help="kiểm tra lại dù vừa kiểm trong 6 giờ")
+    a = ap.parse_args(argv)  # --help -> in hướng dẫn, exit 0; tham số lạ -> exit 2 (không gọi git hay mạng)
+    if not (SKILL_DIR / "VERSION").is_file():
+        print(f"DỪNG: {SKILL_DIR} không có file VERSION — không phải thư mục skill (ví dụ shared/ là nguồn dùng chung). "
+              "Chạy bản trong thư mục skill: <thư mục skill>/scripts/self_update.py")
+        return 2
     old = version()
-    if "--force" not in sys.argv and recently_checked():
+    if not a.force and recently_checked():
         print(f"{NAME} đã kiểm tra cập nhật lúc {time.strftime('%H:%M', time.localtime(STAMP.stat().st_mtime))} (dưới 6 giờ) — bỏ qua.")
         print(f"SKILL_VERSION={NAME} {old}")
         return

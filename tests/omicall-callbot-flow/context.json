@@ -1,0 +1,123 @@
+{
+ "_ghi_chu": "Context GIẢ cho test offline (khuôn tenant_context.template.json + khối callbot_kb). Id là chuỗi test_*, không phải id thật; system_intent_id chép từ spec-callflow.example.json. Chỉ chứng minh nhất quán nội bộ, không chứng minh hợp lệ với nền tảng.",
+ "tenant": {
+  "domain": "<domain>",
+  "tenant_id": "test_tenant_0001"
+ },
+ "survey_at": null,
+ "callbot_kb": {
+  "intents": [
+   {
+    "id": "test_intent_00",
+    "code": "omi_intent_confirm_right",
+    "name": "Câu xác nhận đúng",
+    "is_system": true,
+    "system_intent_id": "654c4bbfafd622652cde5a99"
+   },
+   {
+    "id": "test_intent_01",
+    "code": "omi_intent_confirm_wrong",
+    "name": "Câu xác nhận sai",
+    "is_system": true,
+    "system_intent_id": "654c4bbfafd622652cde5a9e"
+   },
+   {
+    "id": "test_intent_02",
+    "code": "omi_intent_agree",
+    "name": "Khách đồng ý",
+    "is_system": true,
+    "system_intent_id": "654c4bbfafd622652cde5a9d"
+   },
+   {
+    "id": "test_intent_03",
+    "code": "omi_intent_promise",
+    "name": "Câu đưa ra lời hẹn",
+    "is_system": true,
+    "system_intent_id": "634d6c0142d14f7ec2df006e"
+   },
+   {
+    "id": "test_intent_04",
+    "code": "omi_intent_recall",
+    "name": "Khách muốn gọi lại sau",
+    "is_system": true,
+    "system_intent_id": "654c4bbfafd622652cde5a98"
+   },
+   {
+    "id": "test_intent_05",
+    "code": "omi_intent_deny",
+    "name": "Khách từ chối",
+    "is_system": true,
+    "system_intent_id": "634d6c0142d14f7ec2df0075"
+   },
+   {
+    "id": "test_intent_06",
+    "code": "omi_intent_disagree_service",
+    "name": "Câu từ chối dịch vụ",
+    "is_system": true,
+    "system_intent_id": "654c4bbfafd622652cde5aa1"
+   },
+   {
+    "id": "test_intent_07",
+    "code": "omi_intent_repeat",
+    "name": "Khách hàng muốn lặp lại",
+    "is_system": true,
+    "system_intent_id": "654c4bbfafd622652cde5a9c"
+   },
+   {
+    "id": "test_intent_08",
+    "code": "omi_intent_question",
+    "name": "Khách đặt câu hỏi",
+    "is_system": true,
+    "system_intent_id": "634d6c0142d14f7ec2df0073"
+   },
+   {
+    "id": "test_intent_09",
+    "code": "omi_intent_angry",
+    "name": "Khách tức giận",
+    "is_system": true,
+    "system_intent_id": "654c4bbfafd622652cde5a9f"
+   },
+   {
+    "id": "test_intent_10",
+    "code": "khach_can_gap/nhan_vien_kinh_doanh",
+    "name": "Khách cần gặp Nhân viên kinh doanh",
+    "is_system": false,
+    "system_intent_id": null
+   }
+  ],
+  "entities": [
+   {
+    "id": "test_entity_00",
+    "code": "hoi_chi_phi",
+    "name": "Hỏi chi phí",
+    "is_system": false,
+    "entity_data_types": [
+     "STRING"
+    ],
+    "system_entity_type_id": null
+   },
+   {
+    "id": "test_entity_01",
+    "code": "hoi_dia_chi",
+    "name": "Hỏi địa chỉ",
+    "is_system": false,
+    "entity_data_types": [
+     "STRING"
+    ],
+    "system_entity_type_id": null
+   }
+  ],
+  "training_status": null
+ },
+ "agents": [
+  {
+   "agent_id": "test_agent_01",
+   "contact_id": "test_contact_01",
+   "full_name": "Nhân viên thử",
+   "ext": "100",
+   "email": ""
+  }
+ ],
+ "extensions": [],
+ "can_xac_nhan": []
+}

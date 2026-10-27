@@ -1,0 +1,3 @@
+{"_ghi_chu": "Ghép từ khuôn trong omicall-chatbot-gen-ai/references/api-reference.md (save_draft_v2 giữ _id), giá trị placeholder; chỉ dùng cho test nội bộ.",
+ "_id": "<bot_id>", "assistant_name": "<tên bot>", "type": "SCENARIO_HANDLER", "system_prompt": "<prompt>",
+ "is_draft": true, "is_newest_version": false, "campaign": {"name_mappings": [], "nodes": []}}

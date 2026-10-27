@@ -1,0 +1,20 @@
+{
+  "_ghi_chu": "Spec mẫu cho scripts/build_smartagent.py. Mọi giá trị là ví dụ trung tính: thay theo nghiệp vụ và tenant_context (nhân viên lấy bằng MCP list_agents/list_extensions). kind: handled (xử lý trong BEGIN, không node) | collect (thu biến rồi phân loại, cần collect_vars + classify_labels) | classify (ADD_CLASSIFY là node cuối nhánh) | transfer (tới node TRANSFER_CALL dùng chung với bot_can_not_answer) | finish (END_CALL, chỉ intent Hoàn tất). Loại chưa kiểm chứng (webhook, push_notification, start_other_campaign, ring_group, action_chain) làm builder dừng với exit 2. Chỗ thiếu ghi vào pending, không bịa. knowledge.apis (tuỳ chọn): bỏ trống hoặc vắng thì --update GIỮ NGUYÊN api của base, --new không chép api của base; chỉ khai báo khi tài liệu khách nêu endpoint, danh sách khác rỗng sẽ THAY toàn bộ api của base (builder in ref_id bị thay/bỏ).",
+  "name": "Kich ban mau tu van san pham",
+  "prompt": "# VAI TRÒ\nEm là trợ lý tư vấn của công ty mẫu, gọi để giới thiệu sản phẩm và ghi nhận nhu cầu.\n# XƯNG HÔ\n- Khi chưa biết khách là nam hay nữ: gọi \"anh/chị\".\n- Đã xác định thì từ đó chỉ gọi \"anh\" hoặc chỉ gọi \"chị\".\n- Tuyệt đối không nói \"anh hoặc chị\".\n# LUỒNG CUỘC GỌI\nChào khách, hỏi khách có nhu cầu không. Có nhu cầu thì hỏi tên và nhu cầu, phân loại khách. Cuối cùng hỏi khách còn cần hỗ trợ gì không, chỉ kết thúc khi khách xác nhận không còn.\n# QUY TẮC ĐẦU RA CHO GIỌNG ĐỌC TIẾNG VIỆT (BẮT BUỘC)\nChèn nguyên khối trong references/voice-rules.md.\n# ĐIỀU KIỆN HOÀN THÀNH\nĐã thu tên, nhu cầu và phân loại khách, khách xác nhận không còn nhu cầu.",
+  "start_call": "Dạ em chào anh/chị, em gọi từ bộ phận tư vấn của công ty mẫu. Anh/chị cho em xin ít phút được không ạ?",
+  "variables": [
+    {"code": "var_ten", "name": "Tên khách", "prompt": "Hỏi tên khách"},
+    {"code": "var_nhu_cau", "name": "Nhu cầu", "prompt": "Hỏi nhu cầu của khách"}
+  ],
+  "intents": [
+    {"name": "Khách có nhu cầu", "kind": "collect", "content": "Khách nói có nhu cầu tìm hiểu sản phẩm, ví dụ: có em, anh đang cần; chị muốn tìm hiểu thêm.", "collect_vars": ["var_ten", "var_nhu_cau"], "classify_labels": ["Có nhu cầu"]},
+    {"name": "Từ chối", "kind": "classify", "content": "Khách từ chối, không có nhu cầu, ví dụ: thôi em, anh không cần; chị không quan tâm.", "classify_labels": ["Không có nhu cầu"]},
+    {"name": "Khách bận", "kind": "handled", "content": "Khách đang bận, hẹn gọi lại sau, ví dụ: anh đang họp; chị đang lái xe."},
+    {"name": "Gặp nhân viên", "kind": "transfer", "content": "Khách muốn nói chuyện với nhân viên, ví dụ: cho anh gặp người thật; chị muốn nói với tư vấn viên."},
+    {"name": "Hoàn tất cuộc trò chuyện", "kind": "finish", "content": "Khách xác nhận không còn nhu cầu nào khác, ví dụ: không còn gì nữa đâu; hết rồi, cảm ơn em."}
+  ],
+  "transfer": {"type": "Extension", "ext": "101", "agent": "nhan_vien_mau_1", "agent_name": "Nhan vien mau"},
+  "end_text": "Dạ em cảm ơn anh/chị đã dành thời gian. Chúc anh/chị nhiều sức khỏe, em xin phép kết thúc cuộc gọi, em chào anh/chị ạ.",
+  "pending": ["Cần xác nhận: máy lẻ và nhân viên nhận chuyển máy"]
+}

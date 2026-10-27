@@ -1,23 +1,49 @@
 # -*- coding: utf-8 -*-
 """Inject a fetch/XHR captor into the chatbot editor page to learn request/response schemas.
 
-    python inject_captor.py [domain]   # domain mặc định lấy từ phiên MCP (omi_session.py)
-"""
-import os, sys, json, urllib.request
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # cdp.py, omi_session.py cùng thư mục
-from cdp import CDP
+    python inject_captor.py [domain] [--cdp http://127.0.0.1:9222]   # domain mặc định lấy từ phiên MCP (omi_session.py)
 
-if len(sys.argv) > 1:
-    domain = sys.argv[1]
+Chỉ nối Chrome CDP trên 127.0.0.1 (cổng 9222 mặc định); không đọc cookie hay token từ trang.
+Exit: 0 xong; 1 không nối được CDP / không thấy tab; 2 sai cách gọi.
+"""
+import argparse
+import json
+import os
+import sys
+import urllib.error
+import urllib.request
+from urllib.parse import urlparse
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # cdp.py, omi_session.py cùng thư mục
+
+ap = argparse.ArgumentParser(description="Gắn bộ ghi fetch/XHR vào trang editor chatbot qua Chrome CDP (127.0.0.1).")
+ap.add_argument("domain", nargs="?", help="domain tenant (<domain>.omicrm.io); bỏ trống → lấy từ phiên MCP")
+ap.add_argument("--cdp", default="http://127.0.0.1:9222", help="địa chỉ CDP, chỉ chấp nhận 127.0.0.1/localhost")
+a = ap.parse_args()
+if (urlparse(a.cdp).hostname or "") not in ("127.0.0.1", "localhost"):
+    ap.error("--cdp chỉ được trỏ tới 127.0.0.1/localhost")
+
+if a.domain:
+    domain = a.domain
 else:
     from omi_session import claims, get_token
     domain = claims(get_token()).get('domain')
+if not domain:
+    sys.exit("Không xác định được domain — truyền domain làm tham số")
 
-tabs = json.loads(urllib.request.urlopen("http://127.0.0.1:9222/json", timeout=5).read().decode())
-tab = next((t for t in tabs if t["type"] == "page" and "%s.omicrm.io" % domain in t["url"]), None)
+try:
+    tabs = json.loads(urllib.request.urlopen(a.cdp.rstrip("/") + "/json", timeout=5).read().decode())
+except (urllib.error.URLError, OSError, ValueError) as e:
+    print("Không nối được Chrome CDP ở %s (%s) — mở Chrome với --remote-debugging-port=9222 rồi chạy lại"
+          % (a.cdp, type(e).__name__), file=sys.stderr)
+    sys.exit(1)
+host = "%s.omicrm.io" % domain.strip().lower()
+# so khớp đúng hostname, không dùng kiểu `domain in url` (tránh khớp nhầm tenant có tên chứa domain)
+tab = next((t for t in tabs if t.get("type") == "page" and (urlparse(t.get("url", "")).hostname or "") == host), None)
 if not tab:
-    sys.exit("Không thấy tab %s.omicrm.io trong Chrome CDP cổng 9222" % domain)
+    sys.exit("Không thấy tab %s.omicrm.io trong Chrome CDP %s" % (domain, a.cdp))
 
+from cdp import CDP
 c = CDP(tab["webSocketDebuggerUrl"])
 sniff = r"""
 (() => {

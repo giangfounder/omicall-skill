@@ -1,0 +1,529 @@
+{
+ "_fixture_note": "Ghép từ omicall-chatbot-gen-ai/references/api-reference.md:90-140, :205-216, :76-83, :246-262 (gồm START_OTHER_CAMPAIGN ở mục 'Bot gọi kịch bản OMIFlow theo ý định') (đã làm sạch). Hình cạnh source/target theo omicall-omiflow/references/api-reference.md:52, chưa kiểm chứng riêng cho chatbot. Chỉ chứng minh nhất quán nội bộ, KHÔNG chứng minh hợp lệ với nền tảng.",
+ "_id": "<bot_id>",
+ "created_date": null,
+ "create_by": null,
+ "last_updated_date": null,
+ "last_updated_by": null,
+ "is_deleted": false,
+ "tenant_id": "<tenant_id>",
+ "is_draft": true,
+ "current_version": null,
+ "versions_history": null,
+ "is_newest_version": false,
+ "is_publish": false,
+ "last_publish_time": null,
+ "uuid": "<bot uuid>",
+ "assistant_id": "assistant-<uuid>_draft",
+ "assistant_name": "<Tên bot>",
+ "assistant_avatar": null,
+ "assistant_description": "<mô tả bot>",
+ "assistant_name_unsigned": "<ten bot>",
+ "assistant_description_unsigned": "<mo ta bot>",
+ "is_control": true,
+ "is_inferences_qa": false,
+ "mode_reply": "",
+ "content_reply": "",
+ "model": "gpt-4o-mini",
+ "llm_config": {
+  "enable": null,
+  "presence_penalty": null,
+  "frequency_penalty": null,
+  "temperature": null,
+  "top_p": null,
+  "max_tokens": null
+ },
+ "system_prompt": "<lời nhắc hệ thống>",
+ "is_pause": false,
+ "iteration_config": null,
+ "max_characters_reply": null,
+ "context_kick_of_hook_ids": [],
+ "draft_sync_last_version": false,
+ "type": "SCENARIO_HANDLER",
+ "question_answer": null,
+ "vector_store": {
+  "vector_store_id": "vs-<uuid>",
+  "vector_store_files": [
+   {
+    "vector_store_file_id": "vs_file-<uuid>",
+    "file_id": "file-<uuid>",
+    "file_training_status": "completed",
+    "ref_id": "<record_id>",
+    "language": "vi",
+    "total_website": null,
+    "is_post": false
+   }
+  ],
+  "all_file_ref_ids": [
+   "<record_id>"
+  ]
+ },
+ "api_knowledge": [
+  {
+   "ref_id": "request_lay_thong_tin_chi_tiet_khach_hang",
+   "name": "Lấy thông tin chi tiết khách hàng từ CRM",
+   "url": "https://public-v1-stg.omicall.com/api/v2/contact/search?page=1&size=1",
+   "method": "POST",
+   "headers": [
+    {
+     "id": "<code10>",
+     "key": "Content-Type",
+     "value": "application/json"
+    },
+    {
+     "id": "<code10>",
+     "key": "Authorization",
+     "value": "Bearer <access_token>"
+    }
+   ],
+   "body_type": "raw",
+   "body_json": "{\n  \"keyword\": \"{{social_phone_number_linked}}\"\n}",
+   "variables": null,
+   "prompt": "<Hướng dẫn BOT: khi nào gọi>",
+   "query_prompt": "<Hướng dẫn BOT đọc kết quả>",
+   "param_type": "json",
+   "time_out": 60,
+   "api_response_guide": [],
+   "retrieve_data": null
+  }
+ ],
+ "is_v2": null,
+ "topic_originals": null,
+ "file_originals": null,
+ "campaign": {
+  "edges": {
+   "connections": [
+    {
+     "id": "reactflow__edge-<begin_node_id><case_1>-<collect_node_id>1",
+     "source": "<begin_node_id>",
+     "sourceHandle": "<case_1>",
+     "target": "<collect_node_id>",
+     "targetHandle": "1"
+    },
+    {
+     "id": "reactflow__edge-<collect_node_id><case_collect>-<action_node_id>1",
+     "source": "<collect_node_id>",
+     "sourceHandle": "<case_collect>",
+     "target": "<action_node_id>",
+     "targetHandle": "1"
+    },
+    {
+     "id": "reactflow__edge-<begin_node_id><case_2>-<flow_action_node_id>1",
+     "source": "<begin_node_id>",
+     "sourceHandle": "<case_2>",
+     "target": "<flow_action_node_id>",
+     "targetHandle": "1"
+    }
+   ]
+  },
+  "name_mappings": [
+   {
+    "id": "<begin_node_id>",
+    "type": "BEGIN_CONTEXT",
+    "conditions": [
+     {
+      "id": "<case_1>",
+      "type": "CUSTOM_INTENT",
+      "name": "",
+      "personality": "<mô tả tự nhiên: khi nào chọn, khi nào không chọn, câu ví dụ>",
+      "data": []
+     },
+     {
+      "id": "<case_2>",
+      "type": "CUSTOM_INTENT",
+      "name": "",
+      "personality": "<mô tả tự nhiên cho trường hợp gọi flow phụ thuộc>",
+      "data": []
+     },
+     {
+      "id": "bot_can_not_answer",
+      "type": "bot_can_not_answer",
+      "intent": null,
+      "data": []
+     },
+     {
+      "id": "customer_not_response",
+      "type": "customer_not_response",
+      "promptEndConv": "",
+      "waitingTime": 3,
+      "waitingTimeUnit": "minute",
+      "repeat": {
+       "value": "0",
+       "label": "notRepeat"
+      },
+      "repeatContent": [],
+      "intent": null,
+      "data": []
+     }
+    ]
+   },
+   {
+    "id": "<collect_node_id>",
+    "type": "OMI_BOT_COLLECT_INFO",
+    "collect_data": [
+     {
+      "variable_code": "var_sodienthoai",
+      "variable_name": "so_dien_thoai",
+      "variable_value": "<mô tả biến>",
+      "save_to_conv": false
+     }
+    ]
+   }
+  ],
+  "nodes": [
+   {
+    "id": "<begin_node_id>",
+    "is_first_node": true,
+    "description": null,
+    "description_type": null,
+    "color": null,
+    "position": {
+     "x": "160",
+     "y": "40"
+    },
+    "node_type": "BEGIN_CONTEXT",
+    "conditions": null,
+    "actions": null,
+    "next_nodes": [
+     "<collect_node_id>",
+     "<flow_action_node_id>"
+    ],
+    "fail_next_nodes": null,
+    "success_next_nodes": null,
+    "name": null,
+    "is_collapse": false,
+    "collapse_obj": {},
+    "collapse_info": null,
+    "width": 334.0,
+    "height": 287.0,
+    "related_position": null,
+    "ai_analyze": {
+     "content": "<Hướng dẫn & Tính cách BOT>",
+     "context": null,
+     "conditions": [
+      {
+       "id": "<case_1>",
+       "type": "CUSTOM_INTENT",
+       "intent_code": null,
+       "intent_name": "<mô tả tự nhiên: khi nào chọn, khi nào không chọn, câu ví dụ>",
+       "percent": 40,
+       "next_node": "<collect_node_id>"
+      },
+      {
+       "id": "<case_2>",
+       "type": "CUSTOM_INTENT",
+       "intent_code": null,
+       "intent_name": "<mô tả tự nhiên cho trường hợp gọi flow phụ thuộc>",
+       "percent": 40,
+       "next_node": "<flow_action_node_id>"
+      }
+     ],
+     "collect_variables": [],
+     "collect_position": null,
+     "customer_response_wrong": null,
+     "customer_not_response": {
+      "waiting_time": 180,
+      "next_node": "",
+      "id": "customer_not_response",
+      "repeat_contents": null,
+      "prompt_end_conv": "",
+      "action_steps": null
+     },
+     "customer_has_response": null,
+     "bot_can_not_answer": {
+      "waiting_time": null,
+      "next_node": "",
+      "id": null,
+      "repeat_contents": null,
+      "prompt_end_conv": null,
+      "action_steps": null
+     },
+     "collect_sentence_time": null,
+     "chat_gpt_model": null,
+     "active_time": null,
+     "agent_conditions": null,
+     "end_call_config": null,
+     "customize_bot_config": null,
+     "omi_ai_bot_config": null,
+     "partner_ai_config": null,
+     "limit_config": null,
+     "question_answer_ids": [],
+     "vector_store_ids": [
+      "<record_id>"
+     ],
+     "api_knowledge_ids": [
+      "request_lay_thong_tin_chi_tiet_khach_hang"
+     ],
+     "web_hook_id": null,
+     "type": null,
+     "assistant_id": "assistant-<uuid>_<begin_node_id>_draft",
+     "action_status": null,
+     "context_map": null,
+     "hearing": null,
+     "vision": null,
+     "chatx_api_key": null,
+     "conversation_id": null,
+     "user_id": null,
+     "is_use_prev_convid": null,
+     "pro_ai_api_key": null,
+     "llm_config": null
+    },
+    "types": null,
+    "waiting_time": null,
+    "variables": [],
+    "single_action": null,
+    "unit_waiting_time": null,
+    "value_waiting_time": null,
+    "prioriy_conv_id": null,
+    "prioriy_channel_id": null,
+    "custom_sending": null,
+    "sms_number": null,
+    "sending_option": null,
+    "delay_node_config": null
+   },
+   {
+    "id": "<collect_node_id>",
+    "is_first_node": false,
+    "description": null,
+    "description_type": null,
+    "color": null,
+    "position": {
+     "x": "600",
+     "y": "40"
+    },
+    "node_type": "OMI_BOT_COLLECT_INFO",
+    "conditions": null,
+    "actions": null,
+    "next_nodes": [
+     "<action_node_id>"
+    ],
+    "fail_next_nodes": null,
+    "success_next_nodes": null,
+    "name": null,
+    "is_collapse": false,
+    "collapse_obj": {},
+    "collapse_info": null,
+    "width": 334.0,
+    "height": 287.0,
+    "related_position": null,
+    "ai_analyze": {
+     "content": "<hướng dẫn thu số điện thoại>",
+     "context": null,
+     "conditions": [
+      {
+       "id": "<case_collect>",
+       "type": "CUSTOM_INTENT",
+       "next_node": "<action_node_id>",
+       "data": [
+        {
+         "type": "COMPARE",
+         "compare_conditions": [
+          {
+           "operator": "NOT_EQUAL",
+           "values": [
+            {
+             "start_value": "",
+             "end_value": ""
+            }
+           ],
+           "target_type": "COLLECT_INFO",
+           "is_dynamic_field": true,
+           "field_code": "var_sodienthoai"
+          }
+         ]
+        }
+       ],
+       "operator_type": "AND"
+      }
+     ],
+     "collect_variables": [
+      {
+       "variable_code": "var_sodienthoai",
+       "variable_name": "so_dien_thoai",
+       "variable_value": "<mô tả biến>",
+       "option": "ENTITY",
+       "save_to_conv": false
+      }
+     ],
+     "collect_position": null,
+     "customer_response_wrong": null,
+     "customer_not_response": {
+      "waiting_time": 180,
+      "next_node": "",
+      "id": "customer_not_response",
+      "repeat_contents": null,
+      "prompt_end_conv": "",
+      "action_steps": null
+     },
+     "customer_has_response": null,
+     "bot_can_not_answer": {
+      "waiting_time": null,
+      "next_node": "",
+      "id": null,
+      "repeat_contents": null,
+      "prompt_end_conv": null,
+      "action_steps": null
+     },
+     "collect_sentence_time": null,
+     "chat_gpt_model": null,
+     "active_time": null,
+     "agent_conditions": null,
+     "end_call_config": null,
+     "customize_bot_config": null,
+     "omi_ai_bot_config": null,
+     "partner_ai_config": null,
+     "limit_config": null,
+     "question_answer_ids": [],
+     "vector_store_ids": [],
+     "api_knowledge_ids": [],
+     "web_hook_id": null,
+     "type": null,
+     "assistant_id": "assistant-<uuid>_<collect_node_id>_draft",
+     "action_status": null,
+     "context_map": null,
+     "hearing": null,
+     "vision": null,
+     "chatx_api_key": null,
+     "conversation_id": null,
+     "user_id": null,
+     "is_use_prev_convid": null,
+     "pro_ai_api_key": null,
+     "llm_config": null
+    },
+    "types": null,
+    "waiting_time": null,
+    "variables": [],
+    "single_action": null,
+    "unit_waiting_time": null,
+    "value_waiting_time": null,
+    "prioriy_conv_id": null,
+    "prioriy_channel_id": null,
+    "custom_sending": null,
+    "sms_number": null,
+    "sending_option": null,
+    "delay_node_config": null
+   },
+   {
+    "id": "<action_node_id>",
+    "is_first_node": false,
+    "description": null,
+    "description_type": null,
+    "color": null,
+    "position": {
+     "x": "1040",
+     "y": "40"
+    },
+    "node_type": "ACTION",
+    "conditions": null,
+    "actions": [
+     {
+      "type": "SEND_WEBHOOK",
+      "data": {
+       "url": "<url>",
+       "method": "POST",
+       "headers": [
+        {
+         "key": "Content-Type",
+         "value": "application/json"
+        }
+       ],
+       "param_type": "json",
+       "body_type": "raw",
+       "body_json": "{\"so_dien_thoai\": \"{{var_sodienthoai}}\", \"ten\": \"{{social_customer_name}}\"}"
+      }
+     }
+    ],
+    "next_nodes": [],
+    "fail_next_nodes": null,
+    "success_next_nodes": null,
+    "name": null,
+    "is_collapse": false,
+    "collapse_obj": {},
+    "collapse_info": null,
+    "width": 334.0,
+    "height": 287.0,
+    "related_position": null,
+    "ai_analyze": null,
+    "types": null,
+    "waiting_time": null,
+    "variables": [],
+    "single_action": null,
+    "unit_waiting_time": null,
+    "value_waiting_time": null,
+    "prioriy_conv_id": null,
+    "prioriy_channel_id": null,
+    "custom_sending": null,
+    "sms_number": null,
+    "sending_option": null,
+    "delay_node_config": null
+   },
+   {
+    "id": "<flow_action_node_id>",
+    "is_first_node": false,
+    "description": null,
+    "description_type": null,
+    "color": null,
+    "position": {
+     "x": "600",
+     "y": "400"
+    },
+    "node_type": "ACTION",
+    "conditions": null,
+    "actions": [
+     {
+      "type": "START_OTHER_CAMPAIGN",
+      "datas": {
+       "selected": {
+        "value": "<flow uuid>",
+        "_id": "<flow _id>",
+        "label": "<tên flow>",
+        "isDependent": true
+       }
+      }
+     }
+    ],
+    "next_nodes": [],
+    "fail_next_nodes": null,
+    "success_next_nodes": null,
+    "name": null,
+    "is_collapse": false,
+    "collapse_obj": {},
+    "collapse_info": null,
+    "width": 334.0,
+    "height": 287.0,
+    "related_position": null,
+    "ai_analyze": null,
+    "types": null,
+    "waiting_time": null,
+    "variables": [],
+    "single_action": null,
+    "unit_waiting_time": null,
+    "value_waiting_time": null,
+    "prioriy_conv_id": null,
+    "prioriy_channel_id": null,
+    "custom_sending": null,
+    "sms_number": null,
+    "sending_option": null,
+    "delay_node_config": null
+   }
+  ],
+  "variables": [],
+  "classifies": []
+ },
+ "history_config": {
+  "enable": true,
+  "history_length": null,
+  "conversation_history_length": null
+ },
+ "draft_key": "<tenant_id>_<uuid>_true",
+ "name_key": "<tenant_id>_<assistant_name>",
+ "evaluation_configs": [],
+ "natural_language_configs": [],
+ "integrated_scope": {
+  "type": "social",
+  "contact_ids": [],
+  "contact_category_ids": []
+ },
+ "is_public": null,
+ "public_key": "<uuid4>"
+}

@@ -1,0 +1,3 @@
+{"_ghi_chu":"Fixture ghép từ khuôn trong tài liệu skill, giá trị là placeholder; chỉ chứng minh nhất quán nội bộ, không chứng minh hợp lệ với nền tảng.","status_code":9999,"payload":{"items":[
+ {"_id":"<flow_id_1>","uuid":"<flow_uuid_1>","name":"1 - [NHẬN LEAD]","is_publish":false,"status":"<status>","kick_off":{"event":"WEB_HOOK","id":null}},
+ {"_id":"<flow_id_2>","uuid":"<flow_uuid_2>","name":"2 - [GỌI LẠI]","is_publish":true,"status":"<status>","kick_off":{"event":"GENERAL","id":null}}]}}

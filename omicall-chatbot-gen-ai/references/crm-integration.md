@@ -10,7 +10,7 @@ OMICall có API public `POST https://public-v1-stg.omicall.com/api/v2/contact/se
 - URL: `https://public-v1-stg.omicall.com/api/v2/contact/search?page=1&size=1`
 - Header: `Authorization: Bearer <API_TOKEN>` (token của tenant, KHÔNG phải cookie JWT của user)
 - Body raw JSON: `{"keyword": "{{social_phone_number_linked}}"}`
-- Response chứa `payload.items[0].attribute_structure[]` (mảng `{field_code, value[0].display_value}`) với mọi field KH → bot đọc trực tiếp để tư vấn.
+- Response chứa `payload.items[0].attribute_structure` với mọi field KH → bot đọc trực tiếp để tư vấn. **Cần xác nhận** dạng của `attribute_structure`: `omicall-public-api.md` có ví dụ dạng object `{mã_trường: giá_trị}` và ghi chú theo docs là mảng `[{field_code, value[0].display_value}]` — kiểm bằng một lần gọi thật trước khi viết "Hướng dẫn BOT lấy kết quả".
 
 **Ưu điểm**: không tốn quota OMIFlow; response chuẩn OMI, đầy đủ dữ liệu. **Nhược**: cần user cung cấp API Token (Bearer) hợp lệ — token này khác với JWT session user, thường lấy từ menu Cấu hình → API Key.
 
@@ -42,7 +42,7 @@ Dùng khi cần workflow phức tạp (tạo Contact có phân bổ agent, tích
 
 ## Kiến trúc chuẩn: 2 OMIFlow riêng (khi đủ quota)
 Cho luồng "định danh + đọc data KH" từ chatbot, thiết kế đúng là **2 flow riêng biệt**, KHÔNG gộp:
-- **Flow A — "Tạo hồ sơ KH nếu chưa có"**: Trigger API nhận `so_dien_thoai_khach` + `ten_khach_da_kenh` → Điều kiện #1 so SĐT → Điều kiện #2 "Kiểm tra KH tồn tại". Nhánh `else` (chưa tồn tại) → Hành động "Tạo mới khách hàng" (điền Tên = biến `ten_khach_da_kenh`, SĐT = biến `so_dien_thoai_khach`, phân bổ Nhân viên cụ thể/Cấu hình phân bố). Nhánh `đã tồn tại` không cần làm gì. Trả về `{message:"success", status_code:200}`.
+- **Flow A — "Tạo hồ sơ KH nếu chưa có"**: Trigger API nhận `so_dien_thoai_khach` + `ten_khach_da_kenh` → Điều kiện #1 so SĐT → Điều kiện #2 "Kiểm tra KH tồn tại". Nhánh `else` (chưa tồn tại) → Hành động "Tạo mới khách hàng" (điền Tên = biến `ten_khach_da_kenh`, SĐT = biến `so_dien_thoai_khach`, phân bổ Nhân viên cụ thể/Cấu hình phân bố). Nhánh `đã tồn tại` không cần làm gì. Trả về "Kết quả trả về" mặc định `{"message":"success","status_code":9999}` (mục "OMIFlow — Trigger API chi tiết"; quy ước 9999 = thành công nằm trong body, xem `omicall-public-api.md` dòng "Response chung").
 - **Flow B — "Lấy data KH từ CRM"**: Trigger API nhận SĐT → tìm KH đã tồn tại (Điều kiện) → Trả về JSON body chứa toàn bộ thuộc tính KH (các mã thuộc tính bot cần, ví dụ `<ma_thuoc_tinh_1>`, `<ma_thuoc_tinh_2>`, ...). Field "Kết quả trả về" trong trigger API cho phép cấu hình JSON schema trả về, dùng biến `{{...}}` để chèn giá trị thuộc tính KH.
 - **Chatbot gọi cả 2**: 2 mục "Truy vấn" riêng trong drawer "Ngữ cảnh bắt đầu" — Truy vấn #1 trỏ Flow A (chỉ tạo nếu chưa có, response không dùng), Truy vấn #2 trỏ Flow B (đọc data → bot dùng để tư vấn). Bot gọi cả 2 mỗi lượt; Flow A idempotent nhờ Điều kiện #2 tự skip khi KH đã có.
 - **Tại sao không gộp 1 flow**: gộp làm response schema phức tạp hóa cho cả 2 nhánh (tồn tại + mới tạo), và Truy vấn chatbot chỉ hiểu 1 response schema cố định. Chỉ gộp khi quota gói chỉ cho 1 flow.
@@ -84,7 +84,7 @@ Trong drawer Ngữ cảnh bắt đầu → tab "Truy vấn" → nút "+" → đi
 - **Hướng dẫn BOT** (bắt buộc): mô tả khi nào bot cần gọi. Trên bản UI hiện tại bot gọi mỗi lượt bất kể mô tả — nhưng vẫn viết rõ để mai này thay đổi/audit.
 - **Cấu hình truy vấn**: bấm mở drawer con → chọn GET/POST → điền URL webhook OMIFlow → Body Type = `raw` → Body JSON dùng biến `{{social_phone_number_linked}}`, `{{social_customer_name_linked}}`. **Chú ý**: editor JSON tự động thêm `{}` bao ngoài — không paste thêm `{}` gây nested. Xoá sạch trước khi type (Ctrl+A → Delete).
 - **Thời gian chờ**: 60s mặc định.
-- **Hướng dẫn BOT lấy kết quả về từ API** (bắt buộc): schema JSON trả về (liệt kê từng field) + cách bot xử lý khi các field trống hoặc status_code != 200.
+- **Hướng dẫn BOT lấy kết quả về từ API** (bắt buộc): schema JSON trả về (liệt kê từng field) + cách bot xử lý khi các field trống hoặc `status_code` trong body khác 9999 (theo `omicall-public-api.md` "Response chung"; webhook OMIFlow tự cấu hình "Kết quả trả về" thì dùng đúng giá trị đã cấu hình).
 
 ## Test webhook OMIFlow bằng cURL trước khi nối vào chatbot
 Trên trang cấu hình trigger API có nút "Test API" — nhưng cách chắc chắn là dùng cURL/Postman gửi POST tới webhook URL với body mẫu, xác nhận:

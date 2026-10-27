@@ -5,27 +5,36 @@
 - Mỗi ý định (phần câu không thực thể) và mỗi thực thể: >= min_per_intent / min_per_entity câu MỚI (mặc định 200).
 - Câu giống chữ STT tổng đài (stt_noise.py): phiên âm tiếng Anh/tên riêng, nghe nhầm, từ đệm, cắt câu.
 - Lọc trùng với các file đã đẩy (--existing) và trong chính file.
-- Xuất đúng mẫu Excel hệ thống (tải từ CDN nếu không có --template), in báo cáo kiểm tra + câu mẫu ngẫu nhiên.
+- Loại câu có đoạn thực thể xuất hiện sớm hơn vị trí đánh dấu (hệ thống lấy lần xuất hiện đầu → start_char sai), báo số câu bị loại.
+- Xuất đúng mẫu Excel hệ thống: --template ghi đè; không có thì dùng bản cache
+  ~/.cache/omicall-skill/Import_training_data_template.xlsx (tải từ CDN khi chưa có hoặc để làm mới; mạng hỏng mà có
+  cache thì dùng cache; env NO_NETWORK=1 thì không tải). In báo cáo kiểm tra + câu mẫu ngẫu nhiên.
 Cấu trúc spec: xem references/spec-training.example.json và references/data-rules.md.
 """
 import argparse
 import json
+import os
 import random
 import re
+import shutil
 import sys
 import tempfile
 import urllib.request
 from collections import Counter
 from pathlib import Path
 
-from openpyxl import load_workbook
-from openpyxl.styles import Alignment
-from openpyxl.utils import get_column_letter
+try:
+    from openpyxl import load_workbook
+    from openpyxl.styles import Alignment
+    from openpyxl.utils import get_column_letter
+except ImportError:
+    sys.exit("Thiếu openpyxl — cài: python -m pip install openpyxl")
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import stt_noise  # noqa: E402
 
 TEMPLATE_URL = "https://cdn.omicrm.com/callbot/Import_training_data_template.xlsx"
+MIN_CORES, MIN_PATTERNS = 30, 15  # khớp SKILL.md Bước 3 và data-rules.md §4
 DEFAULT_PERSONAS = [["anh", "em"], ["chị", "em"], ["tui", "em"], ["tôi", "em"], ["chú", "con"], ["cô", "con"]]
 OPEN = {
     "q": ["", "", "", "{b} ơi", "cho {s} hỏi", "ủa", "à", "mà", "vậy", "khoan", "{b} cho {s} hỏi cái", "ờ mà"],
@@ -85,6 +94,49 @@ def split_span(text):
     return text.replace("[", "").replace("]", ""), m.group(1)
 
 
+def span_repeats_early(marked):
+    """True khi đoạn thực thể [..] đã xuất hiện trước vị trí đánh dấu (sau khi chuẩn hoá như clean())."""
+    m = re.search(r"\[(.+?)\]", marked)
+    if not m:
+        return False
+    span = clean(m.group(1))
+    if not span:
+        return False
+    prefix = clean(marked[:m.start()].replace("[", "").replace("]", ""))
+    want = len(prefix) + 1 if prefix else 0
+    pos = clean(marked.replace("[", "").replace("]", "")).find(span)
+    return 0 <= pos < want
+
+
+def template_path(explicit):
+    """--template > cache ~/.cache/omicall-skill/ (làm mới từ CDN khi được) > lỗi rõ."""
+    if explicit:
+        if not Path(explicit).is_file():
+            sys.exit(f"Không thấy file mẫu --template {explicit}")
+        return explicit, "--template"
+    cache = Path.home() / ".cache" / "omicall-skill" / "Import_training_data_template.xlsx"
+    if os.environ.get("NO_NETWORK") == "1":
+        if cache.is_file():
+            return str(cache), "cache (NO_NETWORK=1)"
+        sys.exit(f"NO_NETWORK=1 và chưa có cache {cache} — truyền --template <file mẫu>")
+    try:
+        cache.parent.mkdir(parents=True, exist_ok=True)
+        fd, tmp = tempfile.mkstemp(suffix=".xlsx", dir=str(cache.parent))
+        os.close(fd)
+        with urllib.request.urlopen(TEMPLATE_URL, timeout=20) as r, open(tmp, "wb") as f:
+            shutil.copyfileobj(r, f)
+        os.replace(tmp, cache)
+        return str(cache), "CDN (đã lưu cache)"
+    except Exception as e:  # mạng hỏng / bị chặn
+        try:
+            os.remove(tmp)
+        except Exception:
+            pass
+        if cache.is_file():
+            return str(cache), f"cache (không tải được: {type(e).__name__})"
+        sys.exit(f"Không tải được file mẫu ({e}) và chưa có cache {cache} — truyền --template <file mẫu>")
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("spec")
@@ -103,10 +155,7 @@ def main():
     entities = spec.get("entities", {})
     warnings = []
 
-    template = a.template
-    if not template:
-        template = str(Path(tempfile.gettempdir()) / "Import_training_data_template.xlsx")
-        urllib.request.urlretrieve(TEMPLATE_URL, template)
+    template, template_src = template_path(a.template)
 
     seen, existing_rows = set(), []
     for f in a.existing:
@@ -117,8 +166,12 @@ def main():
                 existing_rows.append(row)
     n_existing = len(seen)
     rows = []
+    dropped = Counter()
 
-    def add(text, icode, ecode=None, span=None):
+    def add(text, icode, ecode=None, span=None, marked=None):
+        if marked is not None and span_repeats_early(marked):
+            dropped[ecode] += 1
+            return 0
         text = clean(text)
         if not text or text in seen or TEXTING.search(text):
             return 0
@@ -144,8 +197,8 @@ def main():
         cores = it.get("cores") or []
         if not cores:
             continue
-        if len(cores) < 25:
-            warnings.append(f"{icode}: {len(cores)} lõi câu (<25) — câu sẽ ít đa dạng")
+        if len(cores) < MIN_CORES:
+            warnings.append(f"{icode}: {len(cores)} lõi câu (<{MIN_CORES}) — câu sẽ ít đa dạng")
         kind = it.get("kind", "s")
 
         def mk(i, cores=cores, icode=icode, kind=kind, it=it):
@@ -158,8 +211,8 @@ def main():
     # thực thể: mẫu câu có [đoạn], {x} chủ ngữ, {v} giá trị
     for ecode, en in entities.items():
         pats = en["patterns"]
-        if len(pats) < 15:
-            warnings.append(f"{ecode}: {len(pats)} mẫu câu (<15) — câu sẽ ít đa dạng")
+        if len(pats) < MIN_PATTERNS:
+            warnings.append(f"{ecode}: {len(pats)} mẫu câu (<{MIN_PATTERNS}) — câu sẽ ít đa dạng")
         icode, kind = en["intent"], en.get("kind", "q")
         if icode not in intents:
             warnings.append(f"{ecode}: ý định {icode} chưa khai báo trong intents")
@@ -172,8 +225,9 @@ def main():
             if "{v}" in pat:
                 pat = pat.replace("{v}", en["values"][i % len(en["values"])])
             marked = dress(fill_slots(pat, slots), s, b, kind, en.get("openers"), random.random() < en.get("open_ratio", 1.0))
-            text, span = split_span(stt_noise.stt(marked, random.random() < p_noisy))
-            return add(text, icode, ecode, span)
+            noisy = stt_noise.stt(marked, random.random() < p_noisy)
+            text, span = split_span(noisy)
+            return add(text, icode, ecode, span, noisy)
         fill(n_ent, mk, ecode)
 
     # biến thể phiên âm cho câu đã đẩy còn từ tiếng Anh viết chuẩn
@@ -186,8 +240,9 @@ def main():
             for _ in range(2):
                 if ecode1 and span1 and span1 in text1:
                     i0 = text1.index(span1)
-                    t2, sp2 = split_span(stt_noise.stt(text1[:i0] + "[" + span1 + "]" + text1[i0 + len(span1):], random.random() < p_noisy))
-                    n_aug += add(t2, icode1, ecode1, sp2)
+                    noisy = stt_noise.stt(text1[:i0] + "[" + span1 + "]" + text1[i0 + len(span1):], random.random() < p_noisy)
+                    t2, sp2 = split_span(noisy)
+                    n_aug += add(t2, icode1, ecode1, sp2, noisy)
                 else:
                     n_aug += add(stt_noise.stt(text1, random.random() < p_noisy), icode1)
 
@@ -210,6 +265,8 @@ def main():
     texts = [r[0] for r in rows]
     english_left = sum(stt_noise.has_english(t) for t in texts)
     print(f"{len(rows)} câu mới -> {a.out} (lọc trùng với {n_existing} câu đã có; biến thể phiên âm từ câu cũ: {n_aug})")
+    print(f"file mẫu: {template_src}")
+    print(f"loại do đoạn thực thể lặp sớm hơn vị trí đánh dấu: {sum(dropped.values())}", dict(dropped) if dropped else "")
     print("ý định:", dict(Counter(r[1] for r in rows)))
     print("thực thể:", dict(Counter(r[2] for r in rows if r[2])))
     print("kiểm tra: trùng", len(texts) - len(set(texts)), "| dấu câu", sum(bool(re.search(r"[^\w\s]", t)) for t in texts),

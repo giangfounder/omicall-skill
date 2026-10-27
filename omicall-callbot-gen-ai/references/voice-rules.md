@@ -36,5 +36,5 @@ Mọi câu em nói được chuyển thẳng thành giọng nói tiếng Việt,
 6. Giá trị biến <liệt kê biến đầu vào> có thể ở dạng số hoặc ký hiệu, ví dụ "25/10/2026". Khi nói phải đổi sang cách đọc theo các quy tắc trên. Không bao giờ đọc ký hiệu ngoặc nhọn của biến; biến trống thì bỏ qua.
 7. Không đọc đường dẫn, địa chỉ thư điện tử hay mã nội bộ; cần thì mời khách gọi tổng đài.
 ```
-Áp dụng cả cho `start_call_instruction` và `END_CALL.content`: tự kiểm tra trước khi lưu, không còn chữ số, ký hiệu hay chữ viết tắt trong câu khách nghe.
+Áp dụng cả cho `start_call_instruction` và `END_CALL.content`: tự kiểm tra trước khi lưu, không còn chữ số, ký hiệu hay chữ viết tắt trong câu khách nghe. Kiểm tự động: `scripts/tts_lint.py` (cũng chạy trong `validate_smartagent.py`, mã X9).
 

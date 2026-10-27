@@ -3,7 +3,7 @@
 Dùng khi cần: đưa bot (OmiBot) lên một kênh LiveTalk để chat thử, chạy bộ câu hỏi thử, chấm điểm, tối ưu rồi so sánh trước/sau.
 Áp dụng cho mọi tenant, mọi bot. Không ghi nội dung riêng của khách (prompt, FAQ, tên sản phẩm) vào skill; bộ câu hỏi và báo cáo của từng bot để ở scratchpad hoặc thư mục dự án của user.
 
-> Trạng thái xác minh: phần **5 (chấm điểm)**, **6 (tối ưu)**, **7 (báo cáo)** là quy trình, không phụ thuộc giao diện. Các đường menu và schema ở phần **2–4** đánh dấu **[chưa xác minh]** thì phải kiểm trên tenant trước khi tin, rồi cập nhật file này kèm JSON thật (Rule 1–3 của SKILL.md).
+> Trạng thái xác minh: phần **5 (chấm điểm)**, **6 (tối ưu)**, **7 (báo cáo)** là quy trình, không phụ thuộc giao diện. Các đường menu và schema ở phần **2–4** đánh dấu **[chưa xác minh]** thì phải kiểm trên tenant trước khi tin, rồi cập nhật file này kèm JSON thật (mục "Bảo trì skill" của SKILL.md).
 
 ## 1. Ranh giới an toàn (đọc trước)
 - **Không gắn bot vào kênh đang phục vụ khách thật.** Luôn tạo hoặc dùng một widget LiveTalk riêng, tên có hậu tố `- TEST`.
@@ -58,7 +58,7 @@ GENERAL (đối tượng: hội thoại được thêm mới; điều kiện: k�
 ## 4. Soạn bộ câu hỏi thử
 Nguồn kỳ vọng **chỉ lấy từ dữ liệu của bot** (system_prompt, mô tả ý định, file RAG, API). Câu nào dữ liệu không có đáp án → kỳ vọng là "bot nói chưa có thông tin và mời gặp nhân viên", không tự nghĩ ra đáp án đúng.
 
-Đọc bot trước: `GET bot` → liệt kê ý định (`campaign.name_mappings[0].conditions` loại `CUSTOM_INTENT`), biến thu (`collect_variables`), truy vấn (`api_knowledge`), file RAG (`vector_store.vector_store_files`), `bot_can_not_answer`, `customer_not_response`, `history_config`.
+Đọc bot trước: `GET bot` (hoặc `scripts/bot_outline.py --file <GET.json>`) → liệt kê ý định (`campaign.name_mappings[BEGIN].conditions` loại `CUSTOM_INTENT`), biến thu (`collect_variables`), truy vấn (`api_knowledge`), file RAG (`vector_store.vector_store_files`), `bot_can_not_answer`, `customer_not_response`, `history_config`.
 
 Độ phủ tối thiểu (mỗi dòng ≥ 1 ca; bot lớn thì nhân theo số ý định/chủ đề):
 
@@ -78,6 +78,8 @@ Nguồn kỳ vọng **chỉ lấy từ dữ liệu của bot** (system_prompt, m
 | G12 Nhiều lượt | Hỏi tiếp theo dùng đại từ ("cái đó giá sao") | Giữ ngữ cảnh đúng |
 | G13 Nhiều ý một tin | Hai câu hỏi trong một tin | Trả lời đủ hoặc lần lượt, không bỏ sót |
 | G14 Kết thúc | Cảm ơn, tạm biệt / từ chối | Cảm ơn → chúc → tạm biệt, không ép |
+
+Khung sẵn 14 nhóm: `python scripts/bot_outline.py --file <GET.json> --testcases-skeleton <scratch>/testcases.json` — phần kỳ vọng để "Cần xác nhận", chỉ điền từ dữ liệu của bot.
 
 Mẫu một ca (lưu `testcases.json` ở scratchpad):
 ```json
@@ -126,9 +128,9 @@ Quy trình mỗi vòng:
 ## 7. Báo cáo
 Ghi kết quả từng vòng vào `results.json` (mỗi ca: `reply`, `scores`, `critical`, `errors`) rồi dựng báo cáo bằng `scripts/eval_report.py`:
 ```
-python scripts/eval_report.py <testcases.json> <before.json kết quả> [<after.json kết quả>] -o report.md
+python scripts/eval_report.py <testcases.json> <before.json kết quả> [<after.json kết quả>] -o report.md --strict
 ```
-Báo cáo gồm: tổng quan (điểm trung bình, số ca đạt, số lỗi nghiêm trọng, trước → sau), điểm theo tiêu chí, theo nhóm, bảng chi tiết (câu hỏi, câu trả lời, điểm, lỗi trước/sau), danh sách thay đổi đã làm và lý do, link editor `https://{domain}.omicrm.io/ai/bot/edit/{bot_id}?lng=vi`, trạng thái bản nháp/xuất bản. Báo cáo chứa nội dung của khách → để trong thư mục của user, không đưa vào repo skill.
+Tổng số ca tính theo `testcases.json`: ca không có kết quả tính là trượt và báo "thiếu N ca"; `--strict` → exit 1 khi còn ca thiếu (không kết luận "Đạt" khi chưa chạy đủ). Báo cáo gồm: tổng quan (điểm trung bình, số ca đạt, số lỗi nghiêm trọng, trước → sau), điểm theo tiêu chí, theo nhóm, bảng chi tiết (câu hỏi, câu trả lời, điểm, lỗi trước/sau), danh sách thay đổi đã làm và lý do, link editor `https://{domain}.omicrm.io/ai/bot/edit/{bot_id}?lng=vi`, trạng thái bản nháp/xuất bản. Báo cáo chứa nội dung của khách → để trong thư mục của user, không đưa vào repo skill.
 
 ## 8. Đã kiểm chứng (10/2026)
 - **Mã nhúng widget test**: `<script id="omiLiveTalk" src="https://cdn.omicrm.com/script/livetalk/main.js#domain=<tên miền tổng đài>" async></script>` — **bắt buộc `id="omiLiveTalk"`** (script tìm thẻ theo id để đọc tham số sau `#`; thiếu id thì chỉ log "initialize..." rồi không hiện gì). Tham số thêm: `name=`, `phone=`, `email=`, `uuid=` (ngăn cách bằng `;`). Phục vụ bằng `python -m http.server` → `localhost` chạy được.
