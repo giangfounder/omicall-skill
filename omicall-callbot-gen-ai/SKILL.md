@@ -1,17 +1,23 @@
 ---
 name: omicall-callbot-gen-ai
 description: >-
-  [v1.11.0] Dựng và sửa kịch bản Callbot Gen AI (SmartAgent, AI_AGENT) của OMiCall/OMiCRM: ý định, thu thập thông tin, phân loại, gọi API, RAG, chuyển máy, prompt cho tổng đài viên AI; dựng từ tài liệu nghiệp vụ hoặc PDF, sửa tại …/ai/callbot/script/update/{scriptId}, lưu qua chatbot-gateway và kiểm thử.
+  [v1.12.0] Dựng và sửa kịch bản Callbot Gen AI (SmartAgent, AI_AGENT) của OMiCall/OMiCRM: ý định, thu thập thông tin, phân loại, gọi API, RAG, chuyển máy, prompt cho tổng đài viên AI; dựng từ tài liệu nghiệp vụ hoặc PDF, sửa tại …/ai/callbot/script/update/{scriptId}, lưu qua chatbot-gateway và kiểm thử.
 ---
 
 # OMiCALL Callbot Gen AI — Generic Builder Playbook (all tenants / all scripts)
 
 ## Bước bắt buộc: cập nhật skill
-Chạy `python "<thư mục skill>/scripts/self_update.py"` trước mọi bước khác (`<thư mục skill>` = thư mục chứa SKILL.md này). Câu đầu tiên trả lời user: `Đang dùng omicall-callbot-gen-ai v<phiên bản>` (lấy từ dòng `SKILL_VERSION`; script lỗi thì dùng v1.11.0). Script báo **SKILL.md đã thay đổi** → đọc lại SKILL.md từ đĩa rồi mới làm tiếp. Không cập nhật được → báo lý do, làm tiếp bằng bản hiện có; không sửa, xoá hay commit trong thư mục skill.
+Chạy `python "<thư mục skill>/scripts/self_update.py"` trước mọi bước khác (`<thư mục skill>` = thư mục chứa SKILL.md này). Câu đầu tiên trả lời user: `Đang dùng omicall-callbot-gen-ai v<phiên bản>` (lấy từ dòng `SKILL_VERSION`; script lỗi thì dùng v1.12.0). Script báo **SKILL.md đã thay đổi** → đọc lại SKILL.md từ đĩa rồi mới làm tiếp. Không cập nhật được → báo lý do, làm tiếp bằng bản hiện có; không sửa, xoá hay commit trong thư mục skill.
+
+## Bắt đầu: hỏi domain, rồi yêu cầu đăng nhập
+1. Câu hỏi đầu tiên cho user chỉ là **tên domain** doanh nghiệp (`<tên>.omicrm.io`); domain đã có trong yêu cầu thì bỏ qua.
+2. `python "<thư mục skill>/scripts/omi_login.py" ensure --domain <domain>` (một lệnh: kiểm token, tự đăng nhập lại từ kho bí mật). `"ok":true` → sang bước 4, không nói gì thêm về đăng nhập.
+3. `"need":"setup"` → yêu cầu user đăng nhập trên **trang đăng nhập OMI thật**: mở `https://<domain>.omicrm.io/?lng=vi` trong trình duyệt của agent (browser pane của Claude, Chrome MCP… — agent nào có trình duyệt thì dùng trình duyệt đó), điền sẵn email nếu user đã cho, rồi nhắn đúng một câu: "Anh/chị nhập mật khẩu trên trang OMI vừa mở rồi bấm Đăng nhập." Agent KHÔNG gõ vào ô mật khẩu, không đọc cookie hay token của trang. Tự kiểm trang (ảnh chụp/văn bản) tới khi vào được trong ứng dụng thì làm tiếp; phiên này chỉ dùng cho thao tác giao diện (route `ui`). Muốn đi đường API/MCP (nhanh hơn) thì user chạy thêm một lần lệnh `command` của `ensure` trong terminal (ô nhập ẩn, `references/omi-mcp.md` mục 2a). Không nhận mật khẩu qua chat; user lỡ gửi thì không dùng, không nhắc lại, khuyên đổi mật khẩu.
+4. Đăng nhập xong mới nhận mô tả nghiệp vụ và làm tiếp theo Đường nhanh.
 
 ## Đường nhanh
 Chạy script bằng đường dẫn tuyệt đối `python "<thư mục skill>/scripts/<tên>.py"`; file ra ghi vào scratch (`OMI_SCRATCH`), không ghi vào thư mục skill. Đây chỉ là mục lục, quy tắc gốc nằm ở các mục bên dưới.
-- **B0** `omi_preflight.py --domain <domain>` → `route` api/ui/blocked. `blocked`: đưa user đúng MỘT việc (tự chạy lệnh `mcp add` agent soạn sẵn, hoặc tự đặt `OMI_TOKEN_FILE`); trong lúc chờ làm tiếp B2–B3.
+- **B0** `omi_preflight.py --domain <domain>` → `route` api/login/ui/blocked. `login`: agent tự chạy `omi_login.py login --domain <domain>`. `blocked`: mở terminal cho user chạy `omi_login.py setup` (nhập mật khẩu một lần, Input contract); trong lúc chờ làm tiếp B2–B3.
 - **B1** `tenant_survey.py --out <scratch>/tenant_context.json` + MCP `list_agents`/`list_extensions`/`list_hotlines` (cho `TRANSFER_CALL`).
 - **B2** `extract_text.py <tài liệu> --out <scratch>/source.txt`.
 - **B3** Thiết kế theo Bước 1–3; chỗ thiếu ghi "Cần xác nhận", không dừng hỏi. Tra `references/node-status.json`: `verified` → API; `unverified` → chỉ nhân bản từ mẫu có trong GET baseline (`build_smartagent.py`), không có mẫu thì UI; `enum`/`ui_only` → UI hoặc "Cần xác nhận".
@@ -41,13 +47,13 @@ Callbot **SmartAgent** (`type:"AI_AGENT"`): STT → LLM(+RAG/API) → TTS; tự 
 
 ## Input contract (chỉ 3 thứ, hỏi MỘT LẦN rồi tự làm hết)
 1. **Domain doanh nghiệp** (ví dụ `<domain>.omicrm.io`).
-2. **Tài khoản** và thông tin xác thực cần thiết để agent tự cấu hình MCP OMI (không tự điền mật khẩu vào form hay API đăng nhập).
+2. **Email** đăng nhập; **mật khẩu** user gõ một lần vào ô nhập ẩn của `omi_login.py setup` trong terminal, không gửi qua chat (agent không điền mật khẩu vào form hay API đăng nhập).
 3. **Mô tả nghiệp vụ**: file (PDF/docx/xlsx/txt, ví dụ phiếu khảo sát hoặc kịch bản) và/hoặc prompt mô tả.
 
 Có đủ 3 thứ này thì **không hỏi thêm**. Việc phân tích nghiệp vụ, đặt tên kịch bản (`SCRIPT_NAME` lấy theo doanh nghiệp + mục đích cuộc gọi), thiết kế intent/biến/phân loại, chọn routing, soạn prompt, dựng payload, lưu `add_v2`, verify, xuất thư mục giao đều do agent tự làm. Chỗ nghiệp vụ còn trống (kể cả lựa chọn mặc định agent đã tự chọn) thì ghi "Cần xác nhận" trong báo cáo hoặc `pending[]` của spec, không bịa và không dừng lại hỏi. Tenant đã có script phù hợp → dùng làm baseline qua `list-by-tenant`; tenant trống → dựng từ schema trong `references/api-reference.md`.
 
-**Đăng nhập — ưu tiên MCP OMI** (chi tiết `references/omi-mcp.md`). Agent tự kiểm tra, tự cài và tự cấu hình MCP OMI ở phạm vi người dùng khi chưa có, trên mọi agent/client hỗ trợ MCP chứ không mặc định Codex hay Claude. Dùng thông tin đăng nhập đã được cung cấp mà không hỏi lại; không in mật khẩu/token và không ghi bí mật vào repo hoặc file tạm. Kiểm trạng thái bằng `omi_preflight.py --domain <domain>`. Thứ tự:
-- **(a) MCP OMI**: nếu chưa có thì cài theo `omi-mcp.md`; sau đó gọi `login_omicall_mcp` (+ `select_tenant` nếu nhiều tenant). Token cho API callbot lấy bằng `python "<thư mục skill>/scripts/omi_session.py"` (đọc phiên `~/.omicall-mcp/session.json`, không in token).
+**Đăng nhập — ưu tiên MCP OMI** (chi tiết `references/omi-mcp.md`). Sau lần `setup` đầu tiên, agent tự đăng nhập lại mà không hỏi user; không in mật khẩu/token và không ghi bí mật vào repo hoặc file tạm. Kiểm trạng thái bằng `omi_preflight.py --domain <domain>`. Thứ tự:
+- **(a) MCP OMI + `omi_login.py` (chuẩn)**: `omi_preflight.py` báo `blocked` → agent mở terminal cho user với `python "<thư mục skill>/scripts/omi_login.py" setup --domain <domain> --email <email>`; user gõ mật khẩu vào ô nhập ẩn đúng một lần, script cất vào kho bí mật hệ điều hành, tự đăng nhập MCP OMI và đăng ký server `OMICall-<domain>` (cấu hình không chứa mật khẩu); agent đi đường API ngay. `route=login` (hết hạn, sai tenant) → agent tự chạy `omi_login.py login --domain <domain>`, không hỏi user. MCP có trong phiên thì `login_omicall_mcp` (+ `select_tenant`) cũng được. Token cho API lấy bằng `omi_session.py` (không in token). Chi tiết `references/omi-mcp.md` mục 2a.
 - **(b) Phiên có sẵn**: biến `OMI_TOKEN_FILE` do user tự đặt.
 - **(c) Dự phòng**: mở trang đăng nhập trong browser pane, nhờ user bấm đăng nhập đúng một lần, rồi dựng qua giao diện. Không đọc cookie hay token bằng JS/CDP; bị chặn thì dừng, không thử đường khác.
 

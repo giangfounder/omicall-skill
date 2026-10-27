@@ -27,6 +27,8 @@ CHANGED = {
     65: ("cookie bị chặn thì dừng, theo bảng quyết định token",
          ["Phương án dự phòng", "đăng nhập **một lần**", "Agent không tự gõ mật khẩu vào form hay API đăng nhập",
           "mở lại phiên"]),
+    66: ("bổ sung omi_login.py login khi MCP chưa có trong phiên", ["gọi lại `login_omicall_mcp`", "omi_login.py login --domain <domain>"]),
+    147: ("bổ sung omi_login.py login khi MCP chưa có trong phiên", ["gọi lại `login_omicall_mcp`", "omi_login.py login --domain <domain>"]),
     120: ("file chép sang 4 skill: đường dẫn script tóm tắt theo từng skill, không chỉ omiflow",
           ["**Không đổ JSON lớn vào hội thoại**", "flow_outline.py", "script_outline.py", "bot_outline.py",
            "hoặc chỉ in trường cần thiết"]),

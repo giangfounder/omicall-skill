@@ -1,17 +1,23 @@
 ---
 name: omicall-chatbot-gen-ai
 description: >-
-  [v1.7.0] Dựng, kiểm thử và tối ưu Chatbot AI (OmiBot) của OMiCALL/OMiCRM cho Zalo OA, Facebook, LiveTalk: lời nhắc hệ thống, ý định trong Ngữ cảnh bắt đầu, RAG Dữ liệu khác, Truy vấn API, lưu nháp hoặc xuất bản qua chatbot-gateway, chat thử trên LiveTalk, chấm điểm trước/sau. Kích hoạt khi có đường dẫn omicrm.io/ai/bot/.
+  [v1.8.0] Dựng, kiểm thử và tối ưu Chatbot AI (OmiBot) của OMiCALL/OMiCRM cho Zalo OA, Facebook, LiveTalk: lời nhắc hệ thống, ý định trong Ngữ cảnh bắt đầu, RAG Dữ liệu khác, Truy vấn API, lưu nháp hoặc xuất bản qua chatbot-gateway, chat thử trên LiveTalk, chấm điểm trước/sau. Kích hoạt khi có đường dẫn omicrm.io/ai/bot/.
 ---
 
 # OMiCALL/OMiCRM AI Chatbot (OmiBot) Gen AI — Generic Builder Playbook (mọi tenant / mọi bot)
 
 ## Bước bắt buộc: cập nhật skill
-Chạy `python "<thư mục skill>/scripts/self_update.py"` trước mọi bước khác (`<thư mục skill>` = thư mục chứa SKILL.md này). Câu đầu tiên trả lời user: `Đang dùng omicall-chatbot-gen-ai v<phiên bản>` (lấy từ dòng `SKILL_VERSION`; script lỗi thì dùng v1.7.0). Script báo **SKILL.md đã thay đổi** → đọc lại SKILL.md từ đĩa rồi mới làm tiếp. Không cập nhật được → báo lý do, làm tiếp bằng bản hiện có; không sửa, xoá hay commit trong thư mục skill.
+Chạy `python "<thư mục skill>/scripts/self_update.py"` trước mọi bước khác (`<thư mục skill>` = thư mục chứa SKILL.md này). Câu đầu tiên trả lời user: `Đang dùng omicall-chatbot-gen-ai v<phiên bản>` (lấy từ dòng `SKILL_VERSION`; script lỗi thì dùng v1.8.0). Script báo **SKILL.md đã thay đổi** → đọc lại SKILL.md từ đĩa rồi mới làm tiếp. Không cập nhật được → báo lý do, làm tiếp bằng bản hiện có; không sửa, xoá hay commit trong thư mục skill.
+
+## Bắt đầu: hỏi domain, rồi yêu cầu đăng nhập
+1. Câu hỏi đầu tiên cho user chỉ là **tên domain** doanh nghiệp (`<tên>.omicrm.io`); domain đã có trong yêu cầu thì bỏ qua.
+2. `python "<thư mục skill>/scripts/omi_login.py" ensure --domain <domain>` (một lệnh: kiểm token, tự đăng nhập lại từ kho bí mật). `"ok":true` → sang bước 4, không nói gì thêm về đăng nhập.
+3. `"need":"setup"` → yêu cầu user đăng nhập trên **trang đăng nhập OMI thật**: mở `https://<domain>.omicrm.io/?lng=vi` trong trình duyệt của agent (browser pane của Claude, Chrome MCP… — agent nào có trình duyệt thì dùng trình duyệt đó), điền sẵn email nếu user đã cho, rồi nhắn đúng một câu: "Anh/chị nhập mật khẩu trên trang OMI vừa mở rồi bấm Đăng nhập." Agent KHÔNG gõ vào ô mật khẩu, không đọc cookie hay token của trang. Tự kiểm trang (ảnh chụp/văn bản) tới khi vào được trong ứng dụng thì làm tiếp; phiên này chỉ dùng cho thao tác giao diện (route `ui`). Muốn đi đường API/MCP (nhanh hơn) thì user chạy thêm một lần lệnh `command` của `ensure` trong terminal (ô nhập ẩn, `references/omi-mcp.md` mục 2a). Không nhận mật khẩu qua chat; user lỡ gửi thì không dùng, không nhắc lại, khuyên đổi mật khẩu.
+4. Đăng nhập xong mới nhận mô tả nghiệp vụ và làm tiếp theo Đường nhanh.
 
 ## Đường nhanh
 Chạy script bằng đường dẫn tuyệt đối `<thư mục skill>/scripts/...`. Mỗi bước chỉ trỏ tới quy tắc gốc bên dưới, không thay thế.
-1. `omi_preflight.py --domain <domain>` → route `api`/`ui`/`blocked`, không in token. `blocked` → đưa user đúng một việc theo `references/omi-mcp.md`; không đọc cookie.
+1. `omi_preflight.py --domain <domain>` → route `api`/`login`/`ui`/`blocked`, không in token. `login` → tự chạy `omi_login.py login --domain <domain>`; `blocked` → mở terminal cho user chạy `omi_login.py setup` (Bước 0); không đọc cookie.
 2. `tenant_survey.py --out <scratch>/tenant_context.json` + MCP `get_all_channels`, `get_service_package`: kênh, widget LiveTalk test, quota Bot/Dữ liệu khác/OMIFlow (mục "kiểm tra quota"). Thiếu → "Cần xác nhận".
 3. `bot_outline.py --id <bot_id> --domain <domain> --save` (hoặc `--file <GET.json>`) → baseline: trường hợp, node, cạnh, biến, Truy vấn, RAG, `is_draft`/`is_publish`.
 4. Spec theo `references/spec-bot.example.json` (Bước 2–4). Tra `references/node-status.json`: `verified` → API; chưa có JSON (gửi tin, kết thúc, chuyển nhân viên, Kích hoạt ngữ cảnh) → UI, mỗi nút: điền → đóng hết ngăn kéo → Lưu lại → GET (Gotchas).
@@ -30,12 +36,12 @@ AI **Chatbot** (text) — OMI gọi là **AI Chatbot / OmiBot** (`/ai/bot/...`),
 3. Bảo trì skill (ghi kiến thức mới vào skill, đọc trước khi ghi, ví dụ JSON thật, giữ skill tổng quát, báo phần đã update): mục **"Bảo trì skill"** cuối file.
 
 # Input contract
-Hỏi một lần: (1) **domain doanh nghiệp**; (2) **cách đăng nhập MCP OMI** theo `references/omi-mcp.md` (agent không nhận mật khẩu để điền vào trang đăng nhập); (3) **mô tả nghiệp vụ** (kịch bản, FAQ, tài liệu dịch vụ hoặc prompt). Nếu thông tin đã có trong yêu cầu hoặc cấu hình bí mật thì không hỏi lại. Tên bot tự đặt theo doanh nghiệp và mục đích. Bot đã có sẵn đúng nhu cầu → reuse giữ nguyên `_id` (save ghi đè).
+Hỏi một lần: (1) **domain doanh nghiệp**; (2) **email** đăng nhập — mật khẩu user gõ một lần vào ô nhập ẩn của `omi_login.py setup` trong terminal, không gửi qua chat; (3) **mô tả nghiệp vụ** (kịch bản, FAQ, tài liệu dịch vụ hoặc prompt). Nếu thông tin đã có trong yêu cầu hoặc cấu hình bí mật thì không hỏi lại. Tên bot tự đặt theo doanh nghiệp và mục đích. Bot đã có sẵn đúng nhu cầu → reuse giữ nguyên `_id` (save ghi đè).
 
 # Workflow
 
 ## Bước 0 — Đăng nhập (MCP OMI trước) & lấy token — chi tiết `references/omi-mcp.md`
-- **MCP OMI**: nếu chưa có thì cài và cấu hình ở phạm vi người dùng theo `omi-mcp.md` trên mọi agent/client hỗ trợ MCP, không mặc định Codex hay Claude; sau đó gọi `login_omicall_mcp` (+ `select_tenant`) → `python scripts/omi_session.py` (đọc phiên MCP, in tenant/domain/hạn, không in token); script khác import `omi_session.headers()`.
+- **MCP OMI + `omi_login.py` (chuẩn)**: `omi_preflight.py` báo `blocked` → agent mở terminal cho user với `python "<thư mục skill>/scripts/omi_login.py" setup --domain <domain> --email <email>`; user gõ mật khẩu vào ô nhập ẩn đúng một lần, script cất vào kho bí mật hệ điều hành, tự đăng nhập MCP OMI và đăng ký server `OMICall-<domain>` (cấu hình không chứa mật khẩu); agent đi đường API ngay. `route=login` (hết hạn, sai tenant) → agent tự chạy `omi_login.py login --domain <domain>`, không hỏi user. MCP có trong phiên thì `login_omicall_mcp` (+ `select_tenant`) cũng được. Token cho API lấy bằng `omi_session.py` (không in token). Chi tiết `references/omi-mcp.md` mục 2a. Script khác import `omi_session.headers()`.
 - **Tra một lần bằng MCP**, lưu `tenant_context.json` ở scratchpad: `get_service_package` (module `integrated`, `ai`), `get_all_channels` (oa_id, page_id, widget, bot_id để gắn bot), `list_agents` (nhân viên nhận chuyển hội thoại).
 - Dự phòng không có MCP: user tự đặt `OMI_TOKEN_FILE` (`omi_session.py` đọc), hoặc làm trên giao diện. Không đọc cookie bằng JS/CDP. Xem mục *Đăng nhập an toàn*.
 - Base API (MCP không có công cụ chatbot): `https://chatbot-gateway-v1-stg.omicrm.com` (`Authorization: Bearer <token>`).
@@ -85,7 +91,7 @@ Hỏi một lần: (1) **domain doanh nghiệp**; (2) **cách đăng nhập MCP 
 
 # Đăng nhập an toàn
 - **Không** tự điền username/password vào form đăng nhập hay API đăng nhập bằng script/JS, kể cả khi đã có sẵn thông tin đăng nhập.
-- **Ưu tiên MCP OMI**: agent kiểm tra MCP, chưa có thì cài/cấu hình theo `references/omi-mcp.md`, rồi gọi `login_omicall_mcp` và đọc token từ phiên MCP bằng `scripts/omi_session.py`. Đây là đường chính để gọi API chatbot (Bước 5/6). Không in mật khẩu/token và không ghi bí mật vào repo hoặc file tạm.
+- **Ưu tiên MCP OMI**: đăng nhập một lần bằng `scripts/omi_login.py setup` (user gõ mật khẩu trong terminal), về sau agent tự `omi_login.py login` hoặc `login_omicall_mcp`, đọc token bằng `scripts/omi_session.py`. Đây là đường chính để gọi API chatbot (Bước 5/6). Không in mật khẩu/token và không ghi bí mật vào repo hoặc file tạm.
 - **Dự phòng khi client chưa nạp MCP trong phiên hiện tại**: mở editor trong browser pane, nhờ user tự đăng nhập một lần rồi làm trên giao diện, hoặc user tự đặt `OMI_TOKEN_FILE`. Không đọc cookie bằng JS/CDP; bị lớp an toàn chặn thì không tìm cách lách — hoàn tất cấu hình MCP và yêu cầu mở lại phiên khi client bắt buộc.
 
 # Gotchas chí tử (mọi tenant — sai là hỏng)

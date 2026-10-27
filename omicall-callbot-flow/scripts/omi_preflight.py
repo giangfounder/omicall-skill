@@ -3,13 +3,15 @@
   python <thư mục skill>/scripts/omi_preflight.py --domain <domain> [--min-minutes 5]
 
 In đúng 1 dòng JSON:
-  {token_ok, source, minutes_left, domain_claim, domain_match, node_available, npx_available,
-   mcp_session_file, route: api|ui|blocked, next_step}
+  {token_ok, source, minutes_left, domain_claim, domain_match, credential_stored, node_available, npx_available,
+   mcp_session_file, route: api|login|ui|blocked, next_step}
 - route=api     : token dùng được cho domain này -> đi đường API (omi_save.py, *_outline.py ...). Exit 0.
-- route=ui      : có token nhưng hết hạn / sai domain / hỏng -> gọi lại login_omicall_mcp (+ select_tenant) rồi chạy
-                  lại lệnh này; chưa làm được thì dựng bằng giao diện. Exit 3.
-- route=blocked : không có nguồn token nào -> đưa user đúng MỘT việc (tự chạy lệnh mcp add đã soạn sẵn với
-                  placeholder rồi mở phiên mới, HOẶC tự đặt OMI_TOKEN_FILE). Trong lúc chờ, làm tiếp phần offline. Exit 3.
+- route=login   : token hết hạn / sai tenant / chưa có, nhưng user đã cất thông tin đăng nhập (omi_login.py setup)
+                  -> agent TỰ chạy `omi_login.py login --domain <domain>` rồi chạy lại lệnh này. Exit 3.
+- route=ui      : có token hỏng/hết hạn, chưa cất thông tin đăng nhập -> gọi login_omicall_mcp nếu MCP có trong
+                  phiên; không thì user chạy omi_login.py setup (một lần). Exit 3.
+- route=blocked : không có nguồn token nào -> user chạy `omi_login.py setup --domain <domain>` trong terminal của
+                  mình (nhập mật khẩu ở ô ẩn, một lần). Trong lúc chờ, làm tiếp phần offline. Exit 3.
 Không in token, không đọc cookie, không nhận mật khẩu.
 """
 import argparse
@@ -21,13 +23,22 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import omi_session  # noqa: E402
 
+HERE = os.path.dirname(os.path.abspath(__file__))
 
-def mcp_add_command(domain):
+
+def setup_command(domain):
     d = domain or '<domain>'
-    """Lệnh mẫu cho Claude Code. Client khác có cú pháp khác (Codex --env, Gemini đặt tên ở cuối + --transport stdio,
-    OpenCode --global --env): mẫu ở references/omi-mcp.md Phụ lục A."""
-    return ('claude mcp add OMICall-%s --scope user -e OMICALL_USERNAME=<email> -e OMICALL_PASSWORD=<mật khẩu> '
-            '-e OMICALL_DOMAIN=%s -- npx -y omicall-mcp' % (d, d))
+    return 'python "%s" setup --domain %s' % (os.path.join(HERE, 'omi_login.py'), d)
+
+
+def credential_stored(domain):
+    if not domain:
+        return False
+    try:
+        import omi_login
+        return bool(omi_login.cred_load(domain)[1])
+    except Exception:
+        return False
 
 
 def decide(domain, min_minutes=5):
@@ -43,25 +54,32 @@ def decide(domain, min_minutes=5):
         'npx_available': bool(shutil.which('npx')),
         'mcp_session_file': os.path.exists(omi_session._session_path()),
     }
+    out['credential_stored'] = stored = credential_stored(domain)
     if info['token_ok']:
         out['route'] = 'api'
         out['next_step'] = ('Đi đường API: tenant_survey.py -> dựng payload -> validate -> omi_save.py. '
                             'Token chỉ dùng trong script, không in ra hội thoại.')
+    elif stored:
+        out['route'] = 'login'
+        out['next_step'] = ('Agent tự chạy `python "%s" login --domain %s` (thông tin đăng nhập lấy từ kho bí mật, '
+                            'không hỏi user) rồi chạy lại omi_preflight.py. Lỗi đăng nhập thì báo user chạy lại '
+                            'setup: `%s`.' % (os.path.join(HERE, 'omi_login.py'), domain or '<domain>',
+                                              setup_command(domain)))
     elif info['source']:
         out['route'] = 'ui'
         out['next_step'] = ('Token không dùng được (%s). Nếu công cụ MCP OMI có trong phiên: gọi login_omicall_mcp '
-                            '(+ select_tenant đúng domain %s) rồi chạy lại omi_preflight.py. Nếu không: user tự cập nhật '
-                            'file OMI_TOKEN_FILE, hoặc dựng bằng giao diện (user tự đăng nhập trên trình duyệt).'
-                            % (info['error'], domain or '<domain>'))
+                            '(+ select_tenant đúng domain %s) rồi chạy lại omi_preflight.py. Nếu không: user chạy '
+                            'một lần trong terminal `%s` để agent tự đăng nhập từ đó về sau.'
+                            % (info['error'], domain or '<domain>', setup_command(domain)))
     else:
         out['route'] = 'blocked'
-        out['next_step'] = ('Cần user làm MỘT việc rồi mở phiên mới: (a) user tự chạy lệnh mcp add của client đang dùng — '
-                            'Claude Code: `%s`; client khác (Codex, Gemini CLI, OpenCode...): mẫu lệnh ở '
-                            'references/omi-mcp.md Phụ lục A (cú pháp khác nhau, không chỉ đổi tên CLI); user tự điền '
-                            '<email> và <mật khẩu> trên máy mình; cần Node.js 18+ — hoặc '
-                            '(b) user tự đặt biến OMI_TOKEN_FILE trỏ tới file chứa token. Agent không cầm mật khẩu. '
+        out['next_step'] = ('Cần user làm MỘT việc: chạy trong terminal `%s`, nhập email và mật khẩu ở ô nhập ẩn '
+                            '(mật khẩu cất vào kho bí mật của hệ điều hành, không qua hội thoại). Script tự đăng nhập '
+                            'MCP OMI và đăng ký server MCP; agent đi đường API ngay trong phiên này. Client có công cụ '
+                            'mở terminal thì agent mở sẵn lệnh này cho user. Cần Node.js 18+. Dự phòng: lệnh mcp add '
+                            'theo references/omi-mcp.md Phụ lục A, hoặc user tự đặt OMI_TOKEN_FILE. '
                             'Trong lúc chờ: làm tiếp phần offline (extract_text, phân tích, spec).'
-                            % mcp_add_command(domain))
+                            % setup_command(domain))
     return out
 
 

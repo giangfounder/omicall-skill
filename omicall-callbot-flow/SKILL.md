@@ -1,17 +1,23 @@
 ---
 name: omicall-callbot-flow
 description: >-
-  [v1.4.0] Dựng và sửa Callbot luồng cổ điển (kịch bản NORMAL) của OMiCall/OMiCRM: cây hội thoại, ý định và thực thể NLU, dữ liệu huấn luyện giọng điện thoại, Kho tri thức, sinh luồng từ JSON, lưu và gọi thử. Dùng cho trang …/ai/callbot/script/update/{id} khi kịch bản không phải AI_AGENT; SmartAgent dùng omicall-callbot-gen-ai.
+  [v1.5.0] Dựng và sửa Callbot luồng cổ điển (kịch bản NORMAL) của OMiCall/OMiCRM: cây hội thoại, ý định và thực thể NLU, dữ liệu huấn luyện giọng điện thoại, Kho tri thức, sinh luồng từ JSON, lưu và gọi thử. Dùng cho trang …/ai/callbot/script/update/{id} khi kịch bản không phải AI_AGENT; SmartAgent dùng omicall-callbot-gen-ai.
 ---
 
 # OMiCALL Callbot luồng cổ điển (NORMAL) + Kho tri thức — Generic Builder Playbook
 
 ## Bước bắt buộc: cập nhật skill
-Chạy `python "<thư mục skill>/scripts/self_update.py"` trước mọi bước khác (`<thư mục skill>` = thư mục chứa SKILL.md này). Câu đầu tiên trả lời user: `Đang dùng omicall-callbot-flow v<phiên bản>` (lấy từ dòng `SKILL_VERSION`; script lỗi thì dùng v1.4.0). Script báo **SKILL.md đã thay đổi** → đọc lại SKILL.md từ đĩa rồi mới làm tiếp. Không cập nhật được → báo lý do, làm tiếp bằng bản hiện có; không sửa, xoá hay commit trong thư mục skill.
+Chạy `python "<thư mục skill>/scripts/self_update.py"` trước mọi bước khác (`<thư mục skill>` = thư mục chứa SKILL.md này). Câu đầu tiên trả lời user: `Đang dùng omicall-callbot-flow v<phiên bản>` (lấy từ dòng `SKILL_VERSION`; script lỗi thì dùng v1.5.0). Script báo **SKILL.md đã thay đổi** → đọc lại SKILL.md từ đĩa rồi mới làm tiếp. Không cập nhật được → báo lý do, làm tiếp bằng bản hiện có; không sửa, xoá hay commit trong thư mục skill.
+
+## Bắt đầu: hỏi domain, rồi yêu cầu đăng nhập
+1. Câu hỏi đầu tiên cho user chỉ là **tên domain** doanh nghiệp (`<tên>.omicrm.io`); domain đã có trong yêu cầu thì bỏ qua.
+2. `python "<thư mục skill>/scripts/omi_login.py" ensure --domain <domain>` (một lệnh: kiểm token, tự đăng nhập lại từ kho bí mật). `"ok":true` → sang bước 4, không nói gì thêm về đăng nhập.
+3. `"need":"setup"` → yêu cầu user đăng nhập trên **trang đăng nhập OMI thật**: mở `https://<domain>.omicrm.io/?lng=vi` trong trình duyệt của agent (browser pane của Claude, Chrome MCP… — agent nào có trình duyệt thì dùng trình duyệt đó), điền sẵn email nếu user đã cho, rồi nhắn đúng một câu: "Anh/chị nhập mật khẩu trên trang OMI vừa mở rồi bấm Đăng nhập." Agent KHÔNG gõ vào ô mật khẩu, không đọc cookie hay token của trang. Tự kiểm trang (ảnh chụp/văn bản) tới khi vào được trong ứng dụng thì làm tiếp; phiên này chỉ dùng cho thao tác giao diện (route `ui`). Muốn đi đường API/MCP (nhanh hơn) thì user chạy thêm một lần lệnh `command` của `ensure` trong terminal (ô nhập ẩn, `references/omi-mcp.md` mục 2a). Không nhận mật khẩu qua chat; user lỡ gửi thì không dùng, không nhắc lại, khuyên đổi mật khẩu.
+4. Đăng nhập xong mới nhận mô tả nghiệp vụ và làm tiếp theo Đường nhanh.
 
 ## Đường nhanh
 Script nằm ở `<thư mục skill>/scripts/`, chạy bằng đường dẫn tuyệt đối. Khối này chỉ là lối tắt; quy tắc gốc ở Rules, Workflow, Gotchas.
-1. `scripts/omi_preflight.py --domain <domain>`: route `api` → đi tiếp; `blocked` → đưa user đúng MỘT việc theo `references/omi-mcp.md`, không đọc cookie; trong lúc chờ làm offline bước 3.
+1. `scripts/omi_preflight.py --domain <domain>`: route `api` → đi tiếp; `login` → tự chạy `scripts/omi_login.py login --domain <domain>`; `blocked` → mở terminal cho user chạy `scripts/omi_login.py setup` (Rule 6), không đọc cookie; trong lúc chờ làm offline bước 3.
 2. `scripts/tenant_survey.py --out <scratch>/tenant_context.json` + MCP `list_agents`/`list_extensions`; đếm câu theo ý định bằng `references/browser-snippets.md` §3 khi script chưa đếm.
 3. Soạn bảng ý định/thực thể → **user duyệt** (Bước 2). Soạn `spec_training.json` → `scripts/gen_training.py` → **user duyệt file** (Bước 3). Hai lần duyệt giữ riêng, không gộp.
 4. Đẩy Excel **qua giao diện** (Rule 4; `upload_excel` bằng API chưa kiểm chứng) → khảo sát lại để có id ý định/thực thể trong `tenant_context.json`.
@@ -38,11 +44,11 @@ Nghiệp vụ cần tư vấn tự do thì đề xuất AI_AGENT.
 3. **Dùng lại trước khi tạo mới**: ưu tiên ý định/thực thể hệ thống (`omi_intent_*`, `omi_entity_*`, `khach_can_gap/*`).
 4. **Kho tri thức dùng chung cho mọi kịch bản NORMAL của tenant**, mỗi lần nhập dữ liệu là một lần huấn luyện lại toàn bộ (10–20 phút) → gom dữ liệu vào **một file**, gửi user duyệt, **đẩy một lần qua giao diện**. Không xoá dữ liệu có sẵn khi user chưa yêu cầu.
 5. Không bấm **Xuất bản**, không gắn kịch bản vào hotline/chiến dịch, không gọi thử khi user chưa yêu cầu và chưa đưa số.
-6. Agent ưu tiên MCP OMI và **tự kiểm tra, tự cài, tự cấu hình** MCP ở phạm vi người dùng theo `references/omi-mcp.md`. Quy tắc này áp dụng cho mọi agent/client hỗ trợ MCP, không mặc định Codex hay Claude. Nếu thông tin đăng nhập đã có thì dùng luôn, không hỏi lại; không in mật khẩu/token và không ghi bí mật vào repo hoặc file tạm. Chỉ dùng browser pane khi client chưa nạp được MCP trong phiên hiện tại.
+6. Đăng nhập qua MCP OMI bằng `scripts/omi_login.py` (`references/omi-mcp.md` mục 2a): lần đầu agent mở terminal cho user chạy `python "<thư mục skill>/scripts/omi_login.py" setup --domain <domain> --email <email>` và user gõ mật khẩu vào ô nhập ẩn; script cất vào kho bí mật hệ điều hành, tự đăng nhập, đăng ký server MCP không chứa mật khẩu. Về sau hết hạn hoặc 401 thì agent tự chạy `omi_login.py login --domain <domain>`, không hỏi lại. Áp dụng cho mọi agent/client hỗ trợ MCP. Không in mật khẩu/token, không ghi bí mật vào repo hoặc file tạm. Chỉ dùng browser pane khi không đăng nhập được bằng đường này.
 
 ## Input contract (hỏi MỘT LẦN rồi tự làm hết)
 1. **Domain tenant** (`<tên>.omicrm.io` hoặc `.omicrm.com`).
-2. **Tài khoản** (email và thông tin xác thực cần thiết để agent tự cấu hình MCP — xem Rule 6, `references/omi-mcp.md`).
+2. **Email** đăng nhập; mật khẩu user gõ một lần vào `omi_login.py setup` trong terminal, không gửi qua chat (Rule 6).
 3. **Nghiệp vụ**: file kịch bản (docx/pdf/xlsx/txt) và/hoặc mô tả.
 Có đủ 3 thứ thì không hỏi thêm cho tới bước cần duyệt (bảng ý định/thực thể, file dữ liệu) và bước gọi thử (cần số điện thoại).
 

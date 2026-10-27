@@ -25,6 +25,7 @@ MAP = {
     "scripts/self_update.py": ALL,
     "scripts/omi_session.py": ALL,
     "scripts/omi_preflight.py": ALL,
+    "scripts/omi_login.py": ALL,
     "scripts/omi_api.py": ALL,
     "scripts/omi_save.py": ALL,
     "scripts/tenant_survey.py": ALL,

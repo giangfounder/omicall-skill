@@ -1,17 +1,23 @@
 ---
 name: omicall-omiflow
 description: >-
-  [v1.12.0] Thiết kế, dựng và sửa quy trình tự động OMIFlow của OMICall/OMICRM: trigger webhook API, cuộc gọi, phím IVR, phiếu ghi, lịch, Excel, đối tác; điều kiện, trì hoãn, AI phân loại, gọi API ngoài, cập nhật khách/phiếu/cuộc gọi, popup nhân viên, SMS/ZNS, chạy hoặc liên kết Callbot/Chatbot; đọc và lưu qua API campaign-v1.
+  [v1.13.0] Thiết kế, dựng và sửa quy trình tự động OMIFlow của OMICall/OMICRM: trigger webhook API, cuộc gọi, phím IVR, phiếu ghi, lịch, Excel, đối tác; điều kiện, trì hoãn, AI phân loại, gọi API ngoài, cập nhật khách/phiếu/cuộc gọi, popup nhân viên, SMS/ZNS, chạy hoặc liên kết Callbot/Chatbot; đọc và lưu qua API campaign-v1.
 ---
 
 # OMICall OMIFlow — Builder Playbook (mọi tenant, mọi bài toán)
 
 ## Bước bắt buộc: cập nhật skill
-Chạy `python "<thư mục skill>/scripts/self_update.py"` trước mọi bước khác (`<thư mục skill>` = thư mục chứa SKILL.md này). Câu đầu tiên trả lời user: `Đang dùng omicall-omiflow v<phiên bản>` (lấy từ dòng `SKILL_VERSION`; script lỗi thì dùng v1.12.0). Script báo **SKILL.md đã thay đổi** → đọc lại SKILL.md từ đĩa rồi mới làm tiếp. Không cập nhật được → báo lý do, làm tiếp bằng bản hiện có; không sửa, xoá hay commit trong thư mục skill.
+Chạy `python "<thư mục skill>/scripts/self_update.py"` trước mọi bước khác (`<thư mục skill>` = thư mục chứa SKILL.md này). Câu đầu tiên trả lời user: `Đang dùng omicall-omiflow v<phiên bản>` (lấy từ dòng `SKILL_VERSION`; script lỗi thì dùng v1.13.0). Script báo **SKILL.md đã thay đổi** → đọc lại SKILL.md từ đĩa rồi mới làm tiếp. Không cập nhật được → báo lý do, làm tiếp bằng bản hiện có; không sửa, xoá hay commit trong thư mục skill.
+
+## Bắt đầu: hỏi domain, rồi yêu cầu đăng nhập
+1. Câu hỏi đầu tiên cho user chỉ là **tên domain** doanh nghiệp (`<tên>.omicrm.io`); domain đã có trong yêu cầu thì bỏ qua.
+2. `python "<thư mục skill>/scripts/omi_login.py" ensure --domain <domain>` (một lệnh: kiểm token, tự đăng nhập lại từ kho bí mật). `"ok":true` → sang bước 4, không nói gì thêm về đăng nhập.
+3. `"need":"setup"` → yêu cầu user đăng nhập trên **trang đăng nhập OMI thật**: mở `https://<domain>.omicrm.io/?lng=vi` trong trình duyệt của agent (browser pane của Claude, Chrome MCP… — agent nào có trình duyệt thì dùng trình duyệt đó), điền sẵn email nếu user đã cho, rồi nhắn đúng một câu: "Anh/chị nhập mật khẩu trên trang OMI vừa mở rồi bấm Đăng nhập." Agent KHÔNG gõ vào ô mật khẩu, không đọc cookie hay token của trang. Tự kiểm trang (ảnh chụp/văn bản) tới khi vào được trong ứng dụng thì làm tiếp; phiên này chỉ dùng cho thao tác giao diện (route `ui`). Muốn đi đường API/MCP (nhanh hơn) thì user chạy thêm một lần lệnh `command` của `ensure` trong terminal (ô nhập ẩn, `references/omi-mcp.md` mục 2a). Không nhận mật khẩu qua chat; user lỡ gửi thì không dùng, không nhắc lại, khuyên đổi mật khẩu.
+4. Đăng nhập xong mới nhận mô tả nghiệp vụ và làm tiếp theo Đường nhanh.
 
 ## Đường nhanh
 Chạy script bằng đường dẫn tuyệt đối `<thư mục skill>/scripts/...`. Khối này chỉ trỏ tới quy tắc gốc bên dưới; mâu thuẫn thì quy tắc gốc thắng.
-1. **Token**: `python <thư mục skill>/scripts/omi_preflight.py --domain <domain>` → route `api` / `ui` / `blocked`. `blocked` → đưa user đúng MỘT việc theo `references/omi-mcp.md` (Đọc nhanh); không đọc cookie, không nhập mật khẩu hộ. Trong lúc chờ, làm tiếp bước 3 offline.
+1. **Token**: `python <thư mục skill>/scripts/omi_preflight.py --domain <domain>` → route `api` / `login` / `ui` / `blocked`. `login` → tự chạy `scripts/omi_login.py login --domain <domain>`; `blocked` → mở terminal cho user chạy `scripts/omi_login.py setup` (Input contract); không đọc cookie, không nhập mật khẩu hộ. Trong lúc chờ, làm tiếp bước 3 offline.
 2. **Khảo sát (Bước 0, BẮT BUỘC trước thiết kế)**: `<thư mục skill>/scripts/tenant_survey.py --out <scratch>/tenant_context.json` + công cụ MCP → kiểu thuộc tính (`is_list`), danh mục phiếu, tích hợp đã bật, quota flow và nút. Thiếu → "Cần xác nhận".
 3. **Thiết kế**: khung 8 câu (`references/design-patterns.md` mục A) → tra `references/node-status.json`: `verified` → đi API; `enum` / `ui_only` / `unverified` → đi UI hoặc ghi "Cần xác nhận".
 4. **Dựng — API**: tạo vỏ flow trên UI (có `_id` nháp; cách tối thiểu để lưu được vỏ: Cần xác nhận, `references/api-reference.md` mục Lưu flow) → `flow_outline.py --save <id>` → sửa `nodes` + `edges` + `name_mappings` → `<thư mục skill>/scripts/omi_save.py flow payload.json --domain <domain>` (chỉ `save_draft_v2`, không xuất bản). `name_mappings` (bản editor) chưa `verified`: mỗi phần tử chỉ được **chép nguyên từ bản GET của một nút cùng loại đã dựng trên UI** (`references/node-catalog.md` mục 6, Cách học nhanh) rồi đổi id/giá trị cho khớp `nodes`, không tự viết; chưa có bản GET mẫu cho loại đó → dựng nút đó bằng UI. File `--save` đã che bí mật (`***`): flow có header `Authorization`/token ở nút Gọi API hay webhook thì `omi_save.py` dừng exit 2 (cố ý, tránh ghi đè bí mật thật) → phần đó sửa trên UI, ghi "Cần xác nhận".
@@ -39,11 +45,11 @@ Tài liệu chính thức: `https://omicrm.io/post/topic/omiflow-7` (tổng quan
 
 ## Input contract (hỏi một lần rồi tự làm)
 1. **Domain doanh nghiệp** (`<tên>.omicrm.io`).
-2. **Tài khoản đăng nhập**: user tự đăng nhập (MCP OMI hoặc trang đăng nhập); agent không nhập mật khẩu hộ.
+2. **Email** đăng nhập; mật khẩu user gõ một lần vào ô nhập ẩn của `omi_login.py setup` trong terminal, không gửi qua chat; agent không nhập mật khẩu hộ.
 3. **Bài toán nghiệp vụ**: file hoặc prompt mô tả (sự kiện gì, cần ra kết quả gì, ai nhận, hệ thống ngoài nào).
 
 **Đăng nhập — ưu tiên MCP OMI** (chi tiết `references/omi-mcp.md`). Bước đầu luôn là `scripts/omi_preflight.py --domain <domain>` (không in token, không gọi mạng). Áp dụng trên mọi agent/client hỗ trợ MCP chứ không mặc định Codex hay Claude. Không in mật khẩu/token và không ghi bí mật vào repo hoặc file tạm. Thứ tự:
-- **(a)** MCP OMI: đã có thì gọi `login_omicall_mcp` (+ `select_tenant`). Chưa có thì agent soạn sẵn lệnh `mcp add` theo `omi-mcp.md` (mật khẩu để placeholder) để **user tự chạy** rồi mở phiên mới; agent không cầm mật khẩu dạng rõ. Token cho API OMIFlow lấy bằng `scripts/omi_session.py` (đọc phiên MCP, không in token).
+- **(a) MCP OMI + `omi_login.py` (chuẩn)**: `omi_preflight.py` báo `blocked` → agent mở terminal cho user với `python "<thư mục skill>/scripts/omi_login.py" setup --domain <domain> --email <email>`; user gõ mật khẩu vào ô nhập ẩn đúng một lần, script cất vào kho bí mật hệ điều hành, tự đăng nhập MCP OMI và đăng ký server `OMICall-<domain>` (cấu hình không chứa mật khẩu); agent đi đường API ngay. `route=login` (hết hạn, sai tenant) → agent tự chạy `omi_login.py login --domain <domain>`, không hỏi user. MCP có trong phiên thì `login_omicall_mcp` (+ `select_tenant`) cũng được. Token cho API lấy bằng `omi_session.py` (không in token). Chi tiết `references/omi-mcp.md` mục 2a.
 - **(b)** Phiên có sẵn: `OMI_TOKEN_FILE` do user tự đặt.
 - **(c)** Không có (a), (b): dựng và test bằng giao diện (`references/ui-build-and-test.md`). User tự đăng nhập **một lần** trong browser pane; không chuyển trang khi user đang đăng nhập. **Không đọc cookie lấy token** (bằng JS hay CDP): bị bộ lọc an toàn chặn thì dừng, không lách.
 

@@ -85,7 +85,9 @@ class TestDocs(unittest.TestCase):
         nxt = next(i for i in range(start + 1, len(self.lines)) if self.lines[i].startswith("## "))
         self.assertLessEqual(len([l for l in self.lines[start:nxt] if l.strip()]), 20)
         prev = max(i for i in range(start) if self.lines[i].startswith("## "))
-        self.assertTrue(self.lines[prev].startswith("## Bước bắt buộc"))
+        self.assertTrue(self.lines[prev].startswith("## Bắt đầu: hỏi domain"))
+        prev2 = max(i for i in range(prev) if self.lines[i].startswith("## "))
+        self.assertTrue(self.lines[prev2].startswith("## Bước bắt buộc"))
         self.assertIn("## Bảo trì skill", self.skill_md)
 
     def test_no_relative_script_paths(self):

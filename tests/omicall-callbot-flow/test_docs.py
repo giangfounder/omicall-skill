@@ -30,7 +30,9 @@ class TestDocs(unittest.TestCase):
         self.assertLessEqual(len(block), 20)
         self.assertIn("verify_callflow.py", "\n".join(block))
         prev = max(i for i, l in enumerate(self.lines[:idx[0]]) if l.startswith("## "))
-        self.assertIn("Bước bắt buộc: cập nhật skill", self.lines[prev])
+        self.assertIn("Bắt đầu: hỏi domain", self.lines[prev])
+        prev2 = max(i for i, l in enumerate(self.lines[:prev]) if l.startswith("## "))
+        self.assertIn("Bước bắt buộc: cập nhật skill", self.lines[prev2])
 
     def test_skill_md_greps(self):
         self.assertNotIn("credentials.md", self.skill)
