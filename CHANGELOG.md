@@ -25,6 +25,7 @@ Các bản trước 2026-10-23 được đánh số lại theo lịch sử commi
 ## omicall-callbot-gen-ai
 | Phiên bản | Ngày | Commit | Thay đổi |
 |---|---|---|---|
+| 1.11.0 | 2026-10-27 | tag `omicall-callbot-gen-ai/v1.11.0` | Thêm agent-config-guide: quy chuẩn cấu hình Agent V1 (kịch bản chung, mô tả biến, thứ tự Thu thập/Hướng dẫn Agent, chuyển nút, END_CALL), thao tác node Hành động, canvas, sao chép sang tenant khác, đăng nhập MCP trên Claude desktop, mẫu luồng sản phẩm và đặt hàng |
 | 1.10.0 | 2026-10-27 | tag `omicall-callbot-gen-ai/v1.10.0` | Đường nhanh: preflight token, khảo sát tenant trước thiết kế, trích tài liệu, builder và validator offline cho từng skill, omi_save lưu nháp kèm GET kiểm tự động, node-status.json, shared/ + sync_shared + check_skills, xoá dashboard realtime và dữ liệu khách sót |
 | 1.9.0 | 2026-10-23 | tag `omicall-callbot-gen-ai/v1.9.0` | Tối ưu token: rút mô tả, tách phần ít dùng sang references, cache self_update 6 giờ; sửa script và xoá dữ liệu khách |
 | 1.8.2 | 2026-10-23 | tag `omicall-callbot-gen-ai/v1.8.2` | Hiện phiên bản trong mô tả skill ([vX.Y.Z], thấy khi gõ /) và câu đầu tiên agent trả lời; release.py tự cập nhật |

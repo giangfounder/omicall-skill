@@ -1,13 +1,13 @@
 ---
 name: omicall-callbot-gen-ai
 description: >-
-  [v1.10.0] Dựng và sửa kịch bản Callbot Gen AI (SmartAgent, AI_AGENT) của OMiCall/OMiCRM: ý định, thu thập thông tin, phân loại, gọi API, RAG, chuyển máy, prompt cho tổng đài viên AI; dựng từ tài liệu nghiệp vụ hoặc PDF, sửa tại …/ai/callbot/script/update/{scriptId}, lưu qua chatbot-gateway và kiểm thử.
+  [v1.11.0] Dựng và sửa kịch bản Callbot Gen AI (SmartAgent, AI_AGENT) của OMiCall/OMiCRM: ý định, thu thập thông tin, phân loại, gọi API, RAG, chuyển máy, prompt cho tổng đài viên AI; dựng từ tài liệu nghiệp vụ hoặc PDF, sửa tại …/ai/callbot/script/update/{scriptId}, lưu qua chatbot-gateway và kiểm thử.
 ---
 
 # OMiCALL Callbot Gen AI — Generic Builder Playbook (all tenants / all scripts)
 
 ## Bước bắt buộc: cập nhật skill
-Chạy `python "<thư mục skill>/scripts/self_update.py"` trước mọi bước khác (`<thư mục skill>` = thư mục chứa SKILL.md này). Câu đầu tiên trả lời user: `Đang dùng omicall-callbot-gen-ai v<phiên bản>` (lấy từ dòng `SKILL_VERSION`; script lỗi thì dùng v1.10.0). Script báo **SKILL.md đã thay đổi** → đọc lại SKILL.md từ đĩa rồi mới làm tiếp. Không cập nhật được → báo lý do, làm tiếp bằng bản hiện có; không sửa, xoá hay commit trong thư mục skill.
+Chạy `python "<thư mục skill>/scripts/self_update.py"` trước mọi bước khác (`<thư mục skill>` = thư mục chứa SKILL.md này). Câu đầu tiên trả lời user: `Đang dùng omicall-callbot-gen-ai v<phiên bản>` (lấy từ dòng `SKILL_VERSION`; script lỗi thì dùng v1.11.0). Script báo **SKILL.md đã thay đổi** → đọc lại SKILL.md từ đĩa rồi mới làm tiếp. Không cập nhật được → báo lý do, làm tiếp bằng bản hiện có; không sửa, xoá hay commit trong thư mục skill.
 
 ## Đường nhanh
 Chạy script bằng đường dẫn tuyệt đối `python "<thư mục skill>/scripts/<tên>.py"`; file ra ghi vào scratch (`OMI_SCRATCH`), không ghi vào thư mục skill. Đây chỉ là mục lục, quy tắc gốc nằm ở các mục bên dưới.
@@ -26,6 +26,7 @@ Chạy script bằng đường dẫn tuyệt đối `python "<thư mục skill>/
 | Prompt và lời thoại cho giọng đọc | `references/voice-rules.md` |
 | Đăng nhập, MCP, dựng nhiều artefact | `references/omi-mcp.md` |
 | Loại node nào đã kiểm chứng | `references/node-status.json` |
+| Quy chuẩn viết kịch bản chung, mô tả biến, ý định, hành động, chuyển nút, thao tác UI | `references/agent-config-guide.md` |
 
 Không bao giờ: bấm **Xuất bản** hay ghi đè script đang chạy khi user chưa duyệt (Gotchas). Không nhập mật khẩu hộ user, không đọc cookie hay in token (Input contract). Không tạo cạnh hay `next_node` về BEGIN (Rules 3).
 
@@ -154,6 +155,16 @@ Chrome CDP port 9222, profile riêng: `Start-Process chrome.exe -ArgumentList '-
   Khách im lặng sau câu hỏi này: theo Rules 3.
 - **Nhánh hệ thống “bot không xử lý được” (`bot_can_not_answer`) LUÔN nối tới node `TRANSFER_CALL` chuyển máy cho nhân viên** (mọi kịch bản, `transfer_collected_info:true`; validator X2). Lấy nhân viên và máy lẻ bằng MCP `list_agents`/`list_extensions`, hoặc API `agent-v1-stg.omicrm.com/get_all_agent/no_role` (`agent_id`, `_id` = contact_id, `sip_user`). Tenant chưa có nhân viên nào thì ghi "Cần xác nhận" trong báo cáo. Nối cả intent “khách yêu cầu gặp nhân viên” nếu nghiệp vụ có. Ba chỗ phải khớp (runtime condition + `ai_analyze.bot_can_not_answer.next_node`, connection, node `TRANSFER_CALL`): mẫu JSON ở api-reference mục *Nối `bot_can_not_answer` → TRANSFER_CALL*.
 - Lời báo trước khi chuyển máy cũng cần bằng tiếng Việt đầy đủ, ví dụ: “Em xin phép kết nối anh/chị với nhân viên phụ trách.” Không hứa thời gian liên hệ khi chưa có dữ liệu.
+
+### Quy chuẩn cấu hình Agent (chi tiết: `references/agent-config-guide.md`)
+- Câu thoại cố định (chào, đọc lại thông tin, cảm ơn) và quy tắc thu thập biến đặt ở Kịch bản chung, câu cần nói đúng để trong ngoặc kép.
+- Mô tả biến chỉ ghi mục tiêu + định dạng kết quả, kèm 1–2 ví dụ dễ nhận sai; không ghi luồng hỏi hay câu dẫn dắt.
+- Trong một Ý định: tra kho tri thức thì Hướng dẫn Agent đặt TRƯỚC Thu thập thông tin; gọi API cần tham số thì Thu thập thông tin TRƯỚC, Hướng dẫn Agent SAU và gọi bằng `{{request_api_<tên truy vấn>}}`. Hướng dẫn viết ngắn, không chứa hội thoại mẫu.
+- Luồng sản phẩm/đặt hàng tách 2 trường hợp: khách chưa rõ sản phẩm → tư vấn theo nhu cầu rồi gợi ý; khách đã nói rõ tên → tra đúng tên đó, xác nhận lại, đặt theo đúng nhu cầu khách đã nói, không hỏi lại thông tin tư vấn.
+- Ý định có biến giữ tương tác đến khi đủ biến rồi chuyển nút ngay, nên bước xác nhận lại có thể bị bỏ. Luồng cần xác nhận: Ý định thu thập để trống nút kế tiếp + Ý định riêng "khách xác nhận thông tin đã đọc lại" → phân loại/chuyển máy. Không nối Ý định thu biến thẳng tới END_CALL.
+
+- Không đặt Phân loại và Chuyển tiếp cuộc gọi chung một node (Chuyển tiếp bị khoá sau Phân loại): node Phân loại → node Chuyển máy. Thông báo cho nhân viên (Tạo thông báo) đặt chung node Phân loại được.
+- "Bước tiếp theo" chỉ tạo node mới; nối tới node có sẵn bằng kéo dây trên canvas. Bỏ liên kết bằng dấu x sẽ xoá luôn node mồ côi. Chi tiết thao tác, canvas, sao chép sang tenant khác, đăng nhập MCP trên Claude desktop: `references/agent-config-guide.md` mục 8–10.
 
 ### Thao tác với trình biên tập OMiCRM
 - Các ô nội dung dài trong trình biên tập là vùng nhập có thể nối thêm nội dung khi dán. Muốn thay toàn bộ prompt hoặc mô tả phải: đặt tiêu điểm vào ô → `Ctrl+A` → dán nội dung mới → đọc lại nội dung hiển thị để xác nhận không bị ghép với bản cũ.
