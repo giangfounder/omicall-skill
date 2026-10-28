@@ -1,18 +1,18 @@
 ---
 name: omicall-omiflow
 description: >-
-  [v1.13.0] Thiết kế, dựng và sửa quy trình tự động OMIFlow của OMICall/OMICRM: trigger webhook API, cuộc gọi, phím IVR, phiếu ghi, lịch, Excel, đối tác; điều kiện, trì hoãn, AI phân loại, gọi API ngoài, cập nhật khách/phiếu/cuộc gọi, popup nhân viên, SMS/ZNS, chạy hoặc liên kết Callbot/Chatbot; đọc và lưu qua API campaign-v1.
+  [v1.14.0] Thiết kế, dựng và sửa quy trình tự động OMIFlow của OMICall/OMICRM: trigger webhook API, cuộc gọi, phím IVR, phiếu ghi, lịch, Excel, đối tác; điều kiện, trì hoãn, AI phân loại, gọi API ngoài, cập nhật khách/phiếu/cuộc gọi, popup nhân viên, SMS/ZNS, chạy hoặc liên kết Callbot/Chatbot; đọc và lưu qua API campaign-v1.
 ---
 
 # OMICall OMIFlow — Builder Playbook (mọi tenant, mọi bài toán)
 
 ## Bước bắt buộc: cập nhật skill
-Chạy `python "<thư mục skill>/scripts/self_update.py"` trước mọi bước khác (`<thư mục skill>` = thư mục chứa SKILL.md này). Câu đầu tiên trả lời user: `Đang dùng omicall-omiflow v<phiên bản>` (lấy từ dòng `SKILL_VERSION`; script lỗi thì dùng v1.13.0). Script báo **SKILL.md đã thay đổi** → đọc lại SKILL.md từ đĩa rồi mới làm tiếp. Không cập nhật được → báo lý do, làm tiếp bằng bản hiện có; không sửa, xoá hay commit trong thư mục skill.
+Chạy `python "<thư mục skill>/scripts/self_update.py"` trước mọi bước khác (`<thư mục skill>` = thư mục chứa SKILL.md này). Câu đầu tiên trả lời user: `Đang dùng omicall-omiflow v<phiên bản>` (lấy từ dòng `SKILL_VERSION`; script lỗi thì dùng v1.14.0). Script báo **SKILL.md đã thay đổi** → đọc lại SKILL.md từ đĩa rồi mới làm tiếp. Không cập nhật được → báo lý do, làm tiếp bằng bản hiện có; không sửa, xoá hay commit trong thư mục skill.
 
 ## Bắt đầu: hỏi domain, rồi yêu cầu đăng nhập
 1. Câu hỏi đầu tiên cho user chỉ là **tên domain** doanh nghiệp (`<tên>.omicrm.io`); domain đã có trong yêu cầu thì bỏ qua.
 2. `python "<thư mục skill>/scripts/omi_login.py" ensure --domain <domain>` (một lệnh: kiểm token, tự đăng nhập lại từ kho bí mật). `"ok":true` → sang bước 4, không nói gì thêm về đăng nhập.
-3. `"need":"setup"` → yêu cầu user đăng nhập trên **trang đăng nhập OMI thật**: mở `https://<domain>.omicrm.io/?lng=vi` trong trình duyệt của agent (browser pane của Claude, Chrome MCP… — agent nào có trình duyệt thì dùng trình duyệt đó), điền sẵn email nếu user đã cho, rồi nhắn đúng một câu: "Anh/chị nhập mật khẩu trên trang OMI vừa mở rồi bấm Đăng nhập." Agent KHÔNG gõ vào ô mật khẩu, không đọc cookie hay token của trang. Tự kiểm trang (ảnh chụp/văn bản) tới khi vào được trong ứng dụng thì làm tiếp; phiên này chỉ dùng cho thao tác giao diện (route `ui`). Muốn đi đường API/MCP (nhanh hơn) thì user chạy thêm một lần lệnh `command` của `ensure` trong terminal (ô nhập ẩn, `references/omi-mcp.md` mục 2a). Không nhận mật khẩu qua chat; user lỡ gửi thì không dùng, không nhắc lại, khuyên đổi mật khẩu.
+3. `"need":"setup"` → yêu cầu user đăng nhập trên **trang đăng nhập OMI thật**: mở `https://<domain>.omicrm.io/?lng=vi` trong trình duyệt của agent (browser pane của Claude, Chrome MCP… — agent nào có trình duyệt thì dùng trình duyệt đó) và **tự đưa trình duyệt ra trước mắt user**, không mở ngầm (Claude desktop: `preview_start` với url rồi `show_pane` khung trình duyệt; Chrome MCP: tab mới ở chế độ foreground; client khác: lệnh hiện cửa sổ/khung của client), điền sẵn email nếu user đã cho, rồi nhắn đúng một câu: "Anh/chị nhập mật khẩu trên trang OMI vừa mở rồi bấm Đăng nhập." Agent KHÔNG gõ vào ô mật khẩu, không đọc cookie hay token của trang. Tự kiểm trang (ảnh chụp/văn bản) tới khi vào được trong ứng dụng thì làm tiếp; phiên này chỉ dùng cho thao tác giao diện (route `ui`). Muốn đi đường API/MCP (nhanh hơn) thì user chạy thêm một lần lệnh `command` của `ensure` trong terminal (ô nhập ẩn, `references/omi-mcp.md` mục 2a). Không nhận mật khẩu qua chat; user lỡ gửi thì không dùng, không nhắc lại, khuyên đổi mật khẩu.
 4. Đăng nhập xong mới nhận mô tả nghiệp vụ và làm tiếp theo Đường nhanh.
 
 ## Đường nhanh
@@ -148,6 +148,11 @@ Khung 8 câu (design-patterns mục A): sự kiện kích hoạt · đối tư�
 - **Bật/tắt flow**: biểu tượng cạnh tên flow → "Thông tin Flow" → Hoạt động / Ngưng hoạt động → Cập nhật (`is_pause`). Xoá flow là xoá vĩnh viễn kèm lịch sử chạy → để user tự xoá.
 - **Dựng hoặc test bằng giao diện**: đọc `references/ui-build-and-test.md` (mục 5–6) trước — ô nhập nối thêm, biểu mẫu phải xuất bản, mã biến form, nút kế tiếp, xuất bản đổi id, test trì hoãn, flow bị người khác sửa, browser pane chậm hoặc không bắt XHR.
 - **AI điền CRM sau cuộc gọi**: bóc trường bằng nút LLM từ `{{ca_ai_assistant}}`; thuộc tính khách kiểu danh sách không nhận biến → rẽ nhánh theo giá trị, mỗi trường danh sách một flow; mỗi nút Hành động chỉ một Biến liên kết tuỳ chỉnh; biến chỉ hiện sau Lưu (Điều kiện cần tải lại trang); gõ sau khi bấm ô phải chờ ~1s. Chi tiết `references/ui-build-and-test.md` mục 7.
+- **Bảng "N biến liên kết có vấn đề" có thể báo nhầm**: mã biến của Cửa sổ tương tác (các trường form) vẫn bị liệt kê "Không xác định". Trước khi xoá phải đối chiếu danh sách "Cửa sổ tương tác" ở bộ chọn biến; mã thật sự mất định nghĩa thường do copy nút từ flow khác. Bảng không dẫn tới nút chứa mã → cách tìm ở `ui-build-and-test.md` mục 8.
+- **Điều kiện trỏ vào biến không tồn tại thì luôn rỗng** (ví dụ "Mã X ≠ rỗng" khi API không trả trường đó) → mọi lượt đi nhánh còn lại. Khi dựng điều kiện, kiểm biến đó nằm trong payload thật (gọi API mẫu).
+- **Nút "Cập nhật" ở editor chỉ lưu nháp** (tooltip "không ảnh hưởng phiên bản đang hoạt động"), khác "Xuất bản". Sửa flow đang chạy: Cập nhật rồi để user duyệt và tự xuất bản.
+- **Giới hạn nền tảng (10/2026)**: nút Gọi API chỉ gán từng trường cố định của một object; trường "Danh sách tùy chọn" của cửa sổ biểu mẫu chỉ có nguồn "Tùy chỉnh" (nhập tay). Chưa có dropdown động từ API hay biến dạng list. Cú pháp mảng `data|1.field` (`concepts.md` mục 4) chưa kiểm chứng trên UI nút API. Đường vòng: lớp trung gian dàn phẳng mảng thành các trường cố định + một chuỗi hiển thị sẵn. Không hứa dropdown động với khách.
+- **Header chứa API key lưu dạng chữ thường trong flow**: agent không nhập giá trị key vào ô (quy tắc an toàn), chỉ khai tên header; user tự dán key. Ưu tiên để key ở lớp trung gian nếu có.
 
 ## Tài liệu tham khảo
 - `references/concepts.md` — cơ chế nền tảng: đối tượng và vị trí, trigger, biến, cú pháp truy vấn JSON, trì hoãn, AI, marketing, trò chuyện, dán JSON vào canvas, Google Sheet.

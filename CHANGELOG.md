@@ -67,6 +67,7 @@ Các bản trước 2026-10-23 được đánh số lại theo lịch sử commi
 ## omicall-omiflow
 | Phiên bản | Ngày | Commit | Thay đổi |
 |---|---|---|---|
+| 1.14.0 | 2026-10-28 | tag `omicall-omiflow/v1.14.0` | Gotchas và mục 8 ui-build-and-test: bảng biến có vấn đề báo nhầm biến cửa sổ tương tác, điều kiện trỏ biến không tồn tại, Cập nhật chỉ lưu nháp, giới hạn dropdown động từ API, quy trình tìm và gỡ mã biến mất định nghĩa, sửa mô tả TinyMCE, ref stale |
 | 1.13.0 | 2026-10-27 | tag `omicall-omiflow/v1.13.0` | Đăng nhập một lần: omi_login.py (kho bí mật hệ điều hành, tự đăng nhập lại, MCP không chứa mật khẩu); skill hỏi domain trước rồi yêu cầu đăng nhập trên trang OMI thật; preflight thêm route login |
 | 1.12.0 | 2026-10-27 | tag `omicall-omiflow/v1.12.0` | Đường nhanh: preflight token, khảo sát tenant trước thiết kế, trích tài liệu, builder và validator offline cho từng skill, omi_save lưu nháp kèm GET kiểm tự động, node-status.json, shared/ + sync_shared + check_skills, xoá dashboard realtime và dữ liệu khách sót |
 | 1.11.1 | 2026-10-26 | tag `omicall-omiflow/v1.11.1` | Mục 7 ui-build-and-test: AI điền CRM sau cuộc gọi (bóc trường bằng LLM từ ca_ai_assistant, thuộc tính danh sách không nhận biến nên rẽ nhánh theo giá trị), thao tác canvas xoá/nối cạnh, subagent song song dùng tab riêng |

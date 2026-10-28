@@ -126,3 +126,15 @@ Mỗi subagent tự tạo **tab riêng** (`tabs_create`, rồi truyền `tabId` 
 ### Giới hạn công cụ
 - `browser_batch` tối đa 25 thao tác; ảnh chụp trễ 1–2 thao tác (dùng `wait` rồi chụp lại, hoặc `zoom` vùng nhỏ để đọc tóm tắt điều kiện).
 - Đọc cookie token qua JS bị bộ lọc an toàn chặn: không vòng qua, dựng bằng UI.
+
+---
+
+## 8. Gỡ lỗi biến liên kết và sửa nút qua UI (10/2026)
+
+- **Tìm mã biến nằm ở nút nào**: bảng "biến liên kết có vấn đề" không điều hướng. Mở từng nút nghi ngờ rồi quét bằng JS: `input`/`textarea` (`.value`) và nội dung iframe TinyMCE của ô Mô tả, regex `/\{\{[A-Za-z0-9_]+\}\}/g`. Mô tả phiếu thường chứa nhiều mã nhất; ô tên phiếu và các ô thuộc tính bắt buộc của phiếu cũng có thể chứa mã.
+- **Sửa mô tả (TinyMCE)**: lấy `ed = tinymce.get(iframe.id.replace('_ifr',''))`, `getContent()` → parse bằng `DOMParser`, xoá nguyên dòng nhãn+giá trị (div cha có đúng 2 con), `ed.setContent(html); ed.fire('change'); ed.undoManager.add()`. Ô tên phiếu thì chọn ô, Ctrl+A, gõ lại. Sau Cập nhật phải tải lại trang và quét lại để chắc đã lưu.
+- **Đối chiếu trước khi xoá**: đọc bộ chọn biến (nhóm Cửa sổ tương tác, Biến liên kết tuỳ chỉnh) để biết mã nào hợp lệ; chỉ gỡ mã không có ở đâu. Thay mã mất bằng biến tương đương nếu có (ví dụ tên bệnh nhân), nếu không thì bỏ cả dòng nhãn, đừng để dòng rỗng. Sửa thử mà chưa chắc: tải lại trang (`navigate` với `force`) là bỏ thay đổi chưa lưu.
+- **Ref cũ bị stale** sau khi canvas vẽ lại hoặc tải lại: bấm ref cũ có thể trúng nhầm nút khác. Luôn `find` lại ngay trước mỗi lần bấm, và kiểm tiêu đề ngăn vừa mở đúng nút chưa.
+- **Nút ✕ đóng ngăn ở góc trên trái**: nếu ngăn đã đóng thì cú bấm đó trúng logo và rời khỏi editor. Chụp màn hình xác nhận ngăn đang mở trước khi bấm.
+- **Kiểm API ngoài từ ngoài giao diện**: gọi thử bằng curl với đúng header (tên header phân biệt theo từng API; thông báo "thiếu mã truy cập" hay "API Key trống" cho biết sai tên hay thiếu header). Thông báo `Fetch API failed` khi bấm thử trong nút API chỉ nói OMI không nhận được response dùng được (Cần xác nhận nguyên nhân: 4xx/5xx, thiếu header, bị chặn IP).
+- **Danh sách bên ngoài chưa dùng được dạng dropdown** (xem Gotchas trong `SKILL.md`): chỉ đề xuất đường vòng, ghi "Cần xác nhận" cho cú pháp mảng.
