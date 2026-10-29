@@ -1,13 +1,13 @@
 ---
 name: omicall-crm-config
 description: >-
-  [v1.0.0] Cấu hình nền CRM của OMICall/OMICRM: thuộc tính động Khách hàng và Phiếu ghi (6 kiểu trường, mã field_code), các trường thông tin mặc định, bộ trạng thái khách hàng (WIN/LOST, trình tự), chủ đề và bộ trạng thái phiếu (hạn xử lý, ca làm việc), cấu hình phân bổ. Skill con của omicall-omiflow; gọi riêng được.
+  [v1.1.0] Cấu hình nền CRM của OMICall/OMICRM: thuộc tính động Khách hàng và Phiếu ghi (6 kiểu trường, mã field_code), các trường thông tin mặc định, bộ trạng thái khách hàng (WIN/LOST, trình tự), chủ đề và bộ trạng thái phiếu (hạn xử lý, ca làm việc), cấu hình phân bổ. Skill con của omicall-omiflow; gọi riêng được.
 ---
 
 # OMICall CRM Config — Thuộc tính, trạng thái, chủ đề phiếu (mọi tenant)
 
 ## Bước bắt buộc: cập nhật skill
-Chạy `python "<thư mục skill>/scripts/self_update.py"` trước mọi bước khác (`<thư mục skill>` = thư mục chứa SKILL.md này). Câu đầu tiên trả lời user: `Đang dùng omicall-crm-config v<phiên bản>` (lấy từ dòng `SKILL_VERSION`; script lỗi thì dùng v1.0.0). Script báo **SKILL.md đã thay đổi** → đọc lại SKILL.md từ đĩa rồi mới làm tiếp. Không cập nhật được → báo lý do, làm tiếp bằng bản hiện có; không sửa, xoá hay commit trong thư mục skill.
+Chạy `python "<thư mục skill>/scripts/self_update.py"` trước mọi bước khác (`<thư mục skill>` = thư mục chứa SKILL.md này). Câu đầu tiên trả lời user: `Đang dùng omicall-crm-config v<phiên bản>` (lấy từ dòng `SKILL_VERSION`; script lỗi thì dùng v1.1.0). Script báo **SKILL.md đã thay đổi** → đọc lại SKILL.md từ đĩa rồi mới làm tiếp. Không cập nhật được → báo lý do, làm tiếp bằng bản hiện có; không sửa, xoá hay commit trong thư mục skill.
 
 ## Bắt đầu: domain và đăng nhập
 Được `omicall-omiflow` gọi trong cùng phiên thì dùng lại domain, đăng nhập và `tenant_context.json` đã có, bỏ qua mục này. Gọi riêng: làm đúng mục "Bắt đầu" của `omicall-omiflow/SKILL.md` — hỏi domain, `python "<thư mục skill>/scripts/omi_login.py" ensure --domain <domain>`, `"need":"setup"` thì mở trang đăng nhập OMI thật để user tự nhập mật khẩu. Agent không gõ mật khẩu, không đọc cookie hay token.
@@ -30,6 +30,7 @@ Không bao giờ: xoá hay đổi tên thuộc tính, trạng thái đang dùng 
 3. **Kiểu trường quyết định cách flow gán dữ liệu**: Danh sách tùy chọn / Ô chọn không nhận biến (flow phải rẽ nhánh theo từng giá trị); báo rõ hệ quả này cho user trước khi chọn kiểu.
 4. **Mã `field_type` của 3 kiểu chọn chưa kiểm chứng**: muốn biết thì tạo một trường thử (khi user đồng ý), đọc lại bằng API, rồi ghi bổ sung vào `references/crm-config.md`.
 5. **Không hứa dropdown động từ API** (giao diện chỉ có nguồn "Tùy chỉnh").
+6. **Tính năng nền trước flow**: hạn phiếu theo chủ đề + ca làm việc, "Thêm khách hàng tự động qua cuộc gọi", phân bổ cuộc gọi nhỡ, phân loại bắt buộc (`references/crm-config.md` mục 2, 5) — làm được thì không dựng flow.
 
 ## Quan hệ với skill khác
 - `omicall-omiflow`: flow gán thuộc tính, rẽ nhánh theo trạng thái, tạo phiếu theo chủ đề → cần mã từ skill này. Trigger theo trạng thái chỉ bắt lúc chuyển vào trạng thái.
@@ -37,7 +38,7 @@ Không bao giờ: xoá hay đổi tên thuộc tính, trạng thái đang dùng 
 - `omicall-ai-insight`: trường AI Assistant bóc ra phải khớp tên và tập giá trị của thuộc tính đích.
 
 ## Tài liệu tham khảo
-- `references/crm-config.md` — bộ trạng thái khách hàng, bộ thuộc tính (form động), phiếu ghi (chủ đề, trạng thái, hạn, ca làm việc), 6 kiểu trường, API đọc thuộc tính, gợi ý thiết kế, cấu hình phân bổ.
+- `references/crm-config.md` — bộ trạng thái khách hàng, bộ thuộc tính (form động), phiếu ghi (chủ đề, 3 loại trạng thái, hạn và đúng/chậm tiến độ, ca làm việc), 6 kiểu trường, API đọc thuộc tính, gợi ý thiết kế, Cấu hình doanh nghiệp → Khác và Phân loại, cấu hình phân bổ.
 - `references/omi-mcp.md` — MCP OMI: đăng nhập, công cụ, tiết kiệm token (bản dùng chung).
 - `scripts/tenant_survey.py`, `scripts/omi_preflight.py`, `scripts/omi_login.py`, `scripts/omi_session.py`, `scripts/omi_api.py` — script dùng chung.
 

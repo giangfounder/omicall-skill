@@ -34,6 +34,7 @@ Tab: **Chủ đề**, **Trạng thái**, **Thuộc tính**, **Nhóm tiếp nhậ
 - Chi tiết phiếu ghi lại thời gian nằm ở từng trạng thái; thống kê phiếu có tỉ lệ hoàn thành trước hạn, đúng/chậm tiến độ, số lần mở lại.
 
 Ca làm việc: **Cấu hình → Doanh nghiệp → Khác → Ca làm việc** (dùng cho hạn phiếu và báo cáo thời gian kết nối).
+- **Ba loại trạng thái phiếu** [tài liệu]: *Trạng thái bắt đầu* (gán khi tạo), *Trạng thái hoàn thành* (vị trí tự chọn, là mốc tính **đúng/chậm tiến độ**), *Trạng thái kết thúc* (luôn cuối, phiếu hết hiệu lực); hoàn thành và kết thúc có thể trùng vị trí. Phiếu chưa tới trạng thái hoàn thành trước **ngày hết hạn** (lấy từ cấu hình chủ đề hoặc người tạo chọn) → chậm tiến độ. Đây là SLA có sẵn, không cần OMIFlow. Nguồn: https://omicrm.io/post/detail/huong-dan-su-dung-phieu-ghi-o-omicall-post60 (bài 2023).
 
 ## 3. Thêm thuộc tính — các kiểu trường (✔ khảo sát giao diện 10/2026, chỉ xem, không lưu)
 Mở bộ thuộc tính → **Thêm thuộc tính** (cuối mỗi nhóm) → ngăn "Thêm thuộc tính": cột trái chọn kiểu, phải cấu hình, phía trên có ô xem trước. Khách hàng và Phiếu ghi có **cùng 6 kiểu**. "Thêm nhóm thuộc tính" tạo nhóm (vùng) mới trong form.
@@ -71,6 +72,23 @@ Tên hiển thị trường tự tạo nằm ở `field_name.custom`. `scripts/t
 - Trường có tập giá trị cố định (hạng, nguồn lead, kết quả gọi) → Danh sách tùy chọn / Ô chọn; nhớ kiểu này không nhận biến trong flow. Giá trị lấy từ hệ thống ngoài, thay đổi thường xuyên → để Hộp ký tự (nhận biến) thay vì dropdown nhập tay.
 - Danh mục phiếu (Chủ đề) đọc bằng MCP `get_ticket_categories`; lệnh này có thể lỗi 500 → xem tab Chủ đề trên giao diện (mở chủ đề chỉ để xem, bấm Đóng).
 - Tạo/sửa cấu hình là thao tác ghi trên tenant khách → hỏi user trước.
+
+## 5. Cấu hình doanh nghiệp liên quan dữ liệu (✔ UI 10/2026, chỉ xem)
+Cấu hình → Doanh nghiệp → **Khác** (`/config/company/other/list`):
+| Mục | Tác dụng khi thiết kế giải pháp |
+|---|---|
+| **Cấu hình phân bổ** | chia khách, phiếu, **cuộc gọi nhỡ** cho nhân viên; dùng cho Tải lên Excel, phân cuộc gọi nhỡ, Chiến dịch, OMIFlow (mục dưới) |
+| **Thêm khách hàng tự động qua cuộc gọi** | bật theo Cuộc gọi đi / Cuộc gọi đến, "Ưu tiên nhân viên thực hiện cuộc gọi" (người gọi thành phụ trách) — bật thì không cần flow chỉ để tạo khách từ cuộc gọi |
+| **Ca làm việc** | gán cho nhân viên; dùng cho hạn phiếu và báo cáo thời gian kết nối tổng đài |
+| **Phân loại bắt buộc** | bắt buộc chọn phân loại (tag/nhóm/ngành) khi tương tác Khách hàng, Nhân viên, Phiếu ghi, Lịch sử cuộc gọi |
+| **Mã quốc gia mặc định** | gán cho khách mới |
+| **Đồng bộ dữ liệu** | thêm lại khách đã xoá thì khôi phục lịch sử tương tác |
+| **Trạng thái Tổng đài / Đa kênh / Phiếu ghi** | nguyên nhân chuyển trạng thái nhân viên và chuyển tự động, có log |
+| Giới hạn truy cập IP, Hình thức xuất dữ liệu, Bảo mật (2 lớp, hết hạn phiên) | an ninh — không đổi khi chưa có yêu cầu |
+
+Cấu hình → **Phân loại**: **Tag** (`/config/classify/tag/all`), **Nhóm** khách hàng (`/config/classify/group/customer`), **Ngành** kinh doanh (`/config/classify/business/list`) — dùng cho phân khúc, điều kiện flow, đối tượng Marketing. Tag cũng là đầu ra của AI Assistant (chức năng Phân loại Tag, `omicall-ai-insight`).
+
+Cấu hình → Thuộc tính có thêm tab **Đa kênh** (`/config/attribute/social/attribute`): thuộc tính của hội thoại/khách đa kênh (biến `social_*` trong flow).
 
 ## Cấu hình phân bổ (Cấu hình → Doanh nghiệp → Khác → Cấu hình phân bổ) — đã kiểm chứng 10/2026
 - API đọc: `POST tenant-v1-stg.omicrm.com/sale_allocation/search?page=1&size=50` body `{}` → `payload.items[]` `{_id,name,type,staffs:[{contact_id,full_name,percent}]}`.

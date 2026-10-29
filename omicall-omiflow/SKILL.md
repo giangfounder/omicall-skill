@@ -1,13 +1,13 @@
 ---
 name: omicall-omiflow
 description: >-
-  [v1.16.0] Thiết kế, dựng và sửa quy trình tự động OMIFlow của OMICall/OMICRM: trigger webhook API, cuộc gọi, phím IVR, phiếu ghi, lịch, Excel, đối tác; điều kiện, trì hoãn, AI phân loại, gọi API ngoài, cập nhật khách/phiếu/cuộc gọi, popup nhân viên, SMS/ZNS, chạy hoặc liên kết Callbot/Chatbot; đọc và lưu qua API campaign-v1. Cấu hình nền giao cho skill con omicall-crm-config, omicall-pbx-config, omicall-ai-insight.
+  [v1.17.0] Thiết kế, dựng và sửa quy trình tự động OMIFlow của OMICall/OMICRM: trigger webhook API, cuộc gọi, phím IVR, phiếu ghi, lịch, Excel, đối tác; điều kiện, trì hoãn, AI phân loại, gọi API ngoài, cập nhật khách/phiếu/cuộc gọi, popup nhân viên, SMS/ZNS, chạy hoặc liên kết Callbot/Chatbot; đọc và lưu qua API campaign-v1. Cấu hình nền giao cho skill con omicall-crm-config, omicall-pbx-config, omicall-ai-insight.
 ---
 
 # OMICall OMIFlow — Builder Playbook (mọi tenant, mọi bài toán)
 
 ## Bước bắt buộc: cập nhật skill
-Chạy `python "<thư mục skill>/scripts/self_update.py"` trước mọi bước khác (`<thư mục skill>` = thư mục chứa SKILL.md này). Câu đầu tiên trả lời user: `Đang dùng omicall-omiflow v<phiên bản>` (lấy từ dòng `SKILL_VERSION`; script lỗi thì dùng v1.16.0). Script báo **SKILL.md đã thay đổi** → đọc lại SKILL.md từ đĩa rồi mới làm tiếp. Không cập nhật được → báo lý do, làm tiếp bằng bản hiện có; không sửa, xoá hay commit trong thư mục skill.
+Chạy `python "<thư mục skill>/scripts/self_update.py"` trước mọi bước khác (`<thư mục skill>` = thư mục chứa SKILL.md này). Câu đầu tiên trả lời user: `Đang dùng omicall-omiflow v<phiên bản>` (lấy từ dòng `SKILL_VERSION`; script lỗi thì dùng v1.17.0). Script báo **SKILL.md đã thay đổi** → đọc lại SKILL.md từ đĩa rồi mới làm tiếp. Không cập nhật được → báo lý do, làm tiếp bằng bản hiện có; không sửa, xoá hay commit trong thư mục skill.
 
 ## Bắt đầu: hỏi domain, rồi yêu cầu đăng nhập
 1. Câu hỏi đầu tiên cho user chỉ là **tên domain** doanh nghiệp (`<tên>.omicrm.io`); domain đã có trong yêu cầu thì bỏ qua.
@@ -64,6 +64,7 @@ Flow chỉ chạy đúng khi cấu hình nền của tenant đã có. Bước 0 
 | Nhận phím IVR / webhook Tương tác phím, popup theo phím, nhóm nội bộ làm đích, lời chào, kịch bản tổng đài gắn hotline | `omicall-pbx-config` |
 | Dùng `{{ca_summarize}}` / `{{ca_ai_assistant}}`, thêm trường AI bóc từ cuộc gọi, điều kiện AI Assistant / Voice Insights / Chat Insights, đánh giá cuộc gọi | `omicall-ai-insight` |
 
+Chọn module cho bài toán (cấu hình sẵn trước, flow sau; công thức theo bài toán): `references/solution-map.md`.
 Thứ tự khi bài toán cần nhiều phần: crm-config (trường đích) → ai-insight (trường AI bóc, khớp tập giá trị) → omiflow (flow, lưu nháp) → user Xuất bản flow → pbx-config (gắn webhook TTP, gắn hotline).
 
 ## Workflow
@@ -169,6 +170,7 @@ Khung 8 câu (design-patterns mục A): sự kiện kích hoạt · đối tư�
 ## Tài liệu tham khảo
 - `references/concepts.md` — cơ chế nền tảng: đối tượng và vị trí, trigger, biến, cú pháp truy vấn JSON, trì hoãn, AI, marketing, trò chuyện, dán JSON vào canvas, Google Sheet.
 - `references/node-catalog.md` — mọi trigger, nút, hành động, điều kiện, biến; JSON đã kiểm chứng.
+- `references/solution-map.md` — bốn lớp (CRM, tổng đài, AI, OMIFlow), nguyên tắc chọn, công thức ghép module theo bài toán khách, câu hỏi chốt.
 - `references/design-patterns.md` — khung suy luận 8 câu, 7 mẫu đã chạy (B7: phân lead có duyệt + SLA + thu hồi), mẫu mở rộng theo lĩnh vực, lỗi thiết kế cần tránh.
 - Skill con: `omicall-crm-config/references/crm-config.md` (thuộc tính động, bộ trạng thái khách, chủ đề và trạng thái phiếu, phân bổ), `omicall-pbx-config/references/pbx-config.md` (tổng đài, lời chào, TTP, kịch bản gọi vào), `omicall-ai-insight/references/ai-insight.md` (AI Assistant, Voice/Chat Insights, đánh giá).
 - `references/api-reference.md` — endpoint, schema flow, DUAL node và edge, khung lưu, checklist.

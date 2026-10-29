@@ -70,6 +70,7 @@ Các bản trước 2026-10-23 được đánh số lại theo lịch sử commi
 ## omicall-omiflow
 | Phiên bản | Ngày | Commit | Thay đổi |
 |---|---|---|---|
+| 1.17.0 | 2026-10-30 | tag `omicall-omiflow/v1.17.0` | Khảo sát giao diện 10/2026 + tài liệu công khai: bản đồ 7 màn hình tổng đài, quy tắc kịch bản cuộc gọi, form Tương tác phím và 6 loại hành động, API công khai nhóm nội bộ/hotline/IVR/Autocall, MCP tổng đài 404 trên tenant .omicrm.com; AI Assistant (phạm vi, 4 chức năng), Voice Insights 13 thông số, Chat Insights, API Voice Insights/STT; Cấu hình doanh nghiệp Khác, Phân loại, 3 loại trạng thái phiếu; omiflow thêm solution-map.md (bản đồ kết hợp module theo bài toán) |
 | 1.16.0 | 2026-10-30 | tag `omicall-omiflow/v1.16.0` | Tách cấu hình nền sang skill con omicall-crm-config, omicall-pbx-config, omicall-ai-insight: mục Skill con (bảng khi nào gọi, thứ tự phối hợp), crm-config.md chuyển sang omicall-crm-config, Gotchas TTP/phân bổ/kiểu chọn trỏ sang skill con |
 | 1.15.0 | 2026-10-29 | tag `omicall-omiflow/v1.15.0` | crm-config mục 3: 6 kiểu trường khi Thêm thuộc tính (Khách hàng/Phiếu ghi), dropdown và ô chọn chỉ nguồn Tùy chỉnh, khuôn API attribute/get_all (chỉ trả bộ Phiếu ghi, field_name.custom, data_type REST bên thứ ba chưa bật trên UI); tenant_survey đọc thuộc tính (verified), dàn phẳng bộ thuộc tính, ticket_switch |
 | 1.14.0 | 2026-10-28 | tag `omicall-omiflow/v1.14.0` | Gotchas và mục 8 ui-build-and-test: bảng biến có vấn đề báo nhầm biến cửa sổ tương tác, điều kiện trỏ biến không tồn tại, Cập nhật chỉ lưu nháp, giới hạn dropdown động từ API, quy trình tìm và gỡ mã biến mất định nghĩa, sửa mô tả TinyMCE, ref stale |
@@ -97,14 +98,17 @@ Các bản trước 2026-10-23 được đánh số lại theo lịch sử commi
 ## omicall-crm-config
 | Phiên bản | Ngày | Commit | Thay đổi |
 |---|---|---|---|
+| 1.1.0 | 2026-10-30 | tag `omicall-crm-config/v1.1.0` | Khảo sát giao diện 10/2026 + tài liệu công khai: bản đồ 7 màn hình tổng đài, quy tắc kịch bản cuộc gọi, form Tương tác phím và 6 loại hành động, API công khai nhóm nội bộ/hotline/IVR/Autocall, MCP tổng đài 404 trên tenant .omicrm.com; AI Assistant (phạm vi, 4 chức năng), Voice Insights 13 thông số, Chat Insights, API Voice Insights/STT; Cấu hình doanh nghiệp Khác, Phân loại, 3 loại trạng thái phiếu; omiflow thêm solution-map.md (bản đồ kết hợp module theo bài toán) |
 | 1.0.0 | 2026-10-30 | tag `omicall-crm-config/v1.0.0` | Bản đầu: skill con của omicall-omiflow tách cấu hình nền — crm-config (thuộc tính, trạng thái, chủ đề phiếu, phân bổ; chuyển crm-config.md từ omiflow), pbx-config (nhóm nội bộ, lời chào TTS, Tương tác phím, kịch bản gọi vào, gắn hotline), ai-insight (AI Assistant, Voice/Chat Insights cần khảo sát, đánh giá cuộc gọi, STT); sync_shared chia BUILDERS/SUBSKILLS |
 
 ## omicall-pbx-config
 | Phiên bản | Ngày | Commit | Thay đổi |
 |---|---|---|---|
+| 1.1.0 | 2026-10-30 | tag `omicall-pbx-config/v1.1.0` | Khảo sát giao diện 10/2026 + tài liệu công khai: bản đồ 7 màn hình tổng đài, quy tắc kịch bản cuộc gọi, form Tương tác phím và 6 loại hành động, API công khai nhóm nội bộ/hotline/IVR/Autocall, MCP tổng đài 404 trên tenant .omicrm.com; AI Assistant (phạm vi, 4 chức năng), Voice Insights 13 thông số, Chat Insights, API Voice Insights/STT; Cấu hình doanh nghiệp Khác, Phân loại, 3 loại trạng thái phiếu; omiflow thêm solution-map.md (bản đồ kết hợp module theo bài toán) |
 | 1.0.0 | 2026-10-30 | tag `omicall-pbx-config/v1.0.0` | Bản đầu: skill con của omicall-omiflow tách cấu hình nền — crm-config (thuộc tính, trạng thái, chủ đề phiếu, phân bổ; chuyển crm-config.md từ omiflow), pbx-config (nhóm nội bộ, lời chào TTS, Tương tác phím, kịch bản gọi vào, gắn hotline), ai-insight (AI Assistant, Voice/Chat Insights cần khảo sát, đánh giá cuộc gọi, STT); sync_shared chia BUILDERS/SUBSKILLS |
 
 ## omicall-ai-insight
 | Phiên bản | Ngày | Commit | Thay đổi |
 |---|---|---|---|
+| 1.1.0 | 2026-10-30 | tag `omicall-ai-insight/v1.1.0` | Khảo sát giao diện 10/2026 + tài liệu công khai: bản đồ 7 màn hình tổng đài, quy tắc kịch bản cuộc gọi, form Tương tác phím và 6 loại hành động, API công khai nhóm nội bộ/hotline/IVR/Autocall, MCP tổng đài 404 trên tenant .omicrm.com; AI Assistant (phạm vi, 4 chức năng), Voice Insights 13 thông số, Chat Insights, API Voice Insights/STT; Cấu hình doanh nghiệp Khác, Phân loại, 3 loại trạng thái phiếu; omiflow thêm solution-map.md (bản đồ kết hợp module theo bài toán) |
 | 1.0.0 | 2026-10-30 | tag `omicall-ai-insight/v1.0.0` | Bản đầu: skill con của omicall-omiflow tách cấu hình nền — crm-config (thuộc tính, trạng thái, chủ đề phiếu, phân bổ; chuyển crm-config.md từ omiflow), pbx-config (nhóm nội bộ, lời chào TTS, Tương tác phím, kịch bản gọi vào, gắn hotline), ai-insight (AI Assistant, Voice/Chat Insights cần khảo sát, đánh giá cuộc gọi, STT); sync_shared chia BUILDERS/SUBSKILLS |
