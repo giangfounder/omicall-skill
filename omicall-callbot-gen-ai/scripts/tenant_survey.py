@@ -41,7 +41,7 @@ ENDPOINTS = [
     {'key': 'sale_allocations', 'service': 'tenant', 'method': 'POST', 'path': '/sale_allocation/search?page=1&size=50', 'body': {},
      'verified': True, 'nguon': 'omicall-omiflow/references/crm-config.md:46 (đã kiểm chứng 10/2026); omicall-omiflow/SKILL.md:43'},
     {'key': 'attributes', 'service': 'tenant', 'method': 'GET', 'path': '/attribute/get_all?has_attr=true',
-     'verified': False, 'nguon': 'omicall-omiflow/SKILL.md:43; omicall-omiflow/references/crm-config.md:29 — chưa ghi method và khuôn phản hồi'},
+     'verified': True, 'nguon': 'omicall-omiflow/references/crm-config.md:56 (✔ đọc 10/2026: chỉ trả bộ thuộc tính Phiếu ghi)'},
     {'key': 'ticket_status_sets', 'service': 'ticket', 'method': 'GET', 'path': '/ticket/status-set/get-all',
      'verified': False, 'nguon': 'omicall-omiflow/SKILL.md:43 — chưa ghi method và khuôn phản hồi'},
     {'key': 'bots', 'service': 'chatbot', 'method': 'POST', 'path': '/omiai_assistant/get_list', 'body': {},
@@ -51,8 +51,8 @@ ENDPOINTS = [
                                  'dùng MCP list_agents'},
 ]
 
-# Mã field_type: chỉ single_text, multi_text, date, phone có trong tài liệu (node-catalog). Mã kiểu danh sách: Cần xác nhận.
-TEXT_TYPES = {'single_text', 'multi_text', 'date', 'phone', 'number', 'email'}
+# Mã field_type: single_text, multi_text, date, phone (node-catalog), ticket_switch (crm-config mục 4). Mã kiểu danh sách: Cần xác nhận.
+TEXT_TYPES = {'single_text', 'multi_text', 'date', 'phone', 'number', 'email', 'ticket_switch'}
 LIST_TYPES = {'select', 'single_select', 'multi_select', 'checkbox', 'radio', 'list', 'dropdown', 'multi_choice',
               'single_choice', 'tag', 'tags', 'option', 'options'}
 MCP_FIELDS = {
@@ -111,11 +111,20 @@ def is_list_type(ftype, options):
     return None
 
 
+def _flatten_sets(items):
+    """attribute/get_all trả các BỘ thuộc tính (type, name, attributes[]) -> dàn phẳng, gắn set_type/set_name."""
+    for s in items:
+        if isinstance(s, dict) and isinstance(s.get('attributes'), list):
+            for a in s['attributes']:
+                if isinstance(a, dict) and not a.get('is_deleted'):
+                    yield dict(a, _set_type=s.get('type'), _set_name=s.get('name'))
+        elif isinstance(s, dict):
+            yield s
+
+
 def parse_attributes(items):
     out = []
-    for a in items:
-        if not isinstance(a, dict):
-            continue
+    for a in _flatten_sets(items):
         opts = a.get('options') or a.get('values') or a.get('items') or []
         opt_names = []
         for o in opts if isinstance(opts, list) else []:
@@ -124,8 +133,14 @@ def parse_attributes(items):
             else:
                 opt_names.append(o)
         ftype = a.get('field_type') or a.get('type')
-        out.append({'code': a.get('field_code') or a.get('code'), 'name': a.get('field_name') or a.get('name'),
-                    'type': ftype, 'is_list': is_list_type(ftype, opt_names), 'options': [x for x in opt_names if x is not None]})
+        name = a.get('field_name') or a.get('name')
+        if isinstance(name, dict):  # field_name là {custom, vi, en, i18}
+            name = name.get('custom') or name.get('vi') or name.get('en') or ''
+        item = {'code': a.get('field_code') or a.get('code'), 'name': name,
+                'type': ftype, 'is_list': is_list_type(ftype, opt_names), 'options': [x for x in opt_names if x is not None]}
+        if a.get('_set_type'):
+            item['set'] = '%s/%s' % (a['_set_type'], a.get('_set_name') or '')
+        out.append(item)
     return out
 
 
@@ -192,6 +207,8 @@ def survey(domain=None, tenant_id=None, replay=None, include_unverified=False, n
         ctx['attributes'] = parse_attributes(raw['attributes'])
         cxn.append('attributes.is_list: suy từ field_type theo bảng LIST_TYPES — Cần xác nhận mã kiểu thật; '
                    'is_list=null nghĩa là chưa biết, kiểm trên giao diện trước khi gán biến')
+        cxn.append('attributes: API chỉ trả bộ thuộc tính Phiếu ghi; thuộc tính Khách hàng xem Cấu hình > Thuộc tính > Khách hàng '
+                   '(crm-config.md mục 3)')
     else:
         cxn.append('attributes: chưa có — kiểu thuộc tính (danh sách hay văn bản) phải biết TRƯỚC khi thiết kế; '
                    'kiểm trên giao diện Cấu hình > Thuộc tính')

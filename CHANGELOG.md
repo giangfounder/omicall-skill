@@ -12,6 +12,7 @@ Các bản trước 2026-10-23 được đánh số lại theo lịch sử commi
 ## omicall-callbot-flow
 | Phiên bản | Ngày | Commit | Thay đổi |
 |---|---|---|---|
+| 1.5.1 | 2026-10-29 | tag `omicall-callbot-flow/v1.5.1` | tenant_survey (dùng chung): đọc thuộc tính Phiếu ghi qua attribute/get_all (verified), dàn phẳng bộ thuộc tính |
 | 1.5.0 | 2026-10-27 | tag `omicall-callbot-flow/v1.5.0` | Đăng nhập một lần: omi_login.py (kho bí mật hệ điều hành, tự đăng nhập lại, MCP không chứa mật khẩu); skill hỏi domain trước rồi yêu cầu đăng nhập trên trang OMI thật; preflight thêm route login |
 | 1.4.0 | 2026-10-27 | tag `omicall-callbot-flow/v1.4.0` | Đường nhanh: preflight token, khảo sát tenant trước thiết kế, trích tài liệu, builder và validator offline cho từng skill, omi_save lưu nháp kèm GET kiểm tự động, node-status.json, shared/ + sync_shared + check_skills, xoá dashboard realtime và dữ liệu khách sót |
 | 1.3.0 | 2026-10-23 | tag `omicall-callbot-flow/v1.3.0` | Tối ưu token: rút mô tả, tách phần ít dùng sang references, cache self_update 6 giờ; sửa script và xoá dữ liệu khách |
@@ -26,6 +27,7 @@ Các bản trước 2026-10-23 được đánh số lại theo lịch sử commi
 ## omicall-callbot-gen-ai
 | Phiên bản | Ngày | Commit | Thay đổi |
 |---|---|---|---|
+| 1.12.1 | 2026-10-29 | tag `omicall-callbot-gen-ai/v1.12.1` | tenant_survey (dùng chung): đọc thuộc tính Phiếu ghi qua attribute/get_all (verified), dàn phẳng bộ thuộc tính |
 | 1.12.0 | 2026-10-27 | tag `omicall-callbot-gen-ai/v1.12.0` | Đăng nhập một lần: omi_login.py (kho bí mật hệ điều hành, tự đăng nhập lại, MCP không chứa mật khẩu); skill hỏi domain trước rồi yêu cầu đăng nhập trên trang OMI thật; preflight thêm route login |
 | 1.11.0 | 2026-10-27 | tag `omicall-callbot-gen-ai/v1.11.0` | Thêm agent-config-guide: quy chuẩn cấu hình Agent V1 (kịch bản chung, mô tả biến, thứ tự Thu thập/Hướng dẫn Agent, chuyển nút, END_CALL), thao tác node Hành động, canvas, sao chép sang tenant khác, đăng nhập MCP trên Claude desktop, mẫu luồng sản phẩm và đặt hàng |
 | 1.10.0 | 2026-10-27 | tag `omicall-callbot-gen-ai/v1.10.0` | Đường nhanh: preflight token, khảo sát tenant trước thiết kế, trích tài liệu, builder và validator offline cho từng skill, omi_save lưu nháp kèm GET kiểm tự động, node-status.json, shared/ + sync_shared + check_skills, xoá dashboard realtime và dữ liệu khách sót |
@@ -49,6 +51,7 @@ Các bản trước 2026-10-23 được đánh số lại theo lịch sử commi
 ## omicall-chatbot-gen-ai
 | Phiên bản | Ngày | Commit | Thay đổi |
 |---|---|---|---|
+| 1.8.1 | 2026-10-29 | tag `omicall-chatbot-gen-ai/v1.8.1` | tenant_survey (dùng chung): đọc thuộc tính Phiếu ghi qua attribute/get_all (verified), dàn phẳng bộ thuộc tính |
 | 1.8.0 | 2026-10-27 | tag `omicall-chatbot-gen-ai/v1.8.0` | Đăng nhập một lần: omi_login.py (kho bí mật hệ điều hành, tự đăng nhập lại, MCP không chứa mật khẩu); skill hỏi domain trước rồi yêu cầu đăng nhập trên trang OMI thật; preflight thêm route login |
 | 1.7.0 | 2026-10-27 | tag `omicall-chatbot-gen-ai/v1.7.0` | Đường nhanh: preflight token, khảo sát tenant trước thiết kế, trích tài liệu, builder và validator offline cho từng skill, omi_save lưu nháp kèm GET kiểm tự động, node-status.json, shared/ + sync_shared + check_skills, xoá dashboard realtime và dữ liệu khách sót |
 | 1.6.0 | 2026-10-26 | tag `omicall-chatbot-gen-ai/v1.6.0` | Trường hợp bot mô tả tự nhiên (CUSTOM_INTENT); bot thu SĐT gọi webhook OMIFlow; /end khi test; khác biệt Trò chuyện thử và kênh thật; biến LiveTalk social_lt_phone_number; mã kiểu phân bổ; bẫy giao diện editor |

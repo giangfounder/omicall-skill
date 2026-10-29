@@ -1,13 +1,13 @@
 ---
 name: omicall-chatbot-gen-ai
 description: >-
-  [v1.8.0] Dựng, kiểm thử và tối ưu Chatbot AI (OmiBot) của OMiCALL/OMiCRM cho Zalo OA, Facebook, LiveTalk: lời nhắc hệ thống, ý định trong Ngữ cảnh bắt đầu, RAG Dữ liệu khác, Truy vấn API, lưu nháp hoặc xuất bản qua chatbot-gateway, chat thử trên LiveTalk, chấm điểm trước/sau. Kích hoạt khi có đường dẫn omicrm.io/ai/bot/.
+  [v1.8.1] Dựng, kiểm thử và tối ưu Chatbot AI (OmiBot) của OMiCALL/OMiCRM cho Zalo OA, Facebook, LiveTalk: lời nhắc hệ thống, ý định trong Ngữ cảnh bắt đầu, RAG Dữ liệu khác, Truy vấn API, lưu nháp hoặc xuất bản qua chatbot-gateway, chat thử trên LiveTalk, chấm điểm trước/sau. Kích hoạt khi có đường dẫn omicrm.io/ai/bot/.
 ---
 
 # OMiCALL/OMiCRM AI Chatbot (OmiBot) Gen AI — Generic Builder Playbook (mọi tenant / mọi bot)
 
 ## Bước bắt buộc: cập nhật skill
-Chạy `python "<thư mục skill>/scripts/self_update.py"` trước mọi bước khác (`<thư mục skill>` = thư mục chứa SKILL.md này). Câu đầu tiên trả lời user: `Đang dùng omicall-chatbot-gen-ai v<phiên bản>` (lấy từ dòng `SKILL_VERSION`; script lỗi thì dùng v1.8.0). Script báo **SKILL.md đã thay đổi** → đọc lại SKILL.md từ đĩa rồi mới làm tiếp. Không cập nhật được → báo lý do, làm tiếp bằng bản hiện có; không sửa, xoá hay commit trong thư mục skill.
+Chạy `python "<thư mục skill>/scripts/self_update.py"` trước mọi bước khác (`<thư mục skill>` = thư mục chứa SKILL.md này). Câu đầu tiên trả lời user: `Đang dùng omicall-chatbot-gen-ai v<phiên bản>` (lấy từ dòng `SKILL_VERSION`; script lỗi thì dùng v1.8.1). Script báo **SKILL.md đã thay đổi** → đọc lại SKILL.md từ đĩa rồi mới làm tiếp. Không cập nhật được → báo lý do, làm tiếp bằng bản hiện có; không sửa, xoá hay commit trong thư mục skill.
 
 ## Bắt đầu: hỏi domain, rồi yêu cầu đăng nhập
 1. Câu hỏi đầu tiên cho user chỉ là **tên domain** doanh nghiệp (`<tên>.omicrm.io`); domain đã có trong yêu cầu thì bỏ qua.
