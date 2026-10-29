@@ -16,7 +16,10 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 
-ALL = ["omicall-callbot-gen-ai", "omicall-callbot-flow", "omicall-chatbot-gen-ai", "omicall-omiflow"]
+BUILDERS = ["omicall-callbot-gen-ai", "omicall-callbot-flow", "omicall-chatbot-gen-ai", "omicall-omiflow"]
+# skill con của omicall-omiflow (cấu hình nền): chỉ nhận phần đăng nhập, gọi API, khảo sát, đọc tài liệu
+SUBSKILLS = ["omicall-crm-config", "omicall-pbx-config", "omicall-ai-insight"]
+ALL = BUILDERS + SUBSKILLS
 
 # file trong shared/ -> danh sách skill nhận bản chép (cùng đường dẫn tương đối)
 MAP = {
@@ -27,11 +30,11 @@ MAP = {
     "scripts/omi_preflight.py": ALL,
     "scripts/omi_login.py": ALL,
     "scripts/omi_api.py": ALL,
-    "scripts/omi_save.py": ALL,
+    "scripts/omi_save.py": BUILDERS,
     "scripts/tenant_survey.py": ALL,
-    "scripts/manifest.py": ALL,
+    "scripts/manifest.py": BUILDERS,
     "scripts/extract_text.py": ALL,
-    "scripts/extract_template.py": ALL,
+    "scripts/extract_template.py": BUILDERS,
     "scripts/cdp.py": ["omicall-callbot-gen-ai", "omicall-chatbot-gen-ai"],
 }
 

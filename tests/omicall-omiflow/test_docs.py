@@ -136,8 +136,10 @@ class DocsTest(unittest.TestCase):
 
     def test_skill_md_paths_exist(self):
         sk = read('SKILL.md')
-        for ref in set(re.findall(r'references/([\w.-]+\.(?:md|json))', sk)):
-            self.assertTrue(os.path.exists(os.path.join(REF, ref)), ref)
+        # `omicall-<skill con>/references/x` trỏ sang skill con, còn lại là references của omiflow
+        for other, ref in set(re.findall(r'(?:(omicall-[a-z-]+)/)?references/([\w.-]+\.(?:md|json))', sk)):
+            base = os.path.join(ROOT, other, 'references') if other else REF
+            self.assertTrue(os.path.exists(os.path.join(base, ref)), (other, ref))
         own = {'flow_outline.py', 'validate_flow.py', 'omi_session.py', 'self_update.py'}
         for sc in set(re.findall(r'scripts/([\w.-]+\.py)', sk)) & own:
             self.assertTrue(os.path.exists(os.path.join(SKILL, 'scripts', sc)), sc)

@@ -92,3 +92,18 @@ Các bản trước 2026-10-23 được đánh số lại theo lịch sử commi
 | 1.2.0 | 2026-10-19 | 7eae230 | Khái niệm nền tảng từ tài liệu chính thức, mẫu đa ngành |
 | 1.1.0 | 2026-10-19 | a32a66f | Danh mục module đầy đủ, API và schema flow, khung suy luận, thư viện mẫu |
 | 1.0.0 | 2026-10-19 | 8846a90 | Bản đầu |
+
+## omicall-crm-config
+| Phiên bản | Ngày | Commit | Thay đổi |
+|---|---|---|---|
+| 1.0.0 | 2026-10-30 | tag `omicall-crm-config/v1.0.0` | Bản đầu: skill con của omicall-omiflow tách cấu hình nền — crm-config (thuộc tính, trạng thái, chủ đề phiếu, phân bổ; chuyển crm-config.md từ omiflow), pbx-config (nhóm nội bộ, lời chào TTS, Tương tác phím, kịch bản gọi vào, gắn hotline), ai-insight (AI Assistant, Voice/Chat Insights cần khảo sát, đánh giá cuộc gọi, STT); sync_shared chia BUILDERS/SUBSKILLS |
+
+## omicall-pbx-config
+| Phiên bản | Ngày | Commit | Thay đổi |
+|---|---|---|---|
+| 1.0.0 | 2026-10-30 | tag `omicall-pbx-config/v1.0.0` | Bản đầu: skill con của omicall-omiflow tách cấu hình nền — crm-config (thuộc tính, trạng thái, chủ đề phiếu, phân bổ; chuyển crm-config.md từ omiflow), pbx-config (nhóm nội bộ, lời chào TTS, Tương tác phím, kịch bản gọi vào, gắn hotline), ai-insight (AI Assistant, Voice/Chat Insights cần khảo sát, đánh giá cuộc gọi, STT); sync_shared chia BUILDERS/SUBSKILLS |
+
+## omicall-ai-insight
+| Phiên bản | Ngày | Commit | Thay đổi |
+|---|---|---|---|
+| 1.0.0 | 2026-10-30 | tag `omicall-ai-insight/v1.0.0` | Bản đầu: skill con của omicall-omiflow tách cấu hình nền — crm-config (thuộc tính, trạng thái, chủ đề phiếu, phân bổ; chuyển crm-config.md từ omiflow), pbx-config (nhóm nội bộ, lời chào TTS, Tương tác phím, kịch bản gọi vào, gắn hotline), ai-insight (AI Assistant, Voice/Chat Insights cần khảo sát, đánh giá cuộc gọi, STT); sync_shared chia BUILDERS/SUBSKILLS |

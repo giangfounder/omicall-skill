@@ -30,7 +30,8 @@ TOOLS = Path(__file__).resolve().parent
 ROOT = TOOLS.parent
 sys.path.insert(0, str(TOOLS))
 
-SKILLS = ["omicall-callbot-gen-ai", "omicall-callbot-flow", "omicall-chatbot-gen-ai", "omicall-omiflow"]
+SKILLS = ["omicall-callbot-gen-ai", "omicall-callbot-flow", "omicall-chatbot-gen-ai", "omicall-omiflow",
+          "omicall-crm-config", "omicall-pbx-config", "omicall-ai-insight"]
 SKIP_DIRS = {".git", "__pycache__", "node_modules", ".pytest_cache"}
 SKIP_NAMES = {"credentials.md"}  # không bao giờ mở
 TEXT_EXT = {".md", ".py", ".json", ".txt", ".html", ".js", ".yml", ".yaml", ".toml", ".cfg", ".ini", ".csv", ""}
@@ -40,6 +41,9 @@ EXTRA_PHRASES = {
     "omicall-callbot-gen-ai": ["BEGIN", "datas"],
     "omicall-chatbot-gen-ai": ["/end"],
     "omicall-omiflow": ["name_mappings", "Hoạt động"],
+    "omicall-crm-config": ["field_code", "is_list"],
+    "omicall-pbx-config": ["update_hotline", "nhóm nội bộ"],
+    "omicall-ai-insight": ["ca_ai_assistant", "bản gốc"],
 }
 
 FAST_HEADING = "## Đường nhanh"
