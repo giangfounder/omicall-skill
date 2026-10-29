@@ -49,6 +49,18 @@ Cấu hình → AI → **Chat Insights** (`/config/ai/natural-language-analysis/
 - [API công khai] Voice Insights và Speech-to-Text chạy bất đồng bộ: đăng ký webhook `POST /api/ai/register_webhook_ai` (header apiKey, body `url`) → gửi file multipart (`file` .wav/.mp3/.m4a + `tracking_id`) tới `/api/ai/call_analyze` hoặc `/api/ai/speech_to_text` → kết quả đẩy về webhook, khớp bằng `tracking_id`; Voice Insights trả `criteria_classification_result` và `quality_evaluation_result` (STAFF/CUSTOMER). Dùng khi khách muốn phân tích file ghi âm từ hệ thống khác. Nguồn: https://api.omicall.com/omicall-api/ai-api/voice-insights-api , https://api.omicall.com/omicall-api/ai-api/speech-to-text-api
 - [MCP] `register_stt_webhook(url)` (chỉ HTTPS). apiKey và URL đích do user cung cấp; agent không tự lấy key.
 
+## 5a. Đọc hiện trạng bằng API (✔ GET 10/2026, không mở giao diện)
+`python <thư mục skill>/scripts/config_survey.py --out <scratch>/tenant_context.json --domain <domain>` → khoá `ai_config`:
+
+| Đối tượng | Endpoint (token phiên) |
+|---|---|
+| AI Assistant | `POST cdr-v1-stg.omicrm.com/call_transaction/assistant/list` body `{}` → `{name, desc, type ("call"), enable, call_types, call_purpose_id, contact_ids, agent_cate_ids, numbers, keywords, channels, min_agent_messages_to_start, min_customer_messages_to_start, features[{type, items[{id, prompt, auto_assign, field_type}]}]}`; `features[].type` đã thấy `SUMMARY` (Tổng hợp nội dung); mã của Phân loại Tag / Tạo phiếu / Tạo khách: Cần xác nhận |
+| Mục đích cuộc gọi | `POST cdr-v1-stg.omicrm.com/call_transaction/purpose/get_list` |
+| Tiêu chí Chat Insights | `POST ai-v1-stg.omicrm.com/natural_language/criteria/get_list` |
+| Tiêu chí đánh giá (thủ công) | `GET contact-v1-stg.omicrm.com/evaluation_criteria/get_all` → `{name, scopes[], contact_ids, contact_category_ids}` |
+
+Ghi (thấy trong mã giao diện, chưa chạy): `call_transaction/assistant/add`, `…/update`. Sửa hướng dẫn tổng hợp vẫn làm trên giao diện cho tới khi đã thử ghi bằng API trên một trợ lý mới, có sự đồng ý của user.
+
 ## 6. Kiểm thử
 - AI Assistant: một cuộc gọi thật thoả phạm vi (đúng chiều, nhân viên, đầu số, mục đích) — gọi thử chỉ khi user đồng ý → xem cửa sổ/lịch sử cuộc gọi; flow dùng kết quả → tab Lịch sử của flow.
 - So kết quả với hướng dẫn: mỗi trường đúng một dòng, giá trị danh sách đúng nguyên văn.

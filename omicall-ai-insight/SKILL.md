@@ -1,13 +1,13 @@
 ---
 name: omicall-ai-insight
 description: >-
-  [v1.1.0] Cấu hình và khai thác AI phân tích của OMICall/OMICRM: AI Assistant (hướng dẫn tổng hợp, trường bóc từ cuộc gọi, biến ca_summarize và ca_ai_assistant), Voice Insights, Chat Insights, đánh giá cuộc gọi và phiếu, speech-to-text. Skill con của omicall-omiflow; gọi riêng được.
+  [v1.2.0] Cấu hình và khai thác AI phân tích của OMICall/OMICRM: AI Assistant (hướng dẫn tổng hợp, trường bóc từ cuộc gọi, biến ca_summarize và ca_ai_assistant), Voice Insights, Chat Insights, đánh giá cuộc gọi và phiếu, speech-to-text. Skill con của omicall-omiflow; gọi riêng được.
 ---
 
 # OMICall AI Insight — AI Assistant, Voice Insights, Chat Insights (mọi tenant)
 
 ## Bước bắt buộc: cập nhật skill
-Chạy `python "<thư mục skill>/scripts/self_update.py"` trước mọi bước khác (`<thư mục skill>` = thư mục chứa SKILL.md này). Câu đầu tiên trả lời user: `Đang dùng omicall-ai-insight v<phiên bản>` (lấy từ dòng `SKILL_VERSION`; script lỗi thì dùng v1.1.0). Script báo **SKILL.md đã thay đổi** → đọc lại SKILL.md từ đĩa rồi mới làm tiếp. Không cập nhật được → báo lý do, làm tiếp bằng bản hiện có; không sửa, xoá hay commit trong thư mục skill.
+Chạy `python "<thư mục skill>/scripts/self_update.py"` trước mọi bước khác (`<thư mục skill>` = thư mục chứa SKILL.md này). Câu đầu tiên trả lời user: `Đang dùng omicall-ai-insight v<phiên bản>` (lấy từ dòng `SKILL_VERSION`; script lỗi thì dùng v1.2.0). Script báo **SKILL.md đã thay đổi** → đọc lại SKILL.md từ đĩa rồi mới làm tiếp. Không cập nhật được → báo lý do, làm tiếp bằng bản hiện có; không sửa, xoá hay commit trong thư mục skill.
 
 ## Bắt đầu: domain và đăng nhập
 Được `omicall-omiflow` gọi trong cùng phiên thì dùng lại domain, đăng nhập và `tenant_context.json` đã có, bỏ qua mục này. Gọi riêng: làm đúng mục "Bắt đầu" của `omicall-omiflow/SKILL.md` — hỏi domain, `python "<thư mục skill>/scripts/omi_login.py" ensure --domain <domain>`, `"need":"setup"` thì mở trang đăng nhập OMI thật để user tự nhập mật khẩu. Agent không gõ mật khẩu, không đọc cookie hay token.
@@ -15,7 +15,7 @@ Chạy `python "<thư mục skill>/scripts/self_update.py"` trước mọi bư�
 ## Đường nhanh
 Chạy script bằng đường dẫn tuyệt đối `<thư mục skill>/scripts/...`. Mâu thuẫn thì quy tắc gốc bên dưới thắng.
 1. **Token**: `python <thư mục skill>/scripts/omi_preflight.py --domain <domain>` → `api` / `login` / `ui` / `blocked` (xử lý như omiflow).
-2. **Khảo sát**: `get_service_package` (module `ai`: cờ `omi_call_assistant*`, `call_analysis`, quota `total_call_assistant`); mở AI Assistant (tab Cuộc gọi/Đa kênh, quota N/M), Voice Insights, Chat Insights chỉ để xem; chép nguyên phạm vi và "Hướng dẫn các bước tổng hợp" hiện tại vào scratch (bản gốc để hoàn tác).
+2. **Khảo sát bằng API, không chụp ảnh**: `get_service_package` (cờ `omi_call_assistant*`, `call_analysis`, quota) + `python <thư mục skill>/scripts/config_survey.py --out <scratch>/tenant_context.json --domain <domain>` (trợ lý, phạm vi, mục đích cuộc gọi, tiêu chí); bản gốc hướng dẫn tổng hợp lưu từ kết quả API vào scratch để hoàn tác. Thứ tự nguồn: `references/omi-mcp.md` mục 4a.
 3. **Chọn lớp AI** (`references/ai-insight.md` mục 0): dữ liệu nghiệp vụ vào CRM → AI Assistant (Tổng hợp / Phân loại Tag / Tạo phiếu / Tạo khách); chấm chất lượng → Voice/Chat Insights (cần Mục đích cuộc gọi). Lập bảng *trường → thuộc tính đích (mã, kiểu, tập giá trị) → dòng hướng dẫn*; mã lấy qua `omicall-crm-config`; thiếu → "Cần xác nhận".
 4. **Duyệt**: gửi bản hướng dẫn mới (chỉ thêm dòng, giữ dòng cũ) cho user; lưu chỉ khi user đồng ý.
 5. **Lưu trên giao diện**: Cấu hình > AI > AI Assistant (`references/ai-insight.md` mục 1); tải lại để kiểm nội dung đã lưu.
@@ -42,4 +42,4 @@ Không bao giờ: xoá hay viết lại dòng hướng dẫn cũ, ghi điểm đ
 - `scripts/omi_preflight.py`, `scripts/omi_login.py`, `scripts/omi_session.py`, `scripts/omi_api.py`, `scripts/tenant_survey.py` — script dùng chung.
 
 ## Bảo trì skill
-Khảo sát được màn hình Voice Insights, Chat Insights, API cấu hình AI → cập nhật `references/ai-insight.md` (gắn ✔ và tháng), chỉ ghi vào repo nguồn khi user cho phép. Không ghi nội dung hướng dẫn riêng của khách, URL hay tenant id vào skill.
+Điều gì phải mở giao diện hoặc chụp ảnh mới biết thì ghi ngay vào reference (`references/omi-mcp.md` mục 4b) để lần sau không chụp lại. Khảo sát được màn hình Voice Insights, Chat Insights, API cấu hình AI → cập nhật `references/ai-insight.md` (gắn ✔ và tháng), chỉ ghi vào repo nguồn khi user cho phép. Không ghi nội dung hướng dẫn riêng của khách, URL hay tenant id vào skill.

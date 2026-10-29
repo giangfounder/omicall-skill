@@ -6,6 +6,7 @@
 - **Token hết hạn / sai tenant** (`route=login`): agent TỰ chạy `omi_login.py login --domain <domain> [--tenant-id <id>]`, không hỏi user.
 - **Gặp 401 / hết phiên**: gọi lại `login_omicall_mcp`, chạy lại `omi_preflight.py`; vẫn hỏng thì theo bảng quyết định token ngay dưới.
 - **Nhiều artefact phụ thuộc nhau** (flow + bot + callbot): mục 7. Giao việc giao diện cho subagent: mục 8.
+- **Đọc cấu hình tenant: API trước, ảnh chụp sau cùng** — mục 4a. Tri thức học được bằng ảnh chụp phải ghi vào reference của skill (mục 4b).
 
 ## Bảng quyết định token (duy nhất)
 | Thứ tự | Nguồn token | Ai làm | Khi nào dùng |
@@ -94,6 +95,20 @@ Kịch bản callbot (`chatbot-gateway …/callbot/script/*`), chatbot (`…/bot
 5. **Ưu tiên văn bản hơn ảnh**: `get_page_text`, `read_page` thay cho screenshot; nếu cần ảnh thì `scale` 0.4–0.6.
 6. **Dùng lại script trong `scripts/` của skill**, không viết lại mỗi lần; script mới hữu ích thì thêm vào skill.
 7. **Kiểm thử bằng MCP** (`search_calls`, `search_tickets`, `get_contact_by_phone`) thay vì mở giao diện để xem kết quả.
+
+## 4a. Thứ tự nguồn khi cần biết tenant đang có gì (BẮT BUỘC)
+Mỗi ảnh chụp tốn vài giây và nhiều token; giao diện dùng chung với user nên mỗi thao tác còn có rủi ro đổi form. Đi theo thứ tự, dừng ở bậc đầu tiên trả lời được:
+1. **Tri thức đã ghi trong skill** (reference của skill đang dùng và skill con): màn hình nào, trường nào, lựa chọn nào — không mở lại để "xem cho chắc".
+2. **`tenant_context.json` ở scratch** của phiên (đã khảo sát thì không khảo sát lại).
+3. **Script đọc bằng API**: `tenant_survey.py` (thuộc tính phiếu, trạng thái, phân bổ, artefact) và `config_survey.py` (đầu số + giờ làm việc, kịch bản cuộc gọi, Tương tác phím, nhóm nội bộ/bên ngoài, lời chào, mục đích cuộc gọi, AI Assistant, tiêu chí Chat Insights, tiêu chí đánh giá). Một lệnh thay cho hàng chục lần mở trang.
+4. **MCP OMI** (`get_service_package`, `list_agents`, `search_*`…). Công cụ tổng đài của MCP có thể trả 404 → dùng bậc 3.
+5. **Giao diện bằng chữ**: `get_page_text` / `find` / `read_page` sau khi trang tải xong (chờ 2–3 giây; trang trống là chưa tải, không phải lỗi).
+6. **Ảnh chụp** chỉ khi bậc 5 không thấy: danh sách chọn đang mở, canvas, bố cục. Chụp vùng nhỏ (`zoom`) hoặc `scale` 0.5.
+
+Không dùng ảnh chụp để dò vị trí menu khi đã biết đường dẫn: điều hướng thẳng URL (bảng màn hình trong reference của skill).
+
+## 4b. Ghi lại tri thức học bằng giao diện (để lần sau không chụp lại)
+Ngay khi một ảnh chụp hoặc lần đọc giao diện cho ra điều skill chưa có (đường dẫn màn hình, nhãn trường, danh sách lựa chọn, quy tắc của form, endpoint thấy được, gotcha), ghi vào reference của skill phụ trách (`pbx-config.md`, `ai-insight.md`, `crm-config.md`, `ui-build-and-test.md`…) kèm nhãn `✔ UI <tháng/năm>`. Chỉ ghi năng lực nền tảng, không ghi dữ liệu khách (tên, số, id). Ghi vào repo nguồn khi user cho phép; chưa được phép thì gom vào báo cáo cuối phiên để user duyệt.
 
 ## 6. Xử lý lỗi thường gặp
 - `npm error code ETARGET` / "No matching version found": npm giữ metadata cũ sau khi gói vừa ra bản mới → xoá cache npx (`rm -rf ~/.npm/_npx`, Windows: `%LOCALAPPDATA%\npm-cache\_npx`) rồi chạy `npx omicall-mcp@latest`.

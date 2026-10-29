@@ -1,13 +1,13 @@
 ---
 name: omicall-crm-config
 description: >-
-  [v1.1.0] Cấu hình nền CRM của OMICall/OMICRM: thuộc tính động Khách hàng và Phiếu ghi (6 kiểu trường, mã field_code), các trường thông tin mặc định, bộ trạng thái khách hàng (WIN/LOST, trình tự), chủ đề và bộ trạng thái phiếu (hạn xử lý, ca làm việc), cấu hình phân bổ. Skill con của omicall-omiflow; gọi riêng được.
+  [v1.2.0] Cấu hình nền CRM của OMICall/OMICRM: thuộc tính động Khách hàng và Phiếu ghi (6 kiểu trường, mã field_code), các trường thông tin mặc định, bộ trạng thái khách hàng (WIN/LOST, trình tự), chủ đề và bộ trạng thái phiếu (hạn xử lý, ca làm việc), cấu hình phân bổ. Skill con của omicall-omiflow; gọi riêng được.
 ---
 
 # OMICall CRM Config — Thuộc tính, trạng thái, chủ đề phiếu (mọi tenant)
 
 ## Bước bắt buộc: cập nhật skill
-Chạy `python "<thư mục skill>/scripts/self_update.py"` trước mọi bước khác (`<thư mục skill>` = thư mục chứa SKILL.md này). Câu đầu tiên trả lời user: `Đang dùng omicall-crm-config v<phiên bản>` (lấy từ dòng `SKILL_VERSION`; script lỗi thì dùng v1.1.0). Script báo **SKILL.md đã thay đổi** → đọc lại SKILL.md từ đĩa rồi mới làm tiếp. Không cập nhật được → báo lý do, làm tiếp bằng bản hiện có; không sửa, xoá hay commit trong thư mục skill.
+Chạy `python "<thư mục skill>/scripts/self_update.py"` trước mọi bước khác (`<thư mục skill>` = thư mục chứa SKILL.md này). Câu đầu tiên trả lời user: `Đang dùng omicall-crm-config v<phiên bản>` (lấy từ dòng `SKILL_VERSION`; script lỗi thì dùng v1.2.0). Script báo **SKILL.md đã thay đổi** → đọc lại SKILL.md từ đĩa rồi mới làm tiếp. Không cập nhật được → báo lý do, làm tiếp bằng bản hiện có; không sửa, xoá hay commit trong thư mục skill.
 
 ## Bắt đầu: domain và đăng nhập
 Được `omicall-omiflow` gọi trong cùng phiên thì dùng lại domain, đăng nhập và `tenant_context.json` đã có, bỏ qua mục này. Gọi riêng: làm đúng mục "Bắt đầu" của `omicall-omiflow/SKILL.md` — hỏi domain, `python "<thư mục skill>/scripts/omi_login.py" ensure --domain <domain>`, `"need":"setup"` thì mở trang đăng nhập OMI thật để user tự nhập mật khẩu. Agent không gõ mật khẩu, không đọc cookie hay token.
@@ -15,7 +15,7 @@ Chạy `python "<thư mục skill>/scripts/self_update.py"` trước mọi bư�
 ## Đường nhanh
 Chạy script bằng đường dẫn tuyệt đối `<thư mục skill>/scripts/...`. Mâu thuẫn thì quy tắc gốc bên dưới thắng.
 1. **Token**: `python <thư mục skill>/scripts/omi_preflight.py --domain <domain>` → `api` / `login` / `ui` / `blocked` (xử lý như omiflow).
-2. **Khảo sát**: `tenant_survey.py --out <scratch>/tenant_context.json` (thuộc tính Phiếu ghi có `is_list`, bộ trạng thái phiếu, phân bổ) + MCP `get_ticket_categories`. Thuộc tính Khách hàng và bộ trạng thái khách: đọc giao diện `/config/attribute/customer/{status|attribute}` (`references/crm-config.md` mục 1).
+2. **Khảo sát bằng API trước, giao diện bằng chữ sau, ảnh chụp sau cùng** (`references/omi-mcp.md` mục 4a): `tenant_survey.py --out <scratch>/tenant_context.json` (thuộc tính Phiếu ghi có `is_list`, bộ trạng thái phiếu, phân bổ) + MCP `get_ticket_categories`. Thuộc tính Khách hàng và bộ trạng thái khách: đọc giao diện `/config/attribute/customer/{status|attribute}` (`references/crm-config.md` mục 1).
 3. **Đối chiếu yêu cầu**: lập bảng *trường/trạng thái cần → đã có (mã) / phải tạo (kiểu đề xuất) / Cần xác nhận*. Chọn kiểu theo `references/crm-config.md` mục 3–4 (giá trị cố định → danh sách; giá trị từ hệ thống ngoài → Hộp ký tự).
 4. **Duyệt**: gửi bảng cho user; chỉ tạo hoặc sửa sau khi user đồng ý từng mục.
 5. **Tạo trên giao diện**: Cấu hình → Thuộc tính → Khách hàng / Phiếu ghi → mở bộ → Thêm thuộc tính. Chưa có API ghi đã kiểm chứng → không gọi API ghi.
@@ -43,4 +43,4 @@ Không bao giờ: xoá hay đổi tên thuộc tính, trạng thái đang dùng 
 - `scripts/tenant_survey.py`, `scripts/omi_preflight.py`, `scripts/omi_login.py`, `scripts/omi_session.py`, `scripts/omi_api.py` — script dùng chung.
 
 ## Bảo trì skill
-Học được kiểu trường, mã `field_type`, API ghi mới → cập nhật `references/crm-config.md`, chỉ ghi vào repo nguồn khi user cho phép. Không ghi URL tenant, token hay dữ liệu khách vào skill.
+Điều gì phải mở giao diện hoặc chụp ảnh mới biết thì ghi ngay vào reference (`references/omi-mcp.md` mục 4b) để lần sau không chụp lại. Học được kiểu trường, mã `field_type`, API ghi mới → cập nhật `references/crm-config.md`, chỉ ghi vào repo nguồn khi user cho phép. Không ghi URL tenant, token hay dữ liệu khách vào skill.

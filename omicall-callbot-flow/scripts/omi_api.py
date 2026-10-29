@@ -32,6 +32,11 @@ BASE = {
     'agent': 'https://agent-v1-stg.omicrm.com',
     'external': 'https://external-v1-stg.omicrm.com',
     'filestore': 'https://filestore-v1-stg.omicrm.com',
+    # tổng đài, cuộc gọi/AI Assistant, AI, tiêu chí đánh giá (config_survey.py; ✔ GET 10/2026)
+    'pbx': 'https://pbx-v1-stg.omicrm.com',
+    'cdr': 'https://cdr-v1-stg.omicrm.com',
+    'ai': 'https://ai-v1-stg.omicrm.com',
+    'contact': 'https://contact-v1-stg.omicrm.com',
 }
 TIMEOUT = 120
 MASK = '***'

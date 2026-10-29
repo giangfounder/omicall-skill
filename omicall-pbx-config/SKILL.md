@@ -1,13 +1,13 @@
 ---
 name: omicall-pbx-config
 description: >-
-  [v1.1.0] Cấu hình tổng đài OMICall/OMICRM: đầu số, máy lẻ, nhóm nội bộ (nhóm đổ chuông), lời chào (TTS hoặc file ghi âm), Tương tác phím (IVR, phím → nhóm, webhook sang OMIFlow), kịch bản tổng đài gọi vào và gắn vào hotline. Skill con của omicall-omiflow; gọi riêng được.
+  [v1.2.0] Cấu hình tổng đài OMICall/OMICRM: đầu số, máy lẻ, nhóm nội bộ (nhóm đổ chuông), lời chào (TTS hoặc file ghi âm), Tương tác phím (IVR, phím → nhóm, webhook sang OMIFlow), kịch bản tổng đài gọi vào và gắn vào hotline. Skill con của omicall-omiflow; gọi riêng được.
 ---
 
 # OMICall PBX Config — Tổng đài, lời chào, tương tác phím (mọi tenant)
 
 ## Bước bắt buộc: cập nhật skill
-Chạy `python "<thư mục skill>/scripts/self_update.py"` trước mọi bước khác (`<thư mục skill>` = thư mục chứa SKILL.md này). Câu đầu tiên trả lời user: `Đang dùng omicall-pbx-config v<phiên bản>` (lấy từ dòng `SKILL_VERSION`; script lỗi thì dùng v1.1.0). Script báo **SKILL.md đã thay đổi** → đọc lại SKILL.md từ đĩa rồi mới làm tiếp. Không cập nhật được → báo lý do, làm tiếp bằng bản hiện có; không sửa, xoá hay commit trong thư mục skill.
+Chạy `python "<thư mục skill>/scripts/self_update.py"` trước mọi bước khác (`<thư mục skill>` = thư mục chứa SKILL.md này). Câu đầu tiên trả lời user: `Đang dùng omicall-pbx-config v<phiên bản>` (lấy từ dòng `SKILL_VERSION`; script lỗi thì dùng v1.2.0). Script báo **SKILL.md đã thay đổi** → đọc lại SKILL.md từ đĩa rồi mới làm tiếp. Không cập nhật được → báo lý do, làm tiếp bằng bản hiện có; không sửa, xoá hay commit trong thư mục skill.
 
 ## Bắt đầu: domain và đăng nhập
 Được `omicall-omiflow` gọi trong cùng phiên thì dùng lại domain, đăng nhập và `tenant_context.json` đã có, bỏ qua mục này. Gọi riêng: làm đúng mục "Bắt đầu" của `omicall-omiflow/SKILL.md` — hỏi domain, `python "<thư mục skill>/scripts/omi_login.py" ensure --domain <domain>`, `"need":"setup"` thì mở trang đăng nhập OMI thật để user tự nhập mật khẩu. Agent không gõ mật khẩu, không đọc cookie hay token.
@@ -15,7 +15,7 @@ Chạy `python "<thư mục skill>/scripts/self_update.py"` trước mọi bư�
 ## Đường nhanh
 Chạy script bằng đường dẫn tuyệt đối `<thư mục skill>/scripts/...`. Mâu thuẫn thì quy tắc gốc bên dưới thắng.
 1. **Token**: `python <thư mục skill>/scripts/omi_preflight.py --domain <domain>` → `api` / `login` / `ui` / `blocked` (xử lý như omiflow).
-2. **Khảo sát**: `get_service_package` (cần module `switchboard`); công cụ tổng đài của MCP có thể trả 404 → đọc 7 màn hình Cấu hình → Tổng đài (`references/pbx-config.md` mục 1, 7), mỗi màn một lần tải → ghi `tenant_context.json` khoá `pbx.*`.
+2. **Khảo sát bằng API, không chụp ảnh**: `python <thư mục skill>/scripts/config_survey.py --out <scratch>/tenant_context.json --domain <domain>` (đầu số + giờ làm việc, kịch bản, Tương tác phím, nhóm, lời chào) + `get_service_package`. Không mở giao diện để xem lại điều `references/pbx-config.md` đã ghi; thứ tự nguồn ở `references/omi-mcp.md` mục 4a.
 3. **Thiết kế**: vẽ cây gọi vào *đầu số → kịch bản cuộc gọi (≤3 tiêu chí → lời chào → chuyển tiếp) → Tương tác phím (6 loại hành động) → nhóm nội bộ / callbot / hộp thư thoại*, dựng từ dưới lên (mục 2–5). Thiếu nhóm, nội dung lời chào, tên nơi nhận → "Cần xác nhận".
 4. **Duyệt**: gửi cây và danh sách việc ghi (tạo nhóm, file lời chào, TTP, kịch bản, gắn hotline) cho user; mỗi việc ghi chờ đồng ý.
 5. **Dựng trên giao diện**: lời chào (Tải lên / Robot đọc) → nhóm nội bộ (chiến lược đổ chuông, hàng đợi) → Tương tác phím → kịch bản cuộc gọi. Công cụ ghi của MCP chỉ dùng khi đã đọc lại được bằng MCP trên tenant đó.
@@ -43,4 +43,4 @@ Không bao giờ: gắn kịch bản vào hotline, xoá IVR/nhóm/file âm thanh
 - `scripts/omi_preflight.py`, `scripts/omi_login.py`, `scripts/omi_session.py`, `scripts/omi_api.py`, `scripts/tenant_survey.py` — script dùng chung.
 
 ## Bảo trì skill
-Khảo sát được màn hình, schema hay gotcha mới → cập nhật `references/pbx-config.md` (gắn ✔ và tháng), chỉ ghi vào repo nguồn khi user cho phép. Không ghi đầu số, URL webhook thật, tenant id hay dữ liệu khách vào skill.
+Điều gì phải mở giao diện hoặc chụp ảnh mới biết thì ghi ngay vào reference (`references/omi-mcp.md` mục 4b) để lần sau không chụp lại. Khảo sát được màn hình, schema hay gotcha mới → cập nhật `references/pbx-config.md` (gắn ✔ và tháng), chỉ ghi vào repo nguồn khi user cho phép. Không ghi đầu số, URL webhook thật, tenant id hay dữ liệu khách vào skill.

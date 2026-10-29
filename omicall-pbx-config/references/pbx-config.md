@@ -30,7 +30,7 @@ Cấu hình → Doanh nghiệp → **Cuộc gọi** (`/config/company/call/list`
 ## 4. Kịch bản cuộc gọi (định tuyến gọi vào) ✔ UI 10/2026
 - Mỗi kịch bản = danh sách **Thành phần** kéo thả được. Quy tắc trên giao diện: **tối đa 3 tiêu chí, luôn đứng đầu**; sau đó là **lời chào** và **hành động chuyển tiếp**; không thêm được thành phần sau một hành động chuyển tiếp hoặc **hộp thư thoại** (thành phần cuối).
 - Hành động chuyển tiếp thấy được trên tenant khảo sát: chuyển tới Nhóm nội bộ (kịch bản mặc định) và **Chuyển tiếp đến kịch bản AI Callbot** (callbot nghe máy). Danh sách đầy đủ loại thành phần: Cần khảo sát (có thể giống bộ hành động của phím ở mục 5, chưa kiểm).
-- Loại tiêu chí cụ thể (giờ làm việc, khách VIP, người phụ trách…): **Cần khảo sát** trên form Thêm mới. [MCP] `create_script` gợi ý `criteria_type` 2 = nhân viên phụ trách, 3 = khách gọi lại, 4 = khách gọi nhỡ — chưa đối chiếu.
+- **Giờ làm việc không nằm trong kịch bản** mà ở đầu số (mục 7: `working_days` chọn kịch bản theo ngày/khung giờ). Loại tiêu chí của kịch bản (khách VIP, người phụ trách…): Cần khảo sát. [MCP] `create_script` gợi ý `criteria_type` 2 = nhân viên phụ trách, 3 = khách gọi lại, 4 = khách gọi nhỡ — chưa đối chiếu.
 - Gắn vào đầu số: [API công khai] `POST /api/call_center/hotline/update` — **`call_script` là kịch bản gọi vào mặc định**; `extensions`/`group_ids` chỉ là **quyền dùng đầu số để gọi ra**, không định tuyến gọi vào; `allow_call_in`, `allow_call_out`, `access_type`. `/hotline/extension/update` gán đầu số cho từng máy lẻ theo chiều in/out.
 
 ## 5. Tương tác phím (IVR) ✔ UI 10/2026
@@ -53,13 +53,31 @@ Gotchas ✔:
 - Bước kịch bản: `recording` (lời chào), `textVariable`/`callBotTextVariable` (TTS có biến), `ivrMenu` (số nội bộ của một Tương tác phím), `ringGroup` (số nội bộ của nhóm nội bộ) → một chiến dịch gọi ra có thể đọc thông báo, cho bấm phím, rồi chuyển vào nhóm. Nguồn: https://api.omicall.com/omicall-api/autocall/goi-tu-dong-thong-thuong-api-v2
 - Trong OMIFlow cùng năng lực này là nút Marketing `AUTOCALL` (`omicall-omiflow` node-catalog 2.6).
 
-## 7. Đọc hiện trạng
-- **MCP**: `get_service_package` (module `switchboard` và tính năng con) chạy được. **Các công cụ tổng đài của MCP (`list_groups`, `list_ivr`, `list_scripts`, `list_audio`, `list_hotlines`, `list_eval_criteria`) trả 404 trên tenant miền `.omicrm.com` (10/2026)** → đọc giao diện theo bảng mục 1 (mỗi màn hình một lần tải, `get_page_text`), ghi vào `tenant_context.json` khoá `pbx.*` (thêm vào file thật ở scratch, không sửa khuôn).
-- Public API cần **apiKey của doanh nghiệp**: là bí mật, agent không tự lấy hay nhập; chỉ dùng khi user tự cấu hình.
+## 7. Đọc hiện trạng — bằng API, không mở giao diện
+`python <thư mục skill>/scripts/config_survey.py --out <scratch>/tenant_context.json --domain <domain>` → khoá `pbx` (đầu số + giờ làm việc, kịch bản cuộc gọi, Tương tác phím, nhóm nội bộ/bên ngoài, lời chào). Công cụ tổng đài của MCP (`list_groups`, `list_ivr`, `list_scripts`, `list_audio`, `list_hotlines`, `list_eval_criteria`) **trả 404 trên tenant miền `.omicrm.com` (10/2026)** — không dùng. Public API (mục 3–6) cần **apiKey của doanh nghiệp**: bí mật, agent không tự lấy hay nhập.
+
+### API nội bộ của giao diện (token phiên, host `pbx-v1-stg.omicrm.com`, ✔ GET 10/2026)
+| Đối tượng | Đọc | Ghi (thấy trong mã giao diện, **chưa chạy** — chỉ dùng khi user đồng ý, thử trên bản mới trước) |
+|---|---|---|
+| Đầu số | `GET public_number_of_tenant/list_active` → `payload.items[]` | `public_number_of_tenant/update/with_set_job_v2/<id>` |
+| Kịch bản cuộc gọi | `GET call_script/get?page=0&size=0` → `payload.items[]` (hoặc `POST call_script/getV2?page=&size=`) | `call_script/add`, `call_script/update/<id>` |
+| Tương tác phím | `POST key_interactive_script/get/list` body `{}`; `GET key_interactive_script/get/id/<id>` | `key_interactive_script/add`, `…/update/<id>` |
+| Nhóm nội bộ | `POST internal_group/get/list`; `…/get/id/<id>` | `internal_group/add`, `…/update/<id>` |
+| Nhóm bên ngoài | `POST outer_group/get/list` | `outer_group/add` |
+| Lời chào | `POST greeting/get/list` | `greeting/text_to_speech_v2` (tạo TTS) |
+
+Xoá (`…/delete/<id>`, `…/delete_many`) không bao giờ gọi.
+
+Khuôn dữ liệu đáng nhớ:
+- **Giờ làm việc nằm ở đầu số**: `configs = {allow_call_in, allow_call_out, default_script, working_days[], special_days[]}`; mỗi `working_days[i] = {weekday (2 = Thứ 2…; mã Chủ nhật: Cần xác nhận), type ("full_day" hoặc theo khung giờ), script, time_frames[{from, to, script}]}`. Định tuyến theo giờ = **mỗi ngày/khung giờ chọn một kịch bản cuộc gọi**; ngày lễ ở `special_days`. Đây là chỗ cấu hình "ngoài giờ → hộp thư thoại / callbot".
+- Kịch bản cuộc gọi: `{script_name, extension (số nội bộ đại diện), enable_criteria, criterias[], scripts[{order, action_type, action_id, callbot_script_uuid}]}`; `action_type` đã thấy `Ivr_menu`, `Callbot`; mã giao diện còn có `Ring_group`, `Recording`, `Voice_mail`.
+- Tương tác phím: `{script_name, script_number, greeting_id, greeting_short_id, time_out, max_failure, invalid_sound_id, action_type/action (kịch bản kết thúc), ivr_direct_menu_dial (chuyển khi bấm đúng số nội bộ), webhook{url, enable}, scripts[{ivr: "<phím>", action_type, action}]}` — **phím nằm ở `ivr`**, trường `key` để trống. `action_type` của phím: `Recording` (lời chào), `Callbot`, `Ring_group`, `Ivr_menu`, `Voice_mail`.
+- Nhóm nội bộ: `{group_name, group_number, strategy, members[{agent_id, contact_id, order, timeout}], timeout, call_queue_config, max_wait_time, ring_back_id, is_forward_to_user_owner, is_forward_to_outer_group, outer_group_id, target_timeout_type, target_timeout, enable_criteria, criterias, repeat_config, agent_tags, agent_groups}` — có chuyển cho người phụ trách khách, chuyển sang nhóm bên ngoài, đích khi hết giờ chờ.
+- Lời chào: `formality_code` `upload_file` | `call_bot` | (TTS), `content`, `voice`, `speed`, `duration`.
 
 ## 8. Kiểm thử
 - Sau khi tạo: mở lại từng màn hình, đối chiếu từng phím, thành viên nhóm, lời chào, kịch bản gắn đầu số.
 - Gọi thử chỉ khi user đồng ý và đưa số; xem Lịch sử cuộc gọi (đường đi, phím đã bấm); flow nhận webhook TTP → tab Lịch sử của flow.
 
 ## 9. Còn phải khảo sát
-Danh sách loại **tiêu chí** trong kịch bản cuộc gọi (giờ làm việc, theo khách, theo người phụ trách), Nhóm bên ngoài, Hộp thư thoại (nghe ở đâu), cấu hình Truy vấn mở rộng, ghi âm. Khảo sát được mục nào thì ghi vào đây kèm ✔ và tháng.
+Danh sách loại **tiêu chí** (`criterias`) của kịch bản cuộc gọi và nhóm nội bộ (theo khách, theo người phụ trách), mã `weekday` của Chủ nhật, Nhóm bên ngoài, Hộp thư thoại (nghe ở đâu), cấu hình Truy vấn mở rộng, ghi âm. Khảo sát được mục nào thì ghi vào đây kèm ✔ và tháng.

@@ -35,6 +35,7 @@ MAP = {
     "scripts/manifest.py": BUILDERS,
     "scripts/extract_text.py": ALL,
     "scripts/extract_template.py": BUILDERS,
+    "scripts/config_survey.py": ["omicall-omiflow", "omicall-callbot-gen-ai", "omicall-callbot-flow"] + SUBSKILLS,
     "scripts/cdp.py": ["omicall-callbot-gen-ai", "omicall-chatbot-gen-ai"],
 }
 
