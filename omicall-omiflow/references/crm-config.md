@@ -23,10 +23,9 @@ Dùng trong OMIFlow: trigger `GENERAL` theo thuộc tính trạng thái khách (
 Danh sách bộ thuộc tính (vd. một bộ mặc định cho khách cá nhân). Mở bộ = **trình thiết kế form** chia nhóm:
 - Nhóm mặc định: Thông tin cá nhân (ảnh, giới tính, tên đầy đủ*, SĐT*, email có nhãn, ngày sinh, chức vụ, CMND/Passport, địa chỉ, trường tùy chỉnh, mô tả…), File đính kèm (≤10MB/file), Mạng xã hội, Đánh giá, Trạng thái khách hàng, Nhân viên phụ trách / liên quan, Phân loại (Tag, Nhóm khách hàng, Ngành kinh doanh).
 - **Thêm thuộc tính** vào nhóm, **Thêm nhóm thuộc tính** mới; nhóm có thể tự thu gọn.
-- Kiểu trường khi thêm: **Hộp ký tự**, **Đoạn văn bản**, **Danh sách tùy chọn**, **Ô chọn (duy nhất)**, **Ô chọn (nhiều giá trị)**, **Thời gian**.
-- Tuỳ chọn trường (Hộp ký tự): Tên trường* (≤48 ký tự), Gợi ý, **Kiểu dữ liệu** (Văn bản, Số tự nhiên, Số thập phân, Phần trăm, Tiền tệ), Giới hạn dữ liệu, Giới hạn ký tự, **Dữ liệu bắt buộc**, Bao gồm nhãn, Giá trị mặc định. Có công tắc "Tiếp tục thêm mới" để thêm liên tiếp.
+- Kiểu trường khi thêm: **Hộp ký tự**, **Đoạn văn bản**, **Danh sách tùy chọn**, **Ô chọn (duy nhất)**, **Ô chọn (nhiều giá trị)**, **Thời gian** — chi tiết từng kiểu ở mục 3 (dùng chung cho Khách hàng và Phiếu ghi).
 
-Mỗi trường tạo ra một **mã ngẫu nhiên** (`field_code`) — dùng mã này trong OMIFlow (`ASSIGN_ATTRIBUTE_STRUCTURE`, điều kiện), Public API (`attribute_structure[]`, `otherDynamicUpdates`) và biến chatbot/callbot. Tra mã bằng API `tenant-v1 …/attribute/get_all?has_attr=true` hoặc `GET /api/v2/contact/layout/list` (Public API).
+Mỗi trường tạo ra một **mã ngẫu nhiên** (`field_code`) — dùng mã này trong OMIFlow (`ASSIGN_ATTRIBUTE_STRUCTURE`, điều kiện), Public API (`attribute_structure[]`, `otherDynamicUpdates`) và biến chatbot/callbot. Tra mã: thuộc tính **Phiếu ghi** bằng API `tenant-v1 …/attribute/get_all?has_attr=true` (mục 3); thuộc tính **Khách hàng** API này không trả → đọc trên giao diện hoặc thử `GET /api/v2/contact/layout/list` (Public API, chưa kiểm chứng).
 
 ## 2. Phiếu ghi (`/config/attribute/ticket/{tab}`)
 Tab: **Chủ đề**, **Trạng thái**, **Thuộc tính**, **Nhóm tiếp nhận**.
@@ -36,10 +35,41 @@ Tab: **Chủ đề**, **Trạng thái**, **Thuộc tính**, **Nhóm tiếp nhậ
 
 Ca làm việc: **Cấu hình → Doanh nghiệp → Khác → Ca làm việc** (dùng cho hạn phiếu và báo cáo thời gian kết nối).
 
-## 3. Khi thiết kế
+## 3. Thêm thuộc tính — các kiểu trường (✔ khảo sát giao diện 10/2026, chỉ xem, không lưu)
+Mở bộ thuộc tính → **Thêm thuộc tính** (cuối mỗi nhóm) → ngăn "Thêm thuộc tính": cột trái chọn kiểu, phải cấu hình, phía trên có ô xem trước. Khách hàng và Phiếu ghi có **cùng 6 kiểu**. "Thêm nhóm thuộc tính" tạo nhóm (vùng) mới trong form.
+
+| Kiểu (UI) | Cấu hình | Ghi chú dùng |
+|---|---|---|
+| **Hộp ký tự** | Tên* (≤48), Gợi ý, **Kiểu dữ liệu** (Văn bản / Số tự nhiên / Số thập phân / Phần trăm / Tiền tệ), Giới hạn dữ liệu, Giới hạn ký tự, Bắt buộc, Bao gồm nhãn, Giá trị mặc định | `field_type: single_text`; nhận biến trong OMIFlow |
+| **Đoạn văn bản** | Văn bản nhiều dòng | thường `multi_text` (Cần xác nhận cho trường tự tạo) |
+| **Danh sách tùy chọn** (dropdown) | Tên*, **Dữ liệu** = chỉ có **"Tùy chỉnh"**, Bắt buộc, Danh sách giá trị (mỗi giá trị ≤256 ký tự, thêm/xoá từng dòng, đánh dấu một **Mặc định**) | lựa chọn **nhập tay**, không có nguồn API trên giao diện |
+| **Ô chọn (duy nhất)** (radio) | Tên*, **Bố cục** (Chiều dọc/ngang), Danh sách giá trị, một giá trị mặc định | như dropdown |
+| **Ô chọn (nhiều giá trị)** (checkbox) | Tên*, Bố cục, Bắt buộc, Danh sách giá trị, tick sẵn **nhiều** mặc định | như dropdown, giá trị là mảng |
+| **Thời gian** | Tên*, **Kiểu dữ liệu**: Giờ (HH:mm) / Ngày (dd/MM/yyyy) / Ngày giờ (HH:mm dd/MM/yyyy), Bắt buộc | dùng cho trigger Định kỳ "trước/sau thuộc tính thời gian" |
+
+Phiếu ghi còn có kiểu công tắc `ticket_switch` (thấy trong dữ liệu API, nhãn có thể rỗng).
+
+**Mã `field_type` của 3 kiểu chọn (dropdown, radio, checkbox): Cần xác nhận** — muốn biết thì tạo một trường thử (thao tác ghi, hỏi user), đọc lại bằng API bên dưới, rồi ghi bổ sung vào đây. Trong OMIFlow coi cả 3 là **kiểu danh sách**: không gán biến tự do, rẽ nhánh theo từng giá trị (Gotchas "AI điền CRM").
+
+**Dropdown động từ API**: dữ liệu API của mỗi thuộc tính có khối `data_type: {used_rest_api_from_third_party, values, api_info}` — dấu hiệu backend có hỗ trợ nguồn REST bên thứ ba, nhưng giao diện (10/2026) chỉ hiện "Tùy chỉnh" ở cả Khách hàng lẫn Phiếu ghi. Chưa bật được → không hứa với khách; ghi "Cần xác nhận với OMI".
+
+### API đọc thuộc tính (✔ GET 10/2026)
+`GET tenant-v1-stg.omicrm.com/attribute/get_all?has_attr=true` → `payload[]` = **bộ thuộc tính Phiếu ghi** (thêm `type=customer` vẫn chỉ trả bộ phiếu; không có `has_attr` thì `attributes` rỗng):
+```
+{_id, type:"ticket", name, is_default, is_published,
+ zone:[{zone, zone_name, zone_type:"default|assign|timeAndReminder|classify|attachFile|evaluationZone|ticketObject", cols, position, collapse}],
+ attributes:[{_id, field_code, field_type, field_name:{custom, vi, en, i18}, field_format, zone, index, required,
+              multi, have_data_type, data_type:{used_rest_api_from_third_party, values, api_info},
+              default_value, placeholder, max_length, min_length, is_deleted, ...}]}
+```
+Tên hiển thị trường tự tạo nằm ở `field_name.custom`. `scripts/tenant_survey.py` đã đọc endpoint này và dàn phẳng thành `attributes[]` (`code, name, type, is_list, set`).
+
+## 4. Khi thiết kế
 - Bài toán cần trường mới (mã đơn, hạng hội viên, cửa hàng…) → tạo thuộc tính động đúng kiểu dữ liệu, rồi lấy `field_code` để dùng; không nhét vào ghi chú.
 - Bài toán pipeline/lead → dùng bộ trạng thái khách hàng (WIN/LOST cho báo cáo), đổi trạng thái làm mốc nối flow.
 - Bài toán SLA phiếu → ưu tiên cấu hình sẵn của Chủ đề (hạn theo độ ưu tiên, ca làm việc, nhắc trước) trước khi dựng OMIFlow; OMIFlow chỉ bù phần thiếu (vd. hạn phản hồi đầu tiên, leo thang).
+- Trường có tập giá trị cố định (hạng, nguồn lead, kết quả gọi) → Danh sách tùy chọn / Ô chọn; nhớ kiểu này không nhận biến trong flow. Giá trị lấy từ hệ thống ngoài, thay đổi thường xuyên → để Hộp ký tự (nhận biến) thay vì dropdown nhập tay.
+- Danh mục phiếu (Chủ đề) đọc bằng MCP `get_ticket_categories`; lệnh này có thể lỗi 500 → xem tab Chủ đề trên giao diện (mở chủ đề chỉ để xem, bấm Đóng).
 - Tạo/sửa cấu hình là thao tác ghi trên tenant khách → hỏi user trước.
 
 ## Cấu hình phân bổ (Cấu hình → Doanh nghiệp → Khác → Cấu hình phân bổ) — đã kiểm chứng 10/2026

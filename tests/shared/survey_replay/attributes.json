@@ -1,5 +1,8 @@
-{"_ghi_chu":"Endpoint attribute/get_all CHƯA kiểm chứng: khuôn phản hồi dưới đây là giả định để test bộ suy is_list (field_code/field_type lấy theo node-catalog, mã kiểu danh sách là giả định). Không dùng làm schema.",
- "payload":[{"field_code":"<code10_a>","field_name":"Loại xe","field_type":"multi_select","options":[{"name":"Xe tải"},{"name":"Xe tải Van"}]},
-  {"field_code":"<code10_b>","field_name":"Ngày đăng ký khám","field_type":"date"},
+{"_ghi_chu":"Khuôn bộ thuộc tính theo GET attribute/get_all?has_attr=true (✔ 10/2026, omicall-omiflow/references/crm-config.md mục 3): payload[] là BỘ thuộc tính, trường nằm trong attributes[], field_name dạng {custom,...}. Giá trị là placeholder; mã kiểu danh sách (multi_select) và options là giả định để test bộ suy is_list.",
+ "payload":[{"_id":"<set_id>","type":"ticket","name":"Bộ thuộc tính mặc định","attributes":[
+  {"field_code":"<code10_a>","field_name":{"custom":"Loại xe","vi":"","en":"","i18":""},"field_type":"multi_select","options":[{"name":"Xe tải"},{"name":"Xe tải Van"}]},
+  {"field_code":"<code10_b>","field_name":{"custom":"Ngày đăng ký khám","vi":"","en":"","i18":""},"field_type":"date"},
   {"field_code":"<code10_c>","field_name":"Họ và tên","field_type":"single_text"},
-  {"field_code":"<code10_d>","field_name":"Hạng hội viên","field_type":"<mã chưa biết>"}]}
+  {"field_code":"<code10_d>","field_name":{"custom":"Hạng hội viên","vi":"","en":"","i18":""},"field_type":"<mã chưa biết>"},
+  {"field_code":"<code10_e>","field_name":{"custom":"","vi":"","en":"","i18":""},"field_type":"ticket_switch"},
+  {"field_code":"<code10_f>","field_name":{"custom":"Trường đã xoá","vi":"","en":"","i18":""},"field_type":"single_text","is_deleted":true}]}]}

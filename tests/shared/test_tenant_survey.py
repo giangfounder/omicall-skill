@@ -1,7 +1,7 @@
 """Test tenant_survey.py --replay (offline) và khuôn tenant_context.template.json.
 
 Fixture trong survey_replay/ ghép từ khuôn trong tài liệu skill, giá trị là placeholder: chỉ chứng minh nhất quán
-nội bộ, không chứng minh hợp lệ với nền tảng. attributes.json dùng khuôn giả định (endpoint chưa kiểm chứng).
+nội bộ, không chứng minh hợp lệ với nền tảng. attributes.json theo khuôn bộ thuộc tính đã kiểm chứng; mã kiểu danh sách vẫn giả định.
 """
 import json
 import os
@@ -49,7 +49,7 @@ class TestSurvey(unittest.TestCase):
                 self.assertNotIn(r["key"], called)
                 self.assertTrue(any(c.startswith(r["key"] + ":") for c in got["can_xac_nhan"]), r["key"])
             self.assertRegex(r["nguon"], r"\S+\.md:\d+")
-        self.assertEqual(got["attributes"], [])
+        self.assertIn("attributes", called)
         self.assertEqual(got["_nguon"]["agents"], "MCP list_agents")
         self.assertEqual(got["agents"], [])
 
@@ -62,6 +62,14 @@ class TestSurvey(unittest.TestCase):
         self.assertIs(by["Họ và tên"]["is_list"], False)
         self.assertIsNone(by["Hạng hội viên"]["is_list"])
         self.assertTrue(any("Cần xác nhận mã kiểu thật" in c for c in got["can_xac_nhan"]))
+
+    def test_attribute_sets_flattened(self):
+        got, _ = self.survey()
+        by = {a["code"]: a for a in got["attributes"]}
+        self.assertEqual(by["<code10_a>"]["name"], "Loại xe")  # field_name.custom
+        self.assertEqual(by["<code10_a>"]["set"], "ticket/Bộ thuộc tính mặc định")
+        self.assertIs(by["<code10_e>"]["is_list"], False)  # ticket_switch
+        self.assertNotIn("<code10_f>", by)  # is_deleted bị bỏ
 
     def test_no_secrets_in_output(self):
         for extra in ((), ("--include-unverified",)):
