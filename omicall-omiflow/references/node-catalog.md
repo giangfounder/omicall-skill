@@ -296,7 +296,7 @@ Giá trị nhân viên nhập vào biểu mẫu thành biến `{{<field_code>}}`
 2. **Biến liên kết tùy chỉnh**: từ `CREATE_CUSTOM_VARIABLE`, khai báo ở top-level `custom_variables:[{"name","field_code"}]`.
 3. **Dữ liệu thu thập** (`COLLECT_INFO` hoặc phần thu thập trong nút gửi tin): AI bóc thực thể từ nội dung hoặc câu trả lời; hoặc gán giá trị cố định (mẫu: tra API không ra tên thì gán "Khách hàng mới", rồi nhập lại nhánh chính). Biến tuỳ chỉnh và dữ liệu thu thập chỉ sống trong flow hiện tại.
 4. **Biến hệ thống cuộc gọi**: `{{ct_phone_number}}`, `{{ct_transaction_id}}`, `ct_key_action`, `ct_call_status`, `ct_call_type`, `ct_sip_number`.
-5. **AI Assistant**: `{{ca_summarize}}` (tóm tắt cuộc gọi), `{{ca_ai_assistant}}` (kết quả phân tích, hay chèn vào mô tả phiếu).
+5. **AI Assistant** (cấu hình trường: skill con `omicall-ai-insight`): `{{ca_summarize}}` (tóm tắt cuộc gọi), `{{ca_ai_assistant}}` (kết quả phân tích, hay chèn vào mô tả phiếu).
 6. **Đa kênh**: `social_*` (ví dụ `social_phone_number_linked`, `social_customer_name`, `social_zalo_shared_info_phone`…).
 7. **Biến từ biểu mẫu trong cửa sổ**: `{{<field_code>}}` của `FORM_DIALOG`.
 

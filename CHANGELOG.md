@@ -70,6 +70,7 @@ Các bản trước 2026-10-23 được đánh số lại theo lịch sử commi
 ## omicall-omiflow
 | Phiên bản | Ngày | Commit | Thay đổi |
 |---|---|---|---|
+| 1.16.0 | 2026-10-30 | tag `omicall-omiflow/v1.16.0` | Tách cấu hình nền sang skill con omicall-crm-config, omicall-pbx-config, omicall-ai-insight: mục Skill con (bảng khi nào gọi, thứ tự phối hợp), crm-config.md chuyển sang omicall-crm-config, Gotchas TTP/phân bổ/kiểu chọn trỏ sang skill con |
 | 1.15.0 | 2026-10-29 | tag `omicall-omiflow/v1.15.0` | crm-config mục 3: 6 kiểu trường khi Thêm thuộc tính (Khách hàng/Phiếu ghi), dropdown và ô chọn chỉ nguồn Tùy chỉnh, khuôn API attribute/get_all (chỉ trả bộ Phiếu ghi, field_name.custom, data_type REST bên thứ ba chưa bật trên UI); tenant_survey đọc thuộc tính (verified), dàn phẳng bộ thuộc tính, ticket_switch |
 | 1.14.0 | 2026-10-28 | tag `omicall-omiflow/v1.14.0` | Gotchas và mục 8 ui-build-and-test: bảng biến có vấn đề báo nhầm biến cửa sổ tương tác, điều kiện trỏ biến không tồn tại, Cập nhật chỉ lưu nháp, giới hạn dropdown động từ API, quy trình tìm và gỡ mã biến mất định nghĩa, sửa mô tả TinyMCE, ref stale |
 | 1.13.0 | 2026-10-27 | tag `omicall-omiflow/v1.13.0` | Đăng nhập một lần: omi_login.py (kho bí mật hệ điều hành, tự đăng nhập lại, MCP không chứa mật khẩu); skill hỏi domain trước rồi yêu cầu đăng nhập trên trang OMI thật; preflight thêm route login |

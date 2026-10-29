@@ -104,7 +104,7 @@ WEB_HOOK(digits, customer_phone, ct_transaction_id)  ← tổng đài hoặc cal
 
 ### B4b. Hiện cho nhân viên "khách bấm phím nào, thuộc chi nhánh/phòng ban nào" (nhiều phím → nhiều nơi) [đã dựng, chờ test cuộc gọi thật]
 ```
-Tương tác phím (TTP): bật "Kích hoạt Webhook" → URL trigger API của flow; mỗi phím N → nhóm nội bộ của nơi N
+Tương tác phím (TTP, dựng bằng skill con `omicall-pbx-config`): bật "Kích hoạt Webhook" → URL trigger API của flow; mỗi phím N → nhóm nội bộ của nơi N
 WEB_HOOK(digits, customer_phone, ct_transaction_id)
  → CONDITION digits CONTAIN "1".."M" (CONTAIN để nhận cả "01"), nhánh mặc định "Bước tiếp theo"
  → mỗi trường hợp 1 INFO_DIALOG "Khách {{customer_phone}} bấm phím N - <tên nơi N>" (nhân viên nhận: chỉ định người hoặc "trong luồng")
