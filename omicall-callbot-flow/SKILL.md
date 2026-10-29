@@ -1,13 +1,13 @@
 ---
 name: omicall-callbot-flow
 description: >-
-  [v1.6.0] Dựng và sửa Callbot luồng cổ điển (kịch bản NORMAL) của OMiCall/OMiCRM: cây hội thoại, ý định và thực thể NLU, dữ liệu huấn luyện giọng điện thoại, Kho tri thức, sinh luồng từ JSON, lưu và gọi thử. Dùng cho trang …/ai/callbot/script/update/{id} khi kịch bản không phải AI_AGENT; SmartAgent dùng omicall-callbot-gen-ai.
+  [v1.6.1] Dựng và sửa Callbot luồng cổ điển (kịch bản NORMAL) của OMiCall/OMiCRM: cây hội thoại, ý định và thực thể NLU, dữ liệu huấn luyện giọng điện thoại, Kho tri thức, sinh luồng từ JSON, lưu và gọi thử. Dùng cho trang …/ai/callbot/script/update/{id} khi kịch bản không phải AI_AGENT; SmartAgent dùng omicall-callbot-gen-ai.
 ---
 
 # OMiCALL Callbot luồng cổ điển (NORMAL) + Kho tri thức — Generic Builder Playbook
 
 ## Bước bắt buộc: cập nhật skill
-Chạy `python "<thư mục skill>/scripts/self_update.py"` trước mọi bước khác (`<thư mục skill>` = thư mục chứa SKILL.md này). Câu đầu tiên trả lời user: `Đang dùng omicall-callbot-flow v<phiên bản>` (lấy từ dòng `SKILL_VERSION`; script lỗi thì dùng v1.6.0). Script báo **SKILL.md đã thay đổi** → đọc lại SKILL.md từ đĩa rồi mới làm tiếp. Không cập nhật được → báo lý do, làm tiếp bằng bản hiện có; không sửa, xoá hay commit trong thư mục skill.
+Chạy `python "<thư mục skill>/scripts/self_update.py"` trước mọi bước khác (`<thư mục skill>` = thư mục chứa SKILL.md này). Câu đầu tiên trả lời user: `Đang dùng omicall-callbot-flow v<phiên bản>` (lấy từ dòng `SKILL_VERSION`; script lỗi thì dùng v1.6.1). Script báo **SKILL.md đã thay đổi** → đọc lại SKILL.md từ đĩa rồi mới làm tiếp. Không cập nhật được → báo lý do, làm tiếp bằng bản hiện có; không sửa, xoá hay commit trong thư mục skill.
 
 ## Bắt đầu: hỏi domain, rồi yêu cầu đăng nhập
 1. Câu hỏi đầu tiên cho user chỉ là **tên domain** doanh nghiệp (`<tên>.omicrm.io`); domain đã có trong yêu cầu thì bỏ qua.
@@ -26,6 +26,10 @@ Script nằm ở `<thư mục skill>/scripts/`, chạy bằng đường dẫn tu
 7. `scripts/omi_save.py callflow payload.json --domain <domain> --new` `--context <scratch>/tenant_context.json` (cập nhật: `--update --base <bản mới nhất> --confirm-update`): tự GET lại + `verify_callflow --mode post --sent` kèm `--context` và (khi `--update`) `--base`/`--base-version`. FAIL → sửa spec, dựng lại.
 8. Chờ huấn luyện `SUCCESS` → user tự gọi thử (Bước 6). Không Xuất bản, không gắn hotline khi user chưa yêu cầu.
 Dùng builder thì KHÔNG cần đọc `references/api-reference.md` §5; chỉ đọc khi sửa tay hoặc loại node chưa có trong builder (tra `references/node-status.json`).
+
+## Ít chụp ảnh, chụp thì ghi lại (BẮT BUỘC)
+- Cần biết tenant hay giao diện có gì: đi theo thứ tự `references/omi-mcp.md` mục 4a — tri thức đã ghi trong skill → `tenant_context.json` của phiên → script đọc API (`tenant_survey.py`, `config_survey.py`) → MCP → `get_page_text` / `find` → ảnh chụp sau cùng (zoom vùng nhỏ). Biết đường dẫn thì vào thẳng URL, không chụp để dò menu; không mở lại màn hình để xem điều skill đã ghi.
+- Mỗi lần phải chụp ảnh hay đọc giao diện mới biết điều gì (đường dẫn màn hình, nhãn trường, danh sách lựa chọn, quy tắc form, vị trí nút, gotcha, endpoint) → ghi ngay vào reference của skill kèm `✔ UI <tháng/năm>` (mục 4b) để lần sau dùng lại, không chụp lại. Chỉ ghi năng lực nền tảng, không ghi dữ liệu khách; cuối phiên liệt kê các điểm đã ghi để user duyệt.
 
 ## Overview
 Kịch bản `type:"NORMAL"` là **luồng cố định**: bot đọc lời soạn sẵn ở node `STAFF`, nghe khách, **mô hình NLU của tenant** (học từ Kho tri thức) nhận ra **ý định** + **thực thể** để rẽ sang nhánh `CONDITION`. Không có LLM sinh câu: mọi câu bot nói phải viết sẵn, và mô hình chỉ hiểu đúng những gì đã được dạy.

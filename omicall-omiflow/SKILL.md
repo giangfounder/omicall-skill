@@ -1,13 +1,13 @@
 ---
 name: omicall-omiflow
 description: >-
-  [v1.18.0] Thiết kế, dựng và sửa quy trình tự động OMIFlow của OMICall/OMICRM: trigger webhook API, cuộc gọi, phím IVR, phiếu ghi, lịch, Excel, đối tác; điều kiện, trì hoãn, AI phân loại, gọi API ngoài, cập nhật khách/phiếu/cuộc gọi, popup nhân viên, SMS/ZNS, chạy hoặc liên kết Callbot/Chatbot; đọc và lưu qua API campaign-v1. Cấu hình nền giao cho skill con omicall-crm-config, omicall-pbx-config, omicall-ai-insight.
+  [v1.18.1] Thiết kế, dựng và sửa quy trình tự động OMIFlow của OMICall/OMICRM: trigger webhook API, cuộc gọi, phím IVR, phiếu ghi, lịch, Excel, đối tác; điều kiện, trì hoãn, AI phân loại, gọi API ngoài, cập nhật khách/phiếu/cuộc gọi, popup nhân viên, SMS/ZNS, chạy hoặc liên kết Callbot/Chatbot; đọc và lưu qua API campaign-v1. Cấu hình nền giao cho skill con omicall-crm-config, omicall-pbx-config, omicall-ai-insight.
 ---
 
 # OMICall OMIFlow — Builder Playbook (mọi tenant, mọi bài toán)
 
 ## Bước bắt buộc: cập nhật skill
-Chạy `python "<thư mục skill>/scripts/self_update.py"` trước mọi bước khác (`<thư mục skill>` = thư mục chứa SKILL.md này). Câu đầu tiên trả lời user: `Đang dùng omicall-omiflow v<phiên bản>` (lấy từ dòng `SKILL_VERSION`; script lỗi thì dùng v1.18.0). Script báo **SKILL.md đã thay đổi** → đọc lại SKILL.md từ đĩa rồi mới làm tiếp. Không cập nhật được → báo lý do, làm tiếp bằng bản hiện có; không sửa, xoá hay commit trong thư mục skill.
+Chạy `python "<thư mục skill>/scripts/self_update.py"` trước mọi bước khác (`<thư mục skill>` = thư mục chứa SKILL.md này). Câu đầu tiên trả lời user: `Đang dùng omicall-omiflow v<phiên bản>` (lấy từ dòng `SKILL_VERSION`; script lỗi thì dùng v1.18.1). Script báo **SKILL.md đã thay đổi** → đọc lại SKILL.md từ đĩa rồi mới làm tiếp. Không cập nhật được → báo lý do, làm tiếp bằng bản hiện có; không sửa, xoá hay commit trong thư mục skill.
 
 ## Bắt đầu: hỏi domain, rồi yêu cầu đăng nhập
 1. Câu hỏi đầu tiên cho user chỉ là **tên domain** doanh nghiệp (`<tên>.omicrm.io`); domain đã có trong yêu cầu thì bỏ qua.
@@ -27,6 +27,10 @@ Chạy script bằng đường dẫn tuyệt đối `<thư mục skill>/scripts/
 8. **Giao**: flow vẫn là nháp; user tự bấm **Xuất bản** sau khi duyệt (Rule 3).
 
 Không bao giờ: xuất bản, bật, tắt hay xoá flow khi user chưa duyệt · đọc cookie, in token, nhập mật khẩu hộ · bịa schema cho loại chưa `verified` (Rule 2).
+
+## Ít chụp ảnh, chụp thì ghi lại (BẮT BUỘC)
+- Cần biết tenant hay giao diện có gì: đi theo thứ tự `references/omi-mcp.md` mục 4a — tri thức đã ghi trong skill → `tenant_context.json` của phiên → script đọc API (`tenant_survey.py`, `config_survey.py`) → MCP → `get_page_text` / `find` → ảnh chụp sau cùng (zoom vùng nhỏ). Biết đường dẫn thì vào thẳng URL, không chụp để dò menu; không mở lại màn hình để xem điều skill đã ghi.
+- Mỗi lần phải chụp ảnh hay đọc giao diện mới biết điều gì (đường dẫn màn hình, nhãn trường, danh sách lựa chọn, quy tắc form, vị trí nút, gotcha, endpoint) → ghi ngay vào reference của skill kèm `✔ UI <tháng/năm>` (mục 4b) để lần sau dùng lại, không chụp lại. Chỉ ghi năng lực nền tảng, không ghi dữ liệu khách; cuối phiên liệt kê các điểm đã ghi để user duyệt.
 
 ## Overview
 **OMIFlow** (menu OMIFlow, path `/flow/list`, editor `/flow/edit/{id}`) là bộ máy tự động hoá của OMICRM, cùng loại N8N, Zapier, Make, nhưng gắn sẵn với tổng đài, Callbot, Chatbot, đa kênh, phiếu ghi, khách hàng. Một flow = **điều kiện bắt đầu** → chuỗi **nút** (điều kiện, trì hoãn, hành động, cửa sổ tương tác, marketing, kênh chat) → kết quả nghiệp vụ.

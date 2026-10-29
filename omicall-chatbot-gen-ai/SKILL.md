@@ -1,13 +1,13 @@
 ---
 name: omicall-chatbot-gen-ai
 description: >-
-  [v1.9.0] Dựng, kiểm thử và tối ưu Chatbot AI (OmiBot) của OMiCALL/OMiCRM cho Zalo OA, Facebook, LiveTalk: lời nhắc hệ thống, ý định trong Ngữ cảnh bắt đầu, RAG Dữ liệu khác, Truy vấn API, lưu nháp hoặc xuất bản qua chatbot-gateway, chat thử trên LiveTalk, chấm điểm trước/sau. Kích hoạt khi có đường dẫn omicrm.io/ai/bot/.
+  [v1.9.1] Dựng, kiểm thử và tối ưu Chatbot AI (OmiBot) của OMiCALL/OMiCRM cho Zalo OA, Facebook, LiveTalk: lời nhắc hệ thống, ý định trong Ngữ cảnh bắt đầu, RAG Dữ liệu khác, Truy vấn API, lưu nháp hoặc xuất bản qua chatbot-gateway, chat thử trên LiveTalk, chấm điểm trước/sau. Kích hoạt khi có đường dẫn omicrm.io/ai/bot/.
 ---
 
 # OMiCALL/OMiCRM AI Chatbot (OmiBot) Gen AI — Generic Builder Playbook (mọi tenant / mọi bot)
 
 ## Bước bắt buộc: cập nhật skill
-Chạy `python "<thư mục skill>/scripts/self_update.py"` trước mọi bước khác (`<thư mục skill>` = thư mục chứa SKILL.md này). Câu đầu tiên trả lời user: `Đang dùng omicall-chatbot-gen-ai v<phiên bản>` (lấy từ dòng `SKILL_VERSION`; script lỗi thì dùng v1.9.0). Script báo **SKILL.md đã thay đổi** → đọc lại SKILL.md từ đĩa rồi mới làm tiếp. Không cập nhật được → báo lý do, làm tiếp bằng bản hiện có; không sửa, xoá hay commit trong thư mục skill.
+Chạy `python "<thư mục skill>/scripts/self_update.py"` trước mọi bước khác (`<thư mục skill>` = thư mục chứa SKILL.md này). Câu đầu tiên trả lời user: `Đang dùng omicall-chatbot-gen-ai v<phiên bản>` (lấy từ dòng `SKILL_VERSION`; script lỗi thì dùng v1.9.1). Script báo **SKILL.md đã thay đổi** → đọc lại SKILL.md từ đĩa rồi mới làm tiếp. Không cập nhật được → báo lý do, làm tiếp bằng bản hiện có; không sửa, xoá hay commit trong thư mục skill.
 
 ## Bắt đầu: hỏi domain, rồi yêu cầu đăng nhập
 1. Câu hỏi đầu tiên cho user chỉ là **tên domain** doanh nghiệp (`<tên>.omicrm.io`); domain đã có trong yêu cầu thì bỏ qua.
@@ -39,6 +39,10 @@ AI **Chatbot** (text) — OMI gọi là **AI Chatbot / OmiBot** (`/ai/bot/...`),
 Hỏi một lần: (1) **domain doanh nghiệp**; (2) **email** đăng nhập — mật khẩu user gõ một lần vào ô nhập ẩn của `omi_login.py setup` trong terminal, không gửi qua chat; (3) **mô tả nghiệp vụ** (kịch bản, FAQ, tài liệu dịch vụ hoặc prompt). Nếu thông tin đã có trong yêu cầu hoặc cấu hình bí mật thì không hỏi lại. Tên bot tự đặt theo doanh nghiệp và mục đích. Bot đã có sẵn đúng nhu cầu → reuse giữ nguyên `_id` (save ghi đè).
 
 # Workflow
+
+## Ít chụp ảnh, chụp thì ghi lại (BẮT BUỘC)
+- Cần biết tenant hay giao diện có gì: đi theo thứ tự `references/omi-mcp.md` mục 4a — tri thức đã ghi trong skill → `tenant_context.json` của phiên → script đọc API (`tenant_survey.py`, `config_survey.py`) → MCP → `get_page_text` / `find` → ảnh chụp sau cùng (zoom vùng nhỏ). Biết đường dẫn thì vào thẳng URL, không chụp để dò menu; không mở lại màn hình để xem điều skill đã ghi.
+- Mỗi lần phải chụp ảnh hay đọc giao diện mới biết điều gì (đường dẫn màn hình, nhãn trường, danh sách lựa chọn, quy tắc form, vị trí nút, gotcha, endpoint) → ghi ngay vào reference của skill kèm `✔ UI <tháng/năm>` (mục 4b) để lần sau dùng lại, không chụp lại. Chỉ ghi năng lực nền tảng, không ghi dữ liệu khách; cuối phiên liệt kê các điểm đã ghi để user duyệt.
 
 ## Bước 0 — Đăng nhập (MCP OMI trước) & lấy token — chi tiết `references/omi-mcp.md`
 - **MCP OMI + `omi_login.py` (chuẩn)**: `omi_preflight.py` báo `blocked` → agent mở terminal cho user với `python "<thư mục skill>/scripts/omi_login.py" setup --domain <domain> --email <email>`; user gõ mật khẩu vào ô nhập ẩn đúng một lần, script cất vào kho bí mật hệ điều hành, tự đăng nhập MCP OMI và đăng ký server `OMICall-<domain>` (cấu hình không chứa mật khẩu); agent đi đường API ngay. `route=login` (hết hạn, sai tenant) → agent tự chạy `omi_login.py login --domain <domain>`, không hỏi user. MCP có trong phiên thì `login_omicall_mcp` (+ `select_tenant`) cũng được. Token cho API lấy bằng `omi_session.py` (không in token). Chi tiết `references/omi-mcp.md` mục 2a. Script khác import `omi_session.headers()`.

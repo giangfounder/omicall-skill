@@ -1,13 +1,13 @@
 ---
 name: omicall-callbot-gen-ai
 description: >-
-  [v1.13.0] Dựng và sửa kịch bản Callbot Gen AI (SmartAgent, AI_AGENT) của OMiCall/OMiCRM: ý định, thu thập thông tin, phân loại, gọi API, RAG, chuyển máy, prompt cho tổng đài viên AI; dựng từ tài liệu nghiệp vụ hoặc PDF, sửa tại …/ai/callbot/script/update/{scriptId}, lưu qua chatbot-gateway và kiểm thử.
+  [v1.13.1] Dựng và sửa kịch bản Callbot Gen AI (SmartAgent, AI_AGENT) của OMiCall/OMiCRM: ý định, thu thập thông tin, phân loại, gọi API, RAG, chuyển máy, prompt cho tổng đài viên AI; dựng từ tài liệu nghiệp vụ hoặc PDF, sửa tại …/ai/callbot/script/update/{scriptId}, lưu qua chatbot-gateway và kiểm thử.
 ---
 
 # OMiCALL Callbot Gen AI — Generic Builder Playbook (all tenants / all scripts)
 
 ## Bước bắt buộc: cập nhật skill
-Chạy `python "<thư mục skill>/scripts/self_update.py"` trước mọi bước khác (`<thư mục skill>` = thư mục chứa SKILL.md này). Câu đầu tiên trả lời user: `Đang dùng omicall-callbot-gen-ai v<phiên bản>` (lấy từ dòng `SKILL_VERSION`; script lỗi thì dùng v1.13.0). Script báo **SKILL.md đã thay đổi** → đọc lại SKILL.md từ đĩa rồi mới làm tiếp. Không cập nhật được → báo lý do, làm tiếp bằng bản hiện có; không sửa, xoá hay commit trong thư mục skill.
+Chạy `python "<thư mục skill>/scripts/self_update.py"` trước mọi bước khác (`<thư mục skill>` = thư mục chứa SKILL.md này). Câu đầu tiên trả lời user: `Đang dùng omicall-callbot-gen-ai v<phiên bản>` (lấy từ dòng `SKILL_VERSION`; script lỗi thì dùng v1.13.1). Script báo **SKILL.md đã thay đổi** → đọc lại SKILL.md từ đĩa rồi mới làm tiếp. Không cập nhật được → báo lý do, làm tiếp bằng bản hiện có; không sửa, xoá hay commit trong thư mục skill.
 
 ## Bắt đầu: hỏi domain, rồi yêu cầu đăng nhập
 1. Câu hỏi đầu tiên cho user chỉ là **tên domain** doanh nghiệp (`<tên>.omicrm.io`); domain đã có trong yêu cầu thì bỏ qua.
@@ -35,6 +35,10 @@ Chạy script bằng đường dẫn tuyệt đối `python "<thư mục skill>/
 | Quy chuẩn viết kịch bản chung, mô tả biến, ý định, hành động, chuyển nút, thao tác UI | `references/agent-config-guide.md` |
 
 Không bao giờ: bấm **Xuất bản** hay ghi đè script đang chạy khi user chưa duyệt (Gotchas). Không nhập mật khẩu hộ user, không đọc cookie hay in token (Input contract). Không tạo cạnh hay `next_node` về BEGIN (Rules 3).
+
+## Ít chụp ảnh, chụp thì ghi lại (BẮT BUỘC)
+- Cần biết tenant hay giao diện có gì: đi theo thứ tự `references/omi-mcp.md` mục 4a — tri thức đã ghi trong skill → `tenant_context.json` của phiên → script đọc API (`tenant_survey.py`, `config_survey.py`) → MCP → `get_page_text` / `find` → ảnh chụp sau cùng (zoom vùng nhỏ). Biết đường dẫn thì vào thẳng URL, không chụp để dò menu; không mở lại màn hình để xem điều skill đã ghi.
+- Mỗi lần phải chụp ảnh hay đọc giao diện mới biết điều gì (đường dẫn màn hình, nhãn trường, danh sách lựa chọn, quy tắc form, vị trí nút, gotcha, endpoint) → ghi ngay vào reference của skill kèm `✔ UI <tháng/năm>` (mục 4b) để lần sau dùng lại, không chụp lại. Chỉ ghi năng lực nền tảng, không ghi dữ liệu khách; cuối phiên liệt kê các điểm đã ghi để user duyệt.
 
 ## Overview
 Callbot **SmartAgent** (`type:"AI_AGENT"`): STT → LLM(+RAG/API) → TTS; tự đối thoại, nhận diện ý định, thu biến, chuyển/cúp máy. ≠ **Call Flow** (IVR/Rasa). Skill này là **bộ dùng chung**: mọi tenant, mọi kịch bản; intent, xử lý, routing, prompt hướng dẫn agent đều **do bạn (LLM) tự tư duy từ nghiệp vụ user cung cấp** — không bê nguyên từ script tenant khác hay từ ví dụ trong skill.

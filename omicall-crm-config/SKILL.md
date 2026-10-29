@@ -1,13 +1,13 @@
 ---
 name: omicall-crm-config
 description: >-
-  [v1.2.0] Cấu hình nền CRM của OMICall/OMICRM: thuộc tính động Khách hàng và Phiếu ghi (6 kiểu trường, mã field_code), các trường thông tin mặc định, bộ trạng thái khách hàng (WIN/LOST, trình tự), chủ đề và bộ trạng thái phiếu (hạn xử lý, ca làm việc), cấu hình phân bổ. Skill con của omicall-omiflow; gọi riêng được.
+  [v1.2.1] Cấu hình nền CRM của OMICall/OMICRM: thuộc tính động Khách hàng và Phiếu ghi (6 kiểu trường, mã field_code), các trường thông tin mặc định, bộ trạng thái khách hàng (WIN/LOST, trình tự), chủ đề và bộ trạng thái phiếu (hạn xử lý, ca làm việc), cấu hình phân bổ. Skill con của omicall-omiflow; gọi riêng được.
 ---
 
 # OMICall CRM Config — Thuộc tính, trạng thái, chủ đề phiếu (mọi tenant)
 
 ## Bước bắt buộc: cập nhật skill
-Chạy `python "<thư mục skill>/scripts/self_update.py"` trước mọi bước khác (`<thư mục skill>` = thư mục chứa SKILL.md này). Câu đầu tiên trả lời user: `Đang dùng omicall-crm-config v<phiên bản>` (lấy từ dòng `SKILL_VERSION`; script lỗi thì dùng v1.2.0). Script báo **SKILL.md đã thay đổi** → đọc lại SKILL.md từ đĩa rồi mới làm tiếp. Không cập nhật được → báo lý do, làm tiếp bằng bản hiện có; không sửa, xoá hay commit trong thư mục skill.
+Chạy `python "<thư mục skill>/scripts/self_update.py"` trước mọi bước khác (`<thư mục skill>` = thư mục chứa SKILL.md này). Câu đầu tiên trả lời user: `Đang dùng omicall-crm-config v<phiên bản>` (lấy từ dòng `SKILL_VERSION`; script lỗi thì dùng v1.2.1). Script báo **SKILL.md đã thay đổi** → đọc lại SKILL.md từ đĩa rồi mới làm tiếp. Không cập nhật được → báo lý do, làm tiếp bằng bản hiện có; không sửa, xoá hay commit trong thư mục skill.
 
 ## Bắt đầu: domain và đăng nhập
 Được `omicall-omiflow` gọi trong cùng phiên thì dùng lại domain, đăng nhập và `tenant_context.json` đã có, bỏ qua mục này. Gọi riêng: làm đúng mục "Bắt đầu" của `omicall-omiflow/SKILL.md` — hỏi domain, `python "<thư mục skill>/scripts/omi_login.py" ensure --domain <domain>`, `"need":"setup"` thì mở trang đăng nhập OMI thật để user tự nhập mật khẩu. Agent không gõ mật khẩu, không đọc cookie hay token.
@@ -23,6 +23,10 @@ Chạy script bằng đường dẫn tuyệt đối `<thư mục skill>/scripts/
 7. **Giao**: bảng mã trường, kiểu, `is_list`, bộ trạng thái và chủ đề đã dùng; các điểm "Cần xác nhận". Được omiflow gọi thì quay lại bước thiết kế flow.
 
 Không bao giờ: xoá hay đổi tên thuộc tính, trạng thái đang dùng · đổi "Hình thức" của cấu hình phân bổ đang gắn flow khi user chưa duyệt · Xuất bản hay lưu thay đổi chưa được duyệt · đọc cookie, in token, nhập mật khẩu hộ.
+
+## Ít chụp ảnh, chụp thì ghi lại (BẮT BUỘC)
+- Cần biết tenant hay giao diện có gì: đi theo thứ tự `references/omi-mcp.md` mục 4a — tri thức đã ghi trong skill → `tenant_context.json` của phiên → script đọc API (`tenant_survey.py`, `config_survey.py`) → MCP → `get_page_text` / `find` → ảnh chụp sau cùng (zoom vùng nhỏ). Biết đường dẫn thì vào thẳng URL, không chụp để dò menu; không mở lại màn hình để xem điều skill đã ghi.
+- Mỗi lần phải chụp ảnh hay đọc giao diện mới biết điều gì (đường dẫn màn hình, nhãn trường, danh sách lựa chọn, quy tắc form, vị trí nút, gotcha, endpoint) → ghi ngay vào reference của skill kèm `✔ UI <tháng/năm>` (mục 4b) để lần sau dùng lại, không chụp lại. Chỉ ghi năng lực nền tảng, không ghi dữ liệu khách; cuối phiên liệt kê các điểm đã ghi để user duyệt.
 
 ## Rules (BẮT BUỘC)
 1. **Cấu hình dùng chung cả tenant**: thuộc tính, bộ trạng thái, chủ đề phiếu, phân bổ ảnh hưởng mọi nhân viên, flow, bot. Đọc thoải mái; tạo hoặc sửa chỉ khi user đồng ý; không xoá.
