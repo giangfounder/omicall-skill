@@ -173,10 +173,10 @@
  {
   "type": "RAG upload (knowledge.files)",
   "side": "runtime",
-  "status": "ui_only",
+  "status": "unverified",
   "template": null,
-  "source": "references/api-reference.md:140",
+  "source": "references/api-reference.md (mục RAG — File đào tạo)",
   "verified_on": null,
-  "ui_hint": "Chuỗi upload file RAG cho callbot chưa có API kiểm chứng → tải file trên editor rồi GET."
+  "ui_hint": "scripts/rag_upload.py: filestore put business_type=callbot_recording_file → knowledge.files + org selectedTraining → omi_save --update. Chuỗi đọc từ mã editor, khớp dữ liệu thật; chạy end-to-end lần đầu thì GET + gọi thử rồi đổi status sang verified."
  }
 ]

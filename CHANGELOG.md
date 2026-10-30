@@ -29,6 +29,7 @@ Các bản trước 2026-10-23 được đánh số lại theo lịch sử commi
 ## omicall-callbot-gen-ai
 | Phiên bản | Ngày | Commit | Thay đổi |
 |---|---|---|---|
+| 1.13.2 | 2026-10-30 | tag `omicall-callbot-gen-ai/v1.13.2` | RAG File đào tạo: scripts/rag_upload.py tải docx/pdf qua filestore (business_type=callbot_recording_file), ghi knowledge.files + org selectedTraining, lưu bằng omi_save --update; api-reference mục 'RAG — File đào tạo' (cả chế độ other_wok_id); SKILL.md trỏ tới script |
 | 1.13.1 | 2026-10-30 | tag `omicall-callbot-gen-ai/v1.13.1` | SKILL.md mọi skill: mục 'Ít chụp ảnh, chụp thì ghi lại' ngay sau Đường nhanh (thứ tự nguồn omi-mcp.md 4a, ghi tri thức học từ giao diện vào reference 4b) |
 | 1.13.0 | 2026-10-30 | tag `omicall-callbot-gen-ai/v1.13.0` | Ít chụp ảnh: omi-mcp.md mục 4a (thứ tự nguồn: tri thức skill → tenant_context → API → MCP → chữ giao diện → ảnh) và 4b (ghi tri thức học từ giao diện vào reference); script dùng chung config_survey.py đọc tổng đài và AI bằng API nội bộ (pbx/cdr/ai/contact, ✔ GET 10/2026); omi_api thêm host; pbx-config: bảng API, giờ làm việc nằm ở đầu số (working_days chọn kịch bản), khuôn kịch bản/Tương tác phím (phím ở trường ivr)/nhóm/lời chào; ai-insight: API AI Assistant, mục đích cuộc gọi, tiêu chí |
 | 1.12.1 | 2026-10-29 | tag `omicall-callbot-gen-ai/v1.12.1` | tenant_survey (dùng chung): đọc thuộc tính Phiếu ghi qua attribute/get_all (verified), dàn phẳng bộ thuộc tính |

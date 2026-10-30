@@ -137,7 +137,16 @@ targetHandle `"1"` cho cả ACTION và END_CALL. Định dạng `id` cạnh: m�
 ```json
 {"ref_id":"<mã_biến_action>","name":"<tên>","url":"<endpoint OMi custom: https://customize-v2-stg.omicrm.com/{slug}/...>","method":"POST","headers":[{"id":"<uuid>","key":"Content-Type","value":"application/json"}],"body_type":"raw","body_json":"{\n  \"phone\": \"<so_dien_thoai>\"\n}","variables":null,"prompt":"","query_prompt":"<parse response + luật trả lời>","param_type":"json","time_out":60,"api_response_guide":[],"retrieve_data":null}
 ```
-RAG `knowledge.files[]`: `{"url","id","name"}`.
+RAG `knowledge.files[]`: `{"url","id","name"}`. Tải file: xem mục "RAG — File đào tạo" bên dưới.
+
+## RAG — File đào tạo (knowledge.files) — ✔ đọc mã editor 10/2026, khớp dữ liệu thật
+UI: Ngữ cảnh bắt đầu → **File đào tạo**. Editor KHÔNG tải file lúc chọn; tải khi bấm **Cập nhật**, với mỗi file chưa có `url`:
+1. `POST https://filestore-v1-stg.omicrm.com/file_store/put?business_type=callbot_recording_file&keep_content_type=true`, Bearer, multipart `image=<file>`, `name=<tên file>` (một file mỗi request). Phản hồi `payload[0].object_info.name` = `<tenant_id>/callbot_recording_file/<yyyy>/<mm>/<uuid>.<đuôi>`.
+2. `url = "https://cdn.omicrm.com/crm/" + object name`; `id` = uuid mới (editor sinh uuid v1); `name` = tên file gốc.
+3. Ghi `{"id","name","url"}` vào **cả hai**: `nodes[BEGIN].ai_agent_config.knowledge.files[]` (runtime) và `org_nodes[BEGIN].data.selectedTraining[]` + `data.typeTrainingFile:"file"` (editor hiển thị).
+4. Lưu `add_v2` như mọi lần sửa. Không có API "huấn luyện" riêng cho callbot.
+Chế độ **"other"** (chọn bản ghi Dữ liệu khác của kho chung): `files[] = {"id","name","other_wok_id":"<_id bản ghi other/add>"}`, `typeTrainingFile:"other"`; tạo bản ghi bằng chuỗi RAG của skill chatbot (`warehouse_of_knowledge/other/add`).
+Đường nhanh: `scripts/rag_upload.py <file> --base GET.json --out payload.json` rồi `omi_save.py callbot payload.json --update --confirm-update --base GET.json`. Cần xác nhận lần đầu: gọi thử hỏi câu có trong file mới.
 **2) Biến ACTION top-level**: `{"field_name":"<tên hiển thị>","field_code":"<mã_biến_action / ref_id>","field_value":"","field_type":"","type":"ACTION","is_dynamic_attribute":true}` — type `ACTION` = kết quả API, nhúng `{{<ref_id>}}` vào prompt/PUSH_NOTIFICATION; KHÔNG đưa vào `collect_info_variables`.
 **3) Intent bước `search_knowledge`**: runtime `action_steps:[{"action":"search_knowledge","prompt":"<dùng {{ref_id}} + biến thu>","variables_code":null}]`; editor `actionStep:[{"action":"search_knowledge","labelUnsigned":"huong dan agent","id":"<uuid>","value":"search_knowledge","prompt":"<cùng prompt>"}]` (editor hiện "huong dan agent").
 **query_prompt/prompt phải dạy LLM**: khi nào gọi API; `statusCode==9999` thành công; payload có nhiều mã khách (một số điện thoại gắn nhiều hồ sơ/hợp đồng) → 1 mã đọc luôn, ≥2 mã đọc tên chủ hồ sơ rồi hỏi khách XÁC NHẬN, không tự chọn; bỏ bản ghi trùng theo `<ma_hoa_don>`; `<tong_tien>` đọc thành tiền Việt; `<trang_thai>` đổi mã trạng thái sang câu dễ hiểu (ví dụ đã thanh toán / chưa thanh toán); không đọc field nội bộ (mã đơn vị, mã hệ thống...); tham số từ biến đã thu. Tên trường thật lấy theo tài liệu API của khách, không đoán. Endpoint customize OMi: `https://customize-v2-stg.omicrm.com/{slug}/...`.
