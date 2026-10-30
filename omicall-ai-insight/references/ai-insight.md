@@ -40,6 +40,28 @@ Cấu hình → AI → **Voice Insights** (`/config/ai/call-analysis/analysis-pa
 - → Muốn chấm theo loại cuộc gọi: tạo giá trị **Mục đích cuộc gọi** trước (Cấu hình → Doanh nghiệp → Cuộc gọi), rồi mới tạo bộ tiêu chí.
 - Tab SmartCall: Cần khảo sát.
 
+### 3a. Dựng Voice Insights trên giao diện ✔ UI 10/2026
+Tenant mới có thể **chưa có thông số nào** (danh sách trống) — phải tự thêm. Thứ tự: thông số → mục đích cuộc gọi → bộ tiêu chí.
+
+**Thông số phân tích** — nút Thêm mới mở bảng chọn 13 thẻ (lọc Tất cả / Ngôn ngữ tự nhiên / Âm thanh). 12 thẻ gắn **PRO**, chỉ **Lịch sự** không PRO; gói chưa mở PRO → bấm thẻ báo "Bạn không có quyền sử dụng tính năng này" (kiểm trước khi hứa với khách). Bấm thẻ → ngăn "Thêm thông số" bên phải → nút **Thêm mới** lưu, bảng chọn vẫn mở để thêm tiếp (thẻ đã thêm bị mờ).
+| Thông số | Ô bắt buộc trong form |
+|---|---|
+| Từ khóa | Áp dụng tất cả / Theo đối tượng; danh sách dòng **Từ khóa** + **Phiên âm** (tuỳ chọn, ≤48 ký tự), nút + thêm dòng |
+| Cảm xúc âm thanh | **Khoảng chênh lệch*** (delta; gợi ý trên form: tốt nhất từ 30 delta) |
+| Độ trễ tín hiệu | **Độ trễ tín hiệu*** (ms) |
+| Thời gian phản hồi | **Thời gian phản hồi*** (giây) |
+| Tốc độ thoại | **Tốc độ thoại*** (từ/phút) + tuỳ chọn trừ điểm khi lớn hơn / nhỏ hơn giá trị chênh lệch |
+| Lịch sự, Cảm xúc, Tạp âm, Câu hỏi, Lời hẹn, Độc thoại, Cường độ âm thanh | chỉ ô chọn đối tượng (Nhân viên / Khách hàng) |
+| Đánh giá dịch vụ, Từ chối dịch vụ | chỉ đối tượng Khách hàng |
+
+**Mục đích cuộc gọi** — `/config/company/call/list`, khối "Mục đích cuộc gọi" → Chỉnh sửa → danh sách ô **Tên mục đích** (≤48 ký tự, nút + thêm dòng) → Cập nhật. Có giá trị thì **nhân viên phải chọn mục đích trước khi gọi** → báo khách trước.
+
+**Bộ tiêu chí** — `/config/ai/call-analysis/evaluation-criteria/add/new`, 2 bước:
+1. Thông tin chung: **Tên bộ tiêu chí*** (≤48), Mục đích cuộc gọi (mặc định "Không áp dụng"), Mô tả (≤256), **Khung điểm** (Thêm khung điểm → Tiêu đề*, Từ*, Đến*; ví dụ trên form "0–30 = Không đạt"), Nhân viên / Nhóm nhân viên (trống = áp dụng tất cả) → Tiếp tục.
+2. Cấu hình tiêu chí (`…/evaluation-criteria/config/list`): cột trái danh sách tiêu chí, trọng số tự chia đều (link "Cấu hình" để chỉnh, tổng 100%); chọn tiêu chí → ô **Tiêu chí** (tên) + "Thêm thông số" mở ngăn điều kiện. Danh mục điều kiện bên phải: Tuỳ chỉnh (Chủ đề Ý định/Mong muốn, Tự định nghĩa), Cơ bản (Thời lượng cuộc gọi, Tỉ lệ thoại, Bao gồm từ khoá, Không bao gồm từ khoá), Ngôn ngữ tự nhiên (Lịch sự, Cảm xúc, Đánh giá dịch vụ, Từ chối dịch vụ, Câu hỏi, Lời hẹn), Âm thanh (Độc thoại, Thời gian phản hồi, Cảm xúc âm thanh, Cường độ âm thanh…). Mỗi điều kiện: Đối tượng (Tất cả / Nhân viên / Khách hàng — **giữ lựa chọn của lần trước**, kiểm lại), giá trị cần đếm (Lịch sự: Lịch sự/Không lịch sự; Cảm xúc: Vui vẻ/Bình thường/Khó chịu; Đánh giá dịch vụ: Hài lòng-Khen/Trung lập/Chê), **Số lần** hoặc **Phần trăm xuất hiện** với Trong khoảng Từ–Đến (bỏ trống Đến = "Trên X"), tuỳ chọn khung thời gian, "Thêm trường hợp khác". Trọng số các thông số trong tiêu chí tự chia đều. Nút **Thêm mới** cuối trang lưu cả bộ.
+- Gotcha: bấm vào thẻ điều kiện đã thêm mở "Chỉnh sửa" (nút Cập nhật/Đóng), không phải Thêm thông số — nút "Thêm thông số" nằm dưới thẻ cuối.
+- Danh sách bộ tiêu chí hiện tên, số tiêu chí, khung điểm, mục đích, phạm vi nhân viên. Trên một số tenant tab thứ 4 là "Kho dữ liệu mẫu" thay cho "Trọng số" (Cần khảo sát).
+
 ## 4. Chat Insights ✔ UI 10/2026
 Cấu hình → AI → **Chat Insights** (`/config/ai/natural-language-analysis/evaluation-criteria`): một tab **Bộ tiêu chí** (cột Nhân viên, Ngày tạo). Nội dung form bộ tiêu chí, chỉ số đầu ra: Cần khảo sát (tenant khảo sát chưa có bộ nào).
 

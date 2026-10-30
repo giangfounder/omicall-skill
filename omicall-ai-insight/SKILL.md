@@ -1,13 +1,13 @@
 ---
 name: omicall-ai-insight
 description: >-
-  [v1.2.1] Cấu hình và khai thác AI phân tích của OMICall/OMICRM: AI Assistant (hướng dẫn tổng hợp, trường bóc từ cuộc gọi, biến ca_summarize và ca_ai_assistant), Voice Insights, Chat Insights, đánh giá cuộc gọi và phiếu, speech-to-text. Skill con của omicall-omiflow; gọi riêng được.
+  [v1.3.0] Cấu hình và khai thác AI phân tích của OMICall/OMICRM: AI Assistant (hướng dẫn tổng hợp, trường bóc từ cuộc gọi, biến ca_summarize và ca_ai_assistant), Voice Insights, Chat Insights, đánh giá cuộc gọi và phiếu, speech-to-text. Skill con của omicall-omiflow; gọi riêng được.
 ---
 
 # OMICall AI Insight — AI Assistant, Voice Insights, Chat Insights (mọi tenant)
 
 ## Bước bắt buộc: cập nhật skill
-Chạy `python "<thư mục skill>/scripts/self_update.py"` trước mọi bước khác (`<thư mục skill>` = thư mục chứa SKILL.md này). Câu đầu tiên trả lời user: `Đang dùng omicall-ai-insight v<phiên bản>` (lấy từ dòng `SKILL_VERSION`; script lỗi thì dùng v1.2.1). Script báo **SKILL.md đã thay đổi** → đọc lại SKILL.md từ đĩa rồi mới làm tiếp. Không cập nhật được → báo lý do, làm tiếp bằng bản hiện có; không sửa, xoá hay commit trong thư mục skill.
+Chạy `python "<thư mục skill>/scripts/self_update.py"` trước mọi bước khác (`<thư mục skill>` = thư mục chứa SKILL.md này). Câu đầu tiên trả lời user: `Đang dùng omicall-ai-insight v<phiên bản>` (lấy từ dòng `SKILL_VERSION`; script lỗi thì dùng v1.3.0). Script báo **SKILL.md đã thay đổi** → đọc lại SKILL.md từ đĩa rồi mới làm tiếp. Không cập nhật được → báo lý do, làm tiếp bằng bản hiện có; không sửa, xoá hay commit trong thư mục skill.
 
 ## Bắt đầu: domain và đăng nhập
 Được `omicall-omiflow` gọi trong cùng phiên thì dùng lại domain, đăng nhập và `tenant_context.json` đã có, bỏ qua mục này. Gọi riêng: làm đúng mục "Bắt đầu" của `omicall-omiflow/SKILL.md` — hỏi domain, `python "<thư mục skill>/scripts/omi_login.py" ensure --domain <domain>`, `"need":"setup"` thì mở trang đăng nhập OMI thật để user tự nhập mật khẩu. Agent không gõ mật khẩu, không đọc cookie hay token.
