@@ -144,13 +144,7 @@ Các bản trước 2026-10-23 được đánh số lại theo lịch sử commi
 | 1.0.0 | 2026-10-30 | tag `omicall-ai-insight/v1.0.0` | Bản đầu: skill con của omicall-omiflow tách cấu hình nền — crm-config (thuộc tính, trạng thái, chủ đề phiếu, phân bổ; chuyển crm-config.md từ omiflow), pbx-config (nhóm nội bộ, lời chào TTS, Tương tác phím, kịch bản gọi vào, gắn hotline), ai-insight (AI Assistant, Voice/Chat Insights cần khảo sát, đánh giá cuộc gọi, STT); sync_shared chia BUILDERS/SUBSKILLS |
 
 ## omicall-assistant
-Trước bản 1.0.1 tên là `omicall-start`.
-
-| Phiên bản | Ngày | Commit | Thay đổi |
-|---|---|---|---|
-| 1.0.0 | 2026-11-02 | tag `omicall-start/v1.0.0` | Skill cửa vào mới: hỏi việc bằng lời thường, điền phiếu bài toán 5 ô, xin duyệt rồi gọi đúng skill omicall-* theo thứ tự dựng |
-
-## omicall-assistant
 | Phiên bản | Ngày | Commit | Thay đổi |
 |---|---|---|---|
 | 1.0.1 | 2026-11-02 | tag `omicall-assistant/v1.0.1` | Đổi tên omicall-start thành omicall-assistant (tag cũ omicall-start/v1.0.0 giữ nguyên) |
+| 1.0.0 | 2026-11-02 | tag `omicall-start/v1.0.0` | Skill cửa vào mới (tên cũ `omicall-start`): hỏi việc bằng lời thường, điền phiếu bài toán 5 ô, xin duyệt rồi gọi đúng skill omicall-* theo thứ tự dựng |
