@@ -85,10 +85,10 @@ class TestDocs(unittest.TestCase):
         nxt = next(i for i in range(start + 1, len(self.lines)) if self.lines[i].startswith("## "))
         self.assertLessEqual(len([l for l in self.lines[start:nxt] if l.strip()]), 20)
         prev = max(i for i in range(start) if self.lines[i].startswith("## "))
-        self.assertTrue(self.lines[prev].startswith("## Bắt đầu: hỏi domain"))
+        self.assertTrue(self.lines[prev].startswith("## Bắt đầu và cách trao đổi"))
         prev2 = max(i for i in range(prev) if self.lines[i].startswith("## "))
         self.assertTrue(self.lines[prev2].startswith("## Bước bắt buộc"))
-        self.assertIn("## Bảo trì skill", self.skill_md)
+        self.assertIn("## Bảo trì skill", read(os.path.join(SKILL, "references", "playbook.md")))
 
     def test_no_relative_script_paths(self):
         self.assertIsNone(re.search(r"python scripts/", self.skill_md))

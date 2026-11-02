@@ -81,10 +81,12 @@ class TestDocs(unittest.TestCase):
         self.assertEqual(bad, [])
 
     def test_specific_fixes(self):
-        self.assertIn("other/training", self.skill_md)
-        rag = self.skill_md[self.skill_md.index("## Bước 6"):self.skill_md.index("## Bước 7")]
+        # Bước 6, Truy vấn API: chi tiết theo bước nằm ở references/playbook.md
+        pb = read(os.path.join(SKILL, "references", "playbook.md"))
+        self.assertIn("other/training", pb)
+        rag = pb[pb.index("## Bước 6"):pb.index("## Bước 7")]
         self.assertIn("other/training", rag)
-        q = self.skill_md[self.skill_md.index("## Truy vấn API"):self.skill_md.index("# Quy ước biên soạn")]
+        q = pb[pb.index("## Truy vấn API"):pb.index("# Quy ước biên soạn")]
         self.assertRegex(q, r"24 giờ")
         self.assertNotIn("tra cứu/hỏi thông tin→RAG", self.skill_md)
         gotchas = read(os.path.join(SKILL, "references", "ui-gotchas.md"))

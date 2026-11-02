@@ -1,0 +1,149 @@
+# omicall-omiflow — Chi tiết theo bước
+
+Phần chi tiết tách nguyên văn khỏi SKILL.md để giảm token khi nạp skill. Đọc mục cần khi tới bước tương ứng; SKILL.md thắng khi mâu thuẫn. Bắt đầu, đăng nhập và cách trao đổi với user: `conversation.md`.
+
+## Overview
+**OMIFlow** (menu OMIFlow, path `/flow/list`, editor `/flow/edit/{id}`) là bộ máy tự động hoá của OMICRM, cùng loại N8N, Zapier, Make, nhưng gắn sẵn với tổng đài, Callbot, Chatbot, đa kênh, phiếu ghi, khách hàng. Một flow = **điều kiện bắt đầu** → chuỗi **nút** (điều kiện, trì hoãn, hành động, cửa sổ tương tác, marketing, kênh chat) → kết quả nghiệp vụ.
+
+**Module là của nền tảng, dùng chung mọi tenant.** Tenant chỉ khác ở dữ liệu cấu hình (danh mục phiếu, thuộc tính, nhân viên, tag), tích hợp đã bật (OA, SMS, Email, ZNS, đối tác, callbot) và gói (quota flow, nút). Flow có sẵn ở một tenant chỉ là **minh hoạ nhỏ**. Khi nhận bài toán, agent phải **tự suy luận** module nào ghép được thành lời giải từ danh mục đầy đủ (`references/node-catalog.md`) và cơ chế nền tảng (`references/concepts.md`), không chép nguyên flow mẫu.
+
+Tài liệu chính thức: `https://omicrm.io/post/topic/omiflow-7` (tổng quan, trì hoãn, biến, đối tượng, đối tác, Google Sheet, kịch bản mẫu). Gặp module chưa rõ thì đọc ở đây trước.
+
+## Input contract (hỏi một lần rồi tự làm)
+1. **Domain doanh nghiệp** (`<tên>.omicrm.io`).
+2. **Email** đăng nhập; mật khẩu user gõ một lần vào ô nhập ẩn của `omi_login.py setup` trong terminal, không gửi qua chat; agent không nhập mật khẩu hộ.
+3. **Bài toán nghiệp vụ**: file hoặc prompt mô tả (sự kiện gì, cần ra kết quả gì, ai nhận, hệ thống ngoài nào).
+
+**Đăng nhập — ưu tiên MCP OMI** (chi tiết `references/omi-mcp.md`). Bước đầu luôn là `scripts/omi_preflight.py --domain <domain>` (không in token, không gọi mạng). Áp dụng trên mọi agent/client hỗ trợ MCP chứ không mặc định Codex hay Claude. Không in mật khẩu/token và không ghi bí mật vào repo hoặc file tạm. Thứ tự:
+- **(a) MCP OMI + `omi_login.py` (chuẩn)**: `omi_preflight.py` báo `blocked` → agent mở terminal cho user với `python "<thư mục skill>/scripts/omi_login.py" setup --domain <domain> --email <email>`; user gõ mật khẩu vào ô nhập ẩn đúng một lần, script cất vào kho bí mật hệ điều hành, tự đăng nhập MCP OMI và đăng ký server `OMICall-<domain>` (cấu hình không chứa mật khẩu); agent đi đường API ngay. `route=login` (hết hạn, sai tenant) → agent tự chạy `omi_login.py login --domain <domain>`, không hỏi user. MCP có trong phiên thì `login_omicall_mcp` (+ `select_tenant`) cũng được. Token cho API lấy bằng `omi_session.py` (không in token). Chi tiết `references/omi-mcp.md` mục 2a.
+- **(b)** Phiên có sẵn: `OMI_TOKEN_FILE` do user tự đặt.
+- **(c)** Không có (a), (b): dựng và test bằng giao diện (`references/ui-build-and-test.md`). User tự đăng nhập **một lần** trong browser pane; không chuyển trang khi user đang đăng nhập. **Không đọc cookie lấy token** (bằng JS hay CDP): bị bộ lọc an toàn chặn thì dừng, không lách.
+
+Không ghi token hay mật khẩu vào skill.
+
+## Skill con (cấu hình nền mà flow phụ thuộc)
+Flow chỉ chạy đúng khi cấu hình nền của tenant đã có. Bước 0 hoặc Bước 1 phát hiện thiếu → đọc `SKILL.md` của skill con (cùng thư mục cha với skill này: `<thư mục skill>/../<skill con>/SKILL.md`), làm theo nó với domain, đăng nhập và `tenant_context.json` của phiên hiện tại, rồi quay lại thiết kế flow. Mỗi skill con cũng gọi riêng được (`/<tên skill>`). Mọi thao tác ghi của skill con vẫn chờ user đồng ý.
+
+Bảng "khi gặp → gọi skill nào" và quy trình gọi: mục **Gọi skill liên quan** bên dưới (sinh từ `shared/skill-graph.json`).
+
+Chọn module cho bài toán (cấu hình sẵn trước, flow sau; công thức theo bài toán): `references/solution-map.md`.
+
+## Workflow
+### Bước 0 — Khảo sát tenant
+- **Kiểm TRƯỚC khi thiết kế** (thiết kế sai từ đầu tốn nhiều nhất): kiểu từng thuộc tính khách/phiếu sẽ gán (kiểu *danh sách* không nhận biến → phải rẽ nhánh theo giá trị, xem Gotchas "AI điền CRM" và `references/ui-build-and-test.md` mục 7), danh mục và bộ trạng thái phiếu, tích hợp đã bật (OA, SMS, ZNS, đối tác, callbot), quota flow và nút. Ghi vào `tenant_context.json` (`scripts/tenant_survey.py --out`); thiếu thì "Cần xác nhận".
+- **Flow hiện có — đọc bằng bản tóm tắt, không đổ JSON**: `python <thư mục skill>/scripts/flow_outline.py --list`, rồi `python <thư mục skill>/scripts/flow_outline.py <id>` (trigger → nút → nhánh, tên biến thay cho mã; cảnh báo id mồ côi). File có sẵn: `--file <json>` (offline). Chỉ `--save <id>` ra file (vào scratch) khi cần sửa JSON.
+- **Tra id bằng MCP OMI** (một lần mỗi phiên, lưu `tenant_context.json` ở scratchpad): `get_service_package` (module đã bật), `get_ticket_categories` (danh mục phiếu), `list_agents` (contact_id cho thông báo, người liên quan), `list_hotlines` (đầu số cho trigger cuộc gọi), `get_all_channels` (OA, page, widget cho nút Trò chuyện, Marketing), `list_webhooks`.
+- **Chưa có trong MCP → API cùng token**: bộ trạng thái phiếu (`ticket-v2-stg.omicrm.com/ticket/status-set/get-all`), phân bổ (`tenant-v1-stg.omicrm.com/sale_allocation/search`), thuộc tính động (`tenant-v1-stg.omicrm.com/attribute/get_all?has_attr=true` — ✔ nhưng chỉ trả bộ Phiếu ghi; thuộc tính Khách hàng xem giao diện, `omicall-crm-config/references/crm-config.md` mục 3), kịch bản callbot (`chatbot-gateway-v1-stg.omicrm.com/callbot/script/list-by-tenant/{tenant_id}`). Chỉ in các trường id và tên.
+
+### Bước 1 — Phân tích bài toán
+Khung 8 câu (design-patterns mục A): sự kiện kích hoạt · đối tượng cần có trong luồng · dữ liệu còn thiếu · rẽ nhánh · kết quả nghiệp vụ · người tham gia · thời gian chờ · caller cần gì và chống lặp. Ghi ra bảng: câu hỏi → module → cấu hình. Kiểm tra tenant đã bật tích hợp mà thiết kế cần chưa (OA, nhà cung cấp SMS, template ZNS, đối tác, kịch bản callbot); thiếu thì ghi "Cần cấu hình".
+
+### Mô hình đối tượng (phải nắm trước khi thiết kế — chi tiết `references/concepts.md`)
+- Mỗi lượt chạy mang **đối tượng gốc** từ trigger: khách, phiếu, cuộc gọi, hội thoại, dòng Excel, lượt biểu mẫu, đơn hàng đối tác. Trigger API thì không có đối tượng gốc.
+- Một số đối tượng **tự kéo theo**: phiếu kéo khách, cuộc gọi, hội thoại đính kèm; cuộc gọi kéo khách; hội thoại kéo khách; đơn hàng kéo khách đối tác.
+- Hành động chỉ chạy khi **đối tượng nó cần đã có trong luồng**: gửi tin Zalo cần hội thoại Zalo, Marketing gửi cho "Khách hàng" cần khách, cập nhật đơn cần ID đơn. Thiếu thì thêm **Gán đối tượng liên quan**; đối tượng cùng loại thứ 2 trở đi có **vị trí** 1–5.
+- Biến tuỳ chỉnh và dữ liệu thu thập chỉ sống trong flow hiện tại, không truyền sang flow được gọi.
+
+### Bước 2 — Thiết kế flow
+- Vẽ luồng dạng text (như mẫu B1–B6): trigger → nút → nhánh, có nhánh lỗi và nhánh mặc định.
+- Gom nhánh trùng về một nút chung; dài hoặc dùng lại → tách flow con phụ thuộc (`START_OTHER_CAMPAIGN`).
+- Đặt tên: `<số> - [MỤC ĐÍCH]`; thêm nút Ghi chú chứa URL webhook và cURL mẫu.
+
+### Bước 3 — Dựng JSON và lưu
+- Lấy một flow cùng tenant làm khung (top-level fields), dựng `nodes` + `edges.connections` + `name_mappings` theo mô hình DUAL ở `references/api-reference.md` (nhánh lưu cả trong node lẫn edge; bản editor nằm ở `name_mappings`). Loại nút nào dùng JSON được: tra `references/node-status.json`. `name_mappings` đang `unverified`: phần tử editor chỉ chép nguyên từ bản GET của nút cùng loại đã dựng trên UI (`node-catalog.md` mục 6, Cách học nhanh), không tự viết; không có bản GET mẫu → dựng nút đó trên UI.
+- Chỉ lưu nháp `save_draft_v2` trên flow nháp có `_id` (✔ 10/2026), multipart field `file`, Python `requests` (không dùng curl) — dùng `scripts/omi_save.py flow`. `add_v2` / `update_v2/{id}` mới thấy trong mã UI, **chưa chạy thật** → không dùng; flow mới thì tạo vỏ trên UI rồi lưu nháp vào `_id` đó.
+- Nếu API lưu chưa verify cho tenant đó → dựng bằng **dán JSON nút vào canvas** (định dạng clipboard editor, `concepts.md` mục 7) hoặc thao tác UI, rồi GET để đối chiếu.
+
+### Bước 4 — Verify, test, giao
+- Checklist trong api-reference, chạy tự động bằng `scripts/validate_flow.py` (mã C1–C7, X1–X10); test webhook bằng cURL; xem tab Lịch sử từng nút.
+- Test không chỉ luồng chính: đối tượng đã tồn tại kích hoạt lại, sửa đối tượng đang ở trạng thái trigger, từng nhánh điều kiện, số lượt còn lại theo giới hạn (`references/ui-build-and-test.md` mục 5).
+- **Kiểm thử bằng MCP** thay vì mở giao diện:
+  - flow tạo phiếu → `search_tickets`, `get_ticket`;
+  - flow cập nhật khách → `get_contact_by_phone`;
+  - trigger cuộc gọi hoặc phím IVR → `click_to_call` (khi user đồng ý gọi số thật) rồi `search_calls` lấy `transaction_id`.
+
+  Dọn dữ liệu test (`delete_ticket`, `delete_contact`) chỉ khi user đồng ý.
+- Giao: editor URL `https://{domain}.omicrm.io/flow/edit/{id}?lng=vi`, sơ đồ luồng, bảng biến, cURL test, các điểm "Cần xác nhận".
+
+## Danh mục module (tóm tắt — chi tiết và JSON: `references/node-catalog.md`)
+- **Trigger** (node CONDITION đầu tiên): API (`WEB_HOOK`); Điều kiện (`GENERAL`: đối tượng thêm mới hoặc cập nhật thoả thuộc tính, hoặc sự kiện mở rộng như cuộc gọi kết thúc, phím IVR, phiếu mới, khách quan tâm OA, đánh giá ZNS); Biểu mẫu; Định kỳ (ngày, tuần, tháng, trước hoặc sau một thuộc tính thời gian, thời điểm cụ thể); File Excel; Đối tác (liên kết trực tiếp: Haravan, Sapo, KiotViet, WooCommerce, Pancake…; webhook; đối tác tự định nghĩa); Cuộc gọi đang diễn ra; Phiếu ghi chuyển trạng thái.
+- **Logic**: Điều kiện (nhiều trường hợp + nhánh mặc định; so sánh biến, cuộc gọi, khách, phiếu, khung giờ làm việc), Trì hoãn (sau khoảng, thời điểm cụ thể, khung giờ tiếp tục, hoặc điều kiện đến trước), Random (A/B), Phân tích thông tin (AI phân loại theo chủ đề hoặc ý định đã đào tạo, mỗi ý định một nhánh).
+- **Hành động** (22): thêm hoặc cập nhật khách, tạo hoặc cập nhật phiếu, thông báo, nhắc nhở, trả kết quả qua Biểu mẫu hoặc API, biến liên kết tùy chỉnh (API, ChatGPT, tính toán, ngẫu nhiên, ảnh thư mời), gán đối tượng liên quan, Google Sheet, cập nhật hội thoại, cuộc gọi, nhân viên, cửa sổ, đánh giá AI Chatbot, gọi API ra ngoài, phân loại, chuyển tiếp cuộc gọi, gọi flow khác, cập nhật đối tác, giữ cuộc gọi.
+- **Cửa sổ tương tác** (màn hình nhân viên): thông tin, biểu mẫu (có nhánh hoàn thành), nút bấm, biến, xem chi tiết, tính năng.
+- **Marketing** (gửi hàng loạt): SMS, ZNS hoặc ZBS, xin quyền gọi ZCC, Email, AutoCall, AI Callbot, Viber Business.
+- **Trò chuyện**: tin nhắn từng kênh (Facebook, Zalo OA, Zalo cá nhân, LiveTalk, Telegram, Viber, TikTok, WhatsApp, Email), gửi tin nhắn chung, giao cho bot AI (ChatGPT, ChatX, AI Chatbot, ProAI, Partner AI).
+- **Khác**: Thu thập thông tin (AI bóc thực thể từ nội dung vào biến, hoặc gán giá trị cố định), Ghi chú.
+
+## Kết nối với Callbot và Chatbot
+- **Callbot → OMIFlow**: callbot gọi URL webhook (khi thu đủ biến, khi bot không xử lý được, khi khách bấm phím chuyển máy) để tạo phiếu, đồng bộ hệ thống ngoài, bật popup cho nhân viên.
+- **OMIFlow → Callbot**: nút Marketing `CALLBOT` hoặc `AUTOCALL` tạo phiên gọi cho các khách đi qua flow; kiểm tra trạng thái phiên bằng điều kiện "Kiểm tra trạng thái AI Callbot".
+- **Chatbot cần dữ liệu CRM**: chatbot không tự tra khách theo thuộc tính → gọi flow `WEB_HOOK` → `GET_RELATED`/`API_V2` → `SEND_RESPONSE_WEBHOOK_API` trả dữ liệu (thay cho `response_config` cố định).
+- Sau cuộc gọi AI: `{{ca_summarize}}` (tóm tắt) và `{{ca_ai_assistant}}` (kết quả phân tích; cấu hình trường ở skill con `omicall-ai-insight`) dùng làm đầu vào cho ChatGPT phân loại hoặc chèn vào mô tả phiếu.
+
+## Thao tác UI (khi phải dựng bằng tay)
+- Playbook đầy đủ, đã làm thật (biểu mẫu, trigger, cấu hình từng nút, Lịch sử, kịch bản test): `references/ui-build-and-test.md`.
+- Tab "Thông tin Flow": tên, hoạt động hoặc ngưng, thời gian hiệu lực, mô tả, tag, giới hạn số lần đối tượng đi qua (`iteration_config`), cách bắt đầu: độc lập hoặc phụ thuộc flow khác (`dependent_config`).
+- Tab "Kịch bản": chuột phải canvas → bảng chọn nút (Logic, Tương tác, Trò chuyện, Khác). Chọn node (một lần bấm) → thanh công cụ: thêm nút liền kề, sao chép, lưu vào kho nút, xoá (`button[aria-label="Xóa node"]`).
+- Nối cạnh giữa hai nút có sẵn: `left_click_drag` từ chấm nguồn (cuối nút trước) tới chấm đích (đầu nút sau) khi cả hai cùng hiện trên màn hình, rồi Lưu và mở lại để kiểm (`references/ui-build-and-test.md` mục 7). "Bước tiếp theo" trong ngăn chỉ tạo nút mới. Không được thì sửa `next_nodes` + `edges.connections` trong JSON và lưu nháp. Giả lập PointerEvent bằng JS thường không ăn, không dùng làm cách chính.
+- Nút **Xuất bản** tạo phiên bản mới và áp dụng ngay; chỉ bấm khi user đồng ý.
+
+## Gotchas
+- **Trigger là node CONDITION đầu tiên** (`is_first_node:true`), không phải node riêng; `kick_off.event` phải khớp.
+- **Nhánh lưu hai nơi** (node + `edges.connections`); `success_next_nodes`/`fail_next_nodes` là **chuỗi**, `next_nodes` là **mảng**; `sourceHandle`: case id, `"2"` (Bước tiếp theo), `success_action_step`, `fail_action_step`; `targetHandle:"1"`.
+- **Mã biến ngẫu nhiên** (`{{MpQxWEiLis}}`): tên hiển thị nằm ở `multi_variables[].field_name` hoặc `custom_variables`. Đổi tên biến không đổi mã; xoá biến làm các tham chiếu hỏng ("N biến liên kết có vấn đề").
+- **Bản ghi cuộc gọi sinh trễ**: trước `GET_RELATED CLOSEST_CALL` hoặc gắn cuộc gọi vào phiếu phải `DELAY` 5–10 giây; chờ cuộc gọi kết thúc thì dùng DELAY có điều kiện (tối đa N phút).
+- **Trigger API không có đối tượng gốc**: phải `GET_RELATED` hoặc điều kiện xác định khách theo trường **Số điện thoại chuẩn** (không phải thuộc tính tuỳ chỉnh) trước khi cập nhật khách hoặc phiếu.
+- **Tra API ngoài có thể rỗng**: luôn có nhánh `CONDITION != ""` và giá trị mặc định (`COLLECT_INFO` "Khách hàng mới") để tên phiếu, popup không bị trống.
+- **AI phân loại**: prompt bắt trả DUY NHẤT một mã; điều kiện so đúng mã, không khoảng trắng thừa; luôn có nhánh mặc định cho mã lạ.
+- **Phím IVR** có thể ghi `"2"` hoặc `"02"`: so `IN` hoặc `CONTAIN`, hoặc tạo cả hai trường hợp.
+- **`response_config` của webhook là cố định**; trả dữ liệu động dùng hành động "Trả kết quả qua API" (`SEND_RESPONSE_WEBHOOK_API`, schema chưa kiểm chứng). `status_code` 9999 trong body không phải HTTP status.
+- **Gọi flow khác**: flow đích phải là loại phụ thuộc; kết quả của flow đích không quay về webhook của flow gọi.
+- **Quota**: số flow theo gói, số nút mỗi flow (ví dụ 16/20) — gom nhánh trùng để tiết kiệm.
+- **Trigger theo trạng thái chỉ bắt lúc chuyển vào trạng thái**, sửa thuộc tính khác không chạy lại → dùng đổi trạng thái làm mốc nối flow (ví dụ bước "duyệt/verify" do người làm).
+- **SLA "không gọi trong N phút"**: điều kiện Mở rộng "Kiểm tra tương tác khách hàng" (Không có tương tác + Cuộc gọi/Ghi chú + N phút), không tự đếm cuộc gọi.
+- **Khách đã tồn tại**: "Thêm khách hàng" → `CONTACT_EXIST` (không trùng); "Cập nhật khách hàng" vẫn áp lên khách cũ nhưng chỉ đúng các thuộc tính đã khai báo. Gán phụ trách trùng người hiện tại → `NO_CHANGE`. Cả hai là chấm đỏ vô hại, luồng chạy tiếp.
+- **Giới hạn số lần đi qua (mặc định 2)** làm trigger im lặng khi hết lượt, kể cả lúc test.
+- **Flow mới trên giao diện**: chưa bấm "Lưu lại" mà đóng hộp thoại trigger hoặc rời trang thì mất cả flow → lưu ngay sau khi chọn trigger. "Lưu lại" hiện hộp thoại "Thông tin về URL" (tick xác nhận rồi Cập nhật). URL webhook của trigger API sinh lại mỗi lần tạo trigger mới và không xem lại được sau khi xuất bản → ghi lại lúc hiện. Xoá khoảng hiệu lực: bấm nút x ở từng ô ngày.
+- **Xuất bản đổi id flow** (URL `/flow/edit/{id}` mới): sau xuất bản phải mở lại bằng id mới và kiểm tra lại các nơi đã gắn flow (webhook TTP, bot).
+- **Gắn webhook flow vào Tương tác phím (TTP)**: ô "URL nhận kết quả từ hook" của TTP không lưu được (nút Cập nhật không báo lỗi, ngày sửa đổi không đổi) khi flow đích còn là bản nháp; sau khi xuất bản flow thì lưu được → xuất bản trước, gắn sau, rồi tải lại để kiểm chứng. Gõ xong ô nhập phải click ra ngoài rồi mới bấm Cập nhật (click đầu chỉ làm mất focus). Payload TTP gửi: `digits`, `customer_phone`, `ct_transaction_id` (mẫu B4).
+- **Cửa sổ thông tin (INFO_DIALOG)**: mục Nhân viên có hai loại — "Nhân viên trong luồng kịch bản" và "Nhân viên" chỉ định (chọn người cụ thể); phải kiểm từng nút vì các nút có thể lệch nhau. Chọn người gồm hai bước: thêm loại Nhân viên rồi chọn người.
+- **Học payload từ tenant/flow đã có**: cột "Điều kiện kích hoạt" ở danh sách flow của trigger API liệt kê tên biến → đọc nó thay vì đoán tên trường webhook. Trước khi kết luận "tenant chưa có flow nhận webhook X", phải mở danh sách flow và đọc flow đích; đoán từ cấu hình phía gửi (TTP, callbot) là sai cách.
+- **Mặc định mọi flow mới**: Hoạt động, Không giới hạn lượt, không đặt khoảng hiệu lực (trừ khi user nói khác). Vẫn chỉ lưu nháp, chưa xuất bản tới khi test xong và user duyệt (Rule 3).
+- **Cấu hình TTP, nhóm nội bộ, lời chào, kịch bản tổng đài**: thuộc skill con `omicall-pbx-config` (`omicall-pbx-config/references/pbx-config.md` mục 5). Chỉ tạo/sửa khi user đồng ý; mỗi phím phải có sẵn nhóm nội bộ.
+- **Giao việc cho tiến trình nền (fork)**: mỗi flow chỉ một tiến trình ghi tại một thời điểm; sau mỗi tiến trình phải tự mở lại flow kiểm từng nút trước khi báo xong (báo cáo của fork có thể thiếu hoặc lệch).
+- **Browser pane dùng chung với user**: user thao tác song song (xuất bản, mở hộp thoại, bật công tắc) làm đổi phiên bản và trạng thái giữa chừng; khung xem co nhỏ làm danh sách chọn bị cắt → đặt lại kích thước (resize preset desktop) và không giao hai việc cùng chạm một flow cho nhiều tiến trình nền.
+- **Xuất bản bằng agent có thể bị chặn bởi hệ thống phân quyền** → để user tự bấm Xuất bản, rồi agent làm tiếp phần gắn webhook.
+
+- **LiveTalk**: SĐT khách điền ở form trước chat = biến Đa kênh `{{social_lt_phone_number}}` (email `{{social_lt_email}}`); dùng được trực tiếp trong "Thêm khách hàng" của flow trigger LiveTalk.
+- **Bot ↔ flow**: flow phụ thuộc gọi từ bot (`START_OTHER_CAMPAIGN`) không nhận biến hội thoại; cần truyền dữ liệu thì cho bot gọi flow `WEB_HOOK` qua hành động API với body chứa biến. Log flow webhook "2 lượt cùng giây" = bước CONDITION + ACTION của một lượt.
+- **Cấu hình phân bổ** (`split_evenly` / `prioritize_employees_with_fewer_customers` / `specific_division` theo %): đổi "Hình thức" của cấu hình đang gắn là đổi cho mọi flow dùng nó; không đưa tài khoản admin (nơi nhận lead thu hồi) vào danh sách chia. Chi tiết `omicall-crm-config/references/crm-config.md`.
+- **Biểu mẫu công khai chặn gửi liên tiếp từ cùng trình duyệt** (lần thứ 3 bị từ chối im lặng, trang chỉ tải lại) → test nhiều lead thì xoá dữ liệu trình duyệt của trang form hoặc dùng cửa sổ khác.
+- **Bật/tắt flow**: biểu tượng cạnh tên flow → "Thông tin Flow" → Hoạt động / Ngưng hoạt động → Cập nhật (`is_pause`). Xoá flow là xoá vĩnh viễn kèm lịch sử chạy → để user tự xoá.
+- **Dựng hoặc test bằng giao diện**: đọc `references/ui-build-and-test.md` (mục 5–6) trước — ô nhập nối thêm, biểu mẫu phải xuất bản, mã biến form, nút kế tiếp, xuất bản đổi id, test trì hoãn, flow bị người khác sửa, browser pane chậm hoặc không bắt XHR.
+- **AI điền CRM sau cuộc gọi**: bóc trường bằng nút LLM từ `{{ca_ai_assistant}}`; thuộc tính khách kiểu danh sách không nhận biến → rẽ nhánh theo giá trị, mỗi trường danh sách một flow; mỗi nút Hành động chỉ một Biến liên kết tuỳ chỉnh; biến chỉ hiện sau Lưu (Điều kiện cần tải lại trang); gõ sau khi bấm ô phải chờ ~1s. Chi tiết `references/ui-build-and-test.md` mục 7; sửa hướng dẫn AI Assistant: skill con `omicall-ai-insight`.
+- **Bảng "N biến liên kết có vấn đề" có thể báo nhầm**: mã biến của Cửa sổ tương tác (các trường form) vẫn bị liệt kê "Không xác định". Trước khi xoá phải đối chiếu danh sách "Cửa sổ tương tác" ở bộ chọn biến; mã thật sự mất định nghĩa thường do copy nút từ flow khác. Bảng không dẫn tới nút chứa mã → cách tìm ở `ui-build-and-test.md` mục 8.
+- **Điều kiện trỏ vào biến không tồn tại thì luôn rỗng** (ví dụ "Mã X ≠ rỗng" khi API không trả trường đó) → mọi lượt đi nhánh còn lại. Khi dựng điều kiện, kiểm biến đó nằm trong payload thật (gọi API mẫu).
+- **Nút "Cập nhật" ở editor chỉ lưu nháp** (tooltip "không ảnh hưởng phiên bản đang hoạt động"), khác "Xuất bản". Sửa flow đang chạy: Cập nhật rồi để user duyệt và tự xuất bản.
+- **Giới hạn nền tảng (10/2026)**: nút Gọi API chỉ gán từng trường cố định của một object; trường "Danh sách tùy chọn" của cửa sổ biểu mẫu chỉ có nguồn "Tùy chỉnh" (nhập tay). Chưa có dropdown động từ API hay biến dạng list. Cú pháp mảng `data|1.field` (`concepts.md` mục 4) chưa kiểm chứng trên UI nút API. Đường vòng: lớp trung gian dàn phẳng mảng thành các trường cố định + một chuỗi hiển thị sẵn. Không hứa dropdown động với khách.
+- **Thuộc tính kiểu chọn (CRM)**: Danh sách tùy chọn / Ô chọn duy nhất / Ô chọn nhiều giá trị ở Khách hàng và Phiếu ghi chỉ có nguồn "Tùy chỉnh" (nhập tay); mã `field_type` của 3 kiểu này chưa kiểm chứng. Chi tiết 6 kiểu trường và API đọc: `omicall-crm-config/references/crm-config.md` mục 3 (skill con `omicall-crm-config`).
+- **Header chứa API key lưu dạng chữ thường trong flow**: agent không nhập giá trị key vào ô (quy tắc an toàn), chỉ khai tên header; user tự dán key. Ưu tiên để key ở lớp trung gian nếu có.
+- **Credit**: mỗi nút chạy trong lượt trừ credit, kể cả trigger; giá hiện trên canvas và ở `credit_pricing` của flow; Marketing nhân số người nhận. Báo giá cho khách = cộng giá nút theo từng đường đi, phí tin nhắn tính riêng (`references/concepts.md` mục 6a).
+- **Dùng nhánh Thất bại có sẵn của nút gửi** (Zalo OA: "Trạng thái tin nhắn → Thất bại") thay cho `DELAY` + `CONDITION` kiểm trạng thái gửi: ít nút, ít credit. Kiểm ngăn cấu hình nút trước khi thêm nút kiểm trạng thái.
+
+## Tài liệu tham khảo
+- `references/concepts.md` — cơ chế nền tảng: đối tượng và vị trí, trigger, biến, cú pháp truy vấn JSON, trì hoãn, AI, marketing, trò chuyện, dán JSON vào canvas, Google Sheet.
+- `references/node-catalog.md` — mọi trigger, nút, hành động, điều kiện, biến; JSON đã kiểm chứng.
+- `references/solution-map.md` — bốn lớp (CRM, tổng đài, AI, OMIFlow), nguyên tắc chọn, công thức ghép module theo bài toán khách, câu hỏi chốt.
+- `references/design-patterns.md` — khung suy luận 8 câu, 7 mẫu đã chạy (B7: phân lead có duyệt + SLA + thu hồi), mẫu mở rộng theo lĩnh vực, lỗi thiết kế cần tránh.
+- Skill con: `omicall-crm-config/references/crm-config.md` (thuộc tính động, bộ trạng thái khách, chủ đề và trạng thái phiếu, phân bổ), `omicall-pbx-config/references/pbx-config.md` (tổng đài, lời chào, TTP, kịch bản gọi vào), `omicall-ai-insight/references/ai-insight.md` (AI Assistant, Voice/Chat Insights, đánh giá).
+- `references/api-reference.md` — endpoint, schema flow, DUAL node và edge, khung lưu, checklist.
+- `references/omi-mcp.md` — MCP OMI: cài đặt, đăng nhập, công cụ cho từng bước, cách tiết kiệm token, dựng nhiều artefact, mẫu giao việc cho subagent (bản giống hệt trong mọi skill OMI).
+- `references/node-status.json` — trạng thái từng loại nút/hành động (verified / enum / ui_only / unverified), nguồn file:dòng; quyết định đi API hay UI.
+- `scripts/omi_session.py` — token từ phiên MCP; `scripts/flow_outline.py` — liệt kê và tóm tắt flow (`--file` offline); `scripts/validate_flow.py` — kiểm JSON flow theo checklist (offline, chỉ đọc). Script dùng chung (`omi_preflight`, `omi_api`, `omi_save`, `tenant_survey`, `manifest`, `extract_text`, `extract_template`): xem `references/omi-mcp.md`.
+- `references/webhook-examples.md` — mẫu cURL và response.
+- `references/react-flow-selectors.md` — selector DOM để thao tác canvas bằng JS.
+- `references/ui-build-and-test.md` — dựng và kiểm thử flow hoàn toàn qua giao diện: biểu mẫu, trigger, cấu hình nút, biến, Lịch sử, chiến lược test trì hoãn.
+
+## Bảo trì skill (sau khi giao)
+- Học được schema mới, module mới, gotcha mới → cập nhật catalog (`references/node-catalog.md`, `references/node-status.json`), patterns hoặc mục Gotchas, nhưng **chỉ ghi vào repo nguồn của skill khi user cho phép**; không sửa bản cài (khớp bước *cập nhật skill* ở đầu SKILL.md).
+- Không ghi URL, token, tenant id hay dữ liệu khách vào skill (repo dùng chung). Template nút mới lấy bằng `scripts/extract_template.py` (đã che dữ liệu); nhãn `verified` chỉ do agent chính hoặc user duyệt kèm báo cáo `validate_flow.py --mode post` PASS trên bản GET thật.

@@ -1,6 +1,6 @@
 # OMICall — Bản đồ kết hợp module cho bài toán khách hàng
 
-Dùng ở Bước 1 (phân tích bài toán), trước khi chọn nút OMIFlow. Nhãn: **[đã chạy]** = đã dựng thật (mẫu B trong `design-patterns.md`); **[cấu hình sẵn]** = tính năng có sẵn đã thấy trên giao diện 10/2026, không cần flow; **[suy luận]** = ghép từ các khối đã kiểm chứng nhưng chưa chạy trọn chuỗi — báo khách là phương án, test trước khi cam kết.
+**Các bảng dưới là ví dụ minh hoạ, không phải khuôn**: phương pháp phân rã nằm ở `solution-method.md`, bản đồ năng lực ở `system-model.md`. Dùng ở Bước 1 (phân tích bài toán), trước khi chọn nút OMIFlow. Nhãn: **[đã chạy]** = đã dựng thật (mẫu B trong `design-patterns.md`); **[cấu hình sẵn]** = tính năng có sẵn đã thấy trên giao diện 10/2026, không cần flow; **[suy luận]** = ghép từ các khối đã kiểm chứng nhưng chưa chạy trọn chuỗi — báo khách là phương án, test trước khi cam kết.
 
 ## 1. Bốn lớp và ai giữ lớp nào
 | Lớp | Làm gì | Skill |

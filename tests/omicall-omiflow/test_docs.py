@@ -53,7 +53,7 @@ class DocsTest(unittest.TestCase):
             self.assertIn(s, allt)
 
     def test_no_pointer_event_main_and_no_cookie_bypass(self):
-        sk = read('SKILL.md')
+        sk = read('SKILL.md') + '\n' + read('references', 'playbook.md')  # thao tác UI nằm ở playbook
         self.assertNotIn('dùng PointerEvent qua JS', sk)
         self.assertIn('left_click_drag', sk)
         self.assertNotIn('rồi lấy token từ cookie', sk)

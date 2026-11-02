@@ -16,7 +16,7 @@ Loại nút nào đã có JSON kiểm chứng: `references/node-status.json`. C�
 | GET | `/campaign/update_status/{id}?status=<...>` | Bật hoặc tắt flow | mã UI |
 | POST | `/omi_v2/campaign/delete/{id}` · `/omi_v2/campaign/delete_many` | Xoá | mã UI — chỉ khi user yêu cầu |
 | GET | `/omi_v2/campaign/search_version` | Lịch sử phiên bản | mã UI |
-| — | `/omi_v2/campaign/log/search`, `/log/route`, `/log/count_failure/{uuid}`, `/log/warning_fail`, `/action_error/retry`, `/delay_action/continue` | Lịch sử chạy, lỗi, chạy lại, tiếp tục nút Delay | mã UI |
+| — | `/omi_v2/campaign/log/search`, `/log/route`, `/log/count_failure/{uuid}`, `/log/warning_fail`, `/action_error/retry`, `/delay_action/continue` | Lịch sử chạy, lỗi, chạy lại, tiếp tục nút Delay. `log/search` ✔ 10/2026: `POST ?page=1&size=50` body `{}` trả mọi flow, mỗi item có `campaign_id`, `campaign_name`, `total_credit`, `credit_counts[]` (`concepts.md` mục 6a); lọc theo `campaign_id` trong body không ăn (Cần xác nhận tên trường lọc) | mã UI |
 | — | `/omi_v2/campaign/start/by/excel` | Kích hoạt bằng Excel | mã UI |
 | — | `/omi_v2/campaign_node_template/search` | Kho nút đã lưu | mã UI |
 | — | `report-v1-stg.omicrm.com/omi_v2/campaign/report_*` | Báo cáo (theo nút, hành động, phân loại, chi phí, webhook…) | mã UI |

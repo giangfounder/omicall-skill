@@ -138,3 +138,7 @@ Mỗi subagent tự tạo **tab riêng** (`tabs_create`, rồi truyền `tabId` 
 - **Nút ✕ đóng ngăn ở góc trên trái**: nếu ngăn đã đóng thì cú bấm đó trúng logo và rời khỏi editor. Chụp màn hình xác nhận ngăn đang mở trước khi bấm.
 - **Kiểm API ngoài từ ngoài giao diện**: gọi thử bằng curl với đúng header (tên header phân biệt theo từng API; thông báo "thiếu mã truy cập" hay "API Key trống" cho biết sai tên hay thiếu header). Thông báo `Fetch API failed` khi bấm thử trong nút API chỉ nói OMI không nhận được response dùng được (Cần xác nhận nguyên nhân: 4xx/5xx, thiếu header, bị chặn IP).
 - **Danh sách bên ngoài chưa dùng được dạng dropdown** (xem Gotchas trong `SKILL.md`): chỉ đề xuất đường vòng, ghi "Cần xác nhận" cho cú pháp mảng.
+
+- **Kéo cổng nối ra vùng trống mở bảng chọn nút, nhưng nút tạo ra KHÔNG được nối** (đầu ngăn ghi "Chưa liên kết"); kéo thả vào cổng vào của nút có sẵn cũng không bắt. Nối chắc chắn: mở ngăn nút nguồn → "Nút kế tiếp" → Bước tiếp theo (✔ UI 10/2026).
+- **Đóng ngăn con "Khung giờ" bằng cách bấm vùng mờ** có thể bật ra một ngăn "Điều kiện so sánh" rỗng; bấm vùng mờ sát mép trái (x≈30–120) lần nữa để đóng, ngăn này không thêm điều kiện (✔ UI 10/2026).
+- **Thông báo lỗi đỏ biến mất rất nhanh**: muốn đọc, cài MutationObserver ghi `innerText` các nút mới vào `window.__toasts` trước thao tác rồi đọc lại (chỉ để đọc, không sửa trang).

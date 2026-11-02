@@ -1,0 +1,705 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Trợ lý AI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #07090f;
+    --panel: #0e121b;
+    --panel-2: #141927;
+    --line: rgba(255, 255, 255, .07);
+    --text: #eef1f7;
+    --muted: #7d879b;
+    --faint: #4a5366;
+    --bot: #8b7bff;
+    --bot-2: #3dd6f5;
+    --me: #ff9d3c;
+    --live: #ff4d5e;
+    --ok: #34d399;
+    --radius: 20px;
+    --ease: cubic-bezier(.2, .8, .2, 1);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    font-family: "Be Vietnam Pro", "Segoe UI", system-ui, sans-serif;
+    color: var(--text);
+    background:
+      radial-gradient(900px 600px at 15% 10%, rgba(139, 123, 255, .14), transparent 60%),
+      radial-gradient(700px 500px at 90% 90%, rgba(61, 214, 245, .08), transparent 60%),
+      var(--bg);
+    -webkit-font-smoothing: antialiased;
+  }
+  button { font: inherit; color: inherit; }
+  [hidden] { display: none !important; }
+
+  .app {
+    height: 100dvh;
+    display: grid;
+    grid-template-columns: minmax(340px, 1fr) minmax(380px, 1.25fr);
+    gap: 20px;
+    padding: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  /* ---------- Cột giọng nói ---------- */
+  .voice {
+    position: relative;
+    display: flex; flex-direction: column; align-items: center; justify-content: space-between;
+    padding: 24px;
+    border-radius: var(--radius);
+    background: linear-gradient(180deg, rgba(255,255,255,.035), rgba(255,255,255,.01));
+    border: 1px solid var(--line);
+    overflow: hidden;
+  }
+  .brand { align-self: stretch; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .brand-name { display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 15px; }
+  .brand-mark {
+    width: 28px; height: 28px; border-radius: 9px;
+    background: conic-gradient(from 200deg, var(--bot), var(--bot-2), var(--me), var(--bot));
+  }
+  .pill {
+    display: inline-flex; align-items: center; gap: 8px;
+    height: 30px; padding: 0 12px; border-radius: 999px;
+    font-size: 12.5px; font-weight: 500; color: var(--muted);
+    background: rgba(255,255,255,.05); border: 1px solid var(--line);
+    font-variant-numeric: tabular-nums;
+  }
+  .pill .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--faint); }
+  .pill[data-s="ready"] .dot { background: var(--ok); }
+  .pill[data-s="loading"] .dot { background: var(--me); animation: blink 1s infinite; }
+  .pill[data-s="error"] .dot { background: var(--live); }
+  .pill[data-s="live"] { color: #fff; background: rgba(255, 77, 94, .14); border-color: rgba(255, 77, 94, .35); }
+  .pill[data-s="live"] .dot { background: var(--live); box-shadow: 0 0 0 0 rgba(255,77,94,.6); animation: pulse 1.6s infinite; }
+  @keyframes blink { 50% { opacity: .3; } }
+  @keyframes pulse { 70% { box-shadow: 0 0 0 7px rgba(255,77,94,0); } 100% { box-shadow: 0 0 0 0 rgba(255,77,94,0); } }
+
+  .visual { position: relative; width: min(300px, 70vw); aspect-ratio: 1; display: grid; place-items: center; }
+  .visual canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .orb {
+    --lv: 0;
+    width: 52%; aspect-ratio: 1; border-radius: 50%;
+    background:
+      radial-gradient(circle at 32% 28%, rgba(255,255,255,.7), transparent 30%),
+      conic-gradient(from var(--rot), var(--bot), var(--bot-2), var(--me), var(--bot));
+    box-shadow:
+      0 0 calc(30px + var(--lv) * 90px) rgba(139, 123, 255, calc(.35 + var(--lv) * .45)),
+      inset 0 -12px 30px rgba(0,0,0,.25);
+    transform: scale(calc(1 + var(--lv) * .16));
+    transition: transform .09s linear, box-shadow .09s linear, filter .4s var(--ease);
+    animation: spin 14s linear infinite;
+  }
+  @property --rot { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
+  @keyframes spin { to { --rot: 360deg; } }
+  .app[data-call="idle"] .orb { filter: saturate(.75) brightness(.85); animation-duration: 28s; }
+  .app[data-call="connecting"] .orb { animation: spin 2.5s linear infinite, breathe 1.4s ease-in-out infinite; }
+  @keyframes breathe { 50% { transform: scale(1.07); } }
+
+  .state { text-align: center; }
+  .state h1 { margin: 0; font-size: 26px; font-weight: 600; letter-spacing: -.01em; }
+  .state p { margin: 6px 0 0; font-size: 15px; color: var(--muted); min-height: 22px; transition: color .2s; }
+  .state p[data-who="bot"] { color: var(--bot); }
+  .state p[data-who="me"] { color: var(--me); }
+
+  .controls { display: flex; align-items: center; justify-content: center; gap: 18px; min-height: 68px; }
+  .ctl {
+    width: 54px; height: 54px; border-radius: 50%; border: 1px solid var(--line); cursor: pointer;
+    background: rgba(255,255,255,.05); display: grid; place-items: center;
+    transition: background .15s, transform .12s var(--ease);
+  }
+  .ctl svg { width: 22px; height: 22px; fill: currentColor; }
+  .ctl:hover { background: rgba(255,255,255,.1); }
+  .ctl:active, .start:active { transform: scale(.94); }
+  .ctl[aria-pressed="true"] { background: var(--text); color: var(--bg); }
+  .hang { width: 64px; height: 64px; background: var(--live); border: 0; color: #fff; }
+  .hang:hover { background: #e63e4f; }
+  .hang svg { transform: rotate(135deg); width: 26px; height: 26px; }
+  .start {
+    height: 58px; padding: 0 30px 0 24px; border: 0; border-radius: 999px; cursor: pointer;
+    display: inline-flex; align-items: center; gap: 12px;
+    font-size: 16px; font-weight: 600; color: #fff;
+    background: linear-gradient(100deg, var(--bot), #5b8cff 55%, var(--bot-2));
+    box-shadow: 0 10px 30px -8px rgba(139, 123, 255, .6);
+    transition: transform .12s var(--ease), opacity .2s, box-shadow .2s;
+  }
+  .start:hover { box-shadow: 0 14px 36px -8px rgba(139, 123, 255, .8); }
+  .start:disabled { opacity: .4; cursor: not-allowed; box-shadow: none; }
+  .start svg { width: 20px; height: 20px; fill: #fff; }
+
+  .keypad {
+    position: absolute; inset: auto 16px 104px; padding: 16px;
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+    background: rgba(14, 18, 27, .92); backdrop-filter: blur(12px);
+    border: 1px solid var(--line); border-radius: 18px;
+    animation: rise .2s var(--ease);
+  }
+  @keyframes rise { from { opacity: 0; transform: translateY(8px); } }
+  .key {
+    height: 52px; border-radius: 14px; border: 0; cursor: pointer;
+    background: rgba(255,255,255,.05); font-size: 20px; font-weight: 500;
+  }
+  .key:hover { background: rgba(255,255,255,.1); }
+
+  /* ---------- Cột phụ đề trực tiếp ---------- */
+  .live {
+    position: relative;
+    display: flex; flex-direction: column; min-height: 0;
+    border-radius: var(--radius);
+    background: var(--panel); border: 1px solid var(--line);
+  }
+  .live-head {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    padding: 16px 18px; border-bottom: 1px solid var(--line);
+  }
+  .live-title { display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 600; }
+  .live-title .tag {
+    font-size: 10.5px; font-weight: 700; letter-spacing: .08em; padding: 3px 7px; border-radius: 6px;
+    color: var(--faint); background: rgba(255,255,255,.05);
+  }
+  .app[data-call="accepted"] .live-title .tag { color: #fff; background: var(--live); }
+  .tools { display: flex; gap: 6px; }
+  .tool {
+    height: 32px; padding: 0 10px; border-radius: 9px; border: 1px solid var(--line); cursor: pointer;
+    background: transparent; color: var(--muted); font-size: 12.5px;
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .tool svg { width: 15px; height: 15px; fill: currentColor; }
+  .tool:hover:not(:disabled) { color: var(--text); background: rgba(255,255,255,.05); }
+  .tool:disabled { opacity: .35; cursor: default; }
+
+  .feed {
+    flex: 1; min-height: 0; overflow-y: auto;
+    padding: 18px; display: flex; flex-direction: column; gap: 18px;
+    scrollbar-width: thin; scrollbar-color: var(--panel-2) transparent;
+  }
+  .empty {
+    margin: auto; text-align: center; color: var(--muted); font-size: 14px; max-width: 260px; line-height: 1.55;
+  }
+  .empty-icon {
+    width: 46px; height: 46px; margin: 0 auto 12px; border-radius: 14px; display: grid; place-items: center;
+    background: rgba(255,255,255,.04); color: var(--faint);
+  }
+  .empty-icon svg { width: 22px; height: 22px; fill: currentColor; }
+
+  /* Trợ lý bên trái, người dùng bên phải */
+  .line { display: flex; align-items: flex-start; gap: 10px; max-width: 82%; animation: rise .25s var(--ease); }
+  .line.bot { align-self: flex-start; }
+  .line.me { align-self: flex-end; flex-direction: row-reverse; }
+  .bubble { padding: 9px 14px 10px; border-radius: 18px; min-width: 0; }
+  .line.bot .bubble { background: rgba(139, 123, 255, .13); border-top-left-radius: 6px; }
+  .line.me .bubble { background: rgba(255, 157, 60, .14); border-top-right-radius: 6px; }
+  .line.me .meta { justify-content: flex-end; }
+  .avatar {
+    flex: none;
+    width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center;
+    font-size: 12px; font-weight: 700; color: #0b0d14;
+  }
+  .line.bot .avatar { background: conic-gradient(from 200deg, var(--bot), var(--bot-2), var(--bot)); }
+  .line.me .avatar { background: var(--me); }
+  .meta { display: flex; align-items: baseline; gap: 8px; margin-bottom: 3px; }
+  .who { font-size: 13px; font-weight: 600; }
+  .line.bot .who { color: var(--bot); }
+  .line.me .who { color: var(--me); }
+  .meta time { font-size: 11.5px; color: var(--faint); font-variant-numeric: tabular-nums; }
+  .text { margin: 0; font-size: 15.5px; line-height: 1.6; color: var(--text); word-wrap: break-word; }
+  .text .tail { color: var(--muted); }
+  .line.interim .text::after {
+    content: ""; display: inline-block; width: 2px; height: 1.05em; margin-left: 3px;
+    vertical-align: -2px; background: currentColor; animation: blink .9s steps(1) infinite;
+  }
+  .line.bot.interim .text::after { color: var(--bot); }
+  .line.me.interim .text::after { color: var(--me); }
+
+  .jump {
+    position: absolute; left: 50%; bottom: 16px; transform: translateX(-50%);
+    height: 34px; padding: 0 14px; border-radius: 999px; border: 0; cursor: pointer;
+    background: var(--text); color: var(--bg); font-size: 13px; font-weight: 600;
+    box-shadow: 0 8px 20px rgba(0,0,0,.4);
+  }
+  .note { padding: 10px 18px; font-size: 12.5px; color: var(--muted); border-top: 1px solid var(--line); }
+
+  .toast {
+    position: fixed; top: 16px; left: 50%; transform: translateX(-50%); z-index: 10;
+    background: #241216; color: #ffc0c6; border: 1px solid #4d2027;
+    padding: 10px 16px; border-radius: 12px; font-size: 14px; max-width: calc(100% - 32px);
+    animation: rise .2s var(--ease);
+  }
+  .toast.ok { background: #10241c; color: #aef0cf; border-color: #1e4a37; }
+
+  @media (max-width: 820px) {
+    .line { max-width: 92%; }
+    .app { grid-template-columns: 1fr; grid-template-rows: auto minmax(320px, 1fr); padding: 12px; gap: 12px; height: auto; min-height: 100dvh; }
+    .voice { padding: 18px 16px; gap: 14px; }
+    .visual { width: min(220px, 60vw); }
+    .app[data-call="accepted"] .visual { width: 150px; }
+    .state h1 { font-size: 22px; }
+    .live { height: 60dvh; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+  }
+</style>
+</head>
+<body>
+<div class="app" id="app" data-call="idle">
+  <section class="voice">
+    <div class="brand">
+      <div class="brand-name"><span class="brand-mark" aria-hidden="true"></span><span id="brandName">Trợ lý AI</span></div>
+      <div class="pill" id="pill" data-s="loading"><span class="dot"></span><span id="pillText">Đang khởi động</span></div>
+    </div>
+
+    <div class="visual" aria-hidden="true">
+      <canvas id="viz"></canvas>
+      <div class="orb" id="orb"></div>
+    </div>
+
+    <div class="state">
+      <h1 id="title">Xin chào 👋</h1>
+      <p id="sub">Nhấn nút bên dưới để trò chuyện bằng giọng nói</p>
+    </div>
+
+    <div class="controls">
+      <button class="start" id="startBtn" disabled>
+        <svg viewBox="0 0 24 24"><path d="M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.9V21h2v-3.1A7 7 0 0 0 19 11h-2z"/></svg>
+        Bắt đầu trò chuyện
+      </button>
+      <button class="ctl" id="muteBtn" aria-pressed="false" title="Tắt micro" hidden>
+        <svg viewBox="0 0 24 24"><path d="M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.9V21h2v-3.1A7 7 0 0 0 19 11h-2z"/></svg>
+      </button>
+      <button class="ctl hang" id="hangBtn" title="Kết thúc" hidden>
+        <svg viewBox="0 0 24 24"><path d="M6.6 10.8a15.1 15.1 0 0 0 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1A17 17 0 0 1 3 4c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1l-2.3 2.2z"/></svg>
+      </button>
+      <button class="ctl" id="padBtn" aria-pressed="false" title="Bàn phím" hidden>
+        <svg viewBox="0 0 24 24"><path d="M6 3a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm6 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm6 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4zM6 9a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm6 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm6 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4zM6 15a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm6 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm6 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4z"/></svg>
+      </button>
+    </div>
+
+    <div class="keypad" id="keypad" hidden></div>
+  </section>
+
+  <section class="live">
+    <div class="live-head">
+      <div class="live-title">Phụ đề trực tiếp <span class="tag">LIVE</span></div>
+      <div class="tools">
+        <button class="tool" id="copyBtn" disabled title="Sao chép">
+          <svg viewBox="0 0 24 24"><path d="M16 1H4a2 2 0 0 0-2 2v14h2V3h12V1zm3 4H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2zm0 16H8V7h11v14z"/></svg>Sao chép
+        </button>
+        <button class="tool" id="saveBtn" disabled title="Tải về">
+          <svg viewBox="0 0 24 24"><path d="M5 20h14v-2H5v2zM19 9h-4V3H9v6H5l7 7 7-7z"/></svg>Tải về
+        </button>
+      </div>
+    </div>
+    <div class="feed" id="feed" aria-live="polite">
+      <div class="empty" id="empty">
+        <div class="empty-icon"><svg viewBox="0 0 24 24"><path d="M20 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2zM4 12h4v2H4v-2zm10 6H4v-2h10v2zm6 0h-4v-2h4v2zm0-4H10v-2h10v2z"/></svg></div>
+        Lời của bạn và trợ lý sẽ hiện ở đây theo thời gian thực.
+      </div>
+    </div>
+    <button class="jump" id="jumpBtn" hidden>↓ Lời mới</button>
+    <div class="note" id="sttNote" hidden></div>
+  </section>
+</div>
+
+<div id="audioSink" hidden></div>
+
+<script>
+  // Cấu hình theo tenant: webcall_test.py ghi config.json cạnh trang (xoá ngay sau khi đăng ký).
+  // Không có giá trị mặc định cho tài khoản SIP và số gọi; ý nghĩa từng trường: references/webcall-test.md.
+  const params = new URLSearchParams(location.search);
+  const REQUIRED = ['sipRealm', 'sipUser', 'sipPassword', 'phoneNumber'];
+  const cfg = {
+    sdkVersion: '3.0.35',
+    botName: 'Trợ lý AI',
+    auto: params.get('auto'), // đường dẫn plan.json: bật chế độ tự kiểm thử (autotest.js)
+  };
+
+  const $ = (id) => document.getElementById(id);
+  const app = $('app'), pill = $('pill'), pillText = $('pillText');
+  const titleEl = $('title'), subEl = $('sub'), keypad = $('keypad'), orb = $('orb');
+  const startBtn = $('startBtn'), hangBtn = $('hangBtn'), muteBtn = $('muteBtn'), padBtn = $('padBtn');
+  const feed = $('feed'), emptyEl = $('empty'), jumpBtn = $('jumpBtn'), sttNote = $('sttNote');
+  const copyBtn = $('copyBtn'), saveBtn = $('saveBtn');
+
+  let call = null;
+  let callStart = 0;
+  let registered = false;
+
+  const fmt = (ms) => {
+    const s = Math.max(0, Math.floor(ms / 1000));
+    return `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
+  };
+  function setPill(s, text) { pill.dataset.s = s; pillText.textContent = text; }
+  function toast(msg, ok) {
+    const t = document.createElement('div');
+    t.className = `toast${ok ? ' ok' : ''}`; t.textContent = msg;
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), 3000);
+  }
+  function setSub(text, who = '') { subEl.textContent = text; subEl.dataset.who = who; }
+
+  function setCallState(state) {
+    app.dataset.call = state;
+    const inCall = state !== 'idle';
+    startBtn.hidden = inCall;
+    hangBtn.hidden = !inCall;
+    muteBtn.hidden = padBtn.hidden = state !== 'accepted';
+    if (state === 'connecting') {
+      titleEl.textContent = 'Đang kết nối…';
+      setSub(`Đang gọi ${cfg.botName}`);
+      setPill('loading', 'Đang kết nối');
+    } else if (state === 'accepted') {
+      titleEl.textContent = cfg.botName;
+      setSub('Đang lắng nghe…');
+    } else {
+      keypad.hidden = true;
+      padBtn.setAttribute('aria-pressed', 'false');
+      muteBtn.setAttribute('aria-pressed', 'false');
+      stopMeters();
+      if (registered) setPill('ready', 'Sẵn sàng');
+    }
+  }
+
+  // Bàn phím DTMF (khi trợ lý yêu cầu bấm phím)
+  '123456789*0#'.split('').forEach((d) => {
+    const b = document.createElement('button');
+    b.className = 'key'; b.textContent = d;
+    b.onclick = () => call?.dtmf(d);
+    keypad.appendChild(b);
+  });
+
+  // SDK cần thẻ audio có id `${uid}-remote` để phát tiếng đầu bên kia
+  function attachRemoteAudio(c) {
+    const id = `${c.uid}-remote`;
+    if ($(id)) return;
+    const a = document.createElement('audio');
+    a.id = id; a.autoplay = true;
+    $('audioSink').appendChild(a);
+  }
+
+  // ---------- Hình ảnh âm thanh: quả cầu theo giọng trợ lý, vòng vạch theo cả hai bên ----------
+  const canvas = $('viz'), ctx2d = canvas.getContext('2d');
+  const BARS = 72;
+  let audioCtx = null, rafId = 0, idleRaf = 0;
+
+  function meter(stream) {
+    if (!stream?.getAudioTracks().length) return null;
+    const an = audioCtx.createAnalyser();
+    an.fftSize = 256;
+    an.smoothingTimeConstant = 0.75;
+    audioCtx.createMediaStreamSource(stream).connect(an);
+    const time = new Uint8Array(an.fftSize), freq = new Uint8Array(an.frequencyBinCount);
+    return {
+      freq,
+      level() {
+        an.getByteTimeDomainData(time);
+        an.getByteFrequencyData(freq);
+        let sum = 0;
+        for (const v of time) sum += ((v - 128) / 128) ** 2;
+        return Math.min(1, Math.sqrt(sum / time.length) * 6);
+      },
+    };
+  }
+
+  function drawRing(botM, meM, botLv, meLv, t) {
+    const dpr = devicePixelRatio || 1;
+    const w = canvas.clientWidth, h = canvas.clientHeight;
+    if (canvas.width !== w * dpr) { canvas.width = w * dpr; canvas.height = h * dpr; }
+    ctx2d.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx2d.clearRect(0, 0, w, h);
+    const cx = w / 2, cy = h / 2, r0 = w * 0.33;
+    const meLouder = meLv > botLv;
+    const src = meLouder ? meM : botM;
+    ctx2d.lineCap = 'round';
+    ctx2d.lineWidth = Math.max(2, w / 110);
+    for (let i = 0; i < BARS; i++) {
+      const a = (i / BARS) * Math.PI * 2 - Math.PI / 2;
+      // Đối xứng hai nửa để vòng trông cân
+      const k = i < BARS / 2 ? i : BARS - i;
+      let v = src ? src.freq[Math.floor((k / (BARS / 2)) * 48)] / 255 : 0;
+      v = Math.max(v, 0.06 + 0.04 * Math.sin(t / 600 + i / 4));
+      const len = 4 + v * w * 0.13;
+      const x1 = cx + Math.cos(a) * r0, y1 = cy + Math.sin(a) * r0;
+      const x2 = cx + Math.cos(a) * (r0 + len), y2 = cy + Math.sin(a) * (r0 + len);
+      ctx2d.strokeStyle = meLouder
+        ? `rgba(255,157,60,${0.35 + v * 0.65})`
+        : `hsla(${248 - (k / (BARS / 2)) * 60}, 95%, 72%, ${0.3 + v * 0.7})`;
+      ctx2d.beginPath(); ctx2d.moveTo(x1, y1); ctx2d.lineTo(x2, y2); ctx2d.stroke();
+    }
+  }
+
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function idleLoop(t) { drawRing(null, null, 0, 0, t); if (!reduced) idleRaf = requestAnimationFrame(idleLoop); }
+
+  function startMeters(c) {
+    cancelAnimationFrame(idleRaf);
+    audioCtx ??= new AudioContext();
+    audioCtx.resume();
+    const bot = meter(c.streams?.remote), me = meter(c.streams?.local);
+    let botLv = 0, meLv = 0, who = null;
+    const tick = (t) => {
+      botLv = botLv * 0.7 + (bot?.level() ?? 0) * 0.3;
+      meLv = meLv * 0.7 + (me?.level() ?? 0) * 0.3;
+      orb.style.setProperty('--lv', botLv.toFixed(3));
+      drawRing(bot, me, botLv, meLv, t);
+      const now = botLv > 0.08 ? 'bot' : meLv > 0.08 ? 'me' : '';
+      if (now !== who) {
+        who = now;
+        setSub(now === 'bot' ? `${cfg.botName} đang nói` : now === 'me' ? 'Bạn đang nói' : 'Đang lắng nghe…', now);
+      }
+      setPill('live', `LIVE · ${fmt(Date.now() - callStart)}`);
+      rafId = requestAnimationFrame(tick);
+    };
+    rafId = requestAnimationFrame(tick);
+  }
+  function stopMeters() {
+    cancelAnimationFrame(rafId);
+    orb.style.setProperty('--lv', 0);
+    cancelAnimationFrame(idleRaf);
+    idleRaf = requestAnimationFrame(idleLoop);
+  }
+
+  // ---------- Phụ đề trực tiếp (STT) ----------
+  // Web Speech API của Chrome, nhận thẳng track WebRTC (đã khử vọng):
+  // track remote = lời trợ lý, track local = lời người dùng.
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const log = []; // { who, at, text } để sao chép / tải về
+  let recognizers = [];
+  let stickBottom = true;
+
+  feed.addEventListener('scroll', () => {
+    stickBottom = feed.scrollHeight - feed.scrollTop - feed.clientHeight < 60;
+    if (stickBottom) jumpBtn.hidden = true;
+  });
+  jumpBtn.onclick = () => { feed.scrollTop = feed.scrollHeight; jumpBtn.hidden = true; };
+  function follow() {
+    if (stickBottom) feed.scrollTop = feed.scrollHeight;
+    else jumpBtn.hidden = false;
+  }
+
+  function addLine(who) {
+    emptyEl.hidden = true;
+    const entry = { who, at: fmt(Date.now() - callStart), text: '' };
+    log.push(entry);
+    const el = document.createElement('div');
+    el.className = `line ${who} interim`;
+    const name = who === 'bot' ? cfg.botName : 'Bạn';
+    el.innerHTML = `<div class="avatar">${who === 'bot' ? 'AI' : 'B'}</div>
+      <div class="bubble"><div class="meta"><span class="who"></span><time></time></div><p class="text"></p></div>`;
+    el.querySelector('.who').textContent = name;
+    el.querySelector('time').textContent = entry.at;
+    feed.appendChild(el);
+    copyBtn.disabled = saveBtn.disabled = false;
+    return { el, entry };
+  }
+  // Phần đã chốt hiện đậm, phần đang nhận dạng hiện mờ ở cuối
+  function setLine(line, stable, tail, interim) {
+    const p = line.el.querySelector('.text');
+    p.textContent = stable;
+    if (tail) {
+      const s = document.createElement('span');
+      s.className = 'tail';
+      s.textContent = (stable ? ' ' : '') + tail;
+      p.appendChild(s);
+    }
+    line.el.classList.toggle('interim', interim);
+    line.entry.text = `${stable} ${tail}`.replace(/\s+/g, ' ').trim();
+    follow();
+  }
+
+  // Chrome chia một lượt nói thành nhiều đoạn kết quả và tự dừng sau vài giây:
+  // gom mọi đoạn vào cùng một dòng, chỉ mở dòng mới sau khoảng lặng.
+  const PAUSE_MS = 1500;
+  function recognize(who, track) {
+    const rec = new SR();
+    rec.lang = 'vi-VN';
+    rec.continuous = true;
+    rec.interimResults = true;
+    let line = null, prefix = '', startIdx = 0, stable = '', tail = '', pauseTimer, lastResult = 0;
+    // Phần nháp có thể không bao giờ được chốt (luồng chỉ còn im lặng): quá 2 khoảng lặng thì chốt luôn
+    const close = () => {
+      if (!line) return;
+      if (tail && Date.now() - lastResult < PAUSE_MS * 2) { pauseTimer = setTimeout(close, PAUSE_MS); return; }
+      const forced = !!tail;
+      stable = `${stable} ${tail}`.trim();
+      tail = '';
+      setLine(line, stable, '', false);
+      line = null;
+      // Huỷ phiên để Chrome bỏ đoạn nháp kẹt; onend sẽ mở phiên mới đánh số lại từ 0
+      if (forced) try { rec.abort(); } catch {}
+    };
+    rec.onresult = (e) => {
+      lastResult = Date.now();
+      if (!line) { line = addLine(who); prefix = ''; startIdx = e.resultIndex; }
+      let fin = '', interim = '';
+      for (let i = startIdx; i < e.results.length; i++) {
+        if (e.results[i].isFinal) fin += e.results[i][0].transcript;
+        else interim += e.results[i][0].transcript;
+      }
+      stable = `${prefix} ${fin}`.replace(/\s+/g, ' ').trim();
+      tail = interim.trim();
+      setLine(line, stable, tail, true);
+      clearTimeout(pauseTimer);
+      pauseTimer = setTimeout(close, PAUSE_MS);
+    };
+    rec.onerror = (e) => { if (e.error !== 'no-speech' && e.error !== 'aborted') console.warn('STT', who, e.error); };
+    // Phiên mới đánh số kết quả lại từ 0; giữ phần đã chép làm tiền tố của dòng đang mở
+    rec.onend = () => {
+      if (line) { prefix = `${stable} ${tail}`.trim(); stable = prefix; tail = ''; startIdx = 0; }
+      if (rec.active) setTimeout(() => { try { track ? rec.start(track) : rec.start(); } catch {} }, 100);
+    };
+    rec.active = true;
+    track ? rec.start(track) : rec.start();
+    return rec;
+  }
+
+  function startStt(c) {
+    sttNote.hidden = true;
+    if (!SR) { sttNote.textContent = 'Trình duyệt không hỗ trợ phụ đề, hãy dùng Chrome hoặc Edge.'; sttNote.hidden = false; return; }
+    // start(track) có từ Chrome 135; bản cũ bỏ qua track và nghe micro, nên chỉ chép lời người dùng
+    const chrome = navigator.userAgentData?.brands?.find((b) => /Chrom/.test(b.brand));
+    const trackInput = Number(chrome?.version) >= 135;
+    const pairs = trackInput ? [['bot', c.streams?.remote], ['me', c.streams?.local]] : [['me', null]];
+    for (const [who, stream] of pairs) {
+      const track = stream?.getAudioTracks()[0];
+      try { recognizers.push(recognize(who, track)); } catch (e) { console.warn('STT start', who, e); }
+    }
+    if (!trackInput) {
+      sttNote.textContent = 'Trình duyệt này chỉ chép được lời của bạn; cập nhật Chrome để thấy cả lời trợ lý.';
+      sttNote.hidden = false;
+    }
+  }
+  function stopStt() {
+    recognizers.forEach((r) => { r.active = false; try { r.abort(); } catch {} });
+    recognizers = [];
+    feed.querySelectorAll('.line.interim').forEach((el) => el.classList.remove('interim'));
+  }
+
+  const transcriptText = () => log.filter((l) => l.text)
+    .map((l) => `[${l.at}] ${l.who === 'bot' ? cfg.botName : 'Bạn'}: ${l.text}`).join('\n');
+  copyBtn.onclick = async () => {
+    try { await navigator.clipboard.writeText(transcriptText()); toast('Đã sao chép phụ đề', true); }
+    catch { toast('Không sao chép được'); }
+  };
+  saveBtn.onclick = () => {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([transcriptText()], { type: 'text/plain;charset=utf-8' }));
+    a.download = `phu-de-${new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-')}.txt`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  };
+
+  // ---------- OMICallSDK ----------
+  function loadScript(src) {
+    return new Promise((resolve, reject) => {
+      const s = document.createElement('script');
+      s.src = src; s.setAttribute('omi-call-sdk', '');
+      s.onload = resolve; s.onerror = reject;
+      document.head.appendChild(s);
+    });
+  }
+
+  // Cho autotest.js (và CDP) đọc trạng thái cuộc gọi và phụ đề
+  window.__webcall = {
+    get call() { return call; },
+    get callStart() { return callStart; },
+    get phoneNumber() { return cfg.phoneNumber; },
+    get registered() { return registered; },
+    transcript: () => log.filter((l) => l.text).map((l) => ({ at: l.at, who: l.who, text: l.text })),
+  };
+
+  async function boot() {
+    try {
+      try {
+        const res = await fetch('config.json', { cache: 'no-store' });
+        if (res.ok) Object.assign(cfg, await res.json());
+      } catch {}
+      const missing = REQUIRED.filter((k) => !cfg[k]);
+      if (missing.length) {
+        setPill('error', 'Thiếu cấu hình');
+        titleEl.textContent = 'Thiếu cấu hình';
+        setSub(missing.join(', '));
+        return;
+      }
+      $('brandName').textContent = cfg.botName;
+      if (cfg.auto) {
+        await loadScript('autotest.js');
+        titleEl.textContent = 'Chế độ tự kiểm thử';
+      }
+      await loadScript(`https://cdn.omicrm.com/sdk/web/${cfg.sdkVersion}/core.min.js`);
+      if (typeof OMICallSDK === 'undefined') throw new Error('Không tải được OMICallSDK');
+      await OMICallSDK.init({ lng: 'vi' });
+
+      OMICallSDK.on('register', ({ status }) => {
+        registered = status === 'connected';
+        if (!call) setPill(registered ? 'ready' : status === 'connecting' ? 'loading' : 'error',
+          registered ? 'Sẵn sàng' : status === 'connecting' ? 'Đang khởi động' : 'Mất kết nối');
+        startBtn.disabled = !registered;
+      });
+      const onDialing = (c) => { call = c; attachRemoteAudio(c); setCallState('connecting'); };
+      OMICallSDK.on('connecting', onDialing);
+      OMICallSDK.on('ringing', onDialing);
+      OMICallSDK.on('accepted', (c) => {
+        call = c;
+        callStart = Date.now();
+        feed.querySelectorAll('.line').forEach((el) => el.remove());
+        log.length = 0;
+        emptyEl.hidden = false;
+        setCallState('accepted');
+        startMeters(c);
+        startStt(c);
+      });
+      OMICallSDK.on('ended', (c) => {
+        $(`${c.uid}-remote`)?.remove();
+        const talked = call?.isAccepted;
+        call = null;
+        stopStt();
+        setCallState('idle');
+        titleEl.textContent = talked ? 'Đã kết thúc' : 'Không kết nối được';
+        setSub(talked ? `Thời lượng ${fmt(Date.now() - callStart)} · nhấn để gọi lại` : 'Vui lòng thử lại sau ít phút');
+      });
+
+      const res = await OMICallSDK.register({
+        sipRealm: cfg.sipRealm, sipUser: cfg.sipUser, sipPassword: cfg.sipPassword,
+      });
+      if (!res?.status) {
+        // Giữ nguyên thông báo lỗi của SDK trên trang để webcall_test.py in ra (bảng lỗi ở webcall-test.md)
+        setPill('error', 'Không kết nối được');
+        setSub(res?.error || 'Đăng ký SIP thất bại');
+        toast(res?.error || 'Đăng ký SIP thất bại');
+      }
+    } catch (e) {
+      console.error(e);
+      setPill('error', 'Lỗi tải SDK');
+      toast(e.message);
+    }
+  }
+
+  startBtn.onclick = async () => {
+    try {
+      // Xin quyền micro trước để báo lỗi dễ hiểu thay vì cuộc gọi tự tắt
+      const s = await navigator.mediaDevices.getUserMedia({ audio: true });
+      s.getTracks().forEach((t) => t.stop());
+    } catch {
+      return toast('Cần cho phép micro để trò chuyện với trợ lý');
+    }
+    try { await OMICallSDK.makeCall(cfg.phoneNumber); } catch (e) { toast(e.message); }
+  };
+  hangBtn.onclick = () => call?.end();
+  // mute() của SDK tự đảo trạng thái, callback trả về micro đang bật hay không
+  muteBtn.onclick = () => call?.mute((micOn) => muteBtn.setAttribute('aria-pressed', String(!micOn)));
+  padBtn.onclick = () => {
+    keypad.hidden = !keypad.hidden;
+    padBtn.setAttribute('aria-pressed', String(!keypad.hidden));
+  };
+
+  setCallState('idle');
+  boot();
+</script>
+</body>
+</html>

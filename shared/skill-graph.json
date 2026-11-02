@@ -1,0 +1,47 @@
+{
+  "_ghi_chu": "Nguồn duy nhất về quan hệ giữa các skill. Sửa ở đây rồi chạy: python tools/gen_skill_links.py (sinh mục 'Gọi skill liên quan' vào mọi SKILL.md). Mỗi cạnh: from cần to khi 'when' xảy ra. 'entry': skill cửa vào, chỉ gọi đi, không skill nào gọi tới.",
+  "entry": ["omicall-start"],
+  "edges": [
+    {"from": "omicall-start", "to": "omicall-callbot-gen-ai", "when": "tổng đài trả lời tự động bằng giọng nói, hiểu ý khách bằng AI (SmartAgent)"},
+    {"from": "omicall-start", "to": "omicall-callbot-flow", "when": "tổng đài trả lời theo kịch bản cố định, cây hỏi đáp (callbot cổ điển)"},
+    {"from": "omicall-start", "to": "omicall-chatbot-gen-ai", "when": "chatbot trả lời khách trên Zalo OA, Facebook, website (LiveTalk)"},
+    {"from": "omicall-start", "to": "omicall-omiflow", "when": "tự động hoá: tạo phiếu, nhắn tin, nhắc lịch, chia khách, nối hệ thống ngoài"},
+    {"from": "omicall-start", "to": "omicall-pbx-config", "when": "số tổng đài, giờ làm việc, lời chào, menu bấm phím, nhóm nhân viên nhận cuộc gọi"},
+    {"from": "omicall-start", "to": "omicall-crm-config", "when": "trường thông tin khách/phiếu, trạng thái, chủ đề phiếu, chia khách cho nhân viên"},
+    {"from": "omicall-start", "to": "omicall-ai-insight", "when": "AI tóm tắt, chấm điểm, bóc thông tin từ cuộc gọi hoặc hội thoại"},
+
+    {"from": "omicall-omiflow", "to": "omicall-crm-config", "when": "thuộc tính khách/phiếu, bộ trạng thái, chủ đề phiếu hoặc cấu hình phân bổ chưa có"},
+    {"from": "omicall-omiflow", "to": "omicall-pbx-config", "when": "nhận phím IVR hoặc webhook Tương tác phím, nhóm nội bộ đích, lời chào, gắn kịch bản vào hotline"},
+    {"from": "omicall-omiflow", "to": "omicall-ai-insight", "when": "dùng {{ca_summarize}} hoặc {{ca_ai_assistant}}, điều kiện AI Assistant/Voice/Chat Insights"},
+    {"from": "omicall-omiflow", "to": "omicall-callbot-gen-ai", "when": "flow là webhook cho Callbot Gen AI (tra hệ thống ngoài, popup, phiếu lúc chuyển máy)"},
+    {"from": "omicall-omiflow", "to": "omicall-chatbot-gen-ai", "when": "chatbot gọi flow WEB_HOOK hoặc flow chạy Chatbot"},
+
+    {"from": "omicall-callbot-gen-ai", "to": "omicall-omiflow", "when": "cần webhook tra hệ thống ngoài, popup hoặc phiếu khi chuyển máy"},
+    {"from": "omicall-callbot-gen-ai", "to": "omicall-pbx-config", "when": "gắn kịch bản vào hotline hoặc phím IVR, nhóm đích khi chuyển máy"},
+    {"from": "omicall-callbot-gen-ai", "to": "omicall-crm-config", "when": "dữ liệu thu thập phải ghi vào thuộc tính khách/phiếu chưa có"},
+    {"from": "omicall-callbot-gen-ai", "to": "omicall-callbot-flow", "when": "yêu cầu là callbot cổ điển (NORMAL), không phải SmartAgent"},
+
+    {"from": "omicall-callbot-flow", "to": "omicall-callbot-gen-ai", "when": "kịch bản là SmartAgent (AI_AGENT)"},
+    {"from": "omicall-callbot-flow", "to": "omicall-omiflow", "when": "cần webhook sang OMIFlow (tra cứu, popup, phiếu)"},
+    {"from": "omicall-callbot-flow", "to": "omicall-pbx-config", "when": "gắn kịch bản vào hotline hoặc phím IVR, nhóm đích khi chuyển máy"},
+    {"from": "omicall-callbot-flow", "to": "omicall-crm-config", "when": "dữ liệu thu thập phải ghi vào thuộc tính khách/phiếu chưa có"},
+
+    {"from": "omicall-chatbot-gen-ai", "to": "omicall-omiflow", "when": "bot cần tra CRM hoặc tạo phiếu qua flow WEB_HOOK"},
+    {"from": "omicall-chatbot-gen-ai", "to": "omicall-crm-config", "when": "thuộc tính khách hoặc pipeline trạng thái khách chưa có"},
+    {"from": "omicall-chatbot-gen-ai", "to": "omicall-ai-insight", "when": "đánh giá hội thoại bot bằng Chat Insights"},
+
+    {"from": "omicall-pbx-config", "to": "omicall-callbot-gen-ai", "when": "đích định tuyến là Kịch bản AI Callbot (SmartAgent)"},
+    {"from": "omicall-pbx-config", "to": "omicall-callbot-flow", "when": "đích định tuyến là callbot cổ điển"},
+    {"from": "omicall-pbx-config", "to": "omicall-omiflow", "when": "webhook phím hoặc Tương tác phím sang flow, popup, phiếu"},
+    {"from": "omicall-pbx-config", "to": "omicall-crm-config", "when": "phân bổ cuộc gọi nhỡ, mục đích cuộc gọi"},
+
+    {"from": "omicall-crm-config", "to": "omicall-omiflow", "when": "flow dùng thuộc tính, trạng thái hoặc chủ đề phiếu vừa cấu hình"},
+    {"from": "omicall-crm-config", "to": "omicall-ai-insight", "when": "trường AI bóc từ cuộc gọi phải khớp tập giá trị của thuộc tính"},
+    {"from": "omicall-crm-config", "to": "omicall-chatbot-gen-ai", "when": "bot thu thập dữ liệu vào thuộc tính vừa cấu hình"},
+    {"from": "omicall-crm-config", "to": "omicall-callbot-gen-ai", "when": "callbot thu thập dữ liệu vào thuộc tính vừa cấu hình"},
+
+    {"from": "omicall-ai-insight", "to": "omicall-crm-config", "when": "trường đích hoặc mục đích cuộc gọi chưa có"},
+    {"from": "omicall-ai-insight", "to": "omicall-omiflow", "when": "tự động hoàn toàn: flow dùng {{ca_ai_assistant}} để điền CRM"},
+    {"from": "omicall-ai-insight", "to": "omicall-chatbot-gen-ai", "when": "cấu hình Chat Insights cho hội thoại của bot"}
+  ]
+}

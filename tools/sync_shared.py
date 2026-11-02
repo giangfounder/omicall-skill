@@ -20,12 +20,18 @@ BUILDERS = ["omicall-callbot-gen-ai", "omicall-callbot-flow", "omicall-chatbot-g
 # skill con của omicall-omiflow (cấu hình nền): chỉ nhận phần đăng nhập, gọi API, khảo sát, đọc tài liệu
 SUBSKILLS = ["omicall-crm-config", "omicall-pbx-config", "omicall-ai-insight"]
 ALL = BUILDERS + SUBSKILLS
+# cửa vào chung: chỉ hiểu việc và gọi skill khác, không gọi API
+ENTRY = ["omicall-start"]
 
 # file trong shared/ -> danh sách skill nhận bản chép (cùng đường dẫn tương đối)
 MAP = {
     "references/omi-mcp.md": ALL,
+    "references/omi-mcp-extra.md": ALL,
+    "references/conversation.md": ALL + ENTRY,
+    "references/system-model.md": ALL + ENTRY,
+    "references/solution-method.md": ALL + ENTRY,
     "references/tenant_context.template.json": ALL,
-    "scripts/self_update.py": ALL,
+    "scripts/self_update.py": ALL + ENTRY,
     "scripts/omi_session.py": ALL,
     "scripts/omi_preflight.py": ALL,
     "scripts/omi_login.py": ALL,

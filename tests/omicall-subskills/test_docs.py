@@ -45,7 +45,7 @@ class SubskillDocsTest(unittest.TestCase):
             self.assertTrue(os.path.isfile(os.path.join(ROOT, s, 'references', ref)), s)
 
     def test_omiflow_links_subskills(self):
-        sk = read('omicall-omiflow', 'SKILL.md')
+        sk = read('omicall-omiflow', 'SKILL.md') + '\n' + read('omicall-omiflow', 'references', 'playbook.md')
         self.assertIn('## Skill con', sk)
         for s, ref in SUBSKILLS.items():
             self.assertIn('`%s`' % s, sk)

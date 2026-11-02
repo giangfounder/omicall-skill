@@ -77,7 +77,7 @@ def decide(domain, min_minutes=5):
                             '(mật khẩu cất vào kho bí mật của hệ điều hành, không qua hội thoại). Script tự đăng nhập '
                             'MCP OMI và đăng ký server MCP; agent đi đường API ngay trong phiên này. Client có công cụ '
                             'mở terminal thì agent mở sẵn lệnh này cho user. Cần Node.js 18+. Dự phòng: lệnh mcp add '
-                            'theo references/omi-mcp.md Phụ lục A, hoặc user tự đặt OMI_TOKEN_FILE. '
+                            'theo references/omi-mcp-extra.md Phụ lục A, hoặc user tự đặt OMI_TOKEN_FILE. '
                             'Trong lúc chờ: làm tiếp phần offline (extract_text, phân tích, spec).'
                             % setup_command(domain))
     return out

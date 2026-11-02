@@ -6,7 +6,7 @@ import unittest
 from _util import REFS, SKILL, SPEC_FLOW, load
 
 # File dùng chung do owner 'shared' tạo/đồng bộ — có thể chưa có khi chạy test của skill này.
-SHARED = {"references/omi-mcp.md", "references/tenant_context.template.json", "scripts/self_update.py",
+SHARED = {"references/omi-mcp.md", "references/omi-mcp-extra.md", "references/tenant_context.template.json", "scripts/self_update.py",
           "scripts/omi_session.py", "scripts/omi_preflight.py", "scripts/omi_api.py", "scripts/omi_save.py",
           "scripts/tenant_survey.py", "scripts/manifest.py", "scripts/extract_text.py", "scripts/extract_template.py"}
 
@@ -19,6 +19,8 @@ def read(p):
 class TestDocs(unittest.TestCase):
     def setUp(self):
         self.skill = read(SKILL / "SKILL.md")
+        # chi tiết theo bước đã tách sang references/playbook.md
+        self.docs = self.skill + "\n" + read(SKILL / "references" / "playbook.md")
         self.lines = self.skill.splitlines()
 
     def test_fast_path_block(self):
@@ -30,17 +32,17 @@ class TestDocs(unittest.TestCase):
         self.assertLessEqual(len(block), 20)
         self.assertIn("verify_callflow.py", "\n".join(block))
         prev = max(i for i, l in enumerate(self.lines[:idx[0]]) if l.startswith("## "))
-        self.assertIn("Bắt đầu: hỏi domain", self.lines[prev])
+        self.assertIn("Bắt đầu và cách trao đổi", self.lines[prev])
         prev2 = max(i for i, l in enumerate(self.lines[:prev]) if l.startswith("## "))
         self.assertIn("Bước bắt buộc: cập nhật skill", self.lines[prev2])
 
     def test_skill_md_greps(self):
         self.assertNotIn("credentials.md", self.skill)
         self.assertIn("verify_callflow.py", self.skill)
-        self.assertIn("## Bảo trì skill", self.skill)
+        self.assertIn("## Bảo trì skill", self.docs)
         self.assertNotIn("3 skill", self.skill)
-        b2 = self.skill.split("### Bước 2")[1].split("### Bước 3")[0]
-        b3 = self.skill.split("### Bước 3")[1].split("### Bước 4")[0]
+        b2 = self.docs.split("### Bước 2")[1].split("### Bước 3")[0]
+        b3 = self.docs.split("### Bước 3")[1].split("### Bước 4")[0]
         self.assertIn("user duyệt", b2)
         self.assertIn("user duyệt", b3)
 
@@ -82,7 +84,7 @@ class TestDocs(unittest.TestCase):
             self.assertIn(st[t], ("enum", "unverified"), t)
 
     def test_context_key_and_post_check_doc(self):
-        sk = read(SKILL / "SKILL.md")
+        sk = read(SKILL / "SKILL.md") + "\n" + read(SKILL / "references" / "playbook.md")
         self.assertIn("kho_tri_thuc", sk)
         self.assertNotIn("callbot_kb", sk, "SKILL.md chỉ nêu một khoá Kho tri thức (kho_tri_thuc, khuôn tenant_survey)")
         self.assertNotIn("omicrm.io/ai/callbot", sk, "link editor phải theo đuôi miền của tenant (io|com)")

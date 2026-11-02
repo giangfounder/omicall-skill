@@ -4,6 +4,7 @@ Bộ skill dùng chung cho Claude Code và các agent khác, dùng để dựng 
 
 | Skill | Dùng để |
 |---|---|
+| `omicall-start` | Cửa vào chung: hỏi việc bằng lời thường, lập kế hoạch rồi gọi đúng skill bên dưới (dùng khi chưa biết chọn skill nào) |
 | `omicall-callbot-gen-ai` | Dựng Callbot Gen AI (SmartAgent): ý định, biến thu thập, phân loại, chuyển máy, kết thúc |
 | `omicall-callbot-flow` | Dựng Callbot luồng cổ điển (call flow): phân tích kịch bản → chọn ý định/thực thể → sinh dữ liệu huấn luyện sát chữ STT tổng đài (≥200 câu mỗi ý định/thực thể) → nạp Kho tri thức → dựng kịch bản, kiểm tra, gọi thử |
 | `omicall-chatbot-gen-ai` | Dựng AI Chatbot (OmiBot) cho Zalo OA, Facebook, LiveTalk |
@@ -31,18 +32,18 @@ git clone https://github.com/giangfounder/omicall-skill.git
 ```powershell
 $src = "$PWD\omicall-skill"; $dst = "$env:USERPROFILE\.claude\skills"
 New-Item -ItemType Directory -Force $dst | Out-Null
-foreach ($n in 'omicall-callbot-gen-ai','omicall-callbot-flow','omicall-chatbot-gen-ai','omicall-omiflow','omicall-crm-config','omicall-pbx-config','omicall-ai-insight') { New-Item -ItemType Junction -Path "$dst\$n" -Target "$src\$n" }
+foreach ($n in 'omicall-start','omicall-callbot-gen-ai','omicall-callbot-flow','omicall-chatbot-gen-ai','omicall-omiflow','omicall-crm-config','omicall-pbx-config','omicall-ai-insight') { New-Item -ItemType Junction -Path "$dst\$n" -Target "$src\$n" }
 ```
 
 **macOS / Linux**:
 ```bash
 mkdir -p ~/.claude/skills
-for n in omicall-callbot-gen-ai omicall-callbot-flow omicall-chatbot-gen-ai omicall-omiflow omicall-crm-config omicall-pbx-config omicall-ai-insight; do ln -s "$PWD/omicall-skill/$n" ~/.claude/skills/$n; done
+for n in omicall-start omicall-callbot-gen-ai omicall-callbot-flow omicall-chatbot-gen-ai omicall-omiflow omicall-crm-config omicall-pbx-config omicall-ai-insight; do ln -s "$PWD/omicall-skill/$n" ~/.claude/skills/$n; done
 ```
 
 Agent khác: trỏ hoặc chép 7 thư mục vào thư mục skill của agent đó (ví dụ `~/.agents/skills`, `~/.gemini/skills`).
 
-Kiểm tra: mở Claude Code, gõ `/` và thấy `omicall-callbot-gen-ai`, `omicall-callbot-flow`, `omicall-chatbot-gen-ai`, `omicall-omiflow`, `omicall-crm-config`, `omicall-pbx-config`, `omicall-ai-insight`.
+Kiểm tra: mở Claude Code, gõ `/` và thấy `omicall-start`, `omicall-callbot-gen-ai`, `omicall-callbot-flow`, `omicall-chatbot-gen-ai`, `omicall-omiflow`, `omicall-crm-config`, `omicall-pbx-config`, `omicall-ai-insight`.
 
 ### Bước 4 — Cài MCP OMI (đăng nhập tự động, tra cứu, kiểm thử)
 Mỗi người tự chạy với tài khoản của mình (mật khẩu chỉ nằm trên máy bạn; agent chỉ soạn sẵn lệnh với placeholder, không cầm mật khẩu):
@@ -51,7 +52,7 @@ claude mcp add OMICall-<domain> --scope user -e OMICALL_USERNAME=<email> -e OMIC
 ```
 - `<domain>` là phần trước `.omicrm.io`, ví dụ `congtyabc` → server `OMICall-congtyabc`.
 - Nhiều tenant: mỗi tenant một server (tên `OMICall-<domain>` khác nhau).
-- Client khác (Codex, Gemini CLI, OpenCode, Cursor, VS Code…): mẫu lệnh và cấu hình ở `references/omi-mcp.md` Phụ lục A. Cài xong mở phiên mới.
+- Client khác (Codex, Gemini CLI, OpenCode, Cursor, VS Code…): mẫu lệnh và cấu hình ở `references/omi-mcp-extra.md` Phụ lục A. Cài xong mở phiên mới.
 - Kiểm nhanh trong phiên: `python <thư mục skill>/scripts/omi_preflight.py --domain <domain>` (in 1 dòng JSON, không in token).
 - Không chạy được MCP thì skill vẫn dùng được: agent mở trang đăng nhập để bạn tự đăng nhập một lần, hoặc bạn tự đặt biến `OMI_TOKEN_FILE`.
 

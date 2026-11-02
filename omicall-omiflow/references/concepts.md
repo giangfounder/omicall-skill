@@ -99,6 +99,13 @@ Cú pháp `{{ten_bien}}`, dùng được ở mọi ô nhập văn bản.
   - Viber: đường dẫn, liên lạc, thẻ.
 
   Phân nhánh theo từ khoá, nút bấm (mỗi nút là một nhánh), hoặc AI phân tích câu trả lời. Có phần thu thập thông tin từ câu trả lời của khách.
+- **Nút Zalo OA có sẵn nhánh "Trạng thái tin nhắn → Thất bại"** (✔ UI 10/2026), bên cạnh "Bước tiếp theo". Gửi Zalo lỗi rồi gửi kênh khác (ví dụ SMS) chỉ cần nối nhánh Thất bại sang nút Marketing SMS, **không cần** `DELAY` + `CONDITION` kiểm trạng thái gửi → bớt 2 nút, bớt credit. Trước khi thêm Trì hoãn + Điều kiện trạng thái gửi, kiểm nút gửi đã có nhánh Thất bại chưa. Nút Zalo OA có chọn được template ZBS gửi tới SĐT (người chưa có hội thoại với OA) hay chỉ gửi tin trong hội thoại: Cần xác nhận; nếu chỉ gửi trong hội thoại thì khách mới sẽ luôn đi nhánh Thất bại.
+
+## 6a. Credit của flow (✔ 10/2026)
+- Mỗi **nút chạy** trong một lượt trừ credit, **kể cả nút trigger**; nút ở nhánh không chạy thì không tính. Giá hiện ngay trên canvas, nhãn số phía trên mỗi nút (ví dụ `20`); nút Marketing hiện `20 × Số lượng gửi thực tế` (nhân theo số người nhận).
+- Bảng giá nằm ở trường `credit_pricing` của flow (GET): `default_credit` (giá mỗi nút, ví dụ 20) + `prices[]` theo `code` cho nút đắt hơn (ví dụ `OMI_BOT_AI`, `PUSH_SOUND_NOTIFICATION`). Giá có thể khác giữa các tenant/gói → đọc `credit_pricing` của tenant khách, không lấy số của tenant khác.
+- Số thật mỗi lượt: `POST /omi_v2/campaign/log/search` → `total_credit` và `credit_counts[]` (mỗi phần tử một nút đã chạy, `log_id:"FIRST_LOG_ID"` là trigger, `number` = credit). Cột Credit ở tab Lịch sử là cùng số này.
+- Ước tính cho khách: credit/lượt = tổng giá các nút trên **từng đường đi** (đường thành công và đường dự phòng), nhân số lượt dự kiến theo tỉ lệ mỗi đường. Phí gửi tin (ZBS, ZNS, SMS Brandname, Email, cuộc gọi) tính **riêng** theo bảng giá kênh, không nằm trong credit flow.
 
 ## 7. Dựng nhanh bằng dán JSON (clipboard của editor)
 Editor cho phép **dán JSON nút trực tiếp vào canvas** (tài liệu OMI dùng cách này để chia sẻ nút mẫu). Định dạng clipboard là **định dạng editor** (camelCase), khác JSON lưu qua API (snake_case):

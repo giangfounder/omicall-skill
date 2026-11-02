@@ -10,6 +10,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 HERE = Path(__file__).resolve().parent
 NEW = ROOT / "shared" / "references" / "omi-mcp.md"
+EXTRA = ROOT / "shared" / "references" / "omi-mcp-extra.md"  # mục 7-8 và phụ lục A-B tách khỏi omi-mcp.md
 BASE = HERE / "fixtures" / "omi-mcp.baseline.md"
 SKILLS = ["omicall-callbot-gen-ai", "omicall-callbot-flow", "omicall-chatbot-gen-ai", "omicall-omiflow"]
 
@@ -42,7 +43,7 @@ def lines(p):
 
 class TestOmiMcp(unittest.TestCase):
     def setUp(self):
-        self.new = lines(NEW)
+        self.new = lines(NEW) + lines(EXTRA)
         self.text = "\n".join(self.new)
 
     def test_no_line_lost(self):
@@ -74,9 +75,10 @@ class TestOmiMcp(unittest.TestCase):
         self.assertNotIn("cookie", self.text.split("## 2.")[0].replace("Đọc cookie bằng JS/CDP bị lớp an toàn chặn thì **dừng**", ""))
 
     def test_identical_in_skills(self):
-        src = NEW.read_bytes()
-        for s in SKILLS:
-            self.assertEqual((ROOT / s / "references" / "omi-mcp.md").read_bytes(), src, s)
+        for f in (NEW, EXTRA):
+            src = f.read_bytes()
+            for s in SKILLS:
+                self.assertEqual((ROOT / s / "references" / f.name).read_bytes(), src, s)
 
 
 if __name__ == "__main__":

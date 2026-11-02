@@ -73,7 +73,7 @@ Mọi node có chung khung: `id, is_first_node, description, description_type, c
 | `ACTION` | Tương tác → Hành động | Chuỗi nhiều hành động chạy tuần tự (mục 3) | [verify JSON] |
 | `MARKETING` | Tương tác → Marketing | Tạo phiên gửi hàng loạt: SMS, ZNS hoặc ZBS, ZCC (xin quyền gọi Zalo), Email, AutoCall, AI Callbot, Viber Business | [enum] |
 | `INFO_DIALOG` / `FORM_DIALOG` / `BUTTON_DIALOG` / `VARIABLE_DIALOG` / `VIEW_DETAIL_DIALOG` / `FEATURE_DIALOG` | Tương tác → Cửa sổ tương tác | Bật cửa sổ trên màn hình nhân viên (mục 4) | INFO, FORM [verify JSON]; còn lại [enum] |
-| `ZALO_PERSONAL_MESSAGE`, `ZALO_MESSAGE`, `FACEBOOK_CHAT_MESSAGE`, `FACEBOOK_POST_MESSAGE`, `LIVE_TALK_MESSAGE`, `TELEGRAM_MESSAGE`, `VIBER_MESSAGE`, `TIKTOK_BUSINESS_MESSAGE`, `WHATSAPP_BUSINESS_MESSAGE`, `EMAIL_SMTP_MESSAGE`, `MULTI_CHANNEL_MESSAGE` | Trò chuyện → từng kênh / Gửi tin nhắn chung | Gửi tin hoặc thao tác trên kênh (ví dụ Zalo cá nhân: `REQUEST_FRIEND`) | Zalo cá nhân [verify JSON] |
+| `ZALO_PERSONAL_MESSAGE`, `ZALO_MESSAGE`, `FACEBOOK_CHAT_MESSAGE`, `FACEBOOK_POST_MESSAGE`, `LIVE_TALK_MESSAGE`, `TELEGRAM_MESSAGE`, `VIBER_MESSAGE`, `TIKTOK_BUSINESS_MESSAGE`, `WHATSAPP_BUSINESS_MESSAGE`, `EMAIL_SMTP_MESSAGE`, `MULTI_CHANNEL_MESSAGE` | Trò chuyện → từng kênh / Gửi tin nhắn chung | Gửi tin hoặc thao tác trên kênh (ví dụ Zalo cá nhân: `REQUEST_FRIEND`). Nút Zalo OA có sẵn nhánh "Trạng thái tin nhắn → Thất bại" + "Bước tiếp theo" (✔ UI 10/2026; `concepts.md` mục 6) | Zalo cá nhân [verify JSON] |
 | `CHAT_GPT`, `CHATX_AI`, `OMI_BOT_AI`, `PRO_AI`, `PARTNER_AI`, `CUSTOMIZE_BOT_AI` | Trò chuyện → ChatGPT / ChatX / AI Chatbot / ProAI / Partner AI | Giao cuộc trò chuyện cho bot AI xử lý | [enum] |
 | `COLLECT_INFO` | Khác → Thu thập thông tin | AI bóc Đối tượng hoặc Thực thể (SĐT, email, ngày, thực thể tự đào tạo) từ nội dung, lưu vào biến; tuỳ chọn `FROM_DEFINED_VARIABLE` gán giá trị cố định | [verify JSON] (kiểu giá trị cố định) |
 | `DESCRIPTION` | Khác → Ghi chú | Ghi chú trên canvas (URL webhook, cURL mẫu, giải thích) | [verify JSON] |
@@ -100,7 +100,19 @@ Kiểu `data[].type` trong một trường hợp: `COMPARE` (so sánh), `CALL` (
 
 Phép toán (UI → API): `=`→`EQUAL`, `!=`→`NOT_EQUAL`, `>`→`GT`, `<`→`LT`, `>=`→`GTE`, `<=`→`LTE`, `IN`/`NOT IN` (dùng `ml_values`), `BETWEEN` (`start_value` + `end_value`), `CONTAIN`, `NOT_CONTAIN`, `START_WITH`, `NOT_START_WITH`, `END_WITH`, `NOT_END_WITH`. "Rỗng" = `NOT_EQUAL` với `values:[{}]` hoặc `[{"start_value":""}]`.
 
-**Khung giờ làm việc** (`CUSTOM` → `TIME_FRAME`): `working_days` theo thứ `"1"`…`"7"`, mỗi ngày `{"type":"time_frame","time_frames":[{"from":<epoch ms>,"to":<epoch ms>}]}` (chỉ lấy giờ:phút) hoặc `{"type":"not_apply"}`. Trường hợp thoả = **trong giờ**; nhánh "Bước tiếp theo" = **ngoài giờ**.
+**Khung giờ làm việc** (`CUSTOM` → `TIME_FRAME`): `working_days` theo thứ `"1"`…`"7"`, mỗi ngày `{"type":"time_frame","time_frames":[{"from":<epoch ms>,"to":<epoch ms>}]}` (chỉ lấy giờ:phút) hoặc `{"type":"not_apply"}`. Trường hợp thoả = **trong giờ**; nhánh "Bước tiếp theo" = **ngoài giờ**. `"1"` = Chủ nhật, `"2"`…`"7"` = T2…T7 (✔ GET 10/2026, giờ lưu theo epoch của ngày tạo, múi +7). **Bắt buộc đi kèm ít nhất 1 điều kiện khác trong cùng trường hợp** — thiếu thì UI báo "Điều kiện Khung giờ chỉ hoạt động khi sử dụng chung ít nhất 1 điều kiện khác" và lặng lẽ xoá dữ liệu trường hợp khi đóng ngăn (✔ UI 10/2026); thêm điều kiện luôn đúng, ví dụ `SOCIAL` `social_channel` = `widget_v2` (Kênh = LiveTalk). Mục "Kiểm tra khung giờ làm việc" thì cần Ca làm việc khai sẵn (tenant chưa có ca → "Không có dữ liệu").
+Ví dụ GET thật (trường hợp trong giờ T2–T6 07:00–16:30, kênh LiveTalk):
+```json
+{"id":"<case>","operator_type":"AND","data":[
+  {"type":"CUSTOM","custom_data":[{"target_type":"TIME_FRAME","working_days":{
+     "1":{"type":"not_apply"},"2":{"type":"time_frame","time_frames":[{"from":<epoch 07:00>,"to":<epoch 16:30>}]},
+     "3":{...},"4":{...},"5":{...},"6":{...},"7":{"type":"not_apply"}}}]},
+  {"type":"SOCIAL","attributes":[{"field_code":"social_channel","values":["widget_v2"],"operator_type":"OR","not_contain":false,"is_dynamic_field":false}]}],
+ "next_nodes":["<nút trong giờ>"]}
+```
+**Chuyển hội thoại cho nhân viên** (Hành động → Cập nhật cuộc trò chuyện → "Phân bổ cuộc trò chuyện"; tuỳ chọn Phân bổ mới / Phân bổ thêm / Huỷ phân bổ, Nhóm tiếp nhận) → `{"type":"RE_DISTRIBUTE","data":{"ids":["<id nhóm tiếp nhận>"],"redistribute_option":{"redistribute_type":"new","skip_exist":false,"session_criterias":[]}}}` (✔ GET 10/2026). Cùng danh sách còn "Trạng thái Chatbot", "Chặn / Bỏ chặn", "Nhân viên phụ trách", Tag…
+**Gửi tin LiveTalk** (`LIVE_TALK_MESSAGE`, người nhận mặc định "Cuộc trò chuyện liên quan"): `actions:[{"type":"TEXT","data":{"message_type":"TEXT","message":"<nội dung>","payload":[],"quick_reply":[]}}]` (✔ GET 10/2026).
+**Nút `OMI_BOT_AI` → nhánh "BOT chủ động kết thúc"** (bot đi tới nút Kết thúc trò chuyện): `next_nodes` của nút + edge `sourceHandle` = id của trường hợp kết thúc (trùng `ai_analyze.customer_not_response.id`), không phải `"2"` → `validate_flow.py` báo FAIL X1 giả cho cạnh này (✔ UI 10/2026).
 
 ### 2.2 DELAY [verify JSON]
 ```json
