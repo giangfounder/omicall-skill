@@ -153,6 +153,7 @@ Các bản trước 2026-10-23 được đánh số lại theo lịch sử commi
 ## omicall-assistant
 | Phiên bản | Ngày | Commit | Thay đổi |
 |---|---|---|---|
+| 1.2.0 | 2026-11-02 | tag `omicall-assistant/v1.2.0` | Tổng quản lý điều phối: chia đợt theo phụ thuộc, giao skill con cho subagent chạy song song (tối đa 3 subagent giao diện, mỗi artefact một subagent), lời giao việc và mẫu kết quả chuẩn, tự kiểm bằng GET/validator/manifest, một lượt duyệt đầu và gom câu hỏi chặn; hỏi đáp nhiều mảng tra song song (references/orchestration.md) |
 | 1.1.1 | 2026-11-02 | tag `omicall-assistant/v1.1.1` | Đồng bộ conversation.md và omi-mcp.md từ shared (quy tắc ít ảnh khi dựng bằng giao diện, mục 4c) |
 | 1.1.0 | 2026-11-02 | tag `omicall-assistant/v1.1.0` | Trợ lý tổng thể: thêm chế độ Hỏi đáp tri thức OMICall (references/knowledge-qa.md): chỉ trả lời từ nguồn đã tra qua skill con, không suy diễn, không biết nói không biết, không có nói không có; mọi việc hiện bảng kế hoạch bước → skill → cần duyệt và báo từng bước (references/plan-and-approval.md); cấm đi tắt bằng kết quả cũ |
 | 1.0.1 | 2026-11-02 | tag `omicall-assistant/v1.0.1` | Đổi tên omicall-start thành omicall-assistant (tag cũ omicall-start/v1.0.0 giữ nguyên) |

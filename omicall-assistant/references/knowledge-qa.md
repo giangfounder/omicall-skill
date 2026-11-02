@@ -29,7 +29,7 @@ Câu hỏi về giá, gói, hợp đồng, cam kết hỗ trợ, pháp lý, bả
    > 1. <ý 1> → skill <tên skill>
    > 2. <ý 2> → skill <tên skill>
    > Cần anh/chị duyệt: <"không" nếu chỉ đọc tài liệu; "đọc trên tài khoản <domain>" nếu cần xem hệ thống thật>
-2. **Gọi từng skill**: trước mỗi lần gọi báo "Bước <n>/<tổng>: gọi skill <tên> để tra <ý>". Gọi bằng công cụ Skill (client không có thì đọc `<thư mục skill>/../<tên skill>/SKILL.md` và reference ở bảng mục 2). Chỉ đọc phần liên quan; không chạy bước ghi của skill con.
+2. **Gọi từng skill** (câu hỏi chạm từ 3 mảng trở lên: giao subagent chỉ đọc chạy song song theo `orchestration.md` mục 6, rồi gộp): trước mỗi lần gọi báo "Bước <n>/<tổng>: gọi skill <tên> để tra <ý>". Gọi bằng công cụ Skill (client không có thì đọc `<thư mục skill>/../<tên skill>/SKILL.md` và reference ở bảng mục 2). Chỉ đọc phần liên quan; không chạy bước ghi của skill con.
 3. **Báo kết quả mỗi bước một dòng**: "Xong bước <n>: <tìm thấy / không thấy trong tài liệu>".
 4. **Cần xem tài khoản thật** (ví dụ tenant đã bật kênh nào): hỏi user trước, đăng nhập theo `conversation.md` mục 1, chỉ dùng lệnh đọc, ít lần tải trang.
 5. **Trả lời** theo mẫu mục 4.
