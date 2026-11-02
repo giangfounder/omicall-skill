@@ -1,14 +1,14 @@
 {
   "_ghi_chu": "Nguồn duy nhất về quan hệ giữa các skill. Sửa ở đây rồi chạy: python tools/gen_skill_links.py (sinh mục 'Gọi skill liên quan' vào mọi SKILL.md). Mỗi cạnh: from cần to khi 'when' xảy ra. 'entry': skill cửa vào, chỉ gọi đi, không skill nào gọi tới.",
-  "entry": ["omicall-start"],
+  "entry": ["omicall-assistant"],
   "edges": [
-    {"from": "omicall-start", "to": "omicall-callbot-gen-ai", "when": "tổng đài trả lời tự động bằng giọng nói, hiểu ý khách bằng AI (SmartAgent)"},
-    {"from": "omicall-start", "to": "omicall-callbot-flow", "when": "tổng đài trả lời theo kịch bản cố định, cây hỏi đáp (callbot cổ điển)"},
-    {"from": "omicall-start", "to": "omicall-chatbot-gen-ai", "when": "chatbot trả lời khách trên Zalo OA, Facebook, website (LiveTalk)"},
-    {"from": "omicall-start", "to": "omicall-omiflow", "when": "tự động hoá: tạo phiếu, nhắn tin, nhắc lịch, chia khách, nối hệ thống ngoài"},
-    {"from": "omicall-start", "to": "omicall-pbx-config", "when": "số tổng đài, giờ làm việc, lời chào, menu bấm phím, nhóm nhân viên nhận cuộc gọi"},
-    {"from": "omicall-start", "to": "omicall-crm-config", "when": "trường thông tin khách/phiếu, trạng thái, chủ đề phiếu, chia khách cho nhân viên"},
-    {"from": "omicall-start", "to": "omicall-ai-insight", "when": "AI tóm tắt, chấm điểm, bóc thông tin từ cuộc gọi hoặc hội thoại"},
+    {"from": "omicall-assistant", "to": "omicall-callbot-gen-ai", "when": "tổng đài trả lời tự động bằng giọng nói, hiểu ý khách bằng AI (SmartAgent)"},
+    {"from": "omicall-assistant", "to": "omicall-callbot-flow", "when": "tổng đài trả lời theo kịch bản cố định, cây hỏi đáp (callbot cổ điển)"},
+    {"from": "omicall-assistant", "to": "omicall-chatbot-gen-ai", "when": "chatbot trả lời khách trên Zalo OA, Facebook, website (LiveTalk)"},
+    {"from": "omicall-assistant", "to": "omicall-omiflow", "when": "tự động hoá: tạo phiếu, nhắn tin, nhắc lịch, chia khách, nối hệ thống ngoài"},
+    {"from": "omicall-assistant", "to": "omicall-pbx-config", "when": "số tổng đài, giờ làm việc, lời chào, menu bấm phím, nhóm nhân viên nhận cuộc gọi"},
+    {"from": "omicall-assistant", "to": "omicall-crm-config", "when": "trường thông tin khách/phiếu, trạng thái, chủ đề phiếu, chia khách cho nhân viên"},
+    {"from": "omicall-assistant", "to": "omicall-ai-insight", "when": "AI tóm tắt, chấm điểm, bóc thông tin từ cuộc gọi hoặc hội thoại"},
 
     {"from": "omicall-omiflow", "to": "omicall-crm-config", "when": "thuộc tính khách/phiếu, bộ trạng thái, chủ đề phiếu hoặc cấu hình phân bổ chưa có"},
     {"from": "omicall-omiflow", "to": "omicall-pbx-config", "when": "nhận phím IVR hoặc webhook Tương tác phím, nhóm nội bộ đích, lời chào, gắn kịch bản vào hotline"},

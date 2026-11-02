@@ -1,13 +1,13 @@
 ---
-name: omicall-start
+name: omicall-assistant
 description: >-
-  [v1.0.0] Cửa vào chung cho việc trên OMICall/OMICRM khi user chưa biết cần skill nào hoặc việc gồm nhiều phần (tổng đài, callbot, chatbot, quy trình tự động, CRM, AI phân tích): hỏi việc bằng lời thường, lập kế hoạch rồi gọi đúng skill omicall-*. Yêu cầu đã rõ thuộc một skill thì dùng thẳng skill đó.
+  [v1.0.1] Cửa vào chung cho việc trên OMICall/OMICRM khi user chưa biết cần skill nào hoặc việc gồm nhiều phần (tổng đài, callbot, chatbot, quy trình tự động, CRM, AI phân tích): hỏi việc bằng lời thường, lập kế hoạch rồi gọi đúng skill omicall-*. Yêu cầu đã rõ thuộc một skill thì dùng thẳng skill đó.
 ---
 
-# OMICall — Cửa vào chung
+# OMICall Assistant — Cửa vào chung
 
 ## Bước bắt buộc: cập nhật skill
-Chạy `python "<thư mục skill>/scripts/self_update.py"` trước mọi bước khác (`<thư mục skill>` = thư mục chứa SKILL.md này). Câu đầu tiên trả lời user: `Đang dùng omicall-start v<phiên bản>` (lấy từ dòng `SKILL_VERSION`; script lỗi thì dùng v1.0.0). Không cập nhật được → báo lý do, làm tiếp bằng bản hiện có.
+Chạy `python "<thư mục skill>/scripts/self_update.py"` trước mọi bước khác (`<thư mục skill>` = thư mục chứa SKILL.md này). Câu đầu tiên trả lời user: `Đang dùng omicall-assistant v<phiên bản>` (lấy từ dòng `SKILL_VERSION`; script lỗi thì dùng v1.0.1). Không cập nhật được → báo lý do, làm tiếp bằng bản hiện có.
 
 ## Đường nhanh
 Skill này chỉ hiểu việc, lập kế hoạch và gọi skill khác; không tự dựng gì. Lời nói với user theo `references/conversation.md`.

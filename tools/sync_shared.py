@@ -21,7 +21,7 @@ BUILDERS = ["omicall-callbot-gen-ai", "omicall-callbot-flow", "omicall-chatbot-g
 SUBSKILLS = ["omicall-crm-config", "omicall-pbx-config", "omicall-ai-insight"]
 ALL = BUILDERS + SUBSKILLS
 # cửa vào chung: chỉ hiểu việc và gọi skill khác, không gọi API
-ENTRY = ["omicall-start"]
+ENTRY = ["omicall-assistant"]
 
 # file trong shared/ -> danh sách skill nhận bản chép (cùng đường dẫn tương đối)
 MAP = {
