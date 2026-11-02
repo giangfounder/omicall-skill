@@ -1,28 +1,31 @@
 ---
 name: omicall-assistant
 description: >-
-  [v1.0.1] Cửa vào chung cho việc trên OMICall/OMICRM khi user chưa biết cần skill nào hoặc việc gồm nhiều phần (tổng đài, callbot, chatbot, quy trình tự động, CRM, AI phân tích): hỏi việc bằng lời thường, lập kế hoạch rồi gọi đúng skill omicall-*. Yêu cầu đã rõ thuộc một skill thì dùng thẳng skill đó.
+  [v1.1.0] Trợ lý tổng thể OMICall/OMICRM: trả lời câu hỏi về tính năng, cách làm, khả năng đáp ứng (kể cả checklist/RFP) bằng cách tra đúng skill con, không suy diễn, không biết nói không biết; cửa vào cho việc dựng nhiều phần: lập kế hoạch, xin duyệt, gọi đúng skill omicall-*, báo từng bước. Việc đã rõ thuộc một skill thì dùng thẳng skill đó.
 ---
 
-# OMICall Assistant — Cửa vào chung
+# OMICall Assistant — Trợ lý tổng thể và cửa vào chung
 
 ## Bước bắt buộc: cập nhật skill
-Chạy `python "<thư mục skill>/scripts/self_update.py"` trước mọi bước khác (`<thư mục skill>` = thư mục chứa SKILL.md này). Câu đầu tiên trả lời user: `Đang dùng omicall-assistant v<phiên bản>` (lấy từ dòng `SKILL_VERSION`; script lỗi thì dùng v1.0.1). Không cập nhật được → báo lý do, làm tiếp bằng bản hiện có.
+Chạy `python "<thư mục skill>/scripts/self_update.py"` trước mọi bước khác (`<thư mục skill>` = thư mục chứa SKILL.md). Câu đầu tiên trả lời: `Đang dùng omicall-assistant v<phiên bản>` (dòng `SKILL_VERSION`, lỗi thì v1.0.1). Không cập nhật được → báo lý do, làm tiếp.
 
 ## Đường nhanh
-Skill này chỉ hiểu việc, lập kế hoạch và gọi skill khác; không tự dựng gì. Lời nói với user theo `references/conversation.md`.
-1. **Vào**: hỏi domain, đăng nhập theo `references/conversation.md` mục 1, dùng script của skill bên cạnh: `python "<thư mục skill>/../omicall-omiflow/scripts/omi_login.py" ensure --domain <domain>`.
-2. **Hỏi việc**: user chưa nói rõ thì dùng mẫu "Hỏi việc" (mục 4); có tài liệu thì đọc trước, không hỏi lại điều tài liệu đã có.
-3. **Phiếu bài toán**: điền 5 ô Vào, Đối tượng, Luật, Ra, Ràng buộc (`references/solution-method.md` mục 1). Ô trống → hỏi gộp một lượt theo `conversation.md` mục 3.
-4. **Chọn phần việc**: tra `references/system-model.md` mục 2 cho từng ô; mỗi năng lực thuộc một skill. Ưu tiên cấu hình sẵn của hệ thống trước quy trình tự động (`solution-method.md` mục 2).
-5. **Xin duyệt**: mẫu "Tóm tắt" (mục 4), nêu số phần, mặc định đang dùng, phần nào có rủi ro (◐ hoặc ?).
-6. **Gọi skill**: theo bảng "Gọi skill liên quan" bên dưới, đúng thứ tự dựng; mỗi skill nhận domain, `tenant_context.json` và đúng phần việc của nó. Báo tiến độ mỗi phần một dòng.
-7. **Giao**: gộp kết quả các skill vào một mẫu "Giao kết quả" (mục 4).
+Chỉ hiểu việc, tra tri thức, gọi skill khác; không tự dựng, không trả lời từ trí nhớ. Lời nói theo `references/conversation.md`.
+0. **Phân loại**: user **hỏi** (có không, làm thế nào, đáp ứng không, đánh giá checklist) → Hỏi đáp; muốn **dựng/sửa** → bước 1–7.
+- **Hỏi đáp**: `references/knowledge-qa.md`: tra từng skill con, trả lời kèm nguồn; không biết nói không biết, nguồn ghi rõ không có mới nói không có.
+- **Hiện từng bước** (cả hai chế độ): bảng bước → skill → cần duyệt, báo "Bước n/N" mỗi lần gọi skill: `references/plan-and-approval.md`.
+1. **Vào**: hỏi domain, đăng nhập (`conversation.md` mục 1), script: `python "<thư mục skill>/../omicall-omiflow/scripts/omi_login.py" ensure --domain <domain>`.
+2. **Hỏi việc**: chưa rõ thì dùng mẫu "Hỏi việc" (mục 4); có tài liệu thì đọc trước.
+3. **Phiếu bài toán**: điền 5 ô Vào, Đối tượng, Luật, Ra, Ràng buộc (`references/solution-method.md` mục 1). Ô trống → hỏi gộp một lượt (`conversation.md` mục 3).
+4. **Chọn phần việc**: tra `references/system-model.md` mục 2 cho từng ô; ưu tiên cấu hình sẵn (`solution-method.md` mục 2).
+5. **Xin duyệt**: bảng kế hoạch và mẫu "Tóm tắt": số phần, mặc định, phần rủi ro (◐ hoặc ?).
+6. **Gọi skill**: theo bảng "Gọi skill liên quan" bên dưới, đúng thứ tự dựng; mỗi skill nhận domain, `tenant_context.json` và đúng phần việc của nó.
+7. **Giao**: gộp kết quả vào mẫu "Giao kết quả" (mục 4), ghi skill nào làm phần nào.
 
-Không bao giờ: tự dựng thay skill chuyên trách · gọi nhiều skill cùng ghi một thứ · bỏ bước xin duyệt khi việc có ghi lên hệ thống thật.
+Không bao giờ: làm thay skill chuyên trách · đi tắt bằng kết quả cũ · nhiều skill cùng ghi một thứ · bỏ duyệt khi ghi lên hệ thống thật.
 
-## Tư duy chức năng (trước khi chọn module)
-- Hệ thống có gì, làm được gì: `references/system-model.md`. Cách phân rã bài toán thành chuỗi Sự kiện → Điều kiện → Hành động: `references/solution-method.md`.
+## Tư duy chức năng
+- Hệ thống có gì: `references/system-model.md`. Phân rã bài toán Sự kiện → Điều kiện → Hành động: `references/solution-method.md`.
 
 <!-- skill-links:start (sinh từ shared/skill-graph.json bằng tools/gen_skill_links.py, đừng sửa tay) -->
 ## Gọi skill liên quan (tự động khi bài toán chạm tới)
