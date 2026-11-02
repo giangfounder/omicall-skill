@@ -31,6 +31,7 @@ User chỉ cung cấp **domain, email, mật khẩu** — một lần cho mỗi 
 3. Kết quả: `route=api` ngay trong phiên hiện tại (đi đường API bằng `omi_session.py`); công cụ MCP `OMICall-<domain>` có từ phiên kế tiếp. Mật khẩu sai → script xoá thông tin vừa cất, user chạy lại setup. Tài khoản nhiều tenant → exit 4 kèm danh sách, chạy lại với `--tenant-id`.
 4. Về sau agent tự làm, không hỏi user: hết hạn hoặc 401 → `omi_login.py login --domain <domain>`; kiểm trạng thái → `omi_login.py status --domain <domain>` (không gọi mạng). User muốn xoá → `omi_login.py forget --domain <domain>`.
 5. Agent chỉ chạy `setup --ui` (form do user điền); không chạy `setup` kiểu terminal thay user, không đọc, in hay chuyển mật khẩu cho subagent; subagent dùng phiên sẵn có. Không gõ mật khẩu vào form đăng nhập trên trình duyệt (kể cả Chrome MCP).
+6. **Form cục bộ chỉ cất token cho script/API, không đăng nhập trang web** (✔ UI 11/2026): khung trình duyệt của agent vẫn ở màn hình đăng nhập `<domain>.omicrm.io` (có thể kèm `?redirect=`). Cần dựng bằng giao diện thì nhắn user một câu: "Anh/chị đăng nhập vào trang đang mở trong khung Trình duyệt giúp em", chờ user báo xong rồi mới `navigate` lại; agent không gõ mật khẩu. Địa chỉ giao diện: `https://<domain>.omicrm.io/<đường dẫn>` (ví dụ `/config/attribute/customer/status`, `/flow/list`, `/flow/edit/<id>`).
 
 ## 2. Đăng nhập bằng MCP (ưu tiên số 1)
 1. `login_omicall_mcp` (tham số `domain`, `tenant_id` đều tuỳ chọn; mật khẩu lấy từ cấu hình) → nếu trả danh sách nhiều tenant thì `select_tenant(tenant_id)`.
@@ -110,6 +111,16 @@ Không dùng ảnh chụp để dò vị trí menu khi đã biết đường d�
 
 ## 4b. Ghi lại tri thức học bằng giao diện (để lần sau không chụp lại)
 Ngay khi một ảnh chụp hoặc lần đọc giao diện cho ra điều skill chưa có (đường dẫn màn hình, nhãn trường, danh sách lựa chọn, quy tắc của form, endpoint thấy được, gotcha), ghi vào reference của skill phụ trách (`pbx-config.md`, `ai-insight.md`, `crm-config.md`, `ui-build-and-test.md`…) kèm nhãn `✔ UI <tháng/năm>`. Chỉ ghi năng lực nền tảng, không ghi dữ liệu khách (tên, số, id). Ghi vào repo nguồn khi user cho phép; chưa được phép thì gom vào báo cáo cuối phiên để user duyệt.
+
+## 4c. Điều khiển giao diện mà không chụp ảnh (BẮT BUỘC khi buộc phải dựng bằng UI)
+Chụp ảnh sau mỗi thao tác là lỗi đã gặp (một phiên dựng flow tốn hàng chục ảnh). Làm theo:
+1. **Ngân sách ảnh**: tối đa 1 ảnh cho mỗi ngăn/hộp thoại mới mở lần đầu (để biết bố cục), `scale` 0.5; ảnh thứ hai trong cùng ngăn chỉ để `zoom` vùng nhỏ. Quá ngân sách thì dừng, chuyển sang chữ.
+2. **Bấm theo `ref`, không theo toạ độ**: `find` (hoặc `read_page` filter `interactive`) ngay trước mỗi lần bấm. Toạ độ đổi mỗi lần ngăn trượt/pane đổi cỡ và gây bấm hụt (đã từng tick hụt nhân viên trong điều kiện tương tác). Hộp tick/ô chọn không hiện ở `read_page` thì `find` theo chữ hiển thị.
+3. **Gộp thao tác**: `browser_batch` (tối đa 25) cho chuỗi đã biết rõ (bấm → chờ → gõ → bấm); chỉ đọc kết quả ở cuối chuỗi.
+4. **Xác nhận bằng chữ, không bằng ảnh**: `get_page_text` / `find` đọc tóm tắt thẻ nút ("Không có tương tác trong 4 phút từ …"), hoặc `javascript_tool` đọc `input.value`. Ảnh chụp trễ 1–2 thao tác nên dễ gây hiểu nhầm; dùng `wait` 2 giây rồi đọc chữ.
+5. **Chứng cứ cuối là API, không phải ảnh**: sau khi lưu, GET lại (`flow_outline.py --save <id>`, `filter_contacts/get_list`…) và đọc trường cần kiểm. Chỉ chụp ảnh cuối phiên khi user cần xem.
+6. **Pane**: `resize_window` 1500x900 một lần đầu phiên (pane hẹp làm drawer bị cắt), nhớ trả `preset desktop` khi xong.
+7. **Dựng ít nút nhất có thể trên UI**: mỗi loại nút một lần để lấy schema, phần còn lại sinh bằng script từ bản GET (xem `omicall-omiflow/references/node-catalog.md` mục 6).
 
 ## 6. Xử lý lỗi thường gặp
 - `npm error code ETARGET` / "No matching version found": npm giữ metadata cũ sau khi gói vừa ra bản mới → xoá cache npx (`rm -rf ~/.npm/_npx`, Windows: `%LOCALAPPDATA%\npm-cache\_npx`) rồi chạy `npx omicall-mcp@latest`.

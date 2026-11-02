@@ -94,4 +94,4 @@ Tên nút trên giao diện OMI (Xuất bản, Cập nhật, Lưu lại) giữ n
 
 ## 6. Ít chụp ảnh, chụp thì ghi lại (BẮT BUỘC)
 - Cần biết tenant hay giao diện có gì: theo thứ tự `references/omi-mcp.md` mục 4a (tri thức skill → `tenant_context.json` → script API → MCP → chữ giao diện → ảnh sau cùng, zoom vùng nhỏ). Biết URL thì vào thẳng, không chụp để dò menu, không mở lại màn hình skill đã ghi.
-- Điều mới học từ giao diện hay ảnh (đường dẫn, nhãn, lựa chọn, quy tắc form, gotcha, endpoint) → ghi ngay vào reference kèm `✔ UI <tháng/năm>` (mục 4b); chỉ ghi năng lực nền tảng, không ghi dữ liệu khách; cuối phiên liệt kê để user duyệt.
+- Điều mới học từ giao diện hay ảnh (đường dẫn, nhãn, lựa chọn, quy tắc form, gotcha, endpoint) → ghi ngay vào reference kèm `✔ UI <tháng/năm>` (mục 4b); khi buộc dựng bằng UI thì theo `references/omi-mcp.md` mục 4c (ngân sách ảnh, bấm theo `ref`, xác nhận bằng chữ/API); chỉ ghi năng lực nền tảng, không ghi dữ liệu khách; cuối phiên liệt kê để user duyệt.

@@ -12,6 +12,7 @@ Các bản trước 2026-10-23 được đánh số lại theo lịch sử commi
 ## omicall-callbot-flow
 | Phiên bản | Ngày | Commit | Thay đổi |
 |---|---|---|---|
+| 1.8.1 | 2026-11-02 | tag `omicall-callbot-flow/v1.8.1` | Đồng bộ conversation.md và omi-mcp.md từ shared (quy tắc ít ảnh khi dựng bằng giao diện, mục 4c) |
 | 1.8.0 | 2026-11-02 | tag `omicall-callbot-flow/v1.8.0` | Dễ dùng và ít token: mọi skill trao đổi theo references/conversation.md (khung 5 bước, khi nào hỏi lại, mẫu câu, lời thường thay thuật ngữ, đăng nhập bằng form); SKILL.md builder rút còn 8-11KB, chi tiết chuyển nguyên văn sang references/playbook.md kèm tóm tắt gotcha chí tử; mục Gọi skill liên quan sinh từ shared/skill-graph.json; thêm system-model.md, solution-method.md; omi-mcp.md tách omi-mcp-extra.md; kéo về ghi chú đã kiểm chứng (omiflow credit và nhánh Thất bại, chatbot ui-gotchas, ai-insight tiêu chí đánh giá, callbot-gen-ai thử cuộc gọi web); test kích thước SKILL.md và thuật ngữ |
 | 1.7.0 | 2026-11-02 | tag `omicall-callbot-flow/v1.7.0` | Đăng nhập một lần bằng form cục bộ: omi_login.py setup --ui [--no-browser] (form kiểu trang OMICALL trên 127.0.0.1, mật khẩu đi thẳng vào script, agent mở form trong khung trình duyệt và không đọc form); sửa lỗi Tenant not found do tenant_id/phiên cũ; SKILL.md bước đăng nhập và omi-mcp.md cập nhật theo |
 | 1.6.1 | 2026-10-30 | tag `omicall-callbot-flow/v1.6.1` | SKILL.md mọi skill: mục 'Ít chụp ảnh, chụp thì ghi lại' ngay sau Đường nhanh (thứ tự nguồn omi-mcp.md 4a, ghi tri thức học từ giao diện vào reference 4b) |
@@ -31,6 +32,7 @@ Các bản trước 2026-10-23 được đánh số lại theo lịch sử commi
 ## omicall-callbot-gen-ai
 | Phiên bản | Ngày | Commit | Thay đổi |
 |---|---|---|---|
+| 1.15.1 | 2026-11-02 | tag `omicall-callbot-gen-ai/v1.15.1` | Đồng bộ conversation.md và omi-mcp.md từ shared (quy tắc ít ảnh khi dựng bằng giao diện, mục 4c) |
 | 1.15.0 | 2026-11-02 | tag `omicall-callbot-gen-ai/v1.15.0` | Dễ dùng và ít token: mọi skill trao đổi theo references/conversation.md (khung 5 bước, khi nào hỏi lại, mẫu câu, lời thường thay thuật ngữ, đăng nhập bằng form); SKILL.md builder rút còn 8-11KB, chi tiết chuyển nguyên văn sang references/playbook.md kèm tóm tắt gotcha chí tử; mục Gọi skill liên quan sinh từ shared/skill-graph.json; thêm system-model.md, solution-method.md; omi-mcp.md tách omi-mcp-extra.md; kéo về ghi chú đã kiểm chứng (omiflow credit và nhánh Thất bại, chatbot ui-gotchas, ai-insight tiêu chí đánh giá, callbot-gen-ai thử cuộc gọi web); test kích thước SKILL.md và thuật ngữ |
 | 1.14.0 | 2026-11-02 | tag `omicall-callbot-gen-ai/v1.14.0` | Đăng nhập một lần bằng form cục bộ: omi_login.py setup --ui [--no-browser] (form kiểu trang OMICALL trên 127.0.0.1, mật khẩu đi thẳng vào script, agent mở form trong khung trình duyệt và không đọc form); sửa lỗi Tenant not found do tenant_id/phiên cũ; SKILL.md bước đăng nhập và omi-mcp.md cập nhật theo |
 | 1.13.2 | 2026-10-30 | tag `omicall-callbot-gen-ai/v1.13.2` | RAG File đào tạo: scripts/rag_upload.py tải docx/pdf qua filestore (business_type=callbot_recording_file), ghi knowledge.files + org selectedTraining, lưu bằng omi_save --update; api-reference mục 'RAG — File đào tạo' (cả chế độ other_wok_id); SKILL.md trỏ tới script |
@@ -60,6 +62,7 @@ Các bản trước 2026-10-23 được đánh số lại theo lịch sử commi
 ## omicall-chatbot-gen-ai
 | Phiên bản | Ngày | Commit | Thay đổi |
 |---|---|---|---|
+| 1.11.1 | 2026-11-02 | tag `omicall-chatbot-gen-ai/v1.11.1` | Đồng bộ conversation.md và omi-mcp.md từ shared (quy tắc ít ảnh khi dựng bằng giao diện, mục 4c) |
 | 1.11.0 | 2026-11-02 | tag `omicall-chatbot-gen-ai/v1.11.0` | Dễ dùng và ít token: mọi skill trao đổi theo references/conversation.md (khung 5 bước, khi nào hỏi lại, mẫu câu, lời thường thay thuật ngữ, đăng nhập bằng form); SKILL.md builder rút còn 8-11KB, chi tiết chuyển nguyên văn sang references/playbook.md kèm tóm tắt gotcha chí tử; mục Gọi skill liên quan sinh từ shared/skill-graph.json; thêm system-model.md, solution-method.md; omi-mcp.md tách omi-mcp-extra.md; kéo về ghi chú đã kiểm chứng (omiflow credit và nhánh Thất bại, chatbot ui-gotchas, ai-insight tiêu chí đánh giá, callbot-gen-ai thử cuộc gọi web); test kích thước SKILL.md và thuật ngữ |
 | 1.10.0 | 2026-11-02 | tag `omicall-chatbot-gen-ai/v1.10.0` | Đăng nhập một lần bằng form cục bộ: omi_login.py setup --ui [--no-browser] (form kiểu trang OMICALL trên 127.0.0.1, mật khẩu đi thẳng vào script, agent mở form trong khung trình duyệt và không đọc form); sửa lỗi Tenant not found do tenant_id/phiên cũ; SKILL.md bước đăng nhập và omi-mcp.md cập nhật theo |
 | 1.9.1 | 2026-10-30 | tag `omicall-chatbot-gen-ai/v1.9.1` | SKILL.md mọi skill: mục 'Ít chụp ảnh, chụp thì ghi lại' ngay sau Đường nhanh (thứ tự nguồn omi-mcp.md 4a, ghi tri thức học từ giao diện vào reference 4b) |
@@ -127,6 +130,7 @@ Các bản trước 2026-10-23 được đánh số lại theo lịch sử commi
 ## omicall-pbx-config
 | Phiên bản | Ngày | Commit | Thay đổi |
 |---|---|---|---|
+| 1.4.1 | 2026-11-02 | tag `omicall-pbx-config/v1.4.1` | Đồng bộ conversation.md và omi-mcp.md từ shared (quy tắc ít ảnh khi dựng bằng giao diện, mục 4c) |
 | 1.4.0 | 2026-11-02 | tag `omicall-pbx-config/v1.4.0` | Dễ dùng và ít token: mọi skill trao đổi theo references/conversation.md (khung 5 bước, khi nào hỏi lại, mẫu câu, lời thường thay thuật ngữ, đăng nhập bằng form); SKILL.md builder rút còn 8-11KB, chi tiết chuyển nguyên văn sang references/playbook.md kèm tóm tắt gotcha chí tử; mục Gọi skill liên quan sinh từ shared/skill-graph.json; thêm system-model.md, solution-method.md; omi-mcp.md tách omi-mcp-extra.md; kéo về ghi chú đã kiểm chứng (omiflow credit và nhánh Thất bại, chatbot ui-gotchas, ai-insight tiêu chí đánh giá, callbot-gen-ai thử cuộc gọi web); test kích thước SKILL.md và thuật ngữ |
 | 1.3.0 | 2026-11-02 | tag `omicall-pbx-config/v1.3.0` | Đăng nhập một lần bằng form cục bộ: omi_login.py setup --ui [--no-browser] (form kiểu trang OMICALL trên 127.0.0.1, mật khẩu đi thẳng vào script, agent mở form trong khung trình duyệt và không đọc form); sửa lỗi Tenant not found do tenant_id/phiên cũ; SKILL.md bước đăng nhập và omi-mcp.md cập nhật theo |
 | 1.2.1 | 2026-10-30 | tag `omicall-pbx-config/v1.2.1` | SKILL.md mọi skill: mục 'Ít chụp ảnh, chụp thì ghi lại' ngay sau Đường nhanh (thứ tự nguồn omi-mcp.md 4a, ghi tri thức học từ giao diện vào reference 4b) |
@@ -137,6 +141,7 @@ Các bản trước 2026-10-23 được đánh số lại theo lịch sử commi
 ## omicall-ai-insight
 | Phiên bản | Ngày | Commit | Thay đổi |
 |---|---|---|---|
+| 1.5.1 | 2026-11-02 | tag `omicall-ai-insight/v1.5.1` | Đồng bộ conversation.md và omi-mcp.md từ shared (quy tắc ít ảnh khi dựng bằng giao diện, mục 4c) |
 | 1.5.0 | 2026-11-02 | tag `omicall-ai-insight/v1.5.0` | Dễ dùng và ít token: mọi skill trao đổi theo references/conversation.md (khung 5 bước, khi nào hỏi lại, mẫu câu, lời thường thay thuật ngữ, đăng nhập bằng form); SKILL.md builder rút còn 8-11KB, chi tiết chuyển nguyên văn sang references/playbook.md kèm tóm tắt gotcha chí tử; mục Gọi skill liên quan sinh từ shared/skill-graph.json; thêm system-model.md, solution-method.md; omi-mcp.md tách omi-mcp-extra.md; kéo về ghi chú đã kiểm chứng (omiflow credit và nhánh Thất bại, chatbot ui-gotchas, ai-insight tiêu chí đánh giá, callbot-gen-ai thử cuộc gọi web); test kích thước SKILL.md và thuật ngữ |
 | 1.4.0 | 2026-11-02 | tag `omicall-ai-insight/v1.4.0` | Đăng nhập một lần bằng form cục bộ: omi_login.py setup --ui [--no-browser] (form kiểu trang OMICALL trên 127.0.0.1, mật khẩu đi thẳng vào script, agent mở form trong khung trình duyệt và không đọc form); sửa lỗi Tenant not found do tenant_id/phiên cũ; SKILL.md bước đăng nhập và omi-mcp.md cập nhật theo |
 | 1.3.0 | 2026-10-30 | tag `omicall-ai-insight/v1.3.0` | ai-insight.md mục 3a: dựng Voice Insights trên giao diện (13 thông số, gói PRO, ô bắt buộc từng thông số; mục đích cuộc gọi; form bộ tiêu chí 2 bước, loại điều kiện, gotcha) |
@@ -148,6 +153,7 @@ Các bản trước 2026-10-23 được đánh số lại theo lịch sử commi
 ## omicall-assistant
 | Phiên bản | Ngày | Commit | Thay đổi |
 |---|---|---|---|
+| 1.1.1 | 2026-11-02 | tag `omicall-assistant/v1.1.1` | Đồng bộ conversation.md và omi-mcp.md từ shared (quy tắc ít ảnh khi dựng bằng giao diện, mục 4c) |
 | 1.1.0 | 2026-11-02 | tag `omicall-assistant/v1.1.0` | Trợ lý tổng thể: thêm chế độ Hỏi đáp tri thức OMICall (references/knowledge-qa.md): chỉ trả lời từ nguồn đã tra qua skill con, không suy diễn, không biết nói không biết, không có nói không có; mọi việc hiện bảng kế hoạch bước → skill → cần duyệt và báo từng bước (references/plan-and-approval.md); cấm đi tắt bằng kết quả cũ |
 | 1.0.1 | 2026-11-02 | tag `omicall-assistant/v1.0.1` | Đổi tên omicall-start thành omicall-assistant (tag cũ omicall-start/v1.0.0 giữ nguyên) |
 | 1.0.0 | 2026-11-02 | tag `omicall-start/v1.0.0` | Skill cửa vào mới (tên cũ `omicall-start`): hỏi việc bằng lời thường, điền phiếu bài toán 5 ô, xin duyệt rồi gọi đúng skill omicall-* theo thứ tự dựng |

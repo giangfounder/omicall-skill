@@ -1,13 +1,13 @@
 ---
 name: omicall-pbx-config
 description: >-
-  [v1.4.0] Cấu hình tổng đài OMICall/OMICRM: đầu số, máy lẻ, nhóm nội bộ (nhóm đổ chuông), lời chào (TTS hoặc file ghi âm), Tương tác phím (IVR, phím → nhóm, webhook sang OMIFlow), kịch bản tổng đài gọi vào và gắn vào hotline. Skill con của omicall-omiflow; gọi riêng được.
+  [v1.4.1] Cấu hình tổng đài OMICall/OMICRM: đầu số, máy lẻ, nhóm nội bộ (nhóm đổ chuông), lời chào (TTS hoặc file ghi âm), Tương tác phím (IVR, phím → nhóm, webhook sang OMIFlow), kịch bản tổng đài gọi vào và gắn vào hotline. Skill con của omicall-omiflow; gọi riêng được.
 ---
 
 # OMICall PBX Config — Tổng đài, lời chào, tương tác phím (mọi tenant)
 
 ## Bước bắt buộc: cập nhật skill
-Chạy `python "<thư mục skill>/scripts/self_update.py"` trước mọi bước khác (`<thư mục skill>` = thư mục chứa SKILL.md này). Câu đầu tiên trả lời user: `Đang dùng omicall-pbx-config v<phiên bản>` (lấy từ dòng `SKILL_VERSION`; script lỗi thì dùng v1.4.0). Script báo **SKILL.md đã thay đổi** → đọc lại SKILL.md từ đĩa rồi mới làm tiếp. Không cập nhật được → báo lý do, làm tiếp bằng bản hiện có; không sửa, xoá hay commit trong thư mục skill.
+Chạy `python "<thư mục skill>/scripts/self_update.py"` trước mọi bước khác (`<thư mục skill>` = thư mục chứa SKILL.md này). Câu đầu tiên trả lời user: `Đang dùng omicall-pbx-config v<phiên bản>` (lấy từ dòng `SKILL_VERSION`; script lỗi thì dùng v1.4.1). Script báo **SKILL.md đã thay đổi** → đọc lại SKILL.md từ đĩa rồi mới làm tiếp. Không cập nhật được → báo lý do, làm tiếp bằng bản hiện có; không sửa, xoá hay commit trong thư mục skill.
 
 ## Bắt đầu và cách trao đổi (BẮT BUỘC)
 Làm theo `references/conversation.md`, chung cho mọi skill OMI:
