@@ -87,3 +87,9 @@ Chạy tự động: `python <thư mục skill>/scripts/validate_flow.py <GET.js
 9. **[X8]** Thuộc tính khách kiểu danh sách (`is_list` trong `tenant_context.json`) không nhận biến: rẽ nhánh theo giá trị, mỗi nhánh gán một giá trị cố định.
 10. **[X9]** `name_mappings` có đủ bản editor cho các nút trong `nodes` (`node-catalog.md` mục 6); phần tử chép nguyên từ bản GET của nút cùng loại, không tự viết. Hiện chỉ WARN vì chưa có template editor kiểm chứng; không đối chiếu được id thì WARN "Cần xác nhận", không PASS.
 11. **[X10]** Bản GET khớp bản đã gửi (id nút, số edge) — mode post với `--sent`.
+
+## Ghi chú vận hành đã gặp (11/2026)
+- `flow_outline.py --save <id>` ghi vào thư mục scratch: đặt `OMI_SCRATCH=<thư mục>` trước (tham số sau `--save` là **id flow**, không phải đường dẫn file); in ra đường dẫn file.
+- Danh sách flow: `POST campaign-v1-stg…/omi_v2/campaign/search?page=1&size=50` body `{}`. Bộ trạng thái khách: `POST contact-v1-stg…/filter_contacts/get_list` body `{}` (`payload.items[].values[].second_level[]`). Cả hai gọi được qua `omi_api.post_json('<service>', '<path>', {})`.
+- Flow tạo mới trên UI lưu xong có `_id` nháp (`is_draft:true`, `is_publish:false`); `omi_save.py flow` lưu đè được ngay và tự GET + validate post.
+

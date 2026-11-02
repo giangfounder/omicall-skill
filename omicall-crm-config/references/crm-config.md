@@ -17,6 +17,12 @@ Danh sách bộ trạng thái (cột: Trạng thái, Phân quyền, Phân cấp)
 - **Phân quyền**: nhân viên / nhóm nhân viên được áp dụng.
 - **Thành phần trạng thái** (danh sách có thứ tự) + mục **Cơ hội bán hàng**: mỗi trạng thái gắn cờ **WIN**, **LOST** hoặc **Mặc định** → dùng cho báo cáo chuyển đổi.
 
+**Tạo bộ trạng thái có phân cấp bằng giao diện** (`/config/attribute/customer/status` → Thêm mới; ✔ UI 11/2026):
+- Bật công tắc **Phân cấp** ở khối "Thành phần trạng thái": mỗi **trạng thái cấp 1** luôn đi kèm ít nhất **một** trạng thái cấp 2 (không xoá được mục con duy nhất). Muốn cấp 1 không có con thật thì đặt cấp 2 trùng tên cấp 1.
+- Nút "+" cạnh hàng cấp 1 thêm cấp 1 mới (tự đặt tiêu điểm vào ô tên, gõ luôn được); "+" cạnh hàng cấp 2 thêm cấp 2 cùng cha. Tên tối đa 48 ký tự.
+- Bật **Cơ hội bán hàng** thì hiện thêm các ô bắt buộc "Giá trị cơ hội", "Ngày đóng" và tỷ lệ % mỗi trạng thái: đừng bật khi tài liệu không có các số này. Để tắt thì mọi trạng thái được lưu mang cờ `status:"win"` mặc định, chưa gắn LOST.
+- Đọc lại bằng API: `POST contact-v1-stg…/filter_contacts/get_list` → `values[].index` (cấp 1, bắt đầu từ 1), `values[].second_level[].index` (cấp 2, bắt đầu từ 1). Trigger OMIFlow dùng `index:[{first_index, second_index:[…]}]` theo hai số này.
+
 Dùng trong OMIFlow: trigger `GENERAL` theo thuộc tính trạng thái khách ("chuyển vào trạng thái X"), hành động `UPDATE_INFO_CONTACT` đổi trạng thái pipeline (+ ghi chú). Trigger theo trạng thái chỉ bắt lúc *chuyển vào* trạng thái (Gotchas "Trigger theo trạng thái" trong `omicall-omiflow/SKILL.md`).
 
 ### 1b. Bộ thuộc tính khách hàng (form động)

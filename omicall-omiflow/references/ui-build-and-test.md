@@ -142,3 +142,17 @@ Mỗi subagent tự tạo **tab riêng** (`tabs_create`, rồi truyền `tabId` 
 - **Kéo cổng nối ra vùng trống mở bảng chọn nút, nhưng nút tạo ra KHÔNG được nối** (đầu ngăn ghi "Chưa liên kết"); kéo thả vào cổng vào của nút có sẵn cũng không bắt. Nối chắc chắn: mở ngăn nút nguồn → "Nút kế tiếp" → Bước tiếp theo (✔ UI 10/2026).
 - **Đóng ngăn con "Khung giờ" bằng cách bấm vùng mờ** có thể bật ra một ngăn "Điều kiện so sánh" rỗng; bấm vùng mờ sát mép trái (x≈30–120) lần nữa để đóng, ngăn này không thêm điều kiện (✔ UI 10/2026).
 - **Thông báo lỗi đỏ biến mất rất nhanh**: muốn đọc, cài MutationObserver ghi `innerText` các nút mới vào `window.__toasts` trước thao tác rồi đọc lại (chỉ để đọc, không sửa trang).
+
+---
+
+## 9. Dựng flow nhắc tương tác + thu hồi bằng UI: điều đã học (✔ UI 11/2026; để khỏi chụp lại)
+
+- **Vỏ flow**: Danh sách Flow → Thêm mới; ô ngày hiệu lực có nút ✕ xoá cả khoảng; "Không giới hạn" nằm cạnh "Giới hạn". Lưu lần đầu đổi URL sang `/flow/edit/<id>` (đã có `_id` nháp). Vỏ gồm trigger + vài nút lưu được ngay, kể cả khi nhánh mặc định của nút Điều kiện chưa nối.
+- **Trigger Điều kiện theo trạng thái nhiều cấp**: Khách hàng → gõ tên bộ trạng thái vào ô tìm → bấm chip → hộp chọn có mũi tên ▸ mở cấp 2; tick bằng click `ref`. "Thêm trường hợp" tạo trường hợp mới nhưng **chip trạng thái đã có sẵn và rỗng**, chỉ việc mở chip chọn giá trị (tìm lại sẽ báo "Không có dữ liệu"). Mỗi trường hợp có "Nút kế tiếp" riêng.
+- **Trì hoãn / thời gian**: đơn vị đổi bằng mũi tên ◂ ▸, thứ tự Ngày → Giây → Phút → Giờ…; luôn đọc lại đơn vị bằng chữ sau mỗi lần bấm. Ngăn Trì hoãn mới tạo chưa có "Nút kế tiếp": đóng rồi mở lại từ canvas.
+- **Thông báo (Tạo thông báo)**: "Gửi đến nhân viên" → "+" → chọn loại người nhận; có **Nhân viên phụ trách khách hàng** (JSON runtime `send_to_user_owner_of_contact:true`, bản editor `noticeCustomer:true`). Bỏ chọn "Nhân viên" cụ thể nếu muốn gửi động theo người phụ trách.
+- **Điều kiện "Không có tương tác"**: chọn loại (Cuộc gọi, Ghi chú, Chuyển trạng thái) và **bắt buộc có người tương tác**; chip "Nhân viên phụ trách khách hàng" để trống bị báo "Vui lòng điền đầy đủ thông tin"; chip "Nhân viên" phải mở và tick nhân viên cụ thể (kiểm lại GET: `agent_option.agent_ids` phải khác rỗng, nếu rỗng thì tick đã hụt). **Cửa sổ thời gian phải ngắn hơn khoảng chờ cộng dồn 1 phút** để log lúc vào trạng thái không bị tính là tương tác (ví dụ chờ 5/10/15 phút → cửa sổ 4/9/14).
+- **Thu hồi lead** = Hành động Cập nhật khách hàng → Gán mới → Nhân viên phụ trách → Nhân viên cụ thể + Ghi chú (`ASSIGN_USER_OWNER_ID`, `transfer_agent_note`).
+- **Sinh phần còn lại bằng script**: sau khi UI lưu, GET (`flow_outline.py --save <id>`), nhân bản nút theo mẫu (đổi id, vị trí, giá trị) ở cả `nodes` và `name_mappings`, nối cạnh theo `reactflow__edge-<src><handle>-<tgt>1` (nút Điều kiện dùng id trường hợp làm handle), rồi `omi_save.py flow`. Ví dụ 17 nút dựng từ 5 nút mẫu, editor mở lại hiển thị đủ. Đếm quota nút: tiêu đề "Số lượng nút N / 20".
+- **Quy tắc ít ảnh**: xem `omi-mcp.md` mục 4c.
+

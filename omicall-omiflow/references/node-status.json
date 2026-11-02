@@ -32,7 +32,7 @@
   "status": "verified",
   "template": null,
   "source": "references/node-catalog.md:323",
-  "verified_on": "2026-10",
+  "verified_on": "2026-11",
   "ui_hint": "Trigger Điều kiện → Khách hàng → trạng thái (hộp tick, bấm theo ref)"
  },
  {
@@ -104,7 +104,7 @@
   "status": "verified",
   "template": null,
   "source": "references/node-catalog.md:331",
-  "verified_on": "2026-10",
+  "verified_on": "2026-11",
   "ui_hint": "Mở rộng → Kiểm tra tương tác khách hàng"
  },
  {
@@ -113,7 +113,7 @@
   "status": "verified",
   "template": null,
   "source": "references/node-catalog.md:117",
-  "verified_on": null,
+  "verified_on": "2026-11",
   "ui_hint": "Logic → Trì hoãn; không để là nút cuối chuỗi"
  },
  {
@@ -266,7 +266,7 @@
   "status": "verified",
   "template": null,
   "source": "references/node-catalog.md:216",
-  "verified_on": null,
+  "verified_on": "2026-11",
   "ui_hint": "Hành động → Tạo thông báo; nội dung gõ tay mã biến"
  },
  {
