@@ -20,6 +20,7 @@ Cấu hình → Doanh nghiệp → **Cuộc gọi** (`/config/company/call/list`
 - Bốn nguồn (tab): **Tải lên** (file ghi âm), **Robot đọc** (TTS), **AI Callbot**, **Khác**. Danh sách có thời lượng và phân loại.
 - Lời chào dùng ở: nhạc chờ của Tương tác phím, thành phần "Lời chào" trong kịch bản cuộc gọi, hành động "Lời chào" của một phím.
 - [MCP] `generate_tts_audio(text ≤300 ký tự, speaker_id, speed 0.8–1.2)`; giọng `northern_female_ngocanh`, `southern_male_tienhuy`, `northern_male_anhkiet`, `southern_female_khangan`.
+- **Tạo lời chào giọng Việt bằng API ✔ 11/2026** (tab "Robot đọc" = `formality_code: call_bot`; tab "Khác" chỉ là Custom AI; `greeting/text_to_speech_v2` của pbx lỗi -9999 vì là đường cũ): (1) danh sách giọng `POST chatbot /bot-accent/list-all` (vi: `northern_female_ngocanh`, `southern_male_tienhuy`, `northern_male_anhkiet`, `southern_female_khangan`; còn giọng mm/ht, bỏ qua); (2) `POST ai /ai/request` body `{url:"https://tts-api-v1-stg.omicall.com/v1/tts", body:{speed:1, speaker_id, text}, method:"POST"}` → `payload.data.{url, audioDuration}`; (3) `POST pbx /greeting/add` body `{description:null, file_upload_type:"callbot", content, speed, voice:<speaker_id>, formality:"Robot đọc", formality_code:"call_bot", greeting_name, recording_file:<url bước 2>, duration:<audioDuration>}` → `payload._id`. Không giới hạn 300 ký tự (menu 330 ký tự vẫn đọc được).
 - Nội dung lời chào lấy từ tài liệu khách; không có thì soạn nháp, ghi "Cần xác nhận".
 
 ## 3. Nhóm nội bộ (nhóm đổ chuông)
@@ -81,3 +82,11 @@ Khuôn dữ liệu đáng nhớ:
 
 ## 9. Còn phải khảo sát
 Danh sách loại **tiêu chí** (`criterias`) của kịch bản cuộc gọi và nhóm nội bộ (theo khách, theo người phụ trách), mã `weekday` của Chủ nhật, Nhóm bên ngoài, Hộp thư thoại (nghe ở đâu), cấu hình Truy vấn mở rộng, ghi âm. Khảo sát được mục nào thì ghi vào đây kèm ✔ và tháng.
+
+## 9. Cấu trúc thật của Tương tác phím (✔ UI + API 11/2026, tenant .omicrm.io)
+- Lưu: `POST pbx/key_interactive_script/add` (body bắt từ giao diện), sửa `POST …/update/<id>` (thành công trả `status_code` 9999 kèm bản ghi).
+- Body: `{script_name, max_failure, time_out, greeting_id, invalid_sound_id, greeting_short_id, action, action_type, ivr_direct_menu_dial:"false", webhook{enable,url}, scripts[{ivr:"<phím>", action_type, action}]}`.
+- Phím → bot: `action_type:"Callbot"`, `action` = **id** kịch bản callbot (`id` của `GET chatbot/callbot/script/list-by-tenant/<tenant>`, không phải uuid). Phím → nhóm: `Ring_group` + id nhóm nội bộ. Phím nghe lại: `Ivr_menu` + id chính menu. `action`/`action_type` ở gốc = kịch bản kết thúc (không bấm/quá số lần sai).
+- Form giao diện: nhấn "+" thêm dòng phím; dòng đầu trống `ivr:""` là dòng mặc định. Lời chào (ba ô nhạc chờ) chỉ chọn từ danh sách Lời chào có sẵn; form Lời chào "Khác" chỉ có giọng tiếng Anh (Roger, Sarah…).
+- Nhóm nội bộ: `internal_group/add` bắt buộc ≥1 thành viên.
+- Kịch bản cuộc gọi (✔ API 11/2026): `POST pbx/call_script/add` body `{script_name, enable_criteria:false, criterias:[], scripts:[{order:0, action_type:"Ivr_menu", action_id:"<id Tương tác phím>"}]}` → trả `_id` và `extension` (số nội bộ đại diện); thành công `status_code` 9999. Gắn đầu số vẫn là bước riêng.

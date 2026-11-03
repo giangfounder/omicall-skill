@@ -116,3 +116,7 @@ Thu một cụm thông tin liên quan chặt chẽ: để trống "nút tiếp t
 - Hai trường hợp trong Kịch bản chung: khách chưa rõ sản phẩm → hỏi nhu cầu (cây trồng/đối tượng, giai đoạn, vấn đề) → gọi API → gợi ý 1–2 sản phẩm; khách đã nói rõ tên → tra đúng tên, xác nhận lại tên và quy cách, có biến thể thì hỏi chọn, không hỏi lại thông tin tư vấn.
 - Ý định Đặt hàng: Thu thập thông tin đơn → Hướng dẫn Agent gọi `{{request_api_…}}`; để trống nút kế tiếp. Ý định riêng "Khách xác nhận đơn đã đọc lại" → node Phân loại + Tạo thông báo cho nhân viên.
 - Body API tìm kiếm ngữ nghĩa ghép nhiều biến thành một câu (`"Tìm … {{var_san_pham}} cho {{var_doi_tuong}} giai đoạn {{var_giai_doan}}, nhu cầu {{var_nhu_cau}}"`) vẫn tìm đúng khi chỉ có tên sản phẩm và các biến khác trống; thử trên API thật trước khi lưu.
+
+## Xuất bản (đã kiểm chứng, khi user đã duyệt)
+- Nút **Xuất bản** ở thanh trên cùng, cạnh nút Cập nhật; khung hẹp có thể nằm ngoài vùng nhìn, bấm bằng JS theo chữ nút. Hộp "Xác nhận" (Callbot sẽ hoạt động theo phiên bản này...) → bấm Xác nhận.
+- Dấu hiệu thành công: thông báo "Xuất bản thành công", số "Phiên bản" tăng, và **id kịch bản đổi** (URL tự chuyển sang id mới; uuid giữ nguyên). Sau đó GET lại danh sách để lấy id mới, ghi manifest.

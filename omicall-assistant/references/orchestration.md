@@ -58,3 +58,13 @@ Chia câu hỏi theo bảng `knowledge-qa.md` mục 2, mỗi skill con một sub
 2. Một nhánh blocked/lỗi không dừng các nhánh độc lập; gom mọi câu hỏi thành **một lượt** hỏi user (nút chọn), rồi chạy tiếp.
 3. Báo tiến độ ngắn: "Đợt n/N: <skill> xong / đang chạy / chờ anh/chị"; mỗi subagent một dòng.
 4. Giao: bảng kết quả (skill → đã làm → id/mã → cổng chờ user), danh sách "Cần xác nhận", việc user phải làm (xuất bản, gắn hotline), phần chưa làm kèm lý do.
+
+## 8. Bài học từ lần dựng nhiều bot + menu bấm phím trên tenant trống (✔ 11/2026, chỉ nền tảng, không dữ liệu khách)
+1. **Khuôn trước, dàn trải sau**: tenant chưa có kịch bản nào thì không có bản GET thật để nhân bản. Cho **một** subagent dựng bot đầu bằng giao diện, GET lại làm `bot_template.json`, rồi mới giao các bot còn lại chạy song song bằng API (`--new`). Giao tất cả cùng lúc khi chưa có khuôn thì mỗi bot tự dựng khuôn riêng và bị chặn.
+2. **Phụ thuộc cuối cùng đi qua một tiến trình ghi**: nhóm nhận cuộc gọi, node chuyển nhóm, menu phím, gắn đầu số đều chung một subagent (một artefact = một tiến trình ghi); các bot không tự ghi vào menu.
+3. **Lưu bằng giao diện làm hỏng bản nháp** (mất thứ tự điều kiện, biến, nhãn phân loại). Chỉ lấy phần node cần từ bản đó, ghép vào payload gốc rồi lưu bằng API.
+4. **Xuất bản đổi id** của bot (uuid giữ nguyên) và để lại bản cũ. **Mỗi lần sửa hoặc xuất bản lại bot** (không chỉ lần đầu) phải đồng bộ luồng gọi vào: lấy id mới từ sổ chung → cập nhật menu phím → GET lại từng phím → kiểm đầu số vẫn gắn kịch bản gọi đến (gắn lại nếu chưa). `is_publish` do server trả không dùng để biết đã xuất bản.
+5. **Voice Bot GenAI không nhận phím và chưa có node chuyển sang bot khác**; chọn ngành bằng phím phải do Tương tác phím (hành động `Callbot` + id kịch bản). Lời chào menu là lời thoại TTS của tổng đài (tab "Robot đọc", chọn giọng Việt), không phải một bot.
+6. **Báo cáo subagent có thể sai**: ví dụ báo nhóm có 0 thành viên trong khi GET thật có 1. Luôn tự chạy `config_survey.py` và đối chiếu sổ chung trước khi báo user.
+7. **Giới hạn song song**: 8 subagent chỉ-API chạy cùng lúc không gặp lỗi quá tải; subagent giao diện vẫn tối đa 3, mỗi cái một tab. Một số phiên có bộ phân quyền chặn thao tác gắn kịch bản vào đầu số ("Production Deploy") kể cả khi user đã đồng ý trong chat: dừng, không vòng qua, đưa user các bước tự gắn trên giao diện.
+8. **Subagent chủ động ghi** điều mới học vào reference của skill đích (`pbx-config.md`, `api-reference.md`, `agent-config-guide.md`); assistant chỉ ghi bài học điều phối ở mục này.

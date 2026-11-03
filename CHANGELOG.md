@@ -32,6 +32,7 @@ Các bản trước 2026-10-23 được đánh số lại theo lịch sử commi
 ## omicall-callbot-gen-ai
 | Phiên bản | Ngày | Commit | Thay đổi |
 |---|---|---|---|
+| 1.17.0 | 2026-11-03 | tag `omicall-callbot-gen-ai/v1.17.0` | Ghi tri thức dựng bằng giao diện và API (11/2026) vào tài liệu tham chiếu; viết lại mô tả skill theo văn phong chuẩn |
 | 1.16.0 | 2026-11-03 | tag `omicall-callbot-gen-ai/v1.16.0` | Thêm references/optimize-existing.md (đánh giá và tối ưu nhiều kịch bản đã có: tách FAQ ra RAG, chuẩn hoá mã biến, bẫy is_publish, RAG đường Dữ liệu khác khi filestore callbot lỗi -9999, môi trường chỉ có terminal) và scripts optimize_script.py, rag_other.py |
 | 1.15.1 | 2026-11-02 | tag `omicall-callbot-gen-ai/v1.15.1` | Đồng bộ conversation.md và omi-mcp.md từ shared (quy tắc ít ảnh khi dựng bằng giao diện, mục 4c) |
 | 1.15.0 | 2026-11-02 | tag `omicall-callbot-gen-ai/v1.15.0` | Dễ dùng và ít token: mọi skill trao đổi theo references/conversation.md (khung 5 bước, khi nào hỏi lại, mẫu câu, lời thường thay thuật ngữ, đăng nhập bằng form); SKILL.md builder rút còn 8-11KB, chi tiết chuyển nguyên văn sang references/playbook.md kèm tóm tắt gotcha chí tử; mục Gọi skill liên quan sinh từ shared/skill-graph.json; thêm system-model.md, solution-method.md; omi-mcp.md tách omi-mcp-extra.md; kéo về ghi chú đã kiểm chứng (omiflow credit và nhánh Thất bại, chatbot ui-gotchas, ai-insight tiêu chí đánh giá, callbot-gen-ai thử cuộc gọi web); test kích thước SKILL.md và thuật ngữ |
@@ -131,6 +132,7 @@ Các bản trước 2026-10-23 được đánh số lại theo lịch sử commi
 ## omicall-pbx-config
 | Phiên bản | Ngày | Commit | Thay đổi |
 |---|---|---|---|
+| 1.5.0 | 2026-11-03 | tag `omicall-pbx-config/v1.5.0` | Ghi tri thức dựng bằng giao diện và API (11/2026) vào tài liệu tham chiếu; viết lại mô tả skill theo văn phong chuẩn |
 | 1.4.1 | 2026-11-02 | tag `omicall-pbx-config/v1.4.1` | Đồng bộ conversation.md và omi-mcp.md từ shared (quy tắc ít ảnh khi dựng bằng giao diện, mục 4c) |
 | 1.4.0 | 2026-11-02 | tag `omicall-pbx-config/v1.4.0` | Dễ dùng và ít token: mọi skill trao đổi theo references/conversation.md (khung 5 bước, khi nào hỏi lại, mẫu câu, lời thường thay thuật ngữ, đăng nhập bằng form); SKILL.md builder rút còn 8-11KB, chi tiết chuyển nguyên văn sang references/playbook.md kèm tóm tắt gotcha chí tử; mục Gọi skill liên quan sinh từ shared/skill-graph.json; thêm system-model.md, solution-method.md; omi-mcp.md tách omi-mcp-extra.md; kéo về ghi chú đã kiểm chứng (omiflow credit và nhánh Thất bại, chatbot ui-gotchas, ai-insight tiêu chí đánh giá, callbot-gen-ai thử cuộc gọi web); test kích thước SKILL.md và thuật ngữ |
 | 1.3.0 | 2026-11-02 | tag `omicall-pbx-config/v1.3.0` | Đăng nhập một lần bằng form cục bộ: omi_login.py setup --ui [--no-browser] (form kiểu trang OMICALL trên 127.0.0.1, mật khẩu đi thẳng vào script, agent mở form trong khung trình duyệt và không đọc form); sửa lỗi Tenant not found do tenant_id/phiên cũ; SKILL.md bước đăng nhập và omi-mcp.md cập nhật theo |
@@ -154,6 +156,7 @@ Các bản trước 2026-10-23 được đánh số lại theo lịch sử commi
 ## omicall-assistant
 | Phiên bản | Ngày | Commit | Thay đổi |
 |---|---|---|---|
+| 1.3.0 | 2026-11-03 | tag `omicall-assistant/v1.3.0` | Ghi tri thức dựng bằng giao diện và API (11/2026) vào tài liệu tham chiếu; viết lại mô tả skill theo văn phong chuẩn |
 | 1.2.0 | 2026-11-02 | tag `omicall-assistant/v1.2.0` | Tổng quản lý điều phối: chia đợt theo phụ thuộc, giao skill con cho subagent chạy song song (tối đa 3 subagent giao diện, mỗi artefact một subagent), lời giao việc và mẫu kết quả chuẩn, tự kiểm bằng GET/validator/manifest, một lượt duyệt đầu và gom câu hỏi chặn; hỏi đáp nhiều mảng tra song song (references/orchestration.md) |
 | 1.1.1 | 2026-11-02 | tag `omicall-assistant/v1.1.1` | Đồng bộ conversation.md và omi-mcp.md từ shared (quy tắc ít ảnh khi dựng bằng giao diện, mục 4c) |
 | 1.1.0 | 2026-11-02 | tag `omicall-assistant/v1.1.0` | Trợ lý tổng thể: thêm chế độ Hỏi đáp tri thức OMICall (references/knowledge-qa.md): chỉ trả lời từ nguồn đã tra qua skill con, không suy diễn, không biết nói không biết, không có nói không có; mọi việc hiện bảng kế hoạch bước → skill → cần duyệt và báo từng bước (references/plan-and-approval.md); cấm đi tắt bằng kết quả cũ |
