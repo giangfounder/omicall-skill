@@ -86,9 +86,33 @@ python tools/release.py minor "Mô tả thay đổi" omicall-callbot-flow --push
 - `major`: đổi quy trình/đầu vào; `minor`: thêm quy tắc, bước, script; `patch`: sửa lỗi, sửa chữ.
 - Nhiều skill cùng lúc: liệt kê tên skill, hoặc `--all` khi sửa file dùng chung.
 - **File dùng chung** (giữ giống hệt ở mọi skill): nguồn duy nhất nằm trong `shared/`, sửa ở đó rồi chạy `python tools/sync_shared.py` (kiểm: `--check`). Gồm `references/omi-mcp.md`, `references/tenant_context.template.json`, `scripts/self_update.py`, `scripts/omi_session.py`, `scripts/omi_preflight.py`, `scripts/omi_api.py`, `scripts/omi_save.py`, `scripts/tenant_survey.py`, `scripts/manifest.py`, `scripts/extract_text.py`, `scripts/extract_template.py` (skill con không nhận `omi_save.py`, `manifest.py`, `extract_template.py`); `scripts/cdp.py` chỉ ở `omicall-callbot-gen-ai` và `omicall-chatbot-gen-ai`.
-- Kiểm trước khi phát hành (chạy offline): `python tools/check_skills.py` (Đường nhanh, cụm an toàn, đường dẫn, dữ liệu nhạy cảm; thêm `--baseline-dir <bản chụp>` để so với bản trước khi sửa) và `python tools/selftest.py` (test trong `tests/`, chặn mạng). `release.py` tự từ chối khi file dùng chung lệch, `check_skills` có FAIL, hoặc git theo dõi `credentials.md` ngoài bản mẫu. Commit phát hành gồm thư mục skill được nêu, `CHANGELOG.md` và hạ tầng chung (`shared/`, `tools/`, `tests/`, `README.md`, `.gitignore`). Sửa file dùng chung thì nên phát hành `--all`, vì `sync_shared.py` ghi bản mới vào mọi skill.
+- Kiểm trước khi phát hành (chạy offline): `python tools/check_skills.py` (Đường nhanh, cụm an toàn, đường dẫn, dữ liệu nhạy cảm; thêm `--baseline-dir <bản chụp>` để so với bản trước khi sửa) và `python tools/selftest.py` (test trong `tests/`, chặn mạng). `release.py` tự từ chối khi file dùng chung lệch, `check_skills` có FAIL, hoặc git theo dõi `credentials.md` ngoài bản mẫu. Commit phát hành gồm thư mục skill được nêu, `CHANGELOG.md` và hạ tầng chung (`shared/`, `tools/`, `tests/`, `README.md`, `.gitignore`, `.gitattributes`). Sửa file dùng chung thì nên phát hành `--all`, vì `sync_shared.py` ghi bản mới vào mọi skill.
 - Script tăng `VERSION`, sửa version hiển thị trong `SKILL.md` (`[vX.Y.Z]` đầu mô tả — hiện khi gõ `/`, và dòng "Phiên bản skill"), ghi dòng vào `CHANGELOG.md`, commit, gắn tag và push kèm tag.
 - Khi gọi skill, câu đầu tiên agent trả lời là `Đang dùng <tên skill> v<phiên bản>`.
+
+## Đồng bộ giữa nhiều máy
+GitHub nhánh `main` là bản chuẩn duy nhất. Mỗi máy thuộc một trong hai vai trò.
+
+**Máy chỉ dùng skill** (không cần token): cài theo Bước 3 (junction hoặc symlink vào bản git clone). Mỗi lần gọi skill, `self_update.py` tự `git pull --ff-only`. Không sửa file trong clone này; muốn sửa thì làm ở máy có vai trò sửa.
+
+**Máy sửa skill** (ví dụ máy chủ EC2, laptop cá nhân): mỗi máy một git clone và junction/symlink vào clone đó. Máy dùng token riêng (fine-grained, chỉ repo này, quyền Contents: Read and write), không dán token vào chat hay vào repo. Đặt tác giả một lần:
+```bash
+git config user.name "<Họ tên>" && git config user.email <email>
+git config pull.rebase true && git config rebase.autoStash true && git config fetch.prune true
+```
+Quy trình mỗi lần sửa, giống nhau trên mọi máy:
+1. Đầu phiên: `git pull --rebase --autostash`.
+2. Sửa skill, chạy `python tools/check_skills.py` và `python tools/selftest.py`.
+3. Phát hành bằng `python tools/release.py <major|minor|patch> "<ghi chú>" <skill> --push`. Chỉ dùng `release.py` để commit skill. Đừng `git add -A`, vì sẽ kéo theo `credentials.md` thật hoặc file tạm. `release.py` tự kéo bản mới về trước khi tăng `VERSION`, dừng nếu tag đã có hoặc máy chưa đặt tác giả, và khi đẩy bị từ chối vì máy khác vừa đẩy thì dời commit lên trên bản mới rồi thử lại một lần.
+4. Đẩy ngay sau khi phát hành, đừng để commit chưa đẩy qua đêm: máy có commit chưa đẩy sẽ không tự cập nhật được khi `main` đổi (`--ff-only` báo lỗi).
+
+**Tránh xung đột**
+- Mỗi lúc chỉ một máy sửa một skill. Hai máy sửa hai skill khác nhau thì git tự ghép.
+- Xung đột thường rơi vào `VERSION` và `CHANGELOG.md`. `CHANGELOG.md` đã đặt ghép gộp (`.gitattributes`). `VERSION` xung đột nghĩa là hai máy cùng tăng một skill: giữ số cao hơn, chạy lại `release.py` cho phần của mình.
+- Không `git push --force`, không sửa lịch sử đã đẩy. Cấu hình `.gitattributes` đưa mọi file về LF, nên Windows và Linux không còn khác nhau toàn file vì xuống dòng.
+- Gặp xung đột khi `git pull --rebase`: sửa file báo xung đột, `git add <file>`, `git rebase --continue`. Muốn bỏ: `git rebase --abort`.
+
+**Máy đang chép tay skill (không phải git clone)**: không chép ngược từ thư mục skill lên repo, vì sẽ ghi đè công việc từ máy khác. Chuyển sang git clone: sao lưu thư mục skill hiện có; clone repo; so sánh từng file với bản đang dùng (bỏ qua `credentials.md`) để tìm chỗ chỉ sửa riêng trên máy này; đưa các chỗ đó vào clone và phát hành bằng `release.py`; rồi thay thư mục skill bằng junction/symlink vào clone.
 
 ## Lưu ý bảo mật
 - Không commit mật khẩu, token hay thông tin tenant của khách hàng. `references/credentials.md` chỉ là mẫu.

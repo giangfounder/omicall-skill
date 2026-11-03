@@ -1,0 +1,4 @@
+# File văn bản luôn lưu LF trong repo, dù làm trên Windows hay Linux (tránh khác cả file chỉ vì CRLF)
+* text=auto eol=lf
+# CHANGELOG.md chỉ thêm dòng: hai máy cùng thêm thì giữ cả hai, không báo xung đột
+CHANGELOG.md merge=union
