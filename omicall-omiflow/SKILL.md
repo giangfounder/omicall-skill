@@ -1,13 +1,13 @@
 ---
 name: omicall-omiflow
 description: >-
-  [v1.20.1] Thiết kế, xây dựng và chỉnh sửa quy trình tự động OMIFlow của OMICall/OMICRM. Điều kiện bắt đầu: webhook API, cuộc gọi, phím bấm IVR, phiếu ghi, lịch, tệp Excel, đối tác, trạng thái khách hàng. Thành phần xử lý: điều kiện, trì hoãn, AI phân loại, gọi API ngoài, cập nhật khách hàng/phiếu ghi/cuộc gọi, cửa sổ tương tác cho nhân viên, SMS/ZNS, chạy hoặc liên kết Callbot/Chatbot. Đọc và lưu qua API campaign-v1. Cấu hình nền được giao cho omicall-crm-config, omicall-pbx-config và omicall-ai-insight.
+  [v1.20.2] Thiết kế, xây dựng và chỉnh sửa quy trình tự động OMIFlow của OMICall/OMICRM. Điều kiện bắt đầu: webhook API, cuộc gọi, phím bấm IVR, phiếu ghi, lịch, tệp Excel, đối tác, trạng thái khách hàng. Thành phần xử lý: điều kiện, trì hoãn, AI phân loại, gọi API ngoài, cập nhật khách hàng/phiếu ghi/cuộc gọi, cửa sổ tương tác cho nhân viên, SMS/ZNS, chạy hoặc liên kết Callbot/Chatbot. Đọc và lưu qua API campaign-v1. Cấu hình nền được giao cho omicall-crm-config, omicall-pbx-config và omicall-ai-insight.
 ---
 
 # OMICall OMIFlow — Builder Playbook (mọi tenant, mọi bài toán)
 
 ## Bước bắt buộc: cập nhật skill
-Chạy `python "<thư mục skill>/scripts/self_update.py"` trước mọi bước khác (`<thư mục skill>` = thư mục chứa SKILL.md này). Câu đầu tiên trả lời user: `Đang dùng omicall-omiflow v<phiên bản>` (lấy từ dòng `SKILL_VERSION`; script lỗi thì dùng v1.20.1). Script báo **SKILL.md đã thay đổi** → đọc lại SKILL.md từ đĩa rồi mới làm tiếp. Không cập nhật được → báo lý do, làm tiếp bằng bản hiện có; không sửa, xoá hay commit trong thư mục skill.
+Chạy `python "<thư mục skill>/scripts/self_update.py"` trước mọi bước khác (`<thư mục skill>` = thư mục chứa SKILL.md này). Câu đầu tiên trả lời user: `Đang dùng omicall-omiflow v<phiên bản>` (lấy từ dòng `SKILL_VERSION`; script lỗi thì dùng v1.20.2). Script báo **SKILL.md đã thay đổi** → đọc lại SKILL.md từ đĩa rồi mới làm tiếp. Không cập nhật được → báo lý do, làm tiếp bằng bản hiện có; không sửa, xoá hay commit trong thư mục skill.
 
 ## Bắt đầu và cách trao đổi (BẮT BUỘC)
 Làm theo `references/conversation.md`, chung cho mọi skill OMI:
@@ -64,6 +64,9 @@ Mắt xích thuộc skill khác (xem `references/system-model.md`) thì không t
 - Xuất bản đổi id flow; webhook Tương tác phím chỉ lưu được khi flow đích đã xuất bản → xuất bản trước, gắn sau.
 - Nút "Cập nhật" ở editor chỉ lưu nháp; Xuất bản, bật/tắt flow do user quyết; xoá flow là xoá vĩnh viễn kèm lịch sử → để user tự xoá.
 - Header chứa API key: agent không nhập giá trị key, chỉ khai tên header; user tự dán key.
+- Nhánh "BOT chủ động kết thúc" của nút AI Chatbot cũng chạy khi khách im lặng hết thời gian chờ (180 giây) → không đặt chuyển nhân viên / tin "ngoài giờ" ở đây; dùng flow phụ thuộc gọi từ bot (node-catalog).
+- Khung giờ chỉ chạy khi đi cùng ≥1 điều kiện khác, chế độ VÀ (thiếu → UI lặng lẽ xoá điều kiện khi đóng ngăn); flow phụ thuộc vẫn cần thẻ "Điều kiện bắt đầu" (chọn trigger trước, đổi sang phụ thuộc sau).
+- `add_v2` tạo flow mới bằng API nhưng ra luôn bản **đã xuất bản** (v1) → chỉ dùng khi user đã duyệt hoặc cho flow phụ thuộc; sửa flow đã xuất bản trên UI lưu vào bản nháp có `_id` riêng.
 
 ## Chi tiết theo bước (`references/playbook.md`)
 Đọc đúng mục khi tới bước đó, không đọc cả file. Mục mà Đường nhanh hay Rules nhắc tới nhưng không có ở đây (Input contract, Workflow, Gotchas, Skill con…) đều nằm trong file này.

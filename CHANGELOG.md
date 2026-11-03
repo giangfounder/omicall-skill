@@ -65,6 +65,7 @@ Các bản trước 2026-10-23 được đánh số lại theo lịch sử commi
 ## omicall-chatbot-gen-ai
 | Phiên bản | Ngày | Commit | Thay đổi |
 |---|---|---|---|
+| 1.11.3 | 2026-11-03 | tag `omicall-chatbot-gen-ai/v1.11.3` | Ghi tri thức chuyển nhân viên theo khung giờ cho chatbot (11/2026): flow phụ thuộc gọi từ bot (START_OTHER_CAMPAIGN), tắt chatbot khi bàn giao, Khung giờ cần thêm 1 điều kiện VÀ, nhánh BOT chủ động kết thúc chạy cả khi khách im lặng, add_v2 tạo bản đã xuất bản; ghi rõ bot không im lặng được khi chuyển nhân viên |
 | 1.11.2 | 2026-11-03 | tag `omicall-chatbot-gen-ai/v1.11.2` | Viết lại mô tả skill theo văn phong chuẩn |
 | 1.11.1 | 2026-11-02 | tag `omicall-chatbot-gen-ai/v1.11.1` | Đồng bộ conversation.md và omi-mcp.md từ shared (quy tắc ít ảnh khi dựng bằng giao diện, mục 4c) |
 | 1.11.0 | 2026-11-02 | tag `omicall-chatbot-gen-ai/v1.11.0` | Dễ dùng và ít token: mọi skill trao đổi theo references/conversation.md (khung 5 bước, khi nào hỏi lại, mẫu câu, lời thường thay thuật ngữ, đăng nhập bằng form); SKILL.md builder rút còn 8-11KB, chi tiết chuyển nguyên văn sang references/playbook.md kèm tóm tắt gotcha chí tử; mục Gọi skill liên quan sinh từ shared/skill-graph.json; thêm system-model.md, solution-method.md; omi-mcp.md tách omi-mcp-extra.md; kéo về ghi chú đã kiểm chứng (omiflow credit và nhánh Thất bại, chatbot ui-gotchas, ai-insight tiêu chí đánh giá, callbot-gen-ai thử cuộc gọi web); test kích thước SKILL.md và thuật ngữ |
@@ -90,6 +91,7 @@ Các bản trước 2026-10-23 được đánh số lại theo lịch sử commi
 ## omicall-omiflow
 | Phiên bản | Ngày | Commit | Thay đổi |
 |---|---|---|---|
+| 1.20.2 | 2026-11-03 | tag `omicall-omiflow/v1.20.2` | Ghi tri thức chuyển nhân viên theo khung giờ cho chatbot (11/2026): flow phụ thuộc gọi từ bot (START_OTHER_CAMPAIGN), tắt chatbot khi bàn giao, Khung giờ cần thêm 1 điều kiện VÀ, nhánh BOT chủ động kết thúc chạy cả khi khách im lặng, add_v2 tạo bản đã xuất bản; ghi rõ bot không im lặng được khi chuyển nhân viên |
 | 1.20.1 | 2026-11-03 | tag `omicall-omiflow/v1.20.1` | Viết lại mô tả skill theo văn phong chuẩn |
 | 1.20.0 | 2026-11-02 | tag `omicall-omiflow/v1.20.0` | Ghi tri thức dựng bằng giao diện (✔ UI 11/2026): bộ trạng thái khách phân cấp, flow nhắc tương tác + thu hồi lead (JSON trigger nhiều trường hợp, thông báo cho nhân viên phụ trách, điều kiện không tương tác, thu hồi, nhân bản nút bằng script); omi-mcp.md mục 4c điều khiển giao diện không chụp ảnh và gotcha form đăng nhập cục bộ chỉ cất token |
 | 1.19.0 | 2026-11-02 | tag `omicall-omiflow/v1.19.0` | Dễ dùng và ít token: mọi skill trao đổi theo references/conversation.md (khung 5 bước, khi nào hỏi lại, mẫu câu, lời thường thay thuật ngữ, đăng nhập bằng form); SKILL.md builder rút còn 8-11KB, chi tiết chuyển nguyên văn sang references/playbook.md kèm tóm tắt gotcha chí tử; mục Gọi skill liên quan sinh từ shared/skill-graph.json; thêm system-model.md, solution-method.md; omi-mcp.md tách omi-mcp-extra.md; kéo về ghi chú đã kiểm chứng (omiflow credit và nhánh Thất bại, chatbot ui-gotchas, ai-insight tiêu chí đánh giá, callbot-gen-ai thử cuộc gọi web); test kích thước SKILL.md và thuật ngữ |

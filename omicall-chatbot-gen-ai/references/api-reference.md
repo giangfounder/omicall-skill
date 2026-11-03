@@ -258,7 +258,7 @@ Quy ước của user: trường hợp trong Ngữ cảnh bắt đầu **luôn**
 ### Bot → ACTION `START_OTHER_CAMPAIGN` (gọi flow phụ thuộc): flow KHÔNG nhận biến hội thoại (đã chạy thật 10/2026)
 - Bot nhận đúng trường hợp và flow phụ thuộc chạy ("Hoàn thành"), nhưng trong log flow mọi biến đều trống: `{{social_content}}`, `{{social_customer_name}}`, biến COLLECT_INFO → "-".
 - Nút "Thêm khách hàng" khi đó tạo khách từ danh tính hội thoại (tên/SĐT/email khách điền ở form LiveTalk), KHÔNG phải số khách nhắn trong chat.
-- Nút ACTION không có "Bước tiếp theo" → bot không trả lời tin nhắn đã kích hoạt trường hợp. Nối tiếp một bước (vd. quay lại hội thoại/gửi tin) nếu cần bot tiếp tục.
+- Nút ACTION không có "Bước tiếp theo" → bot không đi tiếp kịch bản sau hành động. ⚠ Không có nghĩa bot im lặng: test LiveTalk thật 11/2026 (gpt-4o-mini, claude-3-haiku) bot vẫn gửi 1 câu LLM tự soạn trước khi chạy hành động (xem `ui-gotchas.md` mục "Bot không im lặng được").
 - Muốn truyền SĐT khách nhắn: cho bot thu biến (nút Thu thập thông tin trong bot) rồi truyền giá trị qua hành động có tham số (vd. API → webhook OMIFlow với body chứa biến), không dựa vào biến hội thoại trong flow phụ thuộc.
 
 ### Bot thu SĐT rồi gọi webhook OMIFlow (đã chạy thật end-to-end 10/2026)
@@ -269,3 +269,8 @@ Luồng: Trường hợp (CUSTOM_INTENT) → `OMI_BOT_COLLECT_INFO` → (case bi
 - Thời điểm: nút thu thập trả lời khách (theo hướng dẫn) rồi ở trạng thái `waiting_reply`; case được xét và webhook chạy **ở tin nhắn kế tiếp của khách**, không phải ngay tin có số. Lượt test ghi nhận 2 lần gọi webhook cùng giây (lần 2 trùng khách → CONTACT_EXIST).
 - Gotcha UI: tạo nút con bằng "Nút kế tiếp" ngay trong ngăn kéo cha rồi đi tiếp sang nút cháu → cấu hình nút con bị mất khi lưu. Mỗi nút: điền → đóng hết ngăn kéo → "Lưu lại" → GET kiểm tra, rồi mới mở nút kế. Nối cạnh còn thiếu thì sửa bằng API (`save_draft_v2`).
 - **Khác biệt kênh thật (10/2026)**: cùng bot, chat qua "Trò chuyện thử" thì SEND_WEBHOOK chạy; chat qua widget LiveTalk đi qua OMIFlow (`OMI_BOT_AI` node) thì bot trả lời bình thường nhưng **webhook không được gọi** sau 3 lượt khách (log flow ở `waiting_reply`, flow webhook không có lượt chạy). Chưa xác định nguyên nhân; trước khi dựa vào hành động trong bot cho kênh thật phải test qua đúng kênh. ("2 lượt chạy cùng giây" trong log flow webhook = bước CONDITION + ACTION của một lượt, không phải gọi trùng.)
+
+### Bot ACTION `START_OTHER_CAMPAIGN` — JSON runtime (✔ GET 11/2026)
+- Node: `{"node_type":"ACTION","actions":[{"id":"<10 ký tự>","type":"START_OTHER_CAMPAIGN","data":{"ids":["<flow uuid>"]}}],"next_nodes":[]}` (`ids` là **uuid** của flow, không phải `_id`). Editor: `{"type":"START_OTHER_CAMPAIGN","datas":{"selected":{"value":"<flow uuid>","_id":"<id>","label":"<tên flow>","isDependent":true}}}`.
+- Một nút ACTION chứa được nhiều hành động (vd. `ADD_CLASSIFY` + `START_OTHER_CAMPAIGN`). Bỏ "Nút kế tiếp" ngay trong ngăn (nút ✕ đỏ) → `next_nodes:[]`, cạnh tự gỡ; nút `END_BOT` cũ còn lại mồ côi, vô hại.
+- Dùng cho "bot không biết thì im lặng, chuyển nhân viên": trường hợp → ACTION (không bước tiếp) → flow phụ thuộc làm khung giờ/gửi tin/`RE_DISTRIBUTE`.

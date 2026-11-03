@@ -1,13 +1,13 @@
 ---
 name: omicall-chatbot-gen-ai
 description: >-
-  [v1.11.2] Xây dựng, kiểm thử và tối ưu Chatbot AI (OmiBot) của OMICall/OMICRM trên Zalo OA, Facebook và LiveTalk: lời nhắc hệ thống, ý định trong Ngữ cảnh bắt đầu, truy xuất tri thức (RAG) từ Dữ liệu khác, Truy vấn API, lưu bản nháp hoặc xuất bản qua chatbot-gateway, trò chuyện thử trên LiveTalk và chấm điểm trước/sau khi chỉnh sửa. Áp dụng khi có đường dẫn omicrm.io/ai/bot/.
+  [v1.11.3] Xây dựng, kiểm thử và tối ưu Chatbot AI (OmiBot) của OMICall/OMICRM trên Zalo OA, Facebook và LiveTalk: lời nhắc hệ thống, ý định trong Ngữ cảnh bắt đầu, truy xuất tri thức (RAG) từ Dữ liệu khác, Truy vấn API, lưu bản nháp hoặc xuất bản qua chatbot-gateway, trò chuyện thử trên LiveTalk và chấm điểm trước/sau khi chỉnh sửa. Áp dụng khi có đường dẫn omicrm.io/ai/bot/.
 ---
 
 # OMiCALL/OMiCRM AI Chatbot (OmiBot) Gen AI — Generic Builder Playbook (mọi tenant / mọi bot)
 
 ## Bước bắt buộc: cập nhật skill
-Chạy `python "<thư mục skill>/scripts/self_update.py"` trước mọi bước khác (`<thư mục skill>` = thư mục chứa SKILL.md này). Câu đầu tiên trả lời user: `Đang dùng omicall-chatbot-gen-ai v<phiên bản>` (lấy từ dòng `SKILL_VERSION`; script lỗi thì dùng v1.11.2). Script báo **SKILL.md đã thay đổi** → đọc lại SKILL.md từ đĩa rồi mới làm tiếp. Không cập nhật được → báo lý do, làm tiếp bằng bản hiện có; không sửa, xoá hay commit trong thư mục skill.
+Chạy `python "<thư mục skill>/scripts/self_update.py"` trước mọi bước khác (`<thư mục skill>` = thư mục chứa SKILL.md này). Câu đầu tiên trả lời user: `Đang dùng omicall-chatbot-gen-ai v<phiên bản>` (lấy từ dòng `SKILL_VERSION`; script lỗi thì dùng v1.11.3). Script báo **SKILL.md đã thay đổi** → đọc lại SKILL.md từ đĩa rồi mới làm tiếp. Không cập nhật được → báo lý do, làm tiếp bằng bản hiện có; không sửa, xoá hay commit trong thư mục skill.
 
 ## Bắt đầu và cách trao đổi (BẮT BUỘC)
 Làm theo `references/conversation.md`, chung cho mọi skill OMI:
@@ -55,6 +55,9 @@ Mắt xích thuộc skill khác (xem `references/system-model.md`) thì không t
 - File GET đã che `Authorization` không dùng làm base để lưu (validator X6).
 - Test lại sau mỗi lần sửa: gõ `/end` trong khung chat; test qua đúng kênh thật trước khi giao.
 - Editor UI: mỗi nút điền → đóng hết ngăn kéo → Lưu lại → GET kiểm; làm giao diện thì đọc `references/ui-gotchas.md` trước.
+- **Bot không im lặng được khi chuyển nhân viên** (✔ LiveTalk thật 11/2026): trường hợp → `END_BOT` hay → ACTION không bước tiếp, bot vẫn gửi 1 câu LLM tự soạn (cả gpt-4o-mini, claude-3-haiku); ép prompt "để trống" thì bot im nhưng **không chọn trường hợp → không chuyển nhân viên**. Báo user là giới hạn nền tảng; chi tiết `references/ui-gotchas.md`.
+- Chuyển nhân viên theo khung giờ: trường hợp → ACTION `START_OTHER_CAMPAIGN` gọi flow phụ thuộc (khung giờ → `RE_DISTRIBUTE` + tắt chatbot); không đặt ở nhánh "BOT chủ động kết thúc" của flow vì nhánh này cũng chạy khi khách im lặng hết thời gian chờ (skill `omicall-omiflow`, node-catalog).
+- Tắt chatbot khi bàn giao rồi thì `/end` không bật lại bot trên hội thoại đó; test bot bằng hội thoại mới.
 - Không bấm Xuất bản trừ khi user yêu cầu. Đăng nhập an toàn: không đọc cookie, không in token; kiểm `domain`/`tenant_id` bằng `omi_session.py` trước khi ghi (mục "Đăng nhập an toàn" trong playbook).
 
 ## Chi tiết theo bước (`references/playbook.md`)

@@ -511,5 +511,50 @@
   "source": "references/node-catalog.md:321",
   "verified_on": null,
   "ui_hint": "Bản editor camelCase, nút đầu BEGIN; chưa có mẫu JSON: lấy từ GET thật, sửa song song với nodes"
+ },
+ {
+  "type": "UPDATE_SOCIAL_CHATBOT_STATUS",
+  "side": "runtime",
+  "status": "verified",
+  "template": null,
+  "source": "references/node-catalog.md (Tắt chatbot của hội thoại)",
+  "verified_on": "2026-11",
+  "ui_hint": "Cập nhật cuộc trò chuyện → Trạng thái Chatbot; data.enable_chatbot=false."
+ },
+ {
+  "type": "RE_DISTRIBUTE",
+  "side": "runtime",
+  "status": "verified",
+  "template": null,
+  "source": "references/node-catalog.md (Chuyển hội thoại cho nhân viên)",
+  "verified_on": "2026-11",
+  "ui_hint": "Cập nhật cuộc trò chuyện → Phân bổ cuộc trò chuyện."
+ },
+ {
+  "type": "ASSIGN_CONVERSATION_MEMBER",
+  "side": "runtime",
+  "status": "verified",
+  "template": null,
+  "source": "references/node-catalog.md",
+  "verified_on": "2026-11",
+  "ui_hint": "Cập nhật cuộc trò chuyện → Nhân viên phụ trách (cụ thể)."
+ },
+ {
+  "type": "LIVE_TALK_MESSAGE",
+  "side": "runtime",
+  "status": "verified",
+  "template": null,
+  "source": "references/node-catalog.md (Gửi tin LiveTalk)",
+  "verified_on": "2026-11",
+  "ui_hint": "Người nhận mặc định Cuộc trò chuyện liên quan."
+ },
+ {
+  "type": "CUSTOM TIME_FRAME (Khung giờ)",
+  "side": "runtime",
+  "status": "verified",
+  "template": null,
+  "source": "references/node-catalog.md (Khung giờ làm việc)",
+  "verified_on": "2026-11",
+  "ui_hint": "Phải đi cùng ≥1 điều kiện khác, chế độ VÀ; key '1'=CN."
  }
 ]

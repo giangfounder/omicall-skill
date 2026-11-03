@@ -93,3 +93,9 @@ Chạy tự động: `python <thư mục skill>/scripts/validate_flow.py <GET.js
 - Danh sách flow: `POST campaign-v1-stg…/omi_v2/campaign/search?page=1&size=50` body `{}`. Bộ trạng thái khách: `POST contact-v1-stg…/filter_contacts/get_list` body `{}` (`payload.items[].values[].second_level[]`). Cả hai gọi được qua `omi_api.post_json('<service>', '<path>', {})`.
 - Flow tạo mới trên UI lưu xong có `_id` nháp (`is_draft:true`, `is_publish:false`); `omi_save.py flow` lưu đè được ngay và tự GET + validate post.
 
+
+## Tạo flow mới bằng `add_v2` (✔ chạy 11/2026)
+- `POST /omi_v2/campaign/add_v2` multipart `file` = JSON nhân bản từ GET một flow có sẵn, bỏ `_id, uuid, public_key, version, versions, created_date, last_updated_date, create_by, last_update_by, last_publish_time, executed, execute_amount, tenant_id`; đặt `name`, `is_publish:false`, `dependent_config`, `start_date/end_date:null`. Giữ nguyên id nút/cạnh/`name_mappings` của flow nguồn được.
+- Kết quả `status_code 9999`, payload có `_id`, `uuid` mới, **`version:1`, `is_publish:true`** (add_v2 tạo luôn bản đã xuất bản, không phải nháp) → chỉ dùng khi user đã duyệt cho chạy, hoặc flow phụ thuộc (không tự chạy theo sự kiện).
+- Đường nhanh tạo flow phụ thuộc gọi từ bot: nhân bản flow có trigger Đa kênh, trigger chỉ giữ `social_channel`, bỏ nút `OMI_BOT_AI`, `dependent_config:{"is_dependent":true}` → add_v2 → `validate_flow.py --mode pre` PASS trước khi gửi.
+- Sửa flow đã xuất bản trên UI rồi bấm "Cập nhật" → lưu vào **bản nháp có `_id` riêng** (thường = `_id` bản xuất bản + 1, cùng `uuid`), URL editor đổi sang id nháp; `GET /get/<id xuất bản>` vẫn trả bản cũ → đọc bản nháp bằng id nháp. Flow phụ thuộc được gọi qua bot chạy với đối tượng `SOCIAL_CONVERSATION` đúng hội thoại (log `target_value` = id hội thoại), `RE_DISTRIBUTE` SUCCESS (✔ 11/2026).
