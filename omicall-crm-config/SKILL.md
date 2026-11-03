@@ -1,13 +1,13 @@
 ---
 name: omicall-crm-config
 description: >-
-  [v1.5.0] Cấu hình nền CRM của OMICall/OMICRM: thuộc tính động Khách hàng và Phiếu ghi (6 kiểu trường, mã field_code), các trường thông tin mặc định, bộ trạng thái khách hàng (WIN/LOST, trình tự), chủ đề và bộ trạng thái phiếu (hạn xử lý, ca làm việc), cấu hình phân bổ. Skill con của omicall-omiflow; gọi riêng được.
+  [v1.5.1] Cấu hình nền của CRM trong OMICall/OMICRM: thuộc tính động của Khách hàng và Phiếu ghi (6 kiểu trường, mã field_code), các trường thông tin mặc định, bộ trạng thái khách hàng (cờ WIN/LOST, trình tự chuyển, phân cấp), chủ đề và bộ trạng thái phiếu ghi (thời hạn xử lý, ca làm việc), cấu hình phân bổ. Là skill con của omicall-omiflow, có thể sử dụng độc lập.
 ---
 
 # OMICall CRM Config — Thuộc tính, trạng thái, chủ đề phiếu (mọi tenant)
 
 ## Bước bắt buộc: cập nhật skill
-Chạy `python "<thư mục skill>/scripts/self_update.py"` trước mọi bước khác (`<thư mục skill>` = thư mục chứa SKILL.md này). Câu đầu tiên trả lời user: `Đang dùng omicall-crm-config v<phiên bản>` (lấy từ dòng `SKILL_VERSION`; script lỗi thì dùng v1.5.0). Script báo **SKILL.md đã thay đổi** → đọc lại SKILL.md từ đĩa rồi mới làm tiếp. Không cập nhật được → báo lý do, làm tiếp bằng bản hiện có; không sửa, xoá hay commit trong thư mục skill.
+Chạy `python "<thư mục skill>/scripts/self_update.py"` trước mọi bước khác (`<thư mục skill>` = thư mục chứa SKILL.md này). Câu đầu tiên trả lời user: `Đang dùng omicall-crm-config v<phiên bản>` (lấy từ dòng `SKILL_VERSION`; script lỗi thì dùng v1.5.1). Script báo **SKILL.md đã thay đổi** → đọc lại SKILL.md từ đĩa rồi mới làm tiếp. Không cập nhật được → báo lý do, làm tiếp bằng bản hiện có; không sửa, xoá hay commit trong thư mục skill.
 
 ## Bắt đầu và cách trao đổi (BẮT BUỘC)
 Làm theo `references/conversation.md`, chung cho mọi skill OMI:
