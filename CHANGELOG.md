@@ -12,6 +12,7 @@ Các bản trước 2026-10-23 được đánh số lại theo lịch sử commi
 ## omicall-callbot-flow
 | Phiên bản | Ngày | Commit | Thay đổi |
 |---|---|---|---|
+| 1.8.3 | 2026-11-04 | tag `omicall-callbot-flow/v1.8.3` | Giảm token: rút gọn conversation.md (8,1→5,2 KB), self_update một lần mỗi phiên, system-model/solution-method chỉ đọc khi dựng mới; thêm omicall-assistant/references/default-behaviors.md (bảng mặc định callbot cổ điển/SmartAgent/chatbot) |
 | 1.8.2 | 2026-11-03 | tag `omicall-callbot-flow/v1.8.2` | Viết lại mô tả skill theo văn phong chuẩn |
 | 1.8.1 | 2026-11-02 | tag `omicall-callbot-flow/v1.8.1` | Đồng bộ conversation.md và omi-mcp.md từ shared (quy tắc ít ảnh khi dựng bằng giao diện, mục 4c) |
 | 1.8.0 | 2026-11-02 | tag `omicall-callbot-flow/v1.8.0` | Dễ dùng và ít token: mọi skill trao đổi theo references/conversation.md (khung 5 bước, khi nào hỏi lại, mẫu câu, lời thường thay thuật ngữ, đăng nhập bằng form); SKILL.md builder rút còn 8-11KB, chi tiết chuyển nguyên văn sang references/playbook.md kèm tóm tắt gotcha chí tử; mục Gọi skill liên quan sinh từ shared/skill-graph.json; thêm system-model.md, solution-method.md; omi-mcp.md tách omi-mcp-extra.md; kéo về ghi chú đã kiểm chứng (omiflow credit và nhánh Thất bại, chatbot ui-gotchas, ai-insight tiêu chí đánh giá, callbot-gen-ai thử cuộc gọi web); test kích thước SKILL.md và thuật ngữ |
@@ -33,6 +34,7 @@ Các bản trước 2026-10-23 được đánh số lại theo lịch sử commi
 ## omicall-callbot-gen-ai
 | Phiên bản | Ngày | Commit | Thay đổi |
 |---|---|---|---|
+| 1.17.1 | 2026-11-04 | tag `omicall-callbot-gen-ai/v1.17.1` | Giảm token: rút gọn conversation.md (8,1→5,2 KB), self_update một lần mỗi phiên, system-model/solution-method chỉ đọc khi dựng mới; thêm omicall-assistant/references/default-behaviors.md (bảng mặc định callbot cổ điển/SmartAgent/chatbot) |
 | 1.17.0 | 2026-11-03 | tag `omicall-callbot-gen-ai/v1.17.0` | Ghi tri thức dựng bằng giao diện và API (11/2026) vào tài liệu tham chiếu; viết lại mô tả skill theo văn phong chuẩn |
 | 1.16.0 | 2026-11-03 | tag `omicall-callbot-gen-ai/v1.16.0` | Thêm references/optimize-existing.md (đánh giá và tối ưu nhiều kịch bản đã có: tách FAQ ra RAG, chuẩn hoá mã biến, bẫy is_publish, RAG đường Dữ liệu khác khi filestore callbot lỗi -9999, môi trường chỉ có terminal) và scripts optimize_script.py, rag_other.py |
 | 1.15.1 | 2026-11-02 | tag `omicall-callbot-gen-ai/v1.15.1` | Đồng bộ conversation.md và omi-mcp.md từ shared (quy tắc ít ảnh khi dựng bằng giao diện, mục 4c) |
@@ -65,6 +67,7 @@ Các bản trước 2026-10-23 được đánh số lại theo lịch sử commi
 ## omicall-chatbot-gen-ai
 | Phiên bản | Ngày | Commit | Thay đổi |
 |---|---|---|---|
+| 1.11.4 | 2026-11-04 | tag `omicall-chatbot-gen-ai/v1.11.4` | Giảm token: rút gọn conversation.md (8,1→5,2 KB), self_update một lần mỗi phiên, system-model/solution-method chỉ đọc khi dựng mới; thêm omicall-assistant/references/default-behaviors.md (bảng mặc định callbot cổ điển/SmartAgent/chatbot) |
 | 1.11.3 | 2026-11-03 | tag `omicall-chatbot-gen-ai/v1.11.3` | Ghi tri thức chuyển nhân viên theo khung giờ cho chatbot (11/2026): flow phụ thuộc gọi từ bot (START_OTHER_CAMPAIGN), tắt chatbot khi bàn giao, Khung giờ cần thêm 1 điều kiện VÀ, nhánh BOT chủ động kết thúc chạy cả khi khách im lặng, add_v2 tạo bản đã xuất bản; ghi rõ bot không im lặng được khi chuyển nhân viên |
 | 1.11.2 | 2026-11-03 | tag `omicall-chatbot-gen-ai/v1.11.2` | Viết lại mô tả skill theo văn phong chuẩn |
 | 1.11.1 | 2026-11-02 | tag `omicall-chatbot-gen-ai/v1.11.1` | Đồng bộ conversation.md và omi-mcp.md từ shared (quy tắc ít ảnh khi dựng bằng giao diện, mục 4c) |
@@ -91,6 +94,7 @@ Các bản trước 2026-10-23 được đánh số lại theo lịch sử commi
 ## omicall-omiflow
 | Phiên bản | Ngày | Commit | Thay đổi |
 |---|---|---|---|
+| 1.20.3 | 2026-11-04 | tag `omicall-omiflow/v1.20.3` | Giảm token: rút gọn conversation.md (8,1→5,2 KB), self_update một lần mỗi phiên, system-model/solution-method chỉ đọc khi dựng mới; thêm omicall-assistant/references/default-behaviors.md (bảng mặc định callbot cổ điển/SmartAgent/chatbot) |
 | 1.20.2 | 2026-11-03 | tag `omicall-omiflow/v1.20.2` | Ghi tri thức chuyển nhân viên theo khung giờ cho chatbot (11/2026): flow phụ thuộc gọi từ bot (START_OTHER_CAMPAIGN), tắt chatbot khi bàn giao, Khung giờ cần thêm 1 điều kiện VÀ, nhánh BOT chủ động kết thúc chạy cả khi khách im lặng, add_v2 tạo bản đã xuất bản; ghi rõ bot không im lặng được khi chuyển nhân viên |
 | 1.20.1 | 2026-11-03 | tag `omicall-omiflow/v1.20.1` | Viết lại mô tả skill theo văn phong chuẩn |
 | 1.20.0 | 2026-11-02 | tag `omicall-omiflow/v1.20.0` | Ghi tri thức dựng bằng giao diện (✔ UI 11/2026): bộ trạng thái khách phân cấp, flow nhắc tương tác + thu hồi lead (JSON trigger nhiều trường hợp, thông báo cho nhân viên phụ trách, điều kiện không tương tác, thu hồi, nhân bản nút bằng script); omi-mcp.md mục 4c điều khiển giao diện không chụp ảnh và gotcha form đăng nhập cục bộ chỉ cất token |
@@ -126,6 +130,7 @@ Các bản trước 2026-10-23 được đánh số lại theo lịch sử commi
 ## omicall-crm-config
 | Phiên bản | Ngày | Commit | Thay đổi |
 |---|---|---|---|
+| 1.5.2 | 2026-11-04 | tag `omicall-crm-config/v1.5.2` | Giảm token: rút gọn conversation.md (8,1→5,2 KB), self_update một lần mỗi phiên, system-model/solution-method chỉ đọc khi dựng mới; thêm omicall-assistant/references/default-behaviors.md (bảng mặc định callbot cổ điển/SmartAgent/chatbot) |
 | 1.5.1 | 2026-11-03 | tag `omicall-crm-config/v1.5.1` | Viết lại mô tả skill theo văn phong chuẩn |
 | 1.5.0 | 2026-11-02 | tag `omicall-crm-config/v1.5.0` | Ghi tri thức dựng bằng giao diện (✔ UI 11/2026): bộ trạng thái khách phân cấp, flow nhắc tương tác + thu hồi lead (JSON trigger nhiều trường hợp, thông báo cho nhân viên phụ trách, điều kiện không tương tác, thu hồi, nhân bản nút bằng script); omi-mcp.md mục 4c điều khiển giao diện không chụp ảnh và gotcha form đăng nhập cục bộ chỉ cất token |
 | 1.4.0 | 2026-11-02 | tag `omicall-crm-config/v1.4.0` | Dễ dùng và ít token: mọi skill trao đổi theo references/conversation.md (khung 5 bước, khi nào hỏi lại, mẫu câu, lời thường thay thuật ngữ, đăng nhập bằng form); SKILL.md builder rút còn 8-11KB, chi tiết chuyển nguyên văn sang references/playbook.md kèm tóm tắt gotcha chí tử; mục Gọi skill liên quan sinh từ shared/skill-graph.json; thêm system-model.md, solution-method.md; omi-mcp.md tách omi-mcp-extra.md; kéo về ghi chú đã kiểm chứng (omiflow credit và nhánh Thất bại, chatbot ui-gotchas, ai-insight tiêu chí đánh giá, callbot-gen-ai thử cuộc gọi web); test kích thước SKILL.md và thuật ngữ |
@@ -138,6 +143,7 @@ Các bản trước 2026-10-23 được đánh số lại theo lịch sử commi
 ## omicall-pbx-config
 | Phiên bản | Ngày | Commit | Thay đổi |
 |---|---|---|---|
+| 1.5.1 | 2026-11-04 | tag `omicall-pbx-config/v1.5.1` | Giảm token: rút gọn conversation.md (8,1→5,2 KB), self_update một lần mỗi phiên, system-model/solution-method chỉ đọc khi dựng mới; thêm omicall-assistant/references/default-behaviors.md (bảng mặc định callbot cổ điển/SmartAgent/chatbot) |
 | 1.5.0 | 2026-11-03 | tag `omicall-pbx-config/v1.5.0` | Ghi tri thức dựng bằng giao diện và API (11/2026) vào tài liệu tham chiếu; viết lại mô tả skill theo văn phong chuẩn |
 | 1.4.1 | 2026-11-02 | tag `omicall-pbx-config/v1.4.1` | Đồng bộ conversation.md và omi-mcp.md từ shared (quy tắc ít ảnh khi dựng bằng giao diện, mục 4c) |
 | 1.4.0 | 2026-11-02 | tag `omicall-pbx-config/v1.4.0` | Dễ dùng và ít token: mọi skill trao đổi theo references/conversation.md (khung 5 bước, khi nào hỏi lại, mẫu câu, lời thường thay thuật ngữ, đăng nhập bằng form); SKILL.md builder rút còn 8-11KB, chi tiết chuyển nguyên văn sang references/playbook.md kèm tóm tắt gotcha chí tử; mục Gọi skill liên quan sinh từ shared/skill-graph.json; thêm system-model.md, solution-method.md; omi-mcp.md tách omi-mcp-extra.md; kéo về ghi chú đã kiểm chứng (omiflow credit và nhánh Thất bại, chatbot ui-gotchas, ai-insight tiêu chí đánh giá, callbot-gen-ai thử cuộc gọi web); test kích thước SKILL.md và thuật ngữ |
@@ -150,6 +156,7 @@ Các bản trước 2026-10-23 được đánh số lại theo lịch sử commi
 ## omicall-ai-insight
 | Phiên bản | Ngày | Commit | Thay đổi |
 |---|---|---|---|
+| 1.5.3 | 2026-11-04 | tag `omicall-ai-insight/v1.5.3` | Giảm token: rút gọn conversation.md (8,1→5,2 KB), self_update một lần mỗi phiên, system-model/solution-method chỉ đọc khi dựng mới; thêm omicall-assistant/references/default-behaviors.md (bảng mặc định callbot cổ điển/SmartAgent/chatbot) |
 | 1.5.2 | 2026-11-03 | tag `omicall-ai-insight/v1.5.2` | Viết lại mô tả skill theo văn phong chuẩn |
 | 1.5.1 | 2026-11-02 | tag `omicall-ai-insight/v1.5.1` | Đồng bộ conversation.md và omi-mcp.md từ shared (quy tắc ít ảnh khi dựng bằng giao diện, mục 4c) |
 | 1.5.0 | 2026-11-02 | tag `omicall-ai-insight/v1.5.0` | Dễ dùng và ít token: mọi skill trao đổi theo references/conversation.md (khung 5 bước, khi nào hỏi lại, mẫu câu, lời thường thay thuật ngữ, đăng nhập bằng form); SKILL.md builder rút còn 8-11KB, chi tiết chuyển nguyên văn sang references/playbook.md kèm tóm tắt gotcha chí tử; mục Gọi skill liên quan sinh từ shared/skill-graph.json; thêm system-model.md, solution-method.md; omi-mcp.md tách omi-mcp-extra.md; kéo về ghi chú đã kiểm chứng (omiflow credit và nhánh Thất bại, chatbot ui-gotchas, ai-insight tiêu chí đánh giá, callbot-gen-ai thử cuộc gọi web); test kích thước SKILL.md và thuật ngữ |
@@ -163,6 +170,7 @@ Các bản trước 2026-10-23 được đánh số lại theo lịch sử commi
 ## omicall-assistant
 | Phiên bản | Ngày | Commit | Thay đổi |
 |---|---|---|---|
+| 1.3.1 | 2026-11-04 | tag `omicall-assistant/v1.3.1` | Giảm token: rút gọn conversation.md (8,1→5,2 KB), self_update một lần mỗi phiên, system-model/solution-method chỉ đọc khi dựng mới; thêm omicall-assistant/references/default-behaviors.md (bảng mặc định callbot cổ điển/SmartAgent/chatbot) |
 | 1.3.0 | 2026-11-03 | tag `omicall-assistant/v1.3.0` | Ghi tri thức dựng bằng giao diện và API (11/2026) vào tài liệu tham chiếu; viết lại mô tả skill theo văn phong chuẩn |
 | 1.2.0 | 2026-11-02 | tag `omicall-assistant/v1.2.0` | Tổng quản lý điều phối: chia đợt theo phụ thuộc, giao skill con cho subagent chạy song song (tối đa 3 subagent giao diện, mỗi artefact một subagent), lời giao việc và mẫu kết quả chuẩn, tự kiểm bằng GET/validator/manifest, một lượt duyệt đầu và gom câu hỏi chặn; hỏi đáp nhiều mảng tra song song (references/orchestration.md) |
 | 1.1.1 | 2026-11-02 | tag `omicall-assistant/v1.1.1` | Đồng bộ conversation.md và omi-mcp.md từ shared (quy tắc ít ảnh khi dựng bằng giao diện, mục 4c) |
