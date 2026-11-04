@@ -1,13 +1,13 @@
 ---
 name: omicall-callbot-gen-ai
 description: >-
-  [v1.17.1] Xây dựng và chỉnh sửa kịch bản Callbot Gen AI (SmartAgent, loại AI_AGENT) của OMICall/OMICRM: ý định, thu thập thông tin, phân loại, gọi API, truy xuất tri thức (RAG), chuyển máy và lời nhắc hệ thống cho tổng đài viên AI. Xây dựng từ tài liệu nghiệp vụ hoặc PDF; chỉnh sửa tại …/ai/callbot/script/update/{scriptId}; lưu qua chatbot-gateway và kiểm thử.
+  [v1.17.2] Xây dựng và chỉnh sửa kịch bản Callbot Gen AI (SmartAgent, loại AI_AGENT) của OMICall/OMICRM: ý định, thu thập thông tin, phân loại, gọi API, truy xuất tri thức (RAG), chuyển máy và lời nhắc hệ thống cho tổng đài viên AI. Xây dựng từ tài liệu nghiệp vụ hoặc PDF; chỉnh sửa tại …/ai/callbot/script/update/{scriptId}; lưu qua chatbot-gateway và kiểm thử.
 ---
 
 # OMiCALL Callbot Gen AI — Generic Builder Playbook (all tenants / all scripts)
 
 ## Bước bắt buộc: cập nhật skill
-Chạy `python "<thư mục skill>/scripts/self_update.py"` trước mọi bước khác, một lần mỗi phiên (đã chạy trong phiên này, kể cả ở skill khác, thì bỏ qua và không nhắc lại phiên bản) (`<thư mục skill>` = thư mục chứa SKILL.md này). Câu đầu tiên trả lời user: `Đang dùng omicall-callbot-gen-ai v<phiên bản>` (lấy từ dòng `SKILL_VERSION`; script lỗi thì dùng v1.17.1). Script báo **SKILL.md đã thay đổi** → đọc lại SKILL.md từ đĩa rồi mới làm tiếp. Không cập nhật được → báo lý do, làm tiếp bằng bản hiện có; không sửa, xoá hay commit trong thư mục skill.
+Chạy `python "<thư mục skill>/scripts/self_update.py"` trước mọi bước khác, 1 lần/phiên (đã chạy rồi, kể cả ở skill khác, thì bỏ qua, không nhắc lại phiên bản) (`<thư mục skill>` = thư mục chứa SKILL.md này). Câu đầu tiên trả lời user: `Đang dùng omicall-callbot-gen-ai v<phiên bản>` (lấy từ dòng `SKILL_VERSION`; script lỗi thì dùng v1.17.2). Script báo **SKILL.md đã thay đổi** → đọc lại SKILL.md từ đĩa rồi mới làm tiếp. Không cập nhật được → báo lý do, làm tiếp bằng bản hiện có; không sửa, xoá hay commit trong thư mục skill.
 
 ## Bắt đầu và cách trao đổi (BẮT BUỘC)
 Làm theo `references/conversation.md`, chung cho mọi skill OMI:
@@ -35,6 +35,10 @@ Chạy script bằng đường dẫn tuyệt đối `python "<thư mục skill>/
 | Quy chuẩn viết kịch bản chung, mô tả biến, ý định, hành động, chuyển nút, thao tác UI | `references/agent-config-guide.md` |
 
 Không bao giờ: bấm **Xuất bản** hay ghi đè script đang chạy khi user chưa duyệt (Gotchas). Không nhập mật khẩu hộ user, không đọc cookie hay in token (Input contract). Không tạo cạnh hay `next_node` về BEGIN (Rules 3).
+
+## Mặc định hành vi và kiểm thử
+- Tình huống chung (từ chối, ngoài phạm vi, tức giận, im lặng, đòi gặp nhân viên, kết thúc): đối chiếu `references/default-behaviors.md` giữa callbot cổ điển, SmartAgent, chatbot; ô "—" là Cần xác nhận, không đoán.
+- Trước khi giao: chạy bộ tình huống `references/test-cases.md`, báo `Đạt n/12`.
 
 ## Tư duy chức năng (trước khi chọn module)
 - Chỉ khi dựng mới hoặc việc chạm nhiều module (sửa nhỏ một bước/lời nhắc thì bỏ qua, đọc đúng mục playbook cần): đọc `references/system-model.md` (hệ thống có gì, làm được gì, đường nhanh nhất cho từng việc) và `references/solution-method.md` (phân rã bài toán thành chuỗi Sự kiện → Điều kiện → Hành động, ghép module có sẵn). Không khớp mẫu theo ca; mắt xích chưa xác minh thì báo user, khảo sát một lần bằng log mạng rồi ghi vào `system-model.md`.
@@ -72,7 +76,7 @@ Mắt xích thuộc skill khác (xem `references/system-model.md`) thì không t
 - Không bấm Xuất bản trừ khi user yêu cầu; token đúng tenant, không đọc cookie.
 
 ## Chi tiết theo bước (`references/playbook.md`)
-Đọc đúng mục khi tới bước đó, không đọc cả file. Mục mà Đường nhanh hay Rules nhắc tới nhưng không có ở đây (Input contract, Workflow, Gotchas, Skill con…) đều nằm trong file này.
+Đọc đúng mục khi tới bước đó, không đọc cả file. Định vị: `grep -n "^#" references/playbook.md`. Mục mà Đường nhanh hay Rules nhắc tới nhưng không có ở đây (Input contract, Workflow, Gotchas, Skill con…) đều nằm trong file này.
 - Overview
 - Input contract (chỉ 3 thứ, hỏi MỘT LẦN rồi tự làm hết)
 - Workflow

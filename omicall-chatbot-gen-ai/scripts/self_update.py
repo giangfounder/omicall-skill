@@ -6,7 +6,7 @@
   và nhắc ĐỌC LẠI SKILL.md nếu file này vừa đổi (nội dung agent đã nạp là bản cũ).
 - Skill không phải git clone (chép tay): so `VERSION` với bản trên GitHub, báo nếu có bản mới và cách cập nhật.
 - Không cập nhật được (mất mạng, có sửa đổi chưa commit...): báo lý do, vẫn cho làm tiếp với bản hiện có.
-- Đã kiểm tra thành công trong 6 giờ gần nhất: bỏ qua, không gọi mạng (thêm `--force` để kiểm tra lại).
+- Bất kỳ skill OMI nào đã kiểm tra thành công trong 6 giờ gần nhất: bỏ qua, không gọi mạng (thêm `--force` để kiểm tra lại).
 Không sửa, xoá hay commit gì trong thư mục skill. Dòng cuối luôn là `SKILL_VERSION=<tên skill> <phiên bản>`.
 `--help` chỉ in hướng dẫn (không gọi git hay mạng); tham số lạ -> exit 2; thư mục không có VERSION (ví dụ shared/) -> exit 2.
 """
@@ -21,7 +21,7 @@ REPO = "https://github.com/giangfounder/omicall-skill"
 RAW = "https://raw.githubusercontent.com/giangfounder/omicall-skill/main"
 SKILL_DIR = Path(__file__).resolve().parent.parent
 NAME = SKILL_DIR.name
-STAMP = Path.home() / ".cache" / "omicall-skill" / f"{NAME}.last"  # ngoài thư mục skill để không bẩn git
+STAMP = Path.home() / ".cache" / "omicall-skill" / "all.last"  # ngoài thư mục skill để không bẩn git; một dấu chung vì mọi skill nằm cùng một repo, một lần pull cập nhật tất cả
 TTL = 6 * 3600
 
 

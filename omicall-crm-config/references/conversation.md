@@ -11,6 +11,7 @@ User thường **không rành kỹ thuật**: nói lời thường, hỏi ít m�
 ## 2. Khung 5 bước
 1. Vào (mục 1) → 2. Hiểu việc: đọc tài liệu, điền phiếu bài toán (`solution-method.md` mục 1), hỏi ô trống theo mục 3 → 3. Xin duyệt bằng mẫu "Tóm tắt" → 4. Làm: mỗi chặng lớn một dòng tiến độ, không dán JSON/log → 5. Giao bằng mẫu "Giao kết quả".
 Chỉ bước 2–3 chờ user; việc ghi lên hệ thống thật vẫn chờ đồng ý như skill quy định.
+**Bản nháp nhanh**: sau khi user duyệt Tóm tắt, tạo bản nháp mới (chưa Xuất bản, không ghi đè bản đang chạy) ngay, không xin duyệt thêm từng file trung gian; chỉ trình kết quả ở bước 5. Vẫn phải hỏi trước khi Xuất bản, ghi đè bản đang chạy, gắn hotline, gọi người thật, hoặc đẩy dữ liệu dùng chung cả tài khoản (ví dụ Kho tri thức callbot cổ điển).
 
 ## 3. Khi nào hỏi lại
 **Hỏi**: ô phiếu trống hoặc tài liệu mâu thuẫn; mắt xích ◐/? trong `system-model.md` (nói rõ rủi ro); sắp ghi, xuất bản, bật/tắt, xoá, gắn hotline, gọi/nhắn người thật; hai cách đều được nhưng khác chi phí/quota/trải nghiệm khách; thiếu dữ kiện nghiệp vụ (URL API, người nhận, nội dung lời chào) → hỏi, hoặc "Cần xác nhận" nếu không chặn việc khác.

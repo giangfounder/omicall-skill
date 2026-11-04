@@ -346,6 +346,20 @@ def check(doc, sent=None, ctx=None, mode="pre", base_version=None):
     if OUT.count("FAIL") == f0:
         emit("PASS", "C7", f"{sum(have.values())} dây khớp next_nodes")
 
+    # C8 — lời thoại cho giọng đọc (chỉ WARN, theo playbook "Lời thoại cho giọng đọc")
+    w0 = OUT.count("WARN")
+    for n in nodes:
+        for t in texts_of(n):
+            plain = re.sub(r"\{\{\w+\}\}", "", t)
+            if len(plain) > 300:
+                emit("WARN", "C8", f"node {n.get('id')}: lời dài {len(plain)} ký tự — chia câu ngắn cho giọng đọc")
+            if re.search(r"[*#•→\[\]<>_|]", plain):
+                emit("WARN", "C8", f"node {n.get('id')}: lời có ký hiệu không đọc được (* # • → [ ] < > _ |)")
+            if re.search(r"\d", plain):
+                emit("WARN", "C8", f"node {n.get('id')}: lời có chữ số — viết số bằng chữ, số điện thoại đọc từng nhóm")
+    if OUT.count("WARN") == w0:
+        emit("PASS", "C8", "lời thoại không có ký hiệu, chữ số hay câu quá dài")
+
     # X5 — so với payload đã gửi
     if sent is not None:
         f0 = OUT.count("FAIL")

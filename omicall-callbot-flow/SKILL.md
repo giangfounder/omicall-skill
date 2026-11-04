@@ -1,13 +1,13 @@
 ---
 name: omicall-callbot-flow
 description: >-
-  [v1.8.3] Xây dựng và chỉnh sửa Callbot theo kịch bản cố định (loại NORMAL) của OMICall/OMICRM: cây hội thoại, ý định và thực thể NLU, dữ liệu huấn luyện cho giọng nói qua điện thoại, Kho tri thức, sinh luồng từ JSON, lưu và gọi thử. Áp dụng cho trang …/ai/callbot/script/update/{id} khi kịch bản không thuộc loại AI_AGENT; với SmartAgent sử dụng omicall-callbot-gen-ai.
+  [v1.8.4] Xây dựng và chỉnh sửa Callbot theo kịch bản cố định (loại NORMAL) của OMICall/OMICRM: cây hội thoại, ý định và thực thể NLU, dữ liệu huấn luyện cho giọng nói qua điện thoại, Kho tri thức, sinh luồng từ JSON, lưu và gọi thử. Áp dụng cho trang …/ai/callbot/script/update/{id} khi kịch bản không thuộc loại AI_AGENT; với SmartAgent sử dụng omicall-callbot-gen-ai.
 ---
 
 # OMiCALL Callbot luồng cổ điển (NORMAL) + Kho tri thức — Generic Builder Playbook
 
 ## Bước bắt buộc: cập nhật skill
-Chạy `python "<thư mục skill>/scripts/self_update.py"` trước mọi bước khác, một lần mỗi phiên (đã chạy trong phiên này, kể cả ở skill khác, thì bỏ qua và không nhắc lại phiên bản) (`<thư mục skill>` = thư mục chứa SKILL.md này). Câu đầu tiên trả lời user: `Đang dùng omicall-callbot-flow v<phiên bản>` (lấy từ dòng `SKILL_VERSION`; script lỗi thì dùng v1.8.3). Script báo **SKILL.md đã thay đổi** → đọc lại SKILL.md từ đĩa rồi mới làm tiếp. Không cập nhật được → báo lý do, làm tiếp bằng bản hiện có; không sửa, xoá hay commit trong thư mục skill.
+Chạy `python "<thư mục skill>/scripts/self_update.py"` trước mọi bước khác, 1 lần/phiên (đã chạy rồi, kể cả ở skill khác, thì bỏ qua, không nhắc lại phiên bản) (`<thư mục skill>` = thư mục chứa SKILL.md này). Câu đầu tiên trả lời user: `Đang dùng omicall-callbot-flow v<phiên bản>` (lấy từ dòng `SKILL_VERSION`; script lỗi thì dùng v1.8.4). Script báo **SKILL.md đã thay đổi** → đọc lại SKILL.md từ đĩa rồi mới làm tiếp. Không cập nhật được → báo lý do, làm tiếp bằng bản hiện có; không sửa, xoá hay commit trong thư mục skill.
 
 ## Bắt đầu và cách trao đổi (BẮT BUỘC)
 Làm theo `references/conversation.md`, chung cho mọi skill OMI:
@@ -25,6 +25,10 @@ Script nằm ở `<thư mục skill>/scripts/`, chạy bằng đường dẫn tu
 7. `scripts/omi_save.py callflow payload.json --domain <domain> --new` `--context <scratch>/tenant_context.json` (cập nhật: `--update --base <bản mới nhất> --confirm-update`): tự GET lại + `verify_callflow --mode post --sent` kèm `--context` và (khi `--update`) `--base`/`--base-version`. FAIL → sửa spec, dựng lại.
 8. Chờ huấn luyện `SUCCESS` → user tự gọi thử (Bước 6). Không Xuất bản, không gắn hotline khi user chưa yêu cầu.
 Dùng builder thì KHÔNG cần đọc `references/api-reference.md` §5; chỉ đọc khi sửa tay hoặc loại node chưa có trong builder (tra `references/node-status.json`).
+
+## Mặc định hành vi và kiểm thử
+- Tình huống chung (từ chối, ngoài phạm vi, tức giận, im lặng, đòi gặp nhân viên, kết thúc): đối chiếu `references/default-behaviors.md` giữa callbot cổ điển, SmartAgent, chatbot; ô "—" là Cần xác nhận, không đoán.
+- Trước khi giao: chạy bộ tình huống `references/test-cases.md`, báo `Đạt n/12`.
 
 ## Tư duy chức năng (trước khi chọn module)
 - Chỉ khi dựng mới hoặc việc chạm nhiều module (sửa nhỏ một bước/lời nhắc thì bỏ qua, đọc đúng mục playbook cần): đọc `references/system-model.md` (hệ thống có gì, làm được gì, đường nhanh nhất cho từng việc) và `references/solution-method.md` (phân rã bài toán thành chuỗi Sự kiện → Điều kiện → Hành động, ghép module có sẵn). Không khớp mẫu theo ca; mắt xích chưa xác minh thì báo user, khảo sát một lần bằng log mạng rồi ghi vào `system-model.md`.
@@ -73,7 +77,7 @@ Mắt xích thuộc skill khác (xem `references/system-model.md`) thì không t
 - Xoá ý định/thực thể hệ thống thừa có thể bị chặn quyền (dữ liệu dùng chung) → để user tự xoá trên UI hoặc bỏ qua; thừa không ảnh hưởng kịch bản.
 
 ## Chi tiết theo bước (`references/playbook.md`)
-Đọc đúng mục khi tới bước đó, không đọc cả file. Mục mà Đường nhanh hay Rules nhắc tới nhưng không có ở đây (Input contract, Workflow, Gotchas, Skill con…) đều nằm trong file này.
+Đọc đúng mục khi tới bước đó, không đọc cả file. Định vị: `grep -n "^#" references/playbook.md`. Mục mà Đường nhanh hay Rules nhắc tới nhưng không có ở đây (Input contract, Workflow, Gotchas, Skill con…) đều nằm trong file này.
 - Overview
 - Input contract (hỏi MỘT LẦN rồi tự làm hết)
 - Workflow
