@@ -1,13 +1,13 @@
 ---
 name: omicall-callbot-flow
 description: >-
-  [v1.8.4] Xây dựng và chỉnh sửa Callbot theo kịch bản cố định (loại NORMAL) của OMICall/OMICRM: cây hội thoại, ý định và thực thể NLU, dữ liệu huấn luyện cho giọng nói qua điện thoại, Kho tri thức, sinh luồng từ JSON, lưu và gọi thử. Áp dụng cho trang …/ai/callbot/script/update/{id} khi kịch bản không thuộc loại AI_AGENT; với SmartAgent sử dụng omicall-callbot-gen-ai.
+  [v1.9.0] Xây dựng và chỉnh sửa Callbot theo kịch bản cố định (loại NORMAL) của OMICall/OMICRM: cây hội thoại, ý định và thực thể NLU, dữ liệu huấn luyện cho giọng nói qua điện thoại, Kho tri thức, sinh luồng từ JSON, lưu và gọi thử. Áp dụng cho trang …/ai/callbot/script/update/{id} khi kịch bản không thuộc loại AI_AGENT; với SmartAgent sử dụng omicall-callbot-gen-ai.
 ---
 
 # OMiCALL Callbot luồng cổ điển (NORMAL) + Kho tri thức — Generic Builder Playbook
 
 ## Bước bắt buộc: cập nhật skill
-Chạy `python "<thư mục skill>/scripts/self_update.py"` trước mọi bước khác, 1 lần/phiên (đã chạy rồi, kể cả ở skill khác, thì bỏ qua, không nhắc lại phiên bản) (`<thư mục skill>` = thư mục chứa SKILL.md này). Câu đầu tiên trả lời user: `Đang dùng omicall-callbot-flow v<phiên bản>` (lấy từ dòng `SKILL_VERSION`; script lỗi thì dùng v1.8.4). Script báo **SKILL.md đã thay đổi** → đọc lại SKILL.md từ đĩa rồi mới làm tiếp. Không cập nhật được → báo lý do, làm tiếp bằng bản hiện có; không sửa, xoá hay commit trong thư mục skill.
+Chạy `python "<thư mục skill>/scripts/self_update.py"` trước mọi bước khác, 1 lần/phiên (đã chạy rồi, kể cả ở skill khác, thì bỏ qua, không nhắc lại phiên bản) (`<thư mục skill>` = thư mục chứa SKILL.md này). Câu đầu tiên trả lời user: `Đang dùng omicall-callbot-flow v<phiên bản>` (lấy từ dòng `SKILL_VERSION`; script lỗi thì dùng v1.9.0). Script báo **SKILL.md đã thay đổi** → đọc lại SKILL.md từ đĩa rồi mới làm tiếp. Không cập nhật được → báo lý do, làm tiếp bằng bản hiện có; không sửa, xoá hay commit trong thư mục skill.
 
 ## Bắt đầu và cách trao đổi (BẮT BUỘC)
 Làm theo `references/conversation.md`, chung cho mọi skill OMI:
@@ -18,7 +18,7 @@ Làm theo `references/conversation.md`, chung cho mọi skill OMI:
 Script nằm ở `<thư mục skill>/scripts/`, chạy bằng đường dẫn tuyệt đối. Khối này chỉ là lối tắt; quy tắc gốc ở Rules, Workflow, Gotchas.
 1. `scripts/omi_preflight.py --domain <domain>`: route `api` → đi tiếp; `login` → tự chạy `scripts/omi_login.py login --domain <domain>`; `blocked` → mở form đăng nhập theo `references/conversation.md` mục 1, không đọc cookie; trong lúc chờ làm offline bước 3.
 2. `scripts/tenant_survey.py --out <scratch>/tenant_context.json` + MCP `list_agents`/`list_extensions`; đếm câu theo ý định bằng `references/browser-snippets.md` §3 khi script chưa đếm.
-3. Soạn bảng ý định/thực thể → **user duyệt** (Bước 2). Soạn `spec_training.json` → `scripts/gen_training.py` → **user duyệt file** (Bước 3). Hai lần duyệt giữ riêng, không gộp.
+3. Soạn bảng ý định/thực thể → **user duyệt** (Bước 2; song song/tuần tự: `references/parallel.md`). Soạn `spec_training.json` → `scripts/gen_training.py` → **user duyệt file** (Bước 3). Hai lần duyệt giữ riêng, không gộp.
 4. Đẩy Excel **qua giao diện** (Rule 4; `upload_excel` bằng API chưa kiểm chứng) → khảo sát lại để có id ý định/thực thể trong `tenant_context.json`.
 5. Trong lúc chờ huấn luyện: soạn `spec_callflow.json`; được chạy `build_callflow.py --allow-pending` để kiểm cấu trúc sớm (payload đó không lưu).
 6. `scripts/build_callflow.py spec_callflow.json --context tenant_context.json --out payload.json` → `scripts/verify_callflow.py payload.json --context tenant_context.json --mode pre`.

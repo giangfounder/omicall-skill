@@ -1,13 +1,13 @@
 ---
 name: omicall-crm-config
 description: >-
-  [v1.5.3] Cấu hình nền của CRM trong OMICall/OMICRM: thuộc tính động của Khách hàng và Phiếu ghi (6 kiểu trường, mã field_code), các trường thông tin mặc định, bộ trạng thái khách hàng (cờ WIN/LOST, trình tự chuyển, phân cấp), chủ đề và bộ trạng thái phiếu ghi (thời hạn xử lý, ca làm việc), cấu hình phân bổ. Là skill con của omicall-omiflow, có thể sử dụng độc lập.
+  [v1.6.0] Cấu hình nền của CRM trong OMICall/OMICRM: thuộc tính động của Khách hàng và Phiếu ghi (6 kiểu trường, mã field_code), các trường thông tin mặc định, bộ trạng thái khách hàng (cờ WIN/LOST, trình tự chuyển, phân cấp), chủ đề và bộ trạng thái phiếu ghi (thời hạn xử lý, ca làm việc), cấu hình phân bổ. Là skill con của omicall-omiflow, có thể sử dụng độc lập.
 ---
 
 # OMICall CRM Config — Thuộc tính, trạng thái, chủ đề phiếu (mọi tenant)
 
 ## Bước bắt buộc: cập nhật skill
-Chạy `python "<thư mục skill>/scripts/self_update.py"` trước mọi bước khác, 1 lần/phiên (đã chạy rồi, kể cả ở skill khác, thì bỏ qua, không nhắc lại phiên bản) (`<thư mục skill>` = thư mục chứa SKILL.md này). Câu đầu tiên trả lời user: `Đang dùng omicall-crm-config v<phiên bản>` (lấy từ dòng `SKILL_VERSION`; script lỗi thì dùng v1.5.3). Script báo **SKILL.md đã thay đổi** → đọc lại SKILL.md từ đĩa rồi mới làm tiếp. Không cập nhật được → báo lý do, làm tiếp bằng bản hiện có; không sửa, xoá hay commit trong thư mục skill.
+Chạy `python "<thư mục skill>/scripts/self_update.py"` trước mọi bước khác, 1 lần/phiên (đã chạy rồi, kể cả ở skill khác, thì bỏ qua, không nhắc lại phiên bản) (`<thư mục skill>` = thư mục chứa SKILL.md này). Câu đầu tiên trả lời user: `Đang dùng omicall-crm-config v<phiên bản>` (lấy từ dòng `SKILL_VERSION`; script lỗi thì dùng v1.6.0). Script báo **SKILL.md đã thay đổi** → đọc lại SKILL.md từ đĩa rồi mới làm tiếp. Không cập nhật được → báo lý do, làm tiếp bằng bản hiện có; không sửa, xoá hay commit trong thư mục skill.
 
 ## Bắt đầu và cách trao đổi (BẮT BUỘC)
 Làm theo `references/conversation.md`, chung cho mọi skill OMI:
@@ -19,7 +19,7 @@ Chạy script bằng đường dẫn tuyệt đối `<thư mục skill>/scripts/
 1. **Token**: `python <thư mục skill>/scripts/omi_preflight.py --domain <domain>` → `api` / `login` / `ui` / `blocked` (xử lý như omiflow).
 2. **Khảo sát bằng API trước, giao diện bằng chữ sau, ảnh chụp sau cùng** (`references/omi-mcp.md` mục 4a): `tenant_survey.py --out <scratch>/tenant_context.json` (thuộc tính Phiếu ghi có `is_list`, bộ trạng thái phiếu, phân bổ) + MCP `get_ticket_categories`. Thuộc tính Khách hàng và bộ trạng thái khách: đọc giao diện `/config/attribute/customer/{status|attribute}` (`references/crm-config.md` mục 1).
 3. **Đối chiếu yêu cầu**: lập bảng *trường/trạng thái cần → đã có (mã) / phải tạo (kiểu đề xuất) / Cần xác nhận*. Chọn kiểu theo `references/crm-config.md` mục 3–4 (giá trị cố định → danh sách; giá trị từ hệ thống ngoài → Hộp ký tự).
-4. **Duyệt**: gửi bảng cho user; chỉ tạo hoặc sửa sau khi user đồng ý từng mục.
+4. **Duyệt**: gửi bảng cho user (kèm song song/tuần tự: `references/parallel.md`); chỉ tạo hoặc sửa sau khi user đồng ý từng mục.
 5. **Tạo trên giao diện**: Cấu hình → Thuộc tính → Khách hàng / Phiếu ghi → mở bộ → Thêm thuộc tính. Chưa có API ghi đã kiểm chứng → không gọi API ghi.
 6. **Kiểm**: chạy lại `tenant_survey.py` (Phiếu ghi) hoặc mở lại giao diện (Khách hàng), ghi `field_code` mới vào `tenant_context.json` mục `attributes`.
 7. **Giao**: bảng mã trường, kiểu, `is_list`, bộ trạng thái và chủ đề đã dùng; các điểm "Cần xác nhận". Được omiflow gọi thì quay lại bước thiết kế flow.

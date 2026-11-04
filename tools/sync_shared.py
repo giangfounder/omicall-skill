@@ -30,6 +30,7 @@ MAP = {
     "references/conversation.md": ALL + ENTRY,
     "references/system-model.md": ALL + ENTRY,
     "references/solution-method.md": ALL + ENTRY,
+    "references/parallel.md": ALL + ENTRY,
     "references/default-behaviors.md": ["omicall-callbot-gen-ai", "omicall-callbot-flow", "omicall-chatbot-gen-ai"] + ENTRY,
     "references/test-cases.md": ["omicall-callbot-gen-ai", "omicall-callbot-flow", "omicall-chatbot-gen-ai"] + ENTRY,
     "references/tenant_context.template.json": ALL,

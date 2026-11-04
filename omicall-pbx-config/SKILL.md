@@ -1,13 +1,13 @@
 ---
 name: omicall-pbx-config
 description: >-
-  [v1.5.2] Cấu hình tổng đài OMICall/OMICRM: đầu số, máy lẻ, nhóm nội bộ (nhóm nhận cuộc gọi), lời chào (chuyển văn bản thành giọng nói hoặc tệp ghi âm), Tương tác phím (IVR: phím → nhóm, webhook sang OMIFlow), kịch bản tổng đài cho cuộc gọi vào và gắn kịch bản vào hotline. Là skill con của omicall-omiflow, có thể sử dụng độc lập.
+  [v1.6.0] Cấu hình tổng đài OMICall/OMICRM: đầu số, máy lẻ, nhóm nội bộ (nhóm nhận cuộc gọi), lời chào (chuyển văn bản thành giọng nói hoặc tệp ghi âm), Tương tác phím (IVR: phím → nhóm, webhook sang OMIFlow), kịch bản tổng đài cho cuộc gọi vào và gắn kịch bản vào hotline. Là skill con của omicall-omiflow, có thể sử dụng độc lập.
 ---
 
 # OMICall PBX Config — Tổng đài, lời chào, tương tác phím (mọi tenant)
 
 ## Bước bắt buộc: cập nhật skill
-Chạy `python "<thư mục skill>/scripts/self_update.py"` trước mọi bước khác, 1 lần/phiên (đã chạy rồi, kể cả ở skill khác, thì bỏ qua, không nhắc lại phiên bản) (`<thư mục skill>` = thư mục chứa SKILL.md này). Câu đầu tiên trả lời user: `Đang dùng omicall-pbx-config v<phiên bản>` (lấy từ dòng `SKILL_VERSION`; script lỗi thì dùng v1.5.2). Script báo **SKILL.md đã thay đổi** → đọc lại SKILL.md từ đĩa rồi mới làm tiếp. Không cập nhật được → báo lý do, làm tiếp bằng bản hiện có; không sửa, xoá hay commit trong thư mục skill.
+Chạy `python "<thư mục skill>/scripts/self_update.py"` trước mọi bước khác, 1 lần/phiên (đã chạy rồi, kể cả ở skill khác, thì bỏ qua, không nhắc lại phiên bản) (`<thư mục skill>` = thư mục chứa SKILL.md này). Câu đầu tiên trả lời user: `Đang dùng omicall-pbx-config v<phiên bản>` (lấy từ dòng `SKILL_VERSION`; script lỗi thì dùng v1.6.0). Script báo **SKILL.md đã thay đổi** → đọc lại SKILL.md từ đĩa rồi mới làm tiếp. Không cập nhật được → báo lý do, làm tiếp bằng bản hiện có; không sửa, xoá hay commit trong thư mục skill.
 
 ## Bắt đầu và cách trao đổi (BẮT BUỘC)
 Làm theo `references/conversation.md`, chung cho mọi skill OMI:
@@ -19,7 +19,7 @@ Chạy script bằng đường dẫn tuyệt đối `<thư mục skill>/scripts/
 1. **Token**: `python <thư mục skill>/scripts/omi_preflight.py --domain <domain>` → `api` / `login` / `ui` / `blocked` (xử lý như omiflow).
 2. **Khảo sát bằng API, không chụp ảnh**: `python <thư mục skill>/scripts/config_survey.py --out <scratch>/tenant_context.json --domain <domain>` (đầu số + giờ làm việc, kịch bản, Tương tác phím, nhóm, lời chào) + `get_service_package`. Không mở giao diện để xem lại điều `references/pbx-config.md` đã ghi; thứ tự nguồn ở `references/omi-mcp.md` mục 4a.
 3. **Thiết kế**: vẽ cây gọi vào *đầu số → kịch bản cuộc gọi (≤3 tiêu chí → lời chào → chuyển tiếp) → Tương tác phím (6 loại hành động) → nhóm nội bộ / callbot / hộp thư thoại*, dựng từ dưới lên (mục 2–5). Thiếu nhóm, nội dung lời chào, tên nơi nhận → "Cần xác nhận".
-4. **Duyệt**: gửi cây và danh sách việc ghi (tạo nhóm, file lời chào, TTP, kịch bản, gắn hotline) cho user; mỗi việc ghi chờ đồng ý.
+4. **Duyệt** (song song/tuần tự: `references/parallel.md`): gửi cây và danh sách việc ghi (tạo nhóm, file lời chào, TTP, kịch bản, gắn hotline) cho user; mỗi việc ghi chờ đồng ý.
 5. **Dựng trên giao diện**: lời chào (Tải lên / Robot đọc) → nhóm nội bộ (chiến lược đổ chuông, hàng đợi) → Tương tác phím → kịch bản cuộc gọi. Công cụ ghi của MCP chỉ dùng khi đã đọc lại được bằng MCP trên tenant đó.
 6. **Gắn hotline**: chọn kịch bản gọi vào cho đầu số (API công khai `call_script`; `extensions`/`group_ids` chỉ là quyền gọi ra) là bước cuối, đổi đường đi cuộc gọi thật → chỉ khi user đồng ý riêng bước này.
 7. **Kiểm**: mở lại từng màn hình, kiểm cột Ngày sửa đổi; gọi thử chỉ khi user đồng ý (`click_to_call` → `search_calls`, `get_call_detail`).

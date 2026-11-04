@@ -1,13 +1,13 @@
 ---
 name: omicall-omiflow
 description: >-
-  [v1.20.4] Thiết kế, xây dựng và chỉnh sửa quy trình tự động OMIFlow của OMICall/OMICRM. Điều kiện bắt đầu: webhook API, cuộc gọi, phím bấm IVR, phiếu ghi, lịch, tệp Excel, đối tác, trạng thái khách hàng. Thành phần xử lý: điều kiện, trì hoãn, AI phân loại, gọi API ngoài, cập nhật khách hàng/phiếu ghi/cuộc gọi, cửa sổ tương tác cho nhân viên, SMS/ZNS, chạy hoặc liên kết Callbot/Chatbot. Đọc và lưu qua API campaign-v1. Cấu hình nền được giao cho omicall-crm-config, omicall-pbx-config và omicall-ai-insight.
+  [v1.21.0] Thiết kế, xây dựng và chỉnh sửa quy trình tự động OMIFlow của OMICall/OMICRM. Điều kiện bắt đầu: webhook API, cuộc gọi, phím bấm IVR, phiếu ghi, lịch, tệp Excel, đối tác, trạng thái khách hàng. Thành phần xử lý: điều kiện, trì hoãn, AI phân loại, gọi API ngoài, cập nhật khách hàng/phiếu ghi/cuộc gọi, cửa sổ tương tác cho nhân viên, SMS/ZNS, chạy hoặc liên kết Callbot/Chatbot. Đọc và lưu qua API campaign-v1. Cấu hình nền được giao cho omicall-crm-config, omicall-pbx-config và omicall-ai-insight.
 ---
 
 # OMICall OMIFlow — Builder Playbook (mọi tenant, mọi bài toán)
 
 ## Bước bắt buộc: cập nhật skill
-Chạy `python "<thư mục skill>/scripts/self_update.py"` trước mọi bước khác, 1 lần/phiên (đã chạy rồi, kể cả ở skill khác, thì bỏ qua, không nhắc lại phiên bản) (`<thư mục skill>` = thư mục chứa SKILL.md này). Câu đầu tiên trả lời user: `Đang dùng omicall-omiflow v<phiên bản>` (lấy từ dòng `SKILL_VERSION`; script lỗi thì dùng v1.20.4). Script báo **SKILL.md đã thay đổi** → đọc lại SKILL.md từ đĩa rồi mới làm tiếp. Không cập nhật được → báo lý do, làm tiếp bằng bản hiện có; không sửa, xoá hay commit trong thư mục skill.
+Chạy `python "<thư mục skill>/scripts/self_update.py"` trước mọi bước khác, 1 lần/phiên (đã chạy rồi, kể cả ở skill khác, thì bỏ qua, không nhắc lại phiên bản) (`<thư mục skill>` = thư mục chứa SKILL.md này). Câu đầu tiên trả lời user: `Đang dùng omicall-omiflow v<phiên bản>` (lấy từ dòng `SKILL_VERSION`; script lỗi thì dùng v1.21.0). Script báo **SKILL.md đã thay đổi** → đọc lại SKILL.md từ đĩa rồi mới làm tiếp. Không cập nhật được → báo lý do, làm tiếp bằng bản hiện có; không sửa, xoá hay commit trong thư mục skill.
 
 ## Bắt đầu và cách trao đổi (BẮT BUỘC)
 Làm theo `references/conversation.md`, chung cho mọi skill OMI:
@@ -20,7 +20,7 @@ Chạy script bằng đường dẫn tuyệt đối `<thư mục skill>/scripts/
 2. **Khảo sát (Bước 0, BẮT BUỘC trước thiết kế)**: `<thư mục skill>/scripts/tenant_survey.py --out <scratch>/tenant_context.json` + `config_survey.py` (tổng đài, AI) + công cụ MCP; giao diện chỉ khi API không có, ảnh chụp sau cùng (`references/omi-mcp.md` mục 4a) → kiểu thuộc tính (`is_list`), danh mục phiếu, tích hợp đã bật, quota flow và nút. Thiếu → "Cần xác nhận"; thiếu cấu hình nền (thuộc tính, tổng đài, AI Assistant) → mục *Skill con*.
 3. **Thiết kế**: khung 8 câu (`references/design-patterns.md` mục A) → tra `references/node-status.json`: `verified` → đi API; `enum` / `ui_only` / `unverified` → đi UI hoặc ghi "Cần xác nhận".
 4. **Dựng — API**: tạo vỏ flow trên UI (có `_id` nháp; cách tối thiểu để lưu được vỏ: Cần xác nhận, `references/api-reference.md` mục Lưu flow) → `flow_outline.py --save <id>` → sửa `nodes` + `edges` + `name_mappings` → `<thư mục skill>/scripts/omi_save.py flow payload.json --domain <domain>` (chỉ `save_draft_v2`, không xuất bản). `name_mappings` (bản editor) chưa `verified`: mỗi phần tử chỉ được **chép nguyên từ bản GET của một nút cùng loại đã dựng trên UI** (`references/node-catalog.md` mục 6, Cách học nhanh) rồi đổi id/giá trị cho khớp `nodes`, không tự viết; chưa có bản GET mẫu cho loại đó → dựng nút đó bằng UI. File `--save` đã che bí mật (`***`): flow có header `Authorization`/token ở nút Gọi API hay webhook thì `omi_save.py` dừng exit 2 (cố ý, tránh ghi đè bí mật thật) → phần đó sửa trên UI, ghi "Cần xác nhận".
-5. **Dựng — UI**: mỗi flow một subagent, một tab (mẫu giao việc trong `references/omi-mcp.md`, thao tác ở `references/ui-build-and-test.md`).
+5. **Dựng — UI**: mỗi flow một subagent, một tab (chia việc: `references/parallel.md`, thao tác ở `references/ui-build-and-test.md`).
 6. **Kiểm**: `python <thư mục skill>/scripts/validate_flow.py payload.json --mode pre --context <scratch>/tenant_context.json`; sau lưu GET lại và chạy `--mode post --sent payload.json` (omi_save tự chạy). Có FAIL thì sửa, không lưu tiếp.
 7. **Test**: cURL hoặc sự kiện thật chỉ khi user đồng ý; xem tab Lịch sử (Bước 4).
 8. **Giao**: flow vẫn là nháp; user tự bấm **Xuất bản** sau khi duyệt (Rule 3).

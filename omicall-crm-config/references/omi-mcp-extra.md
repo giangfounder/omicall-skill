@@ -6,7 +6,7 @@ Bài toán gồm nhiều artefact phụ thuộc nhau (ví dụ chatbot gọi web
 1. **Khảo sát một lần**: `tenant_survey.py --out <scratch>/tenant_context.json` + công cụ MCP (agents, extensions, hotlines, kênh). Subagent đọc file này, không khảo sát lại tenant.
 2. **Thứ tự**: flow `WEB_HOOK` lưu nháp → user duyệt xuất bản → GET lại lấy `kick_off.id` và **id mới** (xuất bản đổi id flow, xem `omicall-omiflow/SKILL.md` mục Gotchas "Xuất bản đổi id flow") → gắn URL/id vào bot hoặc callbot → test đầu-cuối khi user đồng ý.
 3. **Mỗi artefact một subagent và một tiến trình ghi**; không giao hai việc cùng chạm một artefact.
-4. **Tài nguyên chung của tenant chạy tuần tự** (một tiến trình tại một thời điểm): Kho tri thức NLU (mỗi lần nhập là huấn luyện lại toàn bộ), cấu hình AI Assistant, cấu hình phân bổ.
+4. **Tài nguyên chung của tenant chạy tuần tự** và các giới hạn song song khác: `parallel.md` mục 3 (cách đánh giá việc nào chạy song song: mục 2).
 5. **Không truyền token, cookie, mật khẩu cho subagent** (kể cả qua lời giao việc, manifest, file tạm); subagent tự dùng phiên MCP sẵn có qua `omi_session.py`.
 6. **Agent chính tự GET và chạy validator lại** trước khi nối artefact này vào artefact khác; không tin báo cáo của subagent khi chưa kiểm.
 7. **Sổ chung `manifest.py`** (đặt `OMI_MANIFEST=<scratch>/build_manifest.json`):

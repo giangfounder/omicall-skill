@@ -1,13 +1,13 @@
 ---
 name: omicall-callbot-gen-ai
 description: >-
-  [v1.17.2] Xây dựng và chỉnh sửa kịch bản Callbot Gen AI (SmartAgent, loại AI_AGENT) của OMICall/OMICRM: ý định, thu thập thông tin, phân loại, gọi API, truy xuất tri thức (RAG), chuyển máy và lời nhắc hệ thống cho tổng đài viên AI. Xây dựng từ tài liệu nghiệp vụ hoặc PDF; chỉnh sửa tại …/ai/callbot/script/update/{scriptId}; lưu qua chatbot-gateway và kiểm thử.
+  [v1.18.0] Xây dựng và chỉnh sửa kịch bản Callbot Gen AI (SmartAgent, loại AI_AGENT) của OMICall/OMICRM: ý định, thu thập thông tin, phân loại, gọi API, truy xuất tri thức (RAG), chuyển máy và lời nhắc hệ thống cho tổng đài viên AI. Xây dựng từ tài liệu nghiệp vụ hoặc PDF; chỉnh sửa tại …/ai/callbot/script/update/{scriptId}; lưu qua chatbot-gateway và kiểm thử.
 ---
 
 # OMiCALL Callbot Gen AI — Generic Builder Playbook (all tenants / all scripts)
 
 ## Bước bắt buộc: cập nhật skill
-Chạy `python "<thư mục skill>/scripts/self_update.py"` trước mọi bước khác, 1 lần/phiên (đã chạy rồi, kể cả ở skill khác, thì bỏ qua, không nhắc lại phiên bản) (`<thư mục skill>` = thư mục chứa SKILL.md này). Câu đầu tiên trả lời user: `Đang dùng omicall-callbot-gen-ai v<phiên bản>` (lấy từ dòng `SKILL_VERSION`; script lỗi thì dùng v1.17.2). Script báo **SKILL.md đã thay đổi** → đọc lại SKILL.md từ đĩa rồi mới làm tiếp. Không cập nhật được → báo lý do, làm tiếp bằng bản hiện có; không sửa, xoá hay commit trong thư mục skill.
+Chạy `python "<thư mục skill>/scripts/self_update.py"` trước mọi bước khác, 1 lần/phiên (đã chạy rồi, kể cả ở skill khác, thì bỏ qua, không nhắc lại phiên bản) (`<thư mục skill>` = thư mục chứa SKILL.md này). Câu đầu tiên trả lời user: `Đang dùng omicall-callbot-gen-ai v<phiên bản>` (lấy từ dòng `SKILL_VERSION`; script lỗi thì dùng v1.18.0). Script báo **SKILL.md đã thay đổi** → đọc lại SKILL.md từ đĩa rồi mới làm tiếp. Không cập nhật được → báo lý do, làm tiếp bằng bản hiện có; không sửa, xoá hay commit trong thư mục skill.
 
 ## Bắt đầu và cách trao đổi (BẮT BUỘC)
 Làm theo `references/conversation.md`, chung cho mọi skill OMI:
@@ -19,7 +19,7 @@ Chạy script bằng đường dẫn tuyệt đối `python "<thư mục skill>/
 - **B0** `omi_preflight.py --domain <domain>` → `route` api/login/ui/blocked. `login`: agent tự chạy `omi_login.py login --domain <domain>`. `blocked`: mở form đăng nhập theo `references/conversation.md` mục 1; trong lúc chờ làm tiếp B2–B3.
 - **B1** `tenant_survey.py --out <scratch>/tenant_context.json` + MCP `list_agents`/`list_extensions`/`list_hotlines` (cho `TRANSFER_CALL`).
 - **B2** `extract_text.py <tài liệu> --out <scratch>/source.txt`.
-- **B3** Thiết kế theo Bước 1–3; chỗ thiếu ghi "Cần xác nhận", không dừng hỏi. Tra `references/node-status.json`: `verified` → API; `unverified` → chỉ nhân bản từ mẫu có trong GET baseline (`build_smartagent.py`), không có mẫu thì UI; `enum`/`ui_only` → UI hoặc "Cần xác nhận".
+- **B3** Thiết kế theo Bước 1–3 (song song/tuần tự: `references/parallel.md`); chỗ thiếu ghi "Cần xác nhận", không dừng hỏi. Tra `references/node-status.json`: `verified` → API; `unverified` → chỉ nhân bản từ mẫu có trong GET baseline (`build_smartagent.py`), không có mẫu thì UI; `enum`/`ui_only` → UI hoặc "Cần xác nhận".
 - **B4** Baseline `script_outline.py --list`, rồi `--id <id> --save` (file lưu chỉ che giá trị bí mật) → dùng file đó làm `--base`: `build_smartagent.py spec.json --base <file đã lưu> --new|--update` (spec theo `references/spec-smartagent.example.json`). Base còn `***` (script có header bí mật) thì builder dừng exit 2: phần đó sửa trên giao diện, ghi "Cần xác nhận".
 - **B5** `validate_smartagent.py payload.json --mode pre` → phải `RESULT PASS` (mã C1–C11 = checklist api-reference).
 - **B6** `omi_save.py callbot payload.json --domain <domain> --new`; sửa script đang chạy: `--update --confirm-update`. Lệnh tự GET lại, validate post. Rồi `goto.py <id mới>`.

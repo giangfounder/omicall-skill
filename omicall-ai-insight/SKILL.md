@@ -1,13 +1,13 @@
 ---
 name: omicall-ai-insight
 description: >-
-  [v1.5.4] Cấu hình và khai thác các chức năng phân tích bằng trí tuệ nhân tạo của OMICall/OMICRM: AI Assistant (hướng dẫn tổng hợp, các trường thông tin trích xuất từ cuộc gọi, biến ca_summarize và ca_ai_assistant), Voice Insights, Chat Insights, đánh giá cuộc gọi và phiếu ghi, chuyển giọng nói thành văn bản. Là skill con của omicall-omiflow, có thể sử dụng độc lập.
+  [v1.6.0] Cấu hình và khai thác các chức năng phân tích bằng trí tuệ nhân tạo của OMICall/OMICRM: AI Assistant (hướng dẫn tổng hợp, các trường thông tin trích xuất từ cuộc gọi, biến ca_summarize và ca_ai_assistant), Voice Insights, Chat Insights, đánh giá cuộc gọi và phiếu ghi, chuyển giọng nói thành văn bản. Là skill con của omicall-omiflow, có thể sử dụng độc lập.
 ---
 
 # OMICall AI Insight — AI Assistant, Voice Insights, Chat Insights (mọi tenant)
 
 ## Bước bắt buộc: cập nhật skill
-Chạy `python "<thư mục skill>/scripts/self_update.py"` trước mọi bước khác, 1 lần/phiên (đã chạy rồi, kể cả ở skill khác, thì bỏ qua, không nhắc lại phiên bản) (`<thư mục skill>` = thư mục chứa SKILL.md này). Câu đầu tiên trả lời user: `Đang dùng omicall-ai-insight v<phiên bản>` (lấy từ dòng `SKILL_VERSION`; script lỗi thì dùng v1.5.4). Script báo **SKILL.md đã thay đổi** → đọc lại SKILL.md từ đĩa rồi mới làm tiếp. Không cập nhật được → báo lý do, làm tiếp bằng bản hiện có; không sửa, xoá hay commit trong thư mục skill.
+Chạy `python "<thư mục skill>/scripts/self_update.py"` trước mọi bước khác, 1 lần/phiên (đã chạy rồi, kể cả ở skill khác, thì bỏ qua, không nhắc lại phiên bản) (`<thư mục skill>` = thư mục chứa SKILL.md này). Câu đầu tiên trả lời user: `Đang dùng omicall-ai-insight v<phiên bản>` (lấy từ dòng `SKILL_VERSION`; script lỗi thì dùng v1.6.0). Script báo **SKILL.md đã thay đổi** → đọc lại SKILL.md từ đĩa rồi mới làm tiếp. Không cập nhật được → báo lý do, làm tiếp bằng bản hiện có; không sửa, xoá hay commit trong thư mục skill.
 
 ## Bắt đầu và cách trao đổi (BẮT BUỘC)
 Làm theo `references/conversation.md`, chung cho mọi skill OMI:
@@ -19,7 +19,7 @@ Chạy script bằng đường dẫn tuyệt đối `<thư mục skill>/scripts/
 1. **Token**: `python <thư mục skill>/scripts/omi_preflight.py --domain <domain>` → `api` / `login` / `ui` / `blocked` (xử lý như omiflow).
 2. **Khảo sát bằng API, không chụp ảnh**: `get_service_package` (cờ `omi_call_assistant*`, `call_analysis`, quota) + `python <thư mục skill>/scripts/config_survey.py --out <scratch>/tenant_context.json --domain <domain>` (trợ lý, phạm vi, mục đích cuộc gọi, tiêu chí); bản gốc hướng dẫn tổng hợp lưu từ kết quả API vào scratch để hoàn tác. Thứ tự nguồn: `references/omi-mcp.md` mục 4a.
 3. **Chọn lớp AI** (`references/ai-insight.md` mục 0): dữ liệu nghiệp vụ vào CRM → AI Assistant (Tổng hợp / Phân loại Tag / Tạo phiếu / Tạo khách); chấm chất lượng → Voice/Chat Insights (cần Mục đích cuộc gọi). Lập bảng *trường → thuộc tính đích (mã, kiểu, tập giá trị) → dòng hướng dẫn*; mã lấy qua `omicall-crm-config`; thiếu → "Cần xác nhận".
-4. **Duyệt**: gửi bản hướng dẫn mới (chỉ thêm dòng, giữ dòng cũ) cho user; lưu chỉ khi user đồng ý.
+4. **Duyệt** (song song/tuần tự: `references/parallel.md`): gửi bản hướng dẫn mới (chỉ thêm dòng, giữ dòng cũ) cho user; lưu chỉ khi user đồng ý.
 5. **Lưu trên giao diện**: Cấu hình > AI > AI Assistant (`references/ai-insight.md` mục 1); tải lại để kiểm nội dung đã lưu.
 6. **Kiểm**: một cuộc gọi thật sau khi lưu (gọi thử chỉ khi user đồng ý) → `search_calls`, `get_call_detail`: mỗi trường đúng một dòng, giá trị danh sách đúng nguyên văn.
 7. **Giao**: bản hướng dẫn đã lưu, bản gốc, bảng trường → thuộc tính, các điểm "Cần xác nhận". Cần ghi vào CRM tự động → quay lại `omicall-omiflow` (flow sau cuộc gọi).

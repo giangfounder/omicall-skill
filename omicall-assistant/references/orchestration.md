@@ -9,6 +9,7 @@ Assistant là **người điều phối**: hiểu việc, chia phần, giao cho 
 | Hỏi đáp chạm ≥ 3 mảng (checklist, RFP) | Mục 6: mỗi nhóm câu một subagent chỉ đọc, chạy song song |
 | Dựng/sửa ≥ 2 phần | Mục 2–5: chia đợt, mỗi artefact một subagent |
 | Client không có subagent | Chạy tuần tự đúng thứ tự đợt, mọi quy tắc còn lại giữ nguyên |
+Cách đánh giá song song/tuần tự (bốn câu hỏi, giới hạn, khi nào không cần subagent) chung cho mọi skill: `parallel.md`. Mục 6 của file đó ghi đơn vị chia và chỗ phải tuần tự của từng skill chuyên trách; assistant đọc khi xếp đợt. Subagent được giao việc không chia tiếp.
 Công cụ Workflow/nhiều tác tử quy mô lớn chỉ dùng khi user yêu cầu rõ.
 
 ## 2. Chia đợt theo phụ thuộc (đồ thị: `shared/skill-graph.json`; thứ tự gốc crm-config → ai-insight → pbx-config → bot/callbot → omiflow nháp → user xuất bản → pbx-config gắn)
@@ -24,11 +25,7 @@ Công cụ Workflow/nhiều tác tử quy mô lớn chỉ dùng khi user yêu c�
 Quy tắc xếp: A cần giá trị của B → B trước (ghi `consumed_values`). Webhook flow: nháp (đợt 2) → user xuất bản (cổng) → URL/id mới vào bot/callbot (đợt 3). Phần không phụ thuộc nhau vào cùng đợt.
 
 ## 3. Giới hạn song song (đã gặp thật, không nới)
-- Tối đa **3 subagent giao diện** cùng lúc, mỗi subagent **một tab riêng** (`tabs_create`, truyền `tabId` ở mọi lệnh); khung trình duyệt dùng chung với user nên thêm nữa sẽ tranh nhau. Subagent chỉ API/MCP: tối đa 5.
-- **Một artefact = một subagent = một tiến trình ghi**. Không giao hai việc cùng chạm một flow, bot, kịch bản.
-- **Tài nguyên chung chạy tuần tự**, một tiến trình mỗi lúc: Kho tri thức NLU của callbot (mỗi lần nhập huấn luyện lại), cấu hình AI Assistant, cấu hình phân bổ, bộ trạng thái đang được flow dùng.
-- Không truyền token, cookie, mật khẩu cho subagent (kể cả trong lời giao việc hay sổ chung); subagent dùng phiên sẵn có. Chưa đăng nhập giao diện thì user tự đăng nhập trước khi giao việc giao diện.
-- Subagent **không xuất bản, bật/tắt, xoá, gắn hotline/kênh thật, gọi hoặc nhắn người thật**; mọi cổng này do user quyết (cổng ghi ở `manifest.py gates`).
+Theo `parallel.md` mục 3 (subagent giao diện ≤ 3, mỗi cái một tab; chỉ API/MCP ≤ 5; một artefact một tiến trình ghi; tài nguyên chung tuần tự; không truyền bí mật; subagent không qua cổng của user). Không chép lại danh sách ở đây để khỏi lệch.
 
 ## 4. Lời giao việc cho subagent (chọn loại tác tử mới và tự chứa đủ; chỉ dùng "fork" khi hội thoại còn ngắn)
 ```
