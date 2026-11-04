@@ -1,7 +1,7 @@
 ---
 name: omicall-assistant
 description: >-
-  [v1.5.0] Điều phối viên trung tâm của OMICall/OMICRM. Chế độ hỏi đáp: trả lời câu hỏi về tính năng và mức độ đáp ứng (kể cả checklist, RFP) dựa trên tài liệu của các skill chuyên trách, không suy diễn. Chế độ triển khai: phân tích yêu cầu, lập kế hoạch, xin duyệt một lần, chia thành các đợt theo quan hệ phụ thuộc, giao các skill omicall-* cho subagent thực hiện song song, kiểm tra lại kết quả và báo cáo. Yêu cầu chỉ thuộc một skill chuyên trách thì dùng trực tiếp skill đó.
+  [v1.5.1] Điều phối viên trung tâm của OMICall/OMICRM. Chế độ hỏi đáp: trả lời câu hỏi về tính năng và mức độ đáp ứng (kể cả checklist, RFP) dựa trên tài liệu của các skill chuyên trách, không suy diễn. Chế độ triển khai: phân tích yêu cầu, lập kế hoạch, xin duyệt một lần, chia thành các đợt theo quan hệ phụ thuộc, giao các skill omicall-* cho subagent thực hiện song song, kiểm tra lại kết quả và báo cáo. Yêu cầu chỉ thuộc một skill chuyên trách thì dùng trực tiếp skill đó.
 ---
 
 # OMICall Assistant — Tổng quản lý điều phối

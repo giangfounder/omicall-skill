@@ -1,13 +1,13 @@
 ---
 name: omicall-omiflow
 description: >-
-  [v1.21.0] Thiết kế, xây dựng và chỉnh sửa quy trình tự động OMIFlow của OMICall/OMICRM. Điều kiện bắt đầu: webhook API, cuộc gọi, phím bấm IVR, phiếu ghi, lịch, tệp Excel, đối tác, trạng thái khách hàng. Thành phần xử lý: điều kiện, trì hoãn, AI phân loại, gọi API ngoài, cập nhật khách hàng/phiếu ghi/cuộc gọi, cửa sổ tương tác cho nhân viên, SMS/ZNS, chạy hoặc liên kết Callbot/Chatbot. Đọc và lưu qua API campaign-v1. Cấu hình nền được giao cho omicall-crm-config, omicall-pbx-config và omicall-ai-insight.
+  [v1.21.1] Thiết kế, xây dựng và chỉnh sửa quy trình tự động OMIFlow của OMICall/OMICRM. Điều kiện bắt đầu: webhook API, cuộc gọi, phím bấm IVR, phiếu ghi, lịch, tệp Excel, đối tác, trạng thái khách hàng. Thành phần xử lý: điều kiện, trì hoãn, AI phân loại, gọi API ngoài, cập nhật khách hàng/phiếu ghi/cuộc gọi, cửa sổ tương tác cho nhân viên, SMS/ZNS, chạy hoặc liên kết Callbot/Chatbot. Đọc và lưu qua API campaign-v1. Cấu hình nền được giao cho omicall-crm-config, omicall-pbx-config và omicall-ai-insight.
 ---
 
 # OMICall OMIFlow — Builder Playbook (mọi tenant, mọi bài toán)
 
 ## Bước bắt buộc: cập nhật skill
-Chạy `python "<thư mục skill>/scripts/self_update.py"` trước mọi bước khác, 1 lần/phiên (đã chạy rồi, kể cả ở skill khác, thì bỏ qua, không nhắc lại phiên bản) (`<thư mục skill>` = thư mục chứa SKILL.md này). Câu đầu tiên trả lời user: `Đang dùng omicall-omiflow v<phiên bản>` (lấy từ dòng `SKILL_VERSION`; script lỗi thì dùng v1.21.0). Script báo **SKILL.md đã thay đổi** → đọc lại SKILL.md từ đĩa rồi mới làm tiếp. Không cập nhật được → báo lý do, làm tiếp bằng bản hiện có; không sửa, xoá hay commit trong thư mục skill.
+Chạy `python "<thư mục skill>/scripts/self_update.py"` trước mọi bước khác, 1 lần/phiên (đã chạy rồi, kể cả ở skill khác, thì bỏ qua, không nhắc lại phiên bản) (`<thư mục skill>` = thư mục chứa SKILL.md này). Câu đầu tiên trả lời user: `Đang dùng omicall-omiflow v<phiên bản>` (lấy từ dòng `SKILL_VERSION`; script lỗi thì dùng v1.21.1). Script báo **SKILL.md đã thay đổi** → đọc lại SKILL.md từ đĩa rồi mới làm tiếp. Không cập nhật được → báo lý do, làm tiếp bằng bản hiện có; không sửa, xoá hay commit trong thư mục skill.
 
 ## Bắt đầu và cách trao đổi (BẮT BUỘC)
 Làm theo `references/conversation.md`, chung cho mọi skill OMI:

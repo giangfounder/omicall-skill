@@ -13,7 +13,7 @@ Bộ skill dùng chung cho Claude Code và các agent khác, dùng để dựng 
 | `omicall-pbx-config` | Skill con của omiflow: tổng đài — nhóm nội bộ, lời chào, Tương tác phím (IVR), kịch bản gọi vào, gắn hotline |
 | `omicall-ai-insight` | Skill con của omiflow: AI Assistant, Voice Insights, Chat Insights, đánh giá cuộc gọi |
 
-Skill con dùng được riêng (`/omicall-crm-config` …) hoặc được `omicall-omiflow` gọi khi flow thiếu cấu hình nền (bảng *Skill con* trong SKILL.md của omiflow). Cài cả 7 thư mục để omiflow tìm thấy skill con.
+Skill con dùng được riêng (`/omicall-crm-config` …) hoặc được `omicall-omiflow` gọi khi flow thiếu cấu hình nền (bảng *Skill con* trong SKILL.md của omiflow). Cài mọi thư mục `omicall-*` để omiflow tìm thấy skill con.
 
 ## Cài đặt
 
@@ -32,16 +32,16 @@ git clone https://github.com/giangfounder/omicall-skill.git
 ```powershell
 $src = "$PWD\omicall-skill"; $dst = "$env:USERPROFILE\.claude\skills"
 New-Item -ItemType Directory -Force $dst | Out-Null
-foreach ($n in 'omicall-assistant','omicall-callbot-gen-ai','omicall-callbot-flow','omicall-chatbot-gen-ai','omicall-omiflow','omicall-crm-config','omicall-pbx-config','omicall-ai-insight') { New-Item -ItemType Junction -Path "$dst\$n" -Target "$src\$n" }
+Get-ChildItem $src -Directory -Filter 'omicall-*' | ForEach-Object { New-Item -ItemType Junction -Path "$dst\$($_.Name)" -Target $_.FullName }
 ```
 
 **macOS / Linux**:
 ```bash
 mkdir -p ~/.claude/skills
-for n in omicall-assistant omicall-callbot-gen-ai omicall-callbot-flow omicall-chatbot-gen-ai omicall-omiflow omicall-crm-config omicall-pbx-config omicall-ai-insight; do ln -s "$PWD/omicall-skill/$n" ~/.claude/skills/$n; done
+for d in "$PWD"/omicall-skill/omicall-*/; do n=$(basename "$d"); ln -s "${d%/}" ~/.claude/skills/$n; done
 ```
 
-Agent khác: trỏ hoặc chép 7 thư mục vào thư mục skill của agent đó (ví dụ `~/.agents/skills`, `~/.gemini/skills`).
+Agent khác: trỏ mọi thư mục `omicall-*` vào thư mục skill của agent đó (ví dụ `~/.agents/skills`, `~/.gemini/skills`). Lỡ chép tay cũng được: lần gọi skill đầu tiên tự clone repo về `~/omicall-skill` và đổi bản chép tay thành đường dẫn (xem *Phiên bản và cập nhật*).
 
 Kiểm tra: mở Claude Code, gõ `/` và thấy `omicall-assistant`, `omicall-callbot-gen-ai`, `omicall-callbot-flow`, `omicall-chatbot-gen-ai`, `omicall-omiflow`, `omicall-crm-config`, `omicall-pbx-config`, `omicall-ai-insight`.
 
@@ -73,7 +73,10 @@ Agent gửi bảng ý định/thực thể và file dữ liệu huấn luyện �
 Bài toán gồm nhiều phần phụ thuộc nhau (ví dụ chatbot thu SĐT → flow webhook tạo phiếu → callbot gọi lại): agent khảo sát tenant một lần (`tenant_context.json`), giao mỗi artefact cho một subagent, ghi id/URL vào sổ chung `scripts/manifest.py` và chỉ nối các phần khi đã GET và kiểm lại. Quy trình và mẫu giao việc: `references/omi-mcp.md` mục 7–8. Xuất bản, gắn hotline, gọi thử vẫn chờ bạn đồng ý.
 
 ## Phiên bản và cập nhật
-- **Tự cập nhật khi gọi skill**: bước đầu tiên của mọi skill là chạy `scripts/self_update.py`. Cài theo Bước 3 (junction/symlink vào bản git clone) thì skill tự `git pull` bản mới nhất, báo phiên bản đang dùng và đọc lại hướng dẫn nếu vừa đổi. Cài bằng cách chép tay thì skill chỉ báo khi có bản mới.
+- **Gọi một skill là cập nhật cả bộ**: bước đầu tiên của mọi skill là chạy `scripts/self_update.py`, tối đa 1 lần mỗi giờ cho cả bộ (`--force` để kiểm ngay).
+  - Cài theo Bước 3 (junction/symlink vào bản git clone): `git pull` cả repo, báo mọi skill vừa đổi phiên bản, nhắc đọc lại SKILL.md nếu vừa đổi.
+  - **Skill mới** thêm vào repo: tự tạo junction/symlink trong thư mục skill của agent (`~/.claude/skills`, `~/.agents/skills`, `~/.gemini/skills`, `~/.codex/skills`); mở phiên mới để thấy. Đường dẫn trỏ vào skill đã bỏ: chỉ cảnh báo, không xoá.
+  - Cài bằng cách chép tay: tự clone cả repo về `~/omicall-skill`, chuyển thư mục chép tay sang `~/.cache/omicall-skill/backup/` (không xoá) rồi thay bằng đường dẫn vào bản clone. Máy không có git: chỉ báo khi có bản mới.
 - Cập nhật tay: `cd omicall-skill && git pull`.
 - Phiên bản từng skill nằm ở file `VERSION` (dạng MAJOR.MINOR.PATCH); lịch sử ở [CHANGELOG.md](CHANGELOG.md); mỗi bản có tag `<tên skill>/v<phiên bản>`.
 - Quay về bản cũ của một skill: `git checkout omicall-omiflow/v1.4.0 -- omicall-omiflow` (thay tên skill và phiên bản).

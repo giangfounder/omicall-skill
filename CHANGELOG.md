@@ -12,6 +12,7 @@ Các bản trước 2026-10-23 được đánh số lại theo lịch sử commi
 ## omicall-callbot-flow
 | Phiên bản | Ngày | Commit | Thay đổi |
 |---|---|---|---|
+| 1.9.1 | 2026-11-04 | tag `omicall-callbot-flow/v1.9.1` | self_update.py: gọi một skill là cập nhật cả bộ omicall-skill — báo mọi skill đổi phiên bản, tự tạo junction/symlink cho skill mới (cảnh báo đường dẫn hỏng), bản chép tay tự clone về ~/omicall-skill và chuyển bản cũ sang backup, mốc kiểm 1 giờ; README cài bằng vòng quét omicall-*; test_self_update.py |
 | 1.9.0 | 2026-11-04 | tag `omicall-callbot-flow/v1.9.0` | Đánh giá chạy song song và chia subagent cho mọi skill: shared/references/parallel.md (ai được chia, 4 câu hỏi, giới hạn, chọn cách chạy, giao và kiểm, đơn vị chia theo từng skill); SKILL.md trỏ tới ở bước duyệt/thiết kế; orchestration.md và omi-mcp-extra.md mục 7 trỏ về parallel.md |
 | 1.8.4 | 2026-11-04 | tag `omicall-callbot-flow/v1.8.4` | Xử lý đề xuất review: bảng mặc định hành vi và bộ test-cases chung (shared), kiểm lời thoại giọng đọc C8 (callbot-flow), self_update dùng một dấu thời gian chung, mục lục playbook bằng grep, bản nháp nhanh sau khi duyệt Tóm tắt |
 | 1.8.3 | 2026-11-04 | tag `omicall-callbot-flow/v1.8.3` | Giảm token: rút gọn conversation.md (8,1→5,2 KB), self_update một lần mỗi phiên, system-model/solution-method chỉ đọc khi dựng mới; thêm omicall-assistant/references/default-behaviors.md (bảng mặc định callbot cổ điển/SmartAgent/chatbot) |
@@ -36,6 +37,7 @@ Các bản trước 2026-10-23 được đánh số lại theo lịch sử commi
 ## omicall-callbot-gen-ai
 | Phiên bản | Ngày | Commit | Thay đổi |
 |---|---|---|---|
+| 1.18.1 | 2026-11-04 | tag `omicall-callbot-gen-ai/v1.18.1` | self_update.py: gọi một skill là cập nhật cả bộ omicall-skill — báo mọi skill đổi phiên bản, tự tạo junction/symlink cho skill mới (cảnh báo đường dẫn hỏng), bản chép tay tự clone về ~/omicall-skill và chuyển bản cũ sang backup, mốc kiểm 1 giờ; README cài bằng vòng quét omicall-*; test_self_update.py |
 | 1.18.0 | 2026-11-04 | tag `omicall-callbot-gen-ai/v1.18.0` | Đánh giá chạy song song và chia subagent cho mọi skill: shared/references/parallel.md (ai được chia, 4 câu hỏi, giới hạn, chọn cách chạy, giao và kiểm, đơn vị chia theo từng skill); SKILL.md trỏ tới ở bước duyệt/thiết kế; orchestration.md và omi-mcp-extra.md mục 7 trỏ về parallel.md |
 | 1.17.2 | 2026-11-04 | tag `omicall-callbot-gen-ai/v1.17.2` | Xử lý đề xuất review: bảng mặc định hành vi và bộ test-cases chung (shared), kiểm lời thoại giọng đọc C8 (callbot-flow), self_update dùng một dấu thời gian chung, mục lục playbook bằng grep, bản nháp nhanh sau khi duyệt Tóm tắt |
 | 1.17.1 | 2026-11-04 | tag `omicall-callbot-gen-ai/v1.17.1` | Giảm token: rút gọn conversation.md (8,1→5,2 KB), self_update một lần mỗi phiên, system-model/solution-method chỉ đọc khi dựng mới; thêm omicall-assistant/references/default-behaviors.md (bảng mặc định callbot cổ điển/SmartAgent/chatbot) |
@@ -71,6 +73,7 @@ Các bản trước 2026-10-23 được đánh số lại theo lịch sử commi
 ## omicall-chatbot-gen-ai
 | Phiên bản | Ngày | Commit | Thay đổi |
 |---|---|---|---|
+| 1.12.1 | 2026-11-04 | tag `omicall-chatbot-gen-ai/v1.12.1` | self_update.py: gọi một skill là cập nhật cả bộ omicall-skill — báo mọi skill đổi phiên bản, tự tạo junction/symlink cho skill mới (cảnh báo đường dẫn hỏng), bản chép tay tự clone về ~/omicall-skill và chuyển bản cũ sang backup, mốc kiểm 1 giờ; README cài bằng vòng quét omicall-*; test_self_update.py |
 | 1.12.0 | 2026-11-04 | tag `omicall-chatbot-gen-ai/v1.12.0` | Đánh giá chạy song song và chia subagent cho mọi skill: shared/references/parallel.md (ai được chia, 4 câu hỏi, giới hạn, chọn cách chạy, giao và kiểm, đơn vị chia theo từng skill); SKILL.md trỏ tới ở bước duyệt/thiết kế; orchestration.md và omi-mcp-extra.md mục 7 trỏ về parallel.md |
 | 1.11.5 | 2026-11-04 | tag `omicall-chatbot-gen-ai/v1.11.5` | Xử lý đề xuất review: bảng mặc định hành vi và bộ test-cases chung (shared), kiểm lời thoại giọng đọc C8 (callbot-flow), self_update dùng một dấu thời gian chung, mục lục playbook bằng grep, bản nháp nhanh sau khi duyệt Tóm tắt |
 | 1.11.4 | 2026-11-04 | tag `omicall-chatbot-gen-ai/v1.11.4` | Giảm token: rút gọn conversation.md (8,1→5,2 KB), self_update một lần mỗi phiên, system-model/solution-method chỉ đọc khi dựng mới; thêm omicall-assistant/references/default-behaviors.md (bảng mặc định callbot cổ điển/SmartAgent/chatbot) |
@@ -100,6 +103,7 @@ Các bản trước 2026-10-23 được đánh số lại theo lịch sử commi
 ## omicall-omiflow
 | Phiên bản | Ngày | Commit | Thay đổi |
 |---|---|---|---|
+| 1.21.1 | 2026-11-04 | tag `omicall-omiflow/v1.21.1` | self_update.py: gọi một skill là cập nhật cả bộ omicall-skill — báo mọi skill đổi phiên bản, tự tạo junction/symlink cho skill mới (cảnh báo đường dẫn hỏng), bản chép tay tự clone về ~/omicall-skill và chuyển bản cũ sang backup, mốc kiểm 1 giờ; README cài bằng vòng quét omicall-*; test_self_update.py |
 | 1.21.0 | 2026-11-04 | tag `omicall-omiflow/v1.21.0` | Đánh giá chạy song song và chia subagent cho mọi skill: shared/references/parallel.md (ai được chia, 4 câu hỏi, giới hạn, chọn cách chạy, giao và kiểm, đơn vị chia theo từng skill); SKILL.md trỏ tới ở bước duyệt/thiết kế; orchestration.md và omi-mcp-extra.md mục 7 trỏ về parallel.md |
 | 1.20.4 | 2026-11-04 | tag `omicall-omiflow/v1.20.4` | Xử lý đề xuất review: bảng mặc định hành vi và bộ test-cases chung (shared), kiểm lời thoại giọng đọc C8 (callbot-flow), self_update dùng một dấu thời gian chung, mục lục playbook bằng grep, bản nháp nhanh sau khi duyệt Tóm tắt |
 | 1.20.3 | 2026-11-04 | tag `omicall-omiflow/v1.20.3` | Giảm token: rút gọn conversation.md (8,1→5,2 KB), self_update một lần mỗi phiên, system-model/solution-method chỉ đọc khi dựng mới; thêm omicall-assistant/references/default-behaviors.md (bảng mặc định callbot cổ điển/SmartAgent/chatbot) |
@@ -138,6 +142,7 @@ Các bản trước 2026-10-23 được đánh số lại theo lịch sử commi
 ## omicall-crm-config
 | Phiên bản | Ngày | Commit | Thay đổi |
 |---|---|---|---|
+| 1.6.1 | 2026-11-04 | tag `omicall-crm-config/v1.6.1` | self_update.py: gọi một skill là cập nhật cả bộ omicall-skill — báo mọi skill đổi phiên bản, tự tạo junction/symlink cho skill mới (cảnh báo đường dẫn hỏng), bản chép tay tự clone về ~/omicall-skill và chuyển bản cũ sang backup, mốc kiểm 1 giờ; README cài bằng vòng quét omicall-*; test_self_update.py |
 | 1.6.0 | 2026-11-04 | tag `omicall-crm-config/v1.6.0` | Đánh giá chạy song song và chia subagent cho mọi skill: shared/references/parallel.md (ai được chia, 4 câu hỏi, giới hạn, chọn cách chạy, giao và kiểm, đơn vị chia theo từng skill); SKILL.md trỏ tới ở bước duyệt/thiết kế; orchestration.md và omi-mcp-extra.md mục 7 trỏ về parallel.md |
 | 1.5.3 | 2026-11-04 | tag `omicall-crm-config/v1.5.3` | Xử lý đề xuất review: bảng mặc định hành vi và bộ test-cases chung (shared), kiểm lời thoại giọng đọc C8 (callbot-flow), self_update dùng một dấu thời gian chung, mục lục playbook bằng grep, bản nháp nhanh sau khi duyệt Tóm tắt |
 | 1.5.2 | 2026-11-04 | tag `omicall-crm-config/v1.5.2` | Giảm token: rút gọn conversation.md (8,1→5,2 KB), self_update một lần mỗi phiên, system-model/solution-method chỉ đọc khi dựng mới; thêm omicall-assistant/references/default-behaviors.md (bảng mặc định callbot cổ điển/SmartAgent/chatbot) |
@@ -153,6 +158,7 @@ Các bản trước 2026-10-23 được đánh số lại theo lịch sử commi
 ## omicall-pbx-config
 | Phiên bản | Ngày | Commit | Thay đổi |
 |---|---|---|---|
+| 1.6.1 | 2026-11-04 | tag `omicall-pbx-config/v1.6.1` | self_update.py: gọi một skill là cập nhật cả bộ omicall-skill — báo mọi skill đổi phiên bản, tự tạo junction/symlink cho skill mới (cảnh báo đường dẫn hỏng), bản chép tay tự clone về ~/omicall-skill và chuyển bản cũ sang backup, mốc kiểm 1 giờ; README cài bằng vòng quét omicall-*; test_self_update.py |
 | 1.6.0 | 2026-11-04 | tag `omicall-pbx-config/v1.6.0` | Đánh giá chạy song song và chia subagent cho mọi skill: shared/references/parallel.md (ai được chia, 4 câu hỏi, giới hạn, chọn cách chạy, giao và kiểm, đơn vị chia theo từng skill); SKILL.md trỏ tới ở bước duyệt/thiết kế; orchestration.md và omi-mcp-extra.md mục 7 trỏ về parallel.md |
 | 1.5.2 | 2026-11-04 | tag `omicall-pbx-config/v1.5.2` | Xử lý đề xuất review: bảng mặc định hành vi và bộ test-cases chung (shared), kiểm lời thoại giọng đọc C8 (callbot-flow), self_update dùng một dấu thời gian chung, mục lục playbook bằng grep, bản nháp nhanh sau khi duyệt Tóm tắt |
 | 1.5.1 | 2026-11-04 | tag `omicall-pbx-config/v1.5.1` | Giảm token: rút gọn conversation.md (8,1→5,2 KB), self_update một lần mỗi phiên, system-model/solution-method chỉ đọc khi dựng mới; thêm omicall-assistant/references/default-behaviors.md (bảng mặc định callbot cổ điển/SmartAgent/chatbot) |
@@ -168,6 +174,7 @@ Các bản trước 2026-10-23 được đánh số lại theo lịch sử commi
 ## omicall-ai-insight
 | Phiên bản | Ngày | Commit | Thay đổi |
 |---|---|---|---|
+| 1.6.1 | 2026-11-04 | tag `omicall-ai-insight/v1.6.1` | self_update.py: gọi một skill là cập nhật cả bộ omicall-skill — báo mọi skill đổi phiên bản, tự tạo junction/symlink cho skill mới (cảnh báo đường dẫn hỏng), bản chép tay tự clone về ~/omicall-skill và chuyển bản cũ sang backup, mốc kiểm 1 giờ; README cài bằng vòng quét omicall-*; test_self_update.py |
 | 1.6.0 | 2026-11-04 | tag `omicall-ai-insight/v1.6.0` | Đánh giá chạy song song và chia subagent cho mọi skill: shared/references/parallel.md (ai được chia, 4 câu hỏi, giới hạn, chọn cách chạy, giao và kiểm, đơn vị chia theo từng skill); SKILL.md trỏ tới ở bước duyệt/thiết kế; orchestration.md và omi-mcp-extra.md mục 7 trỏ về parallel.md |
 | 1.5.4 | 2026-11-04 | tag `omicall-ai-insight/v1.5.4` | Xử lý đề xuất review: bảng mặc định hành vi và bộ test-cases chung (shared), kiểm lời thoại giọng đọc C8 (callbot-flow), self_update dùng một dấu thời gian chung, mục lục playbook bằng grep, bản nháp nhanh sau khi duyệt Tóm tắt |
 | 1.5.3 | 2026-11-04 | tag `omicall-ai-insight/v1.5.3` | Giảm token: rút gọn conversation.md (8,1→5,2 KB), self_update một lần mỗi phiên, system-model/solution-method chỉ đọc khi dựng mới; thêm omicall-assistant/references/default-behaviors.md (bảng mặc định callbot cổ điển/SmartAgent/chatbot) |
@@ -184,6 +191,7 @@ Các bản trước 2026-10-23 được đánh số lại theo lịch sử commi
 ## omicall-assistant
 | Phiên bản | Ngày | Commit | Thay đổi |
 |---|---|---|---|
+| 1.5.1 | 2026-11-04 | tag `omicall-assistant/v1.5.1` | self_update.py: gọi một skill là cập nhật cả bộ omicall-skill — báo mọi skill đổi phiên bản, tự tạo junction/symlink cho skill mới (cảnh báo đường dẫn hỏng), bản chép tay tự clone về ~/omicall-skill và chuyển bản cũ sang backup, mốc kiểm 1 giờ; README cài bằng vòng quét omicall-*; test_self_update.py |
 | 1.5.0 | 2026-11-04 | tag `omicall-assistant/v1.5.0` | Đánh giá chạy song song và chia subagent cho mọi skill: shared/references/parallel.md (ai được chia, 4 câu hỏi, giới hạn, chọn cách chạy, giao và kiểm, đơn vị chia theo từng skill); SKILL.md trỏ tới ở bước duyệt/thiết kế; orchestration.md và omi-mcp-extra.md mục 7 trỏ về parallel.md |
 | 1.4.0 | 2026-11-04 | tag `omicall-assistant/v1.4.0` | Thêm scripts/check_callin.py (kiểm luồng gọi vào sau khi sửa hoặc xuất bản bot, báo STALE để map lại phím/đầu số), bổ sung orchestration.md; rút gọn SKILL.md dưới 5 KB |
 | 1.3.2 | 2026-11-04 | tag `omicall-assistant/v1.3.2` | Xử lý đề xuất review: bảng mặc định hành vi và bộ test-cases chung (shared), kiểm lời thoại giọng đọc C8 (callbot-flow), self_update dùng một dấu thời gian chung, mục lục playbook bằng grep, bản nháp nhanh sau khi duyệt Tóm tắt |

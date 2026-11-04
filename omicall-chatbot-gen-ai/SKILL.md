@@ -1,13 +1,13 @@
 ---
 name: omicall-chatbot-gen-ai
 description: >-
-  [v1.12.0] Xây dựng, kiểm thử và tối ưu Chatbot AI (OmiBot) của OMICall/OMICRM trên Zalo OA, Facebook và LiveTalk: lời nhắc hệ thống, ý định trong Ngữ cảnh bắt đầu, truy xuất tri thức (RAG) từ Dữ liệu khác, Truy vấn API, lưu bản nháp hoặc xuất bản qua chatbot-gateway, trò chuyện thử trên LiveTalk và chấm điểm trước/sau khi chỉnh sửa. Áp dụng khi có đường dẫn omicrm.io/ai/bot/.
+  [v1.12.1] Xây dựng, kiểm thử và tối ưu Chatbot AI (OmiBot) của OMICall/OMICRM trên Zalo OA, Facebook và LiveTalk: lời nhắc hệ thống, ý định trong Ngữ cảnh bắt đầu, truy xuất tri thức (RAG) từ Dữ liệu khác, Truy vấn API, lưu bản nháp hoặc xuất bản qua chatbot-gateway, trò chuyện thử trên LiveTalk và chấm điểm trước/sau khi chỉnh sửa. Áp dụng khi có đường dẫn omicrm.io/ai/bot/.
 ---
 
 # OMiCALL/OMiCRM AI Chatbot (OmiBot) Gen AI — Generic Builder Playbook (mọi tenant / mọi bot)
 
 ## Bước bắt buộc: cập nhật skill
-Chạy `python "<thư mục skill>/scripts/self_update.py"` trước mọi bước khác, 1 lần/phiên (đã chạy rồi, kể cả ở skill khác, thì bỏ qua, không nhắc lại phiên bản) (`<thư mục skill>` = thư mục chứa SKILL.md này). Câu đầu tiên trả lời user: `Đang dùng omicall-chatbot-gen-ai v<phiên bản>` (lấy từ dòng `SKILL_VERSION`; script lỗi thì dùng v1.12.0). Script báo **SKILL.md đã thay đổi** → đọc lại SKILL.md từ đĩa rồi mới làm tiếp. Không cập nhật được → báo lý do, làm tiếp bằng bản hiện có; không sửa, xoá hay commit trong thư mục skill.
+Chạy `python "<thư mục skill>/scripts/self_update.py"` trước mọi bước khác, 1 lần/phiên (đã chạy rồi, kể cả ở skill khác, thì bỏ qua, không nhắc lại phiên bản) (`<thư mục skill>` = thư mục chứa SKILL.md này). Câu đầu tiên trả lời user: `Đang dùng omicall-chatbot-gen-ai v<phiên bản>` (lấy từ dòng `SKILL_VERSION`; script lỗi thì dùng v1.12.1). Script báo **SKILL.md đã thay đổi** → đọc lại SKILL.md từ đĩa rồi mới làm tiếp. Không cập nhật được → báo lý do, làm tiếp bằng bản hiện có; không sửa, xoá hay commit trong thư mục skill.
 
 ## Bắt đầu và cách trao đổi (BẮT BUỘC)
 Làm theo `references/conversation.md`, chung cho mọi skill OMI:
