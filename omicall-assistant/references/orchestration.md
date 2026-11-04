@@ -16,7 +16,8 @@ Công cụ Workflow/nhiều tác tử quy mô lớn chỉ dùng khi user yêu c�
 |---|---|---|---|
 | 0 | Assistant | Đăng nhập (`conversation.md` mục 1), khảo sát tenant **một lần** (`tenant_survey.py`, `config_survey.py`) → `tenant_context.json`; `manifest.py init`; bảng kế hoạch, **một lượt duyệt** cho cả bài toán | Không |
 | 1 Nền | `crm-config`, `pbx-config` (nhóm, lời chào; chưa gắn hotline), `ai-insight` | Thuộc tính, trạng thái, chủ đề phiếu; nhóm đổ chuông, lời chào; AI Assistant | crm ‖ pbx. `ai-insight` chạy cùng đợt khi không cần thuộc tính mới, ngược lại sang sau crm |
-| 2 Dựng | `callbot-gen-ai`, `callbot-flow`, `chatbot-gen-ai`, `omiflow` (flow không cần id của bot/callbot) | Mỗi artefact một subagent | Có, nếu khác artefact |
+| 2a Khuôn | skill dựng artefact (khi tenant chưa có bản mẫu thật) | Một subagent dựng artefact đầu, GET lại làm khuôn | Không |
+| 2b Dựng | `callbot-gen-ai`, `callbot-flow`, `chatbot-gen-ai`, `omiflow` (flow không cần id của bot/callbot) | Mỗi artefact một subagent, dùng khuôn 2a | Có, nếu khác artefact (mục 9) |
 | 3 Nối | `omiflow` (flow chạy bot/callbot hoặc cần id của chúng), phần gắn webhook/URL của bot/callbot | Dùng id/URL lấy từ `manifest.py get <producer>.<trường>` | Theo producer-trước |
 | 4 Kiểm | Assistant | GET lại, chạy validator, `manifest.py check`, gom cổng chờ user | Không |
 | 5 Sau duyệt | User xuất bản → `pbx-config` gắn hotline/phím/webhook, test đầu-cuối | `manifest.py stale <producer>` rồi GET lại id mới | Theo cổng |
@@ -68,3 +69,17 @@ Chia câu hỏi theo bảng `knowledge-qa.md` mục 2, mỗi skill con một sub
 6. **Báo cáo subagent có thể sai**: ví dụ báo nhóm có 0 thành viên trong khi GET thật có 1. Luôn tự chạy `config_survey.py` và đối chiếu sổ chung trước khi báo user.
 7. **Giới hạn song song**: 8 subagent chỉ-API chạy cùng lúc không gặp lỗi quá tải; subagent giao diện vẫn tối đa 3, mỗi cái một tab. Một số phiên có bộ phân quyền chặn thao tác gắn kịch bản vào đầu số ("Production Deploy") kể cả khi user đã đồng ý trong chat: dừng, không vòng qua, đưa user các bước tự gắn trên giao diện.
 8. **Subagent chủ động ghi** điều mới học vào reference của skill đích (`pbx-config.md`, `api-reference.md`, `agent-config-guide.md`); assistant chỉ ghi bài học điều phối ở mục này.
+
+## 9. Tối ưu thời gian và token, không giảm chất lượng (✔ 11/2026)
+Nguyên tắc: bớt chỗ **lặp và chờ**, không bớt chỗ **kiểm**. Validator mode post, GET lại và `check_callin.py` luôn chạy.
+1. **Dựng khuôn rồi dàn trải** (mục 8.1): họ artefact giống nhau (nhiều bot cùng skill, cùng cấu trúc) → đợt 2a một subagent dựng khuôn, đợt 2b các subagent còn lại song song bằng API. Không dàn trải trước khi có khuôn.
+2. **Một lời giao việc chung + phần riêng**: ghi phần giống nhau (domain, cấm, sổ chung, mẫu trả về, quy tắc tên) vào `<scratch>/brief_common.md` một lần; mỗi subagent chỉ nhận một dòng "đọc brief_common.md" cộng phần riêng (khoá, tên, tệp nguồn, owner). Giảm token giao việc lặp N lần mà nội dung không đổi.
+3. **Tách theo artefact, không theo skill**: một skill có thể chia hai subagent nếu hai việc ghi hai artefact khác nhau và không phụ thuộc nhau (ví dụ `pbx-config`: lời chào TTS ‖ nhóm + menu). Menu cần id lời chào chưa có thì tạm trỏ lời chào có sẵn rồi thay sau, không chờ.
+4. **Dùng lại subagent đã có ngữ cảnh** (`SendMessage`) cho việc tiếp theo cùng artefact/cùng tab thay vì tạo mới (tránh nạp lại skill và khảo sát). Việc mới, không liên quan → subagent mới, ngữ cảnh sạch.
+5. **Chọn model theo việc**: viết nội dung, nghiên cứu, tra cứu → model nhẹ, chạy song song cả nhóm ngay đợt đầu (không cần tenant). Ghi lên hệ thống, xuất bản, sửa cấu hình thật → model mặc định.
+6. **Kiểm bằng script, không bằng LLM**: sau mỗi đợt có sửa/xuất bản bot chạy `python <thư mục skill>/scripts/check_callin.py --domain <d> --scratch <scratch>` (một lệnh, ~1 giây): phím → bot còn là bản mới nhất, nhóm/menu còn tồn tại, đầu số đã gắn kịch bản chưa. STALE → giao đúng subagent giữ menu map lại, rồi chạy lại.
+7. **Hỏi một lượt ngay đầu**: mọi điều chặn nhiều nhánh (thành viên nhóm nhận cuộc gọi, giờ làm việc, số đầu số dùng, tên công ty demo, giọng đọc) hỏi trong lượt duyệt đợt 0 để khỏi làm lại. Cổng hay bị chặn (gắn đầu số vào kịch bản, xuất bản) báo user ở đợt 0 là họ tự làm hoặc phải cấp quyền.
+8. **Chạy nền, không hỏi thăm**: giao xong thì không poll; làm phần độc lập khác (kiểm, viết tài liệu, chuẩn bị đợt sau) trong lúc chờ thông báo.
+9. **Báo cáo trả về ≤ 10 dòng** theo mẫu mục 5; chi tiết ghi vào tệp báo cáo ở scratch, assistant chỉ đọc khi cần kiểm.
+10. **Không làm lại cái đã có**: trước khi dựng, liệt kê artefact đã có trên tenant (bot, menu, lời chào, bản "tối ưu" do người khác tạo) để dùng lại hoặc map, không tạo trùng.
+
