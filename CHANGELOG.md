@@ -174,6 +174,7 @@ Các bản trước 2026-10-23 được đánh số lại theo lịch sử commi
 ## omicall-ai-insight
 | Phiên bản | Ngày | Commit | Thay đổi |
 |---|---|---|---|
+| 1.7.0 | 2026-11-06 | tag `omicall-ai-insight/v1.7.0` | Voice Insights: mục 3b cách hoạt động và chấm điểm (quy trình 4 bước, công thức 7 thông số Đánh giá chất lượng, trọng số, Bộ tiêu chí, SmartCall, màn chi tiết cuộc gọi, khuyến nghị cấu hình); 14 thông số; tốc độ thoại tiếng Việt đếm theo tiếng (~230–380/phút), bỏ mức 125–200; Phân tích lại cuộc gọi cũ |
 | 1.6.1 | 2026-11-04 | tag `omicall-ai-insight/v1.6.1` | self_update.py: gọi một skill là cập nhật cả bộ omicall-skill — báo mọi skill đổi phiên bản, tự tạo junction/symlink cho skill mới (cảnh báo đường dẫn hỏng), bản chép tay tự clone về ~/omicall-skill và chuyển bản cũ sang backup, mốc kiểm 1 giờ; README cài bằng vòng quét omicall-*; test_self_update.py |
 | 1.6.0 | 2026-11-04 | tag `omicall-ai-insight/v1.6.0` | Đánh giá chạy song song và chia subagent cho mọi skill: shared/references/parallel.md (ai được chia, 4 câu hỏi, giới hạn, chọn cách chạy, giao và kiểm, đơn vị chia theo từng skill); SKILL.md trỏ tới ở bước duyệt/thiết kế; orchestration.md và omi-mcp-extra.md mục 7 trỏ về parallel.md |
 | 1.5.4 | 2026-11-04 | tag `omicall-ai-insight/v1.5.4` | Xử lý đề xuất review: bảng mặc định hành vi và bộ test-cases chung (shared), kiểm lời thoại giọng đọc C8 (callbot-flow), self_update dùng một dấu thời gian chung, mục lục playbook bằng grep, bản nháp nhanh sau khi duyệt Tóm tắt |

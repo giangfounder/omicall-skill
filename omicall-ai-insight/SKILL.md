@@ -1,13 +1,13 @@
 ---
 name: omicall-ai-insight
 description: >-
-  [v1.6.1] Cấu hình và khai thác các chức năng phân tích bằng trí tuệ nhân tạo của OMICall/OMICRM: AI Assistant (hướng dẫn tổng hợp, các trường thông tin trích xuất từ cuộc gọi, biến ca_summarize và ca_ai_assistant), Voice Insights, Chat Insights, đánh giá cuộc gọi và phiếu ghi, chuyển giọng nói thành văn bản. Là skill con của omicall-omiflow, có thể sử dụng độc lập.
+  [v1.7.0] Cấu hình và khai thác các chức năng phân tích bằng trí tuệ nhân tạo của OMICall/OMICRM: AI Assistant (hướng dẫn tổng hợp, các trường thông tin trích xuất từ cuộc gọi, biến ca_summarize và ca_ai_assistant), Voice Insights, Chat Insights, đánh giá cuộc gọi và phiếu ghi, chuyển giọng nói thành văn bản. Là skill con của omicall-omiflow, có thể sử dụng độc lập.
 ---
 
 # OMICall AI Insight — AI Assistant, Voice Insights, Chat Insights (mọi tenant)
 
 ## Bước bắt buộc: cập nhật skill
-Chạy `python "<thư mục skill>/scripts/self_update.py"` trước mọi bước khác, 1 lần/phiên (đã chạy rồi, kể cả ở skill khác, thì bỏ qua, không nhắc lại phiên bản) (`<thư mục skill>` = thư mục chứa SKILL.md này). Câu đầu tiên trả lời user: `Đang dùng omicall-ai-insight v<phiên bản>` (lấy từ dòng `SKILL_VERSION`; script lỗi thì dùng v1.6.1). Script báo **SKILL.md đã thay đổi** → đọc lại SKILL.md từ đĩa rồi mới làm tiếp. Không cập nhật được → báo lý do, làm tiếp bằng bản hiện có; không sửa, xoá hay commit trong thư mục skill.
+Chạy `python "<thư mục skill>/scripts/self_update.py"` trước mọi bước khác, 1 lần/phiên (đã chạy rồi, kể cả ở skill khác, thì bỏ qua, không nhắc lại phiên bản) (`<thư mục skill>` = thư mục chứa SKILL.md này). Câu đầu tiên trả lời user: `Đang dùng omicall-ai-insight v<phiên bản>` (lấy từ dòng `SKILL_VERSION`; script lỗi thì dùng v1.7.0). Script báo **SKILL.md đã thay đổi** → đọc lại SKILL.md từ đĩa rồi mới làm tiếp. Không cập nhật được → báo lý do, làm tiếp bằng bản hiện có; không sửa, xoá hay commit trong thư mục skill.
 
 ## Bắt đầu và cách trao đổi (BẮT BUỘC)
 Làm theo `references/conversation.md`, chung cho mọi skill OMI:
@@ -56,7 +56,7 @@ Mắt xích thuộc skill khác (xem `references/system-model.md`) thì không t
 - `omicall-chatbot-gen-ai`: chỉ số Chat Insights dùng trong điều kiện flow nhận tin nhắn.
 
 ## Tài liệu tham khảo
-- `references/ai-insight.md` — so sánh ba lớp AI, AI Assistant (phạm vi, 4 chức năng, cú pháp hướng dẫn, ghi trễ), dùng kết quả có/không OMIFlow, Voice Insights (13 thông số, trọng số, mục đích cuộc gọi), Chat Insights, đánh giá và API Voice Insights/STT, kiểm thử.
+- `references/ai-insight.md` — so sánh ba lớp AI, AI Assistant (phạm vi, 4 chức năng, cú pháp hướng dẫn, ghi trễ), dùng kết quả có/không OMIFlow, Voice Insights (14 thông số, cách chấm điểm Đánh giá chất lượng, Bộ tiêu chí, SmartCall, trọng số, mục đích cuộc gọi), Chat Insights, đánh giá và API Voice Insights/STT, kiểm thử.
 - `references/omi-mcp.md` — MCP OMI: đăng nhập, công cụ nhóm AI và Tổng đài.
 - `scripts/omi_preflight.py`, `scripts/omi_login.py`, `scripts/omi_session.py`, `scripts/omi_api.py`, `scripts/tenant_survey.py` — script dùng chung.
 
