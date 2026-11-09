@@ -50,13 +50,13 @@ Cả bốn câu đều "không" → chạy song song được.
 Nạp skill <omicall-…> bằng công cụ Skill (chỉ skill này). Bạn là SUBAGENT: theo "Chế độ subagent" của parallel.md mục 1 (không chạy self_update.py, không hỏi domain, KHÔNG khảo sát lại tenant).
 Domain <d>. Việc đã duyệt, CHỈ làm đúng danh sách này: <liệt kê>. Artefact <key>, owner <tên subagent>.
 Đầu vào: <scratch>/tenant_context.json (chỉ đọc); manifest <đường dẫn> (OMI_MANIFEST); giá trị cần từ phần khác: <producer>.<trường> (đọc bằng manifest.py get ngay trước khi lưu, không đoán).
-Giao diện: chỉ khi API/MCP không làm được; tabs_create một tab riêng rồi truyền tabId ở MỌI lệnh; theo omi-mcp.md mục 4c (≤1 ảnh mỗi ngăn, bấm theo ref, xác nhận bằng chữ/GET).
+Giao diện: chỉ khi API/MCP không làm được; tabs_create một tab riêng rồi truyền tabId ở MỌI lệnh; đọc references/ui-recipes.md trước bước giao diện đầu tiên (URL thẳng bằng id, find mốc chữ thay chờ rồi chụp, find một lần rồi browser_batch bấm theo ref, kiểm bằng JS mục 2 hoặc GET, ≤1 ảnh mỗi màn hình, scale 0.5).
 Chờ khoảng 1 giây trước khi gõ, Ctrl+A rồi gõ, đọc lại giá trị bằng get_page_text hoặc JS; không dùng Escape để đóng; mỗi browser_batch ≤25 thao tác;
-nối cạnh bằng left_click_drag từ chấm nguồn tới chấm đích.
+nối cạnh: sửa edges qua API khi skill có (omiflow ui-build-and-test.md mục 5); chỉ kéo left_click_drag khi không có API.
 Sau mỗi lần Lưu: tải lại trang → GET → chạy validator của skill (mode post) → manifest.py set <key> kèm verify_report.
 CẤM: xuất bản, bật/tắt, xoá, gắn hotline/kênh/phím thật, gọi hoặc nhắn người thật, nhập mật khẩu, in hay chuyển token/cookie, đụng artefact không phải của mình, ghi `tenant_context.json` (ghi qua `manifest.py`), tự đánh dấu verified cho template (`extract_template --mark-verified`), chia tiếp cho subagent khác.
 Gặp cổng của user, điều cần user quyết hoặc cần đăng nhập giao diện: dừng nhánh đó, trả "blocked" (không tự đoán).
-Trả về tối đa 10 dòng: key | trạng thái done/partial/blocked | id/uuid đã GET | verify_report (PASS/FAIL) | Cần xác nhận | chưa làm được + lý do | cổng chờ user. Không dán JSON hay log dài.
+Trả về tối đa 10 dòng: key | trạng thái done/partial/blocked | id/uuid đã GET | verify_report (PASS/FAIL) | Cần xác nhận | chưa làm được + lý do | cổng chờ user | số ảnh đã chụp. Không dán JSON hay log dài.
 ```
 <!-- /gen:cam -->
 - Agent chính **tự GET lại và chạy validator** trước khi nối artefact hoặc báo user; lệch thì giao lại đúng nhánh đó, tối đa 1 lần. Một nhánh bị chặn không dừng các nhánh độc lập; câu hỏi cho user gom thành một lượt.

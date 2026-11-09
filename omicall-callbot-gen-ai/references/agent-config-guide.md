@@ -85,7 +85,7 @@ Mọi quy tắc END_CALL (cách hệ thống chạy endcall, chỉ Ý định "H
 - Một node Hành động chứa được nhiều hành động theo thứ tự (ví dụ Phân loại rồi Chuyển tiếp cuộc gọi).
 - Kịch bản mới: "Thêm mới" → chọn SmartAgent → đặt tên → "Lưu lại" (chưa có id) → sau lần lưu đầu URL đổi sang `/update/{id}`, nút đổi thành "Cập nhật". Hộp chọn loại kịch bản nằm đè lên danh sách: bấm theo phần tử, tránh bấm xuyên xuống dòng kịch bản bên dưới.
 - Khung trình duyệt hẹp (dưới khoảng 800px) làm editor chuyển giao diện điện thoại, nút Cập nhật bị đẩy ra ngoài, menu "Bước tiếp theo" không nhận bấm. Nhờ user mở rộng khung; không giả lập viewport lớn hơn (toạ độ bấm bị lệch).
-- Ảnh chụp có thể trễ một thao tác so với trang: chờ 1–2 giây và chụp lại trước khi bấm tiếp, nhất là gần nút xoá (dấu x đỏ ở điều kiện, trường hợp). Sau mỗi khối thay đổi bấm "Cập nhật" và chờ thông báo "Cập nhật thành công".
+- Ảnh chụp có thể trễ một thao tác so với trang: không chụp lại để bấm; `find` lại nút rồi bấm theo ref (nhất là gần nút xoá: dấu x đỏ ở điều kiện, trường hợp), kiểm bằng JS đọc trạng thái (`ui-recipes.md` mục 2). Sau mỗi khối thay đổi bấm "Cập nhật" và chờ thông báo "Cập nhật thành công".
 - Ô văn bản dài: dùng nhập giá trị theo phần tử (form input) thay vì dán clipboard; clipboard máy không vào được trình duyệt tích hợp.
 - Tải file lên "File đào tạo" cần hộp chọn file của hệ điều hành: để user tự tải.
 

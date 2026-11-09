@@ -1,19 +1,20 @@
 ---
 name: omicall-chatbot-gen-ai
 description: >-
-  [v1.13.0] Xây dựng, kiểm thử và tối ưu Chatbot AI (OmiBot) của OMICall/OMICRM trên Zalo OA, Facebook và LiveTalk: lời nhắc hệ thống, ý định trong Ngữ cảnh bắt đầu, truy xuất tri thức (RAG) từ Dữ liệu khác, Truy vấn API, lưu bản nháp hoặc xuất bản qua chatbot-gateway, trò chuyện thử trên LiveTalk và chấm điểm trước/sau khi chỉnh sửa. Áp dụng khi có đường dẫn omicrm.io/ai/bot/.
+  [v1.14.0] Xây dựng, kiểm thử và tối ưu Chatbot AI (OmiBot) của OMICall/OMICRM trên Zalo OA, Facebook và LiveTalk: lời nhắc hệ thống, ý định trong Ngữ cảnh bắt đầu, truy xuất tri thức (RAG) từ Dữ liệu khác, Truy vấn API, lưu bản nháp hoặc xuất bản qua chatbot-gateway, trò chuyện thử trên LiveTalk và chấm điểm trước/sau khi chỉnh sửa. Áp dụng khi có đường dẫn omicrm.io/ai/bot/.
 ---
 
 # OMiCALL/OMiCRM AI Chatbot (OmiBot) Gen AI — Generic Builder Playbook (mọi tenant / mọi bot)
 
 ## Bước bắt buộc: cập nhật skill
-Chạy `python "<thư mục skill>/scripts/self_update.py"` trước mọi bước khác, 1 lần/phiên (đã chạy rồi, kể cả ở skill khác, thì bỏ qua). Câu đầu tiên: `Đang dùng omicall-chatbot-gen-ai v<phiên bản>` (dòng `SKILL_VERSION`; script lỗi thì dùng v1.13.0). Script báo **SKILL.md đã thay đổi** → đọc lại từ đĩa rồi làm tiếp. Không cập nhật được → báo lý do, làm tiếp bằng bản hiện có; không sửa, xoá hay commit trong thư mục skill.
+Chạy `python "<thư mục skill>/scripts/self_update.py"` trước mọi bước khác, 1 lần/phiên (đã chạy rồi, kể cả ở skill khác, thì bỏ qua). Câu đầu tiên: `Đang dùng omicall-chatbot-gen-ai v<phiên bản>` (dòng `SKILL_VERSION`; script lỗi thì dùng v1.14.0). Script báo **SKILL.md đã thay đổi** → đọc lại từ đĩa rồi làm tiếp. Không cập nhật được → báo lý do, làm tiếp bằng bản hiện có; không sửa, xoá hay commit trong thư mục skill.
 **Chế độ subagent / hỏi đáp**: là subagent hoặc chỉ hỏi tính năng → bỏ qua bước này, hỏi domain, khảo sát (`parallel.md` mục 1).
+**Bước nào phải làm trên giao diện**: theo `references/ui-recipes.md` (URL thẳng bằng id, chờ bằng `find`, bấm theo ref, kiểm bằng JS hoặc GET; ≤ 1 ảnh mỗi màn hình).
 
 ## Bắt đầu và cách trao đổi (BẮT BUỘC)
 Làm theo `references/conversation.md`, chung cho mọi skill OMI:
 - Mục 1: hỏi domain → `python "<thư mục skill>/scripts/omi_login.py" ensure --domain <domain>` → `"need":"setup"` thì mở form cục bộ `omi_login.py setup --ui` trong agent (cách duy nhất; dự phòng: `references/omi-mcp.md` mục 2a). Không nhận mật khẩu qua chat, không gõ hay đọc form.
-- Mục 2–6: khung 5 bước, cách hỏi lại, mẫu câu, lời thường, ít chụp ảnh.
+- Mục 2–6: khung 5 bước, cách hỏi lại, mẫu câu, lời thường.
 
 ## Đường nhanh
 Chạy script bằng đường dẫn tuyệt đối `<thư mục skill>/scripts/...`. Mỗi bước chỉ trỏ tới quy tắc gốc bên dưới, không thay thế.

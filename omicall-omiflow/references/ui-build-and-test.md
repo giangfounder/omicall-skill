@@ -78,7 +78,7 @@ Mục lục: 1. Tạo flow và Thông tin Flow · 2. Trigger (kể cả Biểu m
 - Ngăn mở từ "Bước tiếp theo" của nút khác có danh sách "Biến liên kết tuỳ chỉnh" rỗng → gõ tay `{{mã}}` hoặc mở nút từ canvas (`node-catalog.md` mục 2.5).
 
 ### Trì hoãn
-- Mặc định "Sau khoảng thời gian = 1 Ngày". Đơn vị đổi bằng mũi tên ◂ ▸ quay vòng. Thứ tự đã ghi khác nhau giữa hai lần dựng (10/2026: Ngày → Giờ → Phút…; 11/2026: Ngày → Giây → Phút → Giờ…) → **luôn đọc lại đơn vị bằng chữ sau mỗi lần bấm**. Sau khi gõ giá trị, nút ✕ xuất hiện làm lệch vị trí mũi tên, nên chụp lại trước khi bấm.
+- Mặc định "Sau khoảng thời gian = 1 Ngày". Đơn vị đổi bằng mũi tên ◂ ▸ quay vòng. Thứ tự đã ghi khác nhau giữa hai lần dựng (10/2026: Ngày → Giờ → Phút…; 11/2026: Ngày → Giây → Phút → Giờ…) → **luôn đọc lại đơn vị bằng chữ sau mỗi lần bấm**. Sau khi gõ giá trị, nút ✕ xuất hiện làm lệch vị trí mũi tên: `find` lại mũi tên rồi bấm theo ref (không bấm theo toạ độ cũ). Nhanh hơn: đặt khoảng chờ qua API (`flow_outline` + `omi_save`).
 - Tuỳ chọn: Thời gian cụ thể, Đặt khung giờ tiếp tục, Hoặc điều kiện đến trước.
 
 ### Điều kiện
@@ -162,8 +162,8 @@ Mục duy nhất về kéo/nối cạnh; nơi khác trỏ về đây.
 
 ## 9. Mẹo browser pane và chạy song song
 
-- Ảnh chụp trễ 1–2 thao tác và khung pane đổi kích thước liên tục: xác nhận bằng `get_page_text` hoặc JS (`input.value`, `innerText`), bấm theo `ref` lấy từ `find` thay vì toạ độ. Ảnh vẫn trễ thì `wait` rồi chụp lại, hoặc `zoom` vùng nhỏ để đọc tóm tắt điều kiện.
-- Pane đổi kích thước thì toạ độ cũ bị từ chối ("page, zoom or size has changed") → chụp lại hoặc dùng `ref`.
+- Ảnh chụp trễ 1–2 thao tác và khung pane đổi kích thước liên tục: xác nhận bằng JS đọc trạng thái (`ui-recipes.md` mục 2) hoặc `get_page_text`, bấm theo `ref` lấy từ `find` thay vì toạ độ. Không `wait` rồi chụp lại; chỉ khi chữ không đủ mới `zoom` vùng nhỏ để đọc tóm tắt điều kiện.
+- Pane đổi kích thước thì toạ độ cũ bị từ chối ("page, zoom or size has changed") → `find` lại rồi bấm theo `ref` (không chụp lại để lấy toạ độ).
 - **Ref cũ bị stale** sau khi canvas vẽ lại hoặc tải lại: bấm ref cũ có thể trúng nhầm nút khác. Luôn `find` lại ngay trước mỗi lần bấm, và kiểm tiêu đề ngăn vừa mở đúng nút chưa.
 - **Nút ✕ đóng ngăn ở góc trên trái nằm đè logo trang chủ**: nếu ngăn đã đóng thì cú bấm đó trúng logo và rời khỏi editor (mất flow chưa lưu). Xác nhận ngăn đang mở trước khi bấm.
 - Bấm ra ngoài hộp xác nhận có thể mở nhầm ngăn khác (ví dụ ngăn Ghi chú) và trình duyệt có thể tự điền ô; đọc lại nội dung trước khi lưu.
@@ -171,5 +171,5 @@ Mục duy nhất về kéo/nối cạnh; nơi khác trỏ về đây.
 - **Browser pane không bắt XHR khác domain** trong `read_network_requests`; dùng `performance.getEntriesByType('resource')` để tìm endpoint. Pane hẹp làm canvas tràn ngang → ưu tiên API thay vì bấm UI.
 - Phiên đăng nhập hết hạn sau một đêm: mở trang đăng nhập để user tự đăng nhập lại.
 - Đọc cookie lấy token (JS hay CDP) bị bộ lọc an toàn chặn: **không lách**, kể cả bằng hàm `fetch` trong trang tự đọc cookie. Token chỉ lấy qua MCP OMI hoặc `OMI_TOKEN_FILE` do user đặt (`scripts/omi_preflight.py`); không có thì dựng bằng UI. Trang editor tải lại toàn bộ khi đổi URL → hàm JS đọc DOM đã khai báo phải khai báo lại.
-- **Quy tắc ít ảnh**: xem `omi-mcp.md` mục 4c.
+- **Quy tắc ít ảnh, công thức theo thao tác, JS đọc trạng thái**: `ui-recipes.md`.
 - **Chạy song song bằng subagent (fork)**: mỗi subagent tự tạo **tab riêng** (`tabs_create`, rồi truyền `tabId` ở mọi lệnh), không dùng tab của agent chính; mỗi flow một subagent, không hai bên cùng chạm một flow. Dặn trước: chờ trước khi gõ, kiểm từng trường hợp sau khi lưu, không xuất bản. Subagent báo thiếu kiểm sau tải lại thì agent chính tự mở lại kiểm. Mẫu giao việc đầy đủ (điều CẤM, ghi manifest): `omi-mcp.md` mục *Mẫu giao việc cho subagent*; mỗi subagent tự chạy `scripts/validate_flow.py` trên bản GET sau khi lưu.

@@ -1,0 +1,49 @@
+{
+ "skill_name": "omicall-assistant",
+ "_ghi_chu": "Eval chất lượng bước hiểu bài toán (solution-method.md mục 1), chạy offline, dừng ở cổng xin duyệt. Định dạng skill-creator (id, prompt, expected_output, files, expectations) + khối 'grade' do tools/run_quality_eval.py chấm tự động bằng problem_card.py. Không ghi tên/thông tin khách thật.",
+ "evals": [
+  {
+   "id": 1,
+   "prompt": "Khách muốn khi khách hàng gọi vào ngoài giờ thì hệ thống ghi lại, sáng hôm sau nhân viên gọi lại. Làm giúp tôi bản demo.",
+   "expected_output": "Phiếu chế độ nói: giả thuyết + độ tự tin, tối đa 4 câu hỏi mỗi câu kèm phỏng đoán, có ô Không làm; chưa dựng gì.",
+   "files": [],
+   "expectations": ["Phiếu đủ 7 ô", "Mọi câu hỏi có phỏng đoán", "Không làm có ít nhất 1 dòng", "Không ghi gì lên hệ thống"],
+   "grade": {"mode": "noi", "max_questions": 4}
+  },
+  {
+   "id": 2,
+   "prompt": "Khách là phòng khám nha khoa. Khi khách đặt lịch qua chatbot Zalo OA, bot hỏi họ tên, số điện thoại, ngày giờ muốn khám; sau đó tự tạo phiếu ghi chủ đề Đặt lịch giao cho lễ tân, lễ tân xác nhận trong 2 giờ làm việc. Thành công khi 100% lịch đặt qua Zalo có phiếu. Lần này không làm gọi điện nhắc lịch và không nối phần mềm phòng khám. Gói đã có chatbot và OMIFlow. Làm bản demo.",
+   "expected_output": "Yêu cầu đã đủ: độ tự tin cao, hỏi 0–1 câu, phiếu đủ 7 ô khớp đề bài, phần việc gồm chatbot và quy trình tự động.",
+   "files": [],
+   "expectations": ["Hỏi tối đa 1 câu", "Không làm nêu gọi nhắc lịch hoặc phần mềm phòng khám", "Phần việc có chatbot và quy trình"],
+   "grade": {"mode": "noi", "max_questions": 1, "min_confidence": 80, "min_parts": 2,
+             "parts_regex_all": ["(?i)chatbot|bot", "(?i)quy trình|flow|phiếu"],
+             "o_regex": {"khong_lam": "(?i)nhắc|gọi|phần mềm"}}
+  },
+  {
+   "id": 3,
+   "prompt": "Đọc file evals_files/rfp_trich.md (trích yêu cầu của khách) và lập phiếu bài toán để gửi lại khách các điểm cần xác nhận. Đây là tài liệu gửi khách.",
+   "expected_output": "Phiếu chế độ tài liệu: không đoán, không độ tự tin; Ràng buộc và Thành công khi là Cần xác nhận kèm câu hỏi cho khách; không bịa số liệu SLA.",
+   "files": ["evals/omicall-assistant/files/rfp_trich.md"],
+   "expectations": ["mode tai_lieu", "Không có độ tự tin hay 'Em đoán' trong câu hỏi gửi khách", "Không bịa con số hạn xử lý"],
+   "grade": {"mode": "tai_lieu", "cxn_required": ["thanh_cong"], "o_forbid_regex": {"thanh_cong": "\\d", "luat": "\\d+\\s*(giờ|phút|ngày)"}}
+  },
+  {
+   "id": 4,
+   "prompt": "Khách bán mỹ phẩm online muốn chatbot trên fanpage Facebook trả lời câu hỏi về sản phẩm. Họ có nhắc là sau này muốn có báo cáo doanh thu theo kênh nhưng đợt này chưa cần. Lên phương án demo.",
+   "expected_output": "Phiếu chế độ nói, ô Không làm có báo cáo doanh thu.",
+   "files": [],
+   "expectations": ["Không làm có báo cáo doanh thu"],
+   "grade": {"mode": "noi", "max_questions": 4, "o_regex": {"khong_lam": "(?i)báo cáo"}}
+  },
+  {
+   "id": 5,
+   "prompt": "khách bất động sản: lead đổ về từ form website, cần chia đều cho sale, quá 15 phút sale chưa gọi thì báo trưởng nhóm. tư vấn + dựng demo giúp",
+   "expected_output": "Phiếu chế độ nói, phần việc gồm cấu hình phân bổ/trường khách và quy trình tự động; câu hỏi kèm phỏng đoán.",
+   "files": [],
+   "expectations": ["Có phần quy trình tự động", "Ô Luật nhắc 15 phút"],
+   "grade": {"mode": "noi", "max_questions": 4, "min_parts": 1, "parts_regex_all": ["(?i)quy trình|flow"],
+             "o_regex": {"luat": "15"}}
+  }
+ ]
+}

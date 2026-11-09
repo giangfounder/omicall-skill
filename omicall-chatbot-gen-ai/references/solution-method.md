@@ -2,15 +2,29 @@
 
 Dùng ở bước phân tích, sau khi đọc `system-model.md`. Mục tiêu: ghép đúng module ngay từ đầu, không dò giao diện, không học thuộc từng ca. Các bảng "công thức theo bài toán" (`omicall-omiflow/references/solution-map.md`, mẫu B trong `design-patterns.md`) chỉ là **ví dụ minh hoạ** cách ghép; gặp bài toán mới thì phân rã theo các bước dưới.
 
-## 1. Chuẩn hoá bài toán thành 5 thành phần
-| Thành phần | Câu hỏi | Ví dụ trả lời |
+## 1. Chuẩn hoá bài toán: phiếu 5 ô + 2 ô chốt
+| Ô | Câu hỏi | Ví dụ trả lời |
 |---|---|---|
 | Vào | Cái gì khởi động (kênh, sự kiện)? | hotline, Zalo OA, form, Excel, hệ thống ngoài gọi webhook |
 | Đối tượng | Việc xoay quanh thực thể nào? | khách hàng, cuộc gọi, phiếu ghi, hội thoại |
 | Luật | Dựa vào đâu để quyết định, ai/đâu xử lý? | giờ làm việc, phím bấm, nội dung AI hiểu, ca/bộ phận, hạn xử lý |
 | Ra | Kết quả nghiệp vụ là bản ghi hay hành động nào? | phiếu đúng chủ đề, thuộc tính khách đổi, cuộc gọi/tin đi, popup |
 | Ràng buộc | Gói, quota, hệ thống ngoài, dữ liệu nhạy cảm, hạn chót? | module nào đã bật, API ngoài đã có chưa |
-Hỏi user MỘT lần những thành phần chưa rõ (kèm đề xuất mặc định), không hỏi dần từng câu.
+| **Thành công khi** | Nhìn vào đâu để biết đã đúng ý khách? | "khách gọi ngoài giờ có phiếu trước 8h sáng", "≥80% câu hỏi giá bot tự trả lời" |
+| **Không làm** | Phần nào khách có thể tưởng là có nhưng lần này không làm? | không nối hệ thống kế toán, không gọi ra, không làm báo cáo |
+Ô "Không làm" bắt buộc có ít nhất 1 dòng: hiểu sai phạm vi là lỗi tốn công nhất.
+
+### 1a. Cách điền (yêu cầu nói miệng, user có mặt)
+1. **Giả thuyết trước khi hỏi**: tự viết 1 câu "khách cần …" kèm độ tự tin 0–100% (chỉ để agent tự cân nhắc, không đưa vào tài liệu gửi khách). Tự tin ≥ 90% và đủ 7 ô → bỏ qua bước 2.
+2. **Hỏi một lượt, mỗi câu kèm phỏng đoán** (tối đa 4 câu, theo `conversation.md` mục 3): `<câu hỏi>? Em đoán: <đề xuất> (đề xuất)`. User chỉ cần gật hoặc sửa, không phải tự nghĩ. Chỉ hỏi ô làm đổi thiết kế; ô còn lại điền mặc định và nêu trong Tóm tắt.
+3. **Dừng hỏi** khi đoán trước được câu trả lời của câu hỏi tiếp theo. Còn ô trống không chặn việc → ghi "Cần xác nhận", làm tiếp.
+4. **Chốt bằng mẫu "Tóm tắt"** (`conversation.md` mục 4), có đủ "Thành công khi" và "Không làm". Chỉ bắt đầu khi user trả lời đồng ý rõ ràng ("đồng ý", "ok làm đi"). Câu kiểu "tuỳ em", "chắc được" → hỏi lại đúng ô còn mơ hồ.
+
+### 1b. Cách điền (tài liệu, RFP, checklist của khách)
+Không đoán, không đề xuất trong phần gửi khách: ô nào tài liệu không nói → "Cần xác nhận" kèm một câu hỏi ngắn, lời của OMI, khách trả lời được. Không ghi độ tự tin, ghi chú nội bộ hay tên module kỹ thuật vào danh sách gửi khách.
+
+### 1c. Kiểm phiếu bằng script
+Ghi phiếu ra `<scratch>/problem_card.json` rồi chạy `python "<thư mục skill>/scripts/problem_card.py" check <file>`: script báo ô thiếu, "Không làm" rỗng, số câu hỏi > 4, câu hỏi thiếu phỏng đoán (chế độ nói), độ tự tin lọt vào phần gửi khách (chế độ tài liệu); `render` in mẫu Tóm tắt từ phiếu. Mẫu JSON: `python ... problem_card.py template`.
 
 ## 2. Chọn năng lực cho từng thành phần theo thang "ít bộ phận động nhất"
 1. **Cấu hình sẵn của hệ thống** làm được thì dừng ở đây (hạn phiếu theo chủ đề, tự tạo khách từ cuộc gọi, phân bổ, AI Assistant, Truy vấn mở rộng): ít nút, ít quota, ít chỗ hỏng.

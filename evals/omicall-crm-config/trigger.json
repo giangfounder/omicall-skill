@@ -1,0 +1,66 @@
+[
+ {
+  "query": "Thêm thuộc tính động Ngày hết hạn hợp đồng kiểu ngày cho Khách hàng",
+  "should_trigger": true
+ },
+ {
+  "query": "Tạo bộ trạng thái khách hàng: Mới, Đang tư vấn, Đã chốt (WIN), Huỷ (LOST)",
+  "should_trigger": true
+ },
+ {
+  "query": "Chủ đề phiếu Bảo hành với trạng thái và thời hạn xử lý theo ca làm việc",
+  "should_trigger": true
+ },
+ {
+  "query": "field_code của trường Nguồn khách là gì, sửa thành kiểu danh sách",
+  "should_trigger": true
+ },
+ {
+  "query": "Cấu hình phân bổ khách đều cho nhóm sale",
+  "should_trigger": true
+ },
+ {
+  "query": "Thêm trường mặc định số CMND vào phiếu ghi",
+  "should_trigger": true
+ },
+ {
+  "query": "Trạng thái phiếu cần thêm bước Chờ khách phản hồi",
+  "should_trigger": true
+ },
+ {
+  "query": "Sắp xếp lại thứ tự chuyển trạng thái khách, không cho nhảy từ Mới sang Đã chốt",
+  "should_trigger": true
+ },
+ {
+  "query": "Tạo quy trình tự động đổi trạng thái khách sau cuộc gọi",
+  "should_trigger": false
+ },
+ {
+  "query": "Callbot AI hỏi khách ngày sinh rồi lưu vào trường khách hàng",
+  "should_trigger": false
+ },
+ {
+  "query": "Thêm nhóm nội bộ nhận cuộc gọi cho phòng CSKH",
+  "should_trigger": false
+ },
+ {
+  "query": "AI bóc thông tin từ cuộc gọi điền vào thuộc tính khách",
+  "should_trigger": false
+ },
+ {
+  "query": "Xuất danh sách khách hàng ra Excel để gửi sếp",
+  "should_trigger": false
+ },
+ {
+  "query": "Thiết kế cơ sở dữ liệu khách hàng cho app Django",
+  "should_trigger": false
+ },
+ {
+  "query": "Chatbot thu số điện thoại khách trên Zalo",
+  "should_trigger": false
+ },
+ {
+  "query": "Gắn kịch bản tổng đài cho hotline mới",
+  "should_trigger": false
+ }
+]

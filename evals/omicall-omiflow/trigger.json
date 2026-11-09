@@ -1,0 +1,70 @@
+[
+ {
+  "query": "Tạo quy trình tự động: khách gọi nhỡ thì tạo phiếu gọi lại giao nhân viên trực",
+  "should_trigger": true
+ },
+ {
+  "query": "Webhook từ website gửi lead vào OMICall rồi gửi ZNS cảm ơn",
+  "should_trigger": true
+ },
+ {
+  "query": "Flow nhắc lịch: trước hẹn 1 ngày gửi SMS, chưa xác nhận thì cho callbot gọi",
+  "should_trigger": true
+ },
+ {
+  "query": "OMIFlow dùng AI phân loại nội dung cuộc gọi rồi cập nhật trạng thái khách",
+  "should_trigger": true
+ },
+ {
+  "query": "Khi phiếu ghi quá hạn thì báo trưởng nhóm, dựng giúp quy trình này",
+  "should_trigger": true
+ },
+ {
+  "query": "Import file Excel danh sách khách, mỗi dòng chạy callbot gọi ra",
+  "should_trigger": true
+ },
+ {
+  "query": "Sửa flow đang chạy: thêm điều kiện nếu khách VIP thì chuyển nhóm khác",
+  "should_trigger": true
+ },
+ {
+  "query": "Cuối cuộc gọi tự động gọi API hệ thống ngoài để đẩy thông tin đơn hàng",
+  "should_trigger": true
+ },
+ {
+  "query": "Tự động chia khách mới cho nhân viên rồi nhắn Zalo thông báo, trì hoãn 2 tiếng thì nhắc lại",
+  "should_trigger": true
+ },
+ {
+  "query": "Chỉ thêm thuộc tính Hạng thành viên cho khách hàng",
+  "should_trigger": false
+ },
+ {
+  "query": "Tạo menu bấm phím cho tổng đài giờ hành chính",
+  "should_trigger": false
+ },
+ {
+  "query": "Sửa lời nhắc của chatbot Zalo",
+  "should_trigger": false
+ },
+ {
+  "query": "Dựng callbot SmartAgent đặt lịch",
+  "should_trigger": false
+ },
+ {
+  "query": "Cấu hình chủ đề phiếu Khiếu nại với hạn xử lý 24 giờ",
+  "should_trigger": false
+ },
+ {
+  "query": "Viết workflow GitHub Actions chạy test tự động",
+  "should_trigger": false
+ },
+ {
+  "query": "Bật AI tóm tắt cuộc gọi vào biến ca_summarize",
+  "should_trigger": false
+ },
+ {
+  "query": "Thiết kế quy trình bán hàng B2B nói chung cho đội sale (không liên quan phần mềm)",
+  "should_trigger": false
+ }
+]

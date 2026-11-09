@@ -17,7 +17,8 @@ Chỉ bước 2–3 chờ user; việc ghi lên hệ thống thật vẫn chờ 
 ## 3. Khi nào hỏi lại
 **Hỏi**: ô phiếu trống hoặc tài liệu mâu thuẫn; mắt xích ◐/? trong `system-model.md` (nói rõ rủi ro); sắp ghi, xuất bản, bật/tắt, xoá, gắn hotline, gọi/nhắn người thật; hai cách đều được nhưng khác chi phí/quota/trải nghiệm khách; thiếu dữ kiện nghiệp vụ (URL API, người nhận, nội dung lời chào) → hỏi, hoặc "Cần xác nhận" nếu không chặn việc khác.
 **Không hỏi**: điều đã có mặc định trong skill (nêu trong Tóm tắt); điều tra được bằng script/MCP/`tenant_context.json`; chi tiết kỹ thuật user không quyết được.
-**Cách hỏi**: gộp một lượt, tối đa 4 câu, mỗi câu một dòng; có lựa chọn thì đề xuất đứng đầu kèm "(đề xuất)", dùng `AskUserQuestion` nếu có, không thì đánh số; không hỏi lại điều đã trả lời.
+**Cách hỏi**: gộp một lượt, tối đa 4 câu, mỗi câu một dòng, mỗi câu kèm "Em đoán: …" để user chỉ cần gật hoặc sửa (mẫu "Hỏi lại có phỏng đoán" mục 4); có lựa chọn thì đề xuất đứng đầu kèm "(đề xuất)", dùng `AskUserQuestion` nếu có, không thì đánh số; không hỏi lại điều đã trả lời. Phân tích tài liệu/RFP gửi khách thì không đoán: ô trống ghi "Cần xác nhận" (`solution-method.md` mục 1b).
+**Chỉ bắt đầu khi đồng ý rõ ràng**: "đồng ý", "ok làm đi". "Tuỳ em", "chắc được" chưa phải đồng ý → hỏi lại đúng điểm còn mơ hồ.
 
 ## 4. Mẫu câu
 Chỉ thay phần trong `<>`. Không dùng từ ở cột trái bảng mục 5.
@@ -36,8 +37,15 @@ Chỉ thay phần trong `<>`. Không dùng từ ở cột trái bảng mục 5.
 > - Khi: <điều xảy ra>
 > - Hệ thống sẽ: <việc tự động làm>
 > - Kết quả: <khách hoặc nhân viên nhận được gì>
+> - Thành công khi: <dấu hiệu nhìn thấy được>
+> - Lần này không làm: <liệt kê, ít nhất 1 ý>
 > Em sẽ làm <số> phần: <liệt kê ngắn>. Những điểm em đang để mặc định: <liệt kê>.
-> Anh/chị đồng ý để em bắt đầu không?
+> Anh/chị trả lời "đồng ý" để em bắt đầu, hoặc sửa giúp em dòng chưa đúng.
+
+**Hỏi lại có phỏng đoán** (tối đa 4 câu, một lượt):
+> Để làm đúng ý anh/chị, em cần chốt <số> điểm. Đúng thì anh/chị chỉ cần trả lời "đúng":
+> 1. <câu hỏi>? Em đoán: <đề xuất>
+> 2. <câu hỏi>? Em đoán: <đề xuất>
 
 **Tiến độ**:
 > Xong phần <tên phần> (<số>/<tổng>). Đang làm <phần tiếp theo>.
@@ -74,4 +82,4 @@ Tên nút giao diện OMI (Xuất bản, Cập nhật, Lưu lại) giữ nguyên
 
 ## 6. Ít chụp ảnh, chụp thì ghi lại
 - Cần biết tenant/giao diện có gì: theo thứ tự `references/omi-mcp.md` mục 4a (tri thức skill → `tenant_context.json` → script API → MCP → chữ giao diện → ảnh sau cùng, zoom vùng nhỏ). Biết URL thì vào thẳng.
-- Điều mới học từ giao diện/ảnh (đường dẫn, nhãn, quy tắc form, gotcha, endpoint) → ghi ngay vào reference kèm `✔ UI <tháng/năm>` (mục 4b); dựng bằng UI theo mục 4c; chỉ ghi năng lực nền tảng, không ghi dữ liệu khách; cuối phiên liệt kê để user duyệt.
+- Điều mới học từ giao diện/ảnh (đường dẫn, nhãn, quy tắc form, gotcha, endpoint) → ghi ngay vào reference kèm `✔ UI <tháng/năm>` (mục 4b); dựng bằng UI theo `ui-recipes.md`; chỉ ghi năng lực nền tảng, không ghi dữ liệu khách; cuối phiên liệt kê để user duyệt.

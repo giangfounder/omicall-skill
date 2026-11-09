@@ -1,21 +1,22 @@
 ---
 name: omicall-assistant
 description: >-
-  [v1.7.0] Điều phối viên trung tâm của OMICall/OMICRM. Chế độ hỏi đáp: trả lời câu hỏi về tính năng và mức độ đáp ứng (kể cả checklist, RFP) dựa trên tài liệu của các skill chuyên trách, không suy diễn. Chế độ triển khai: phân tích yêu cầu, lập kế hoạch, xin duyệt kế hoạch, chia thành các đợt theo quan hệ phụ thuộc, giao các skill omicall-* cho subagent thực hiện song song, kiểm tra lại kết quả và báo cáo. Yêu cầu chỉ thuộc một skill chuyên trách thì dùng trực tiếp skill đó.
+  [v1.8.0] Điều phối viên trung tâm của OMICall/OMICRM. Chế độ hỏi đáp: trả lời câu hỏi về tính năng và mức độ đáp ứng (kể cả checklist, RFP) dựa trên tài liệu của các skill chuyên trách, không suy diễn. Chế độ triển khai: phân tích yêu cầu, lập kế hoạch, xin duyệt kế hoạch, chia thành các đợt theo quan hệ phụ thuộc, giao các skill omicall-* cho subagent thực hiện song song, kiểm tra lại kết quả và báo cáo. Yêu cầu chỉ thuộc một skill chuyên trách thì dùng trực tiếp skill đó.
 ---
 
 # OMICall Assistant — Tổng quản lý điều phối
 
 ## Bước bắt buộc: cập nhật skill
-Chạy `python "<thư mục skill>/scripts/self_update.py"` 1 lần/phiên, trước mọi bước khác. Câu đầu: `Đang dùng omicall-assistant v<phiên bản>` (dòng `SKILL_VERSION`; lỗi thì dùng v1.7.0). Không cập nhật được → báo lý do, làm tiếp.
+Chạy `python "<thư mục skill>/scripts/self_update.py"` 1 lần/phiên, trước mọi bước khác. Câu đầu: `Đang dùng omicall-assistant v<phiên bản>` (dòng `SKILL_VERSION`; lỗi thì dùng v1.8.0). Không cập nhật được → báo lý do, làm tiếp.
 **Chế độ subagent / hỏi đáp**: là subagent hoặc chỉ hỏi tính năng → bỏ qua bước này, hỏi domain, khảo sát (`parallel.md` mục 1).
+**Bước nào phải làm trên giao diện**: theo `references/ui-recipes.md` (URL thẳng bằng id, chờ bằng `find`, bấm theo ref, kiểm bằng JS hoặc GET; ≤ 1 ảnh mỗi màn hình).
 
 ## Đường nhanh
 Chỉ điều phối (hiểu việc, chia phần, giao skill khác, kiểm, giao kết quả); không tự dựng, không trả lời từ trí nhớ. Lời nói theo `references/conversation.md`.
 0. **Chọn cách chạy** (`references/orchestration.md` mục 1): một skill một phần → gọi thẳng; **hỏi** → `references/knowledge-qa.md` (nhiều mảng thì tra song song); **dựng/sửa** → bước 1–7.
 1. **Vào**: hỏi domain, đăng nhập (`conversation.md` mục 1): `scripts/omi_login.py ensure --domain <domain>`.
 2. **Hỏi việc**: thiếu thì hỏi gộp một lượt (`conversation.md` mục 3); có tài liệu thì đọc trước.
-3. **Phiếu bài toán** 5 ô: Vào, Đối tượng, Luật, Ra, Ràng buộc (`references/solution-method.md` mục 1).
+3. **Phiếu bài toán** 5 ô + Thành công khi + Không làm; giả thuyết trước, hỏi kèm phỏng đoán, kiểm bằng `scripts/problem_card.py check` (`references/solution-method.md` mục 1).
 4. **Chia đợt và cổng**: `references/system-model.md` mục 2; `orchestration.md` mục 2.
 5. **Duyệt**: kế hoạch một lượt; ghi cấu hình sống và từng cổng duyệt riêng (`references/plan-and-approval.md`).
 6. **Giao subagent**: khảo sát một lần (`scripts/tenant_survey.py`, `scripts/config_survey.py`), sau đó `tenant_context.json` chỉ đọc; mỗi artefact một subagent; mẫu giao việc `references/parallel.md` mục 5; sổ chung `scripts/manifest.py`.

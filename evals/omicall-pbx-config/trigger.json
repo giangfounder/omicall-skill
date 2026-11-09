@@ -1,0 +1,66 @@
+[
+ {
+  "query": "Tạo menu bấm phím: 1 gặp kinh doanh, 2 gặp kỹ thuật, 0 gặp tổng đài viên",
+  "should_trigger": true
+ },
+ {
+  "query": "Đổi lời chào tổng đài sang giọng đọc tự động với nội dung mới",
+  "should_trigger": true
+ },
+ {
+  "query": "Tạo nhóm nội bộ nhận cuộc gọi cho phòng chăm sóc khách hàng",
+  "should_trigger": true
+ },
+ {
+  "query": "Kịch bản cuộc gọi vào: ngoài giờ làm việc phát thông báo nghỉ",
+  "should_trigger": true
+ },
+ {
+  "query": "Gắn kịch bản tổng đài vào đầu số hotline mới mua",
+  "should_trigger": true
+ },
+ {
+  "query": "Thêm máy lẻ cho nhân viên mới và đưa vào nhóm trực",
+  "should_trigger": true
+ },
+ {
+  "query": "Phím 3 trong menu cần chuyển sang quy trình tự động qua webhook",
+  "should_trigger": true
+ },
+ {
+  "query": "Upload file ghi âm lời chào và gắn vào giờ hành chính",
+  "should_trigger": true
+ },
+ {
+  "query": "Dựng callbot AI trả lời khi khách gọi vào ngoài giờ",
+  "should_trigger": false
+ },
+ {
+  "query": "Tạo flow tạo phiếu khi khách bấm phím 3",
+  "should_trigger": false
+ },
+ {
+  "query": "Thêm trường Chi nhánh cho khách hàng",
+  "should_trigger": false
+ },
+ {
+  "query": "Tổng đài viên AI chuyển máy cho nhóm kỹ thuật",
+  "should_trigger": false
+ },
+ {
+  "query": "Chấm điểm cuộc gọi tổng đài viên theo tiêu chí lịch sự",
+  "should_trigger": false
+ },
+ {
+  "query": "Cài Asterisk trên Ubuntu",
+  "should_trigger": false
+ },
+ {
+  "query": "Bot chat LiveTalk chuyển cho nhân viên",
+  "should_trigger": false
+ },
+ {
+  "query": "So sánh giá cước gọi giữa các nhà mạng",
+  "should_trigger": false
+ }
+]

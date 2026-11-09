@@ -1,0 +1,70 @@
+[
+ {
+  "query": "Khách muốn: chatbot Zalo thu số điện thoại, xong tự tạo phiếu và cho callbot gọi lại tư vấn. Lên kế hoạch và dựng giúp tôi",
+  "should_trigger": true
+ },
+ {
+  "query": "Đây là RFP của khách (file đính kèm), chấm giúp OMICall đáp ứng được những dòng nào",
+  "should_trigger": true
+ },
+ {
+  "query": "OMICall có làm được chấm điểm chất lượng cuộc gọi tự động và gửi ZNS sau cuộc gọi không? trả lời checklist này cho khách",
+  "should_trigger": true
+ },
+ {
+  "query": "Tôi cần demo cho khách bảo hiểm: tổng đài bấm phím, bot trả lời ngoài giờ, phiếu ghi cho nhân viên. Không biết bắt đầu từ đâu",
+  "should_trigger": true
+ },
+ {
+  "query": "khách bên bất động sản muốn tự động hoá chăm sóc lead từ facebook tới gọi điện, tư vấn giúp phương án trên omicrm",
+  "should_trigger": true
+ },
+ {
+  "query": "Làm POC trọn gói trên tài khoản demo: cấu hình trường khách hàng, quy trình tự động và chatbot website",
+  "should_trigger": true
+ },
+ {
+  "query": "Phân tích tài liệu yêu cầu này và liệt kê những điểm cần khách xác nhận trước khi báo giá OMICall",
+  "should_trigger": true
+ },
+ {
+  "query": "Kiểm tra lại toàn bộ cấu hình đã dựng cho demo hôm qua (bot, quy trình, số tổng đài) xem còn chỗ nào chưa nối",
+  "should_trigger": true
+ },
+ {
+  "query": "OMICall có tích hợp được với CRM nội bộ của khách qua API không, kèm ví dụ cách nối",
+  "should_trigger": true
+ },
+ {
+  "query": "Sửa lời chào của callbot SmartAgent trong kịch bản đang mở",
+  "should_trigger": false
+ },
+ {
+  "query": "Thêm thuộc tính Nguồn khách kiểu danh sách cho Khách hàng",
+  "should_trigger": false
+ },
+ {
+  "query": "Chatbot Zalo trả lời sai giá sản phẩm, tối ưu lại lời nhắc giúp tôi",
+  "should_trigger": false
+ },
+ {
+  "query": "Viết hàm Python đọc file Excel danh sách khách và gửi email",
+  "should_trigger": false
+ },
+ {
+  "query": "Giải thích sự khác nhau giữa VoIP và SIP trunk nói chung",
+  "should_trigger": false
+ },
+ {
+  "query": "Sinh dữ liệu huấn luyện cho ý định hỏi lãi suất của callbot cổ điển",
+  "should_trigger": false
+ },
+ {
+  "query": "Soạn email chào hàng gửi khách hàng mới, giọng thân thiện",
+  "should_trigger": false
+ },
+ {
+  "query": "Gắn kịch bản cuộc gọi vào đầu số hotline đang có",
+  "should_trigger": false
+ }
+]

@@ -1,0 +1,66 @@
+[
+ {
+  "query": "Bật AI Assistant tóm tắt cuộc gọi và lưu vào biến ca_summarize",
+  "should_trigger": true
+ },
+ {
+  "query": "Cấu hình trường thông tin AI trích xuất từ cuộc gọi: nhu cầu, ngân sách, thời gian mua",
+  "should_trigger": true
+ },
+ {
+  "query": "Voice Insights chấm điểm chất lượng cuộc gọi theo bộ tiêu chí của công ty",
+  "should_trigger": true
+ },
+ {
+  "query": "Phân tích lại các cuộc gọi cũ tuần trước bằng AI",
+  "should_trigger": true
+ },
+ {
+  "query": "Chat Insights phân tích cảm xúc hội thoại Zalo",
+  "should_trigger": true
+ },
+ {
+  "query": "Tạo bộ tiêu chí đánh giá cuộc gọi cho phiếu ghi",
+  "should_trigger": true
+ },
+ {
+  "query": "Tốc độ nói của nhân viên bị chấm thấp, giải thích cách Voice Insights tính",
+  "should_trigger": true
+ },
+ {
+  "query": "Chuyển giọng nói thành văn bản cho cuộc gọi và xem bản gốc",
+  "should_trigger": true
+ },
+ {
+  "query": "Dựng callbot AI hỏi mức hài lòng sau cuộc gọi",
+  "should_trigger": false
+ },
+ {
+  "query": "Tạo quy trình gửi ZNS khi điểm cuộc gọi thấp",
+  "should_trigger": false
+ },
+ {
+  "query": "Tối ưu lời nhắc chatbot Facebook",
+  "should_trigger": false
+ },
+ {
+  "query": "Thêm trạng thái phiếu Đã đánh giá",
+  "should_trigger": false
+ },
+ {
+  "query": "Tạo menu bấm phím khảo sát hài lòng 1 đến 5",
+  "should_trigger": false
+ },
+ {
+  "query": "Viết báo cáo phân tích doanh thu quý bằng Excel",
+  "should_trigger": false
+ },
+ {
+  "query": "Huấn luyện mô hình nhận dạng giọng nói riêng bằng PyTorch",
+  "should_trigger": false
+ },
+ {
+  "query": "Callbot cổ điển nhận sai số điện thoại khách đọc",
+  "should_trigger": false
+ }
+]

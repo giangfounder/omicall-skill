@@ -59,7 +59,7 @@ UPDATE_ENTRY = ('Chạy `python "<thư mục skill>/scripts/self_update.py"` 1 l
                 '→ báo lý do, làm tiếp.')
 CONVERSATION = """Làm theo `references/conversation.md`, chung cho mọi skill OMI:
 - Mục 1: hỏi domain → `python "<thư mục skill>/scripts/omi_login.py" ensure --domain <domain>` → `"need":"setup"` thì mở form cục bộ `omi_login.py setup --ui` trong agent (cách duy nhất; dự phòng: `references/omi-mcp.md` mục 2a). Không nhận mật khẩu qua chat, không gõ hay đọc form.
-- Mục 2–6: khung 5 bước, cách hỏi lại, mẫu câu, lời thường, ít chụp ảnh."""
+- Mục 2–6: khung 5 bước, cách hỏi lại, mẫu câu, lời thường."""
 
 ORCH = Path("omicall-assistant") / "references" / "orchestration.md"
 PLAN = Path("omicall-assistant") / "references" / "plan-and-approval.md"
@@ -102,7 +102,10 @@ def links_block(g, skill):
 def start_block(g, skill, version):
     entry = skill in g.get("entry", [])
     upd = (UPDATE_ENTRY if entry else UPDATE).format(name=skill, ver=version)
-    out = H_UPDATE + "\n" + upd + "\n" + mode_line(g) + "\n\n"
+    out = H_UPDATE + "\n" + upd + "\n" + mode_line(g) + "\n"
+    if g.get("giao_dien"):  # quy tắc làm trên giao diện ít ảnh (khoá `giao_dien`): đặt ở chỗ agent luôn đọc
+        out += g["giao_dien"] + "\n"
+    out += "\n"
     if not entry:
         out += H_START + "\n" + CONVERSATION + "\n\n"
     return out

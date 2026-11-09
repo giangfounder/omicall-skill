@@ -1,0 +1,70 @@
+[
+ {
+  "query": "Dựng chatbot AI trên Zalo OA tư vấn khoá học và xin số điện thoại",
+  "should_trigger": true
+ },
+ {
+  "query": "OmiBot trên LiveTalk website trả lời sai chính sách đổi trả, sửa giúp",
+  "should_trigger": true
+ },
+ {
+  "query": "Nạp tài liệu sản phẩm vào Dữ liệu khác cho bot chat trả lời theo tài liệu",
+  "should_trigger": true
+ },
+ {
+  "query": "Mở trang ai/bot của omicrm, thêm ngữ cảnh bắt đầu cho khách hỏi giá",
+  "should_trigger": true
+ },
+ {
+  "query": "Bot Facebook Messenger cần tra tồn kho qua API khi khách hỏi",
+  "should_trigger": true
+ },
+ {
+  "query": "Chấm điểm chatbot trước và sau khi sửa lời nhắc, chạy hội thoại thử",
+  "should_trigger": true
+ },
+ {
+  "query": "Tạo chatbot chăm sóc khách hàng nhắn tin tự động cho fanpage",
+  "should_trigger": true
+ },
+ {
+  "query": "Chatbot cần chuyển cho nhân viên khi khách muốn khiếu nại",
+  "should_trigger": true
+ },
+ {
+  "query": "Xuất bản bản nháp chatbot sau khi tôi duyệt",
+  "should_trigger": true
+ },
+ {
+  "query": "Dựng callbot gọi điện tư vấn khoá học bằng giọng nói",
+  "should_trigger": false
+ },
+ {
+  "query": "Gửi tin ZNS cho khách sau khi tạo phiếu",
+  "should_trigger": false
+ },
+ {
+  "query": "Tạo quy trình: khách nhắn Zalo thì tạo phiếu ghi tự động",
+  "should_trigger": false
+ },
+ {
+  "query": "Bật Chat Insights phân tích cảm xúc hội thoại",
+  "should_trigger": false
+ },
+ {
+  "query": "Trả lời tin nhắn Zalo của khách này giúp tôi: giá bao nhiêu?",
+  "should_trigger": false
+ },
+ {
+  "query": "Callbot cổ điển hỏi đáp FAQ qua điện thoại",
+  "should_trigger": false
+ },
+ {
+  "query": "Viết bài đăng fanpage giới thiệu sản phẩm mới",
+  "should_trigger": false
+ },
+ {
+  "query": "Thêm trạng thái khách hàng Đã chốt với cờ WIN",
+  "should_trigger": false
+ }
+]

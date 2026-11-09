@@ -1,19 +1,20 @@
 ---
 name: omicall-callbot-flow
 description: >-
-  [v1.10.0] Xây dựng và chỉnh sửa Callbot theo kịch bản cố định (loại NORMAL) của OMICall/OMICRM: cây hội thoại, ý định và thực thể NLU, dữ liệu huấn luyện cho giọng nói qua điện thoại, Kho tri thức, sinh luồng từ JSON, lưu và gọi thử. Áp dụng cho trang …/ai/callbot/script/update/{id} khi kịch bản không thuộc loại AI_AGENT; với SmartAgent sử dụng omicall-callbot-gen-ai.
+  [v1.11.0] Xây dựng và chỉnh sửa Callbot theo kịch bản cố định (loại NORMAL) của OMICall/OMICRM: cây hội thoại, ý định và thực thể NLU, dữ liệu huấn luyện cho giọng nói qua điện thoại, Kho tri thức, sinh luồng từ JSON, lưu và gọi thử. Áp dụng cho trang …/ai/callbot/script/update/{id} khi kịch bản không thuộc loại AI_AGENT; với SmartAgent sử dụng omicall-callbot-gen-ai.
 ---
 
 # OMiCALL Callbot luồng cổ điển (NORMAL) + Kho tri thức — Generic Builder Playbook
 
 ## Bước bắt buộc: cập nhật skill
-Chạy `python "<thư mục skill>/scripts/self_update.py"` trước mọi bước khác, 1 lần/phiên (đã chạy rồi, kể cả ở skill khác, thì bỏ qua). Câu đầu tiên: `Đang dùng omicall-callbot-flow v<phiên bản>` (dòng `SKILL_VERSION`; script lỗi thì dùng v1.10.0). Script báo **SKILL.md đã thay đổi** → đọc lại từ đĩa rồi làm tiếp. Không cập nhật được → báo lý do, làm tiếp bằng bản hiện có; không sửa, xoá hay commit trong thư mục skill.
+Chạy `python "<thư mục skill>/scripts/self_update.py"` trước mọi bước khác, 1 lần/phiên (đã chạy rồi, kể cả ở skill khác, thì bỏ qua). Câu đầu tiên: `Đang dùng omicall-callbot-flow v<phiên bản>` (dòng `SKILL_VERSION`; script lỗi thì dùng v1.11.0). Script báo **SKILL.md đã thay đổi** → đọc lại từ đĩa rồi làm tiếp. Không cập nhật được → báo lý do, làm tiếp bằng bản hiện có; không sửa, xoá hay commit trong thư mục skill.
 **Chế độ subagent / hỏi đáp**: là subagent hoặc chỉ hỏi tính năng → bỏ qua bước này, hỏi domain, khảo sát (`parallel.md` mục 1).
+**Bước nào phải làm trên giao diện**: theo `references/ui-recipes.md` (URL thẳng bằng id, chờ bằng `find`, bấm theo ref, kiểm bằng JS hoặc GET; ≤ 1 ảnh mỗi màn hình).
 
 ## Bắt đầu và cách trao đổi (BẮT BUỘC)
 Làm theo `references/conversation.md`, chung cho mọi skill OMI:
 - Mục 1: hỏi domain → `python "<thư mục skill>/scripts/omi_login.py" ensure --domain <domain>` → `"need":"setup"` thì mở form cục bộ `omi_login.py setup --ui` trong agent (cách duy nhất; dự phòng: `references/omi-mcp.md` mục 2a). Không nhận mật khẩu qua chat, không gõ hay đọc form.
-- Mục 2–6: khung 5 bước, cách hỏi lại, mẫu câu, lời thường, ít chụp ảnh.
+- Mục 2–6: khung 5 bước, cách hỏi lại, mẫu câu, lời thường.
 
 ## Đường nhanh
 Script nằm ở `<thư mục skill>/scripts/`, chạy bằng đường dẫn tuyệt đối. Khối này chỉ là lối tắt; quy tắc gốc ở Rules, Workflow, Gotchas.
@@ -55,7 +56,7 @@ Mắt xích thuộc skill khác (xem `references/system-model.md`) thì không t
 3. **Dùng lại trước khi tạo mới**: ưu tiên ý định/thực thể hệ thống (`omi_intent_*`, `omi_entity_*`, `khach_can_gap/*`).
 4. **Kho tri thức dùng chung cho mọi kịch bản NORMAL của tenant**, mỗi lần nhập dữ liệu là một lần huấn luyện lại toàn bộ (10–20 phút) → gom dữ liệu vào **một file**, gửi user duyệt, **đẩy một lần qua giao diện**. Không xoá dữ liệu có sẵn khi user chưa yêu cầu.
 5. Không bấm **Xuất bản**, không gắn kịch bản vào hotline/chiến dịch, không gọi thử khi user chưa yêu cầu và chưa đưa số.
-6. Đăng nhập theo `references/conversation.md` mục 1: mặc định form cục bộ `omi_login.py setup --ui` mở trong agent; `setup` trong terminal (ô nhập ẩn) chỉ là dự phòng (`references/omi-mcp.md` mục 2a). Hết hạn hoặc 401 → agent tự chạy `omi_login.py login --domain <domain>`, không hỏi lại. Không nhận mật khẩu qua chat, không in mật khẩu/token, không ghi bí mật vào repo hoặc file tạm. Không đọc cookie hay token trong trang (JS/CDP); token chỉ lấy qua `scripts/omi_session.py`.
+6. Đăng nhập theo `references/conversation.md` mục 1 (form cục bộ `omi_login.py setup --ui`). Hết hạn hoặc 401 → tự chạy `omi_login.py login --domain <domain>`, không hỏi lại. Không nhận mật khẩu qua chat, không in mật khẩu/token, không ghi bí mật vào repo hoặc file tạm. Không đọc cookie hay token trong trang (JS/CDP); token chỉ lấy qua `scripts/omi_session.py`.
 
 ## Quy tắc kịch bản mặc định (user đã chốt, áp mọi dự án trừ khi user đổi)
 - **Hỏi đáp**: trả lời **1 lần** (1 câu = trả lời + hỏi lại câu của bước); khách hỏi lại cùng chủ đề → bước "báo chuyển máy" → chuyển nhân viên.

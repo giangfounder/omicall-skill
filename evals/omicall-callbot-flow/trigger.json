@@ -1,0 +1,66 @@
+[
+ {
+  "query": "Dựng callbot luồng cổ điển từ kịch bản docx: xác nhận đơn hàng, khách nói có hoặc không",
+  "should_trigger": true
+ },
+ {
+  "query": "Sinh dữ liệu huấn luyện sát lời STT tổng đài cho ý định đồng ý và từ chối",
+  "should_trigger": true
+ },
+ {
+  "query": "Callbot NORMAL nhận nhầm không thành có, thêm câu huấn luyện và train lại",
+  "should_trigger": true
+ },
+ {
+  "query": "Tạo cây hội thoại callbot nhắc nợ theo kịch bản cố định, nhánh hẹn ngày trả",
+  "should_trigger": true
+ },
+ {
+  "query": "Nạp file ý định và thực thể vào Kho tri thức rồi dựng call flow",
+  "should_trigger": true
+ },
+ {
+  "query": "Callbot kịch bản cố định khảo sát 3 câu hỏi, mỗi câu khách trả lời điểm 1 đến 5",
+  "should_trigger": true
+ },
+ {
+  "query": "Sửa call flow: bước không hiểu thì chuyển cho nhân viên thay vì kết thúc",
+  "should_trigger": true
+ },
+ {
+  "query": "Gọi thử callbot cổ điển vừa dựng tới số của tôi",
+  "should_trigger": true
+ },
+ {
+  "query": "Dựng SmartAgent AI hội thoại tự do, không cần cây kịch bản",
+  "should_trigger": false
+ },
+ {
+  "query": "Chatbot Facebook trả lời bình luận tự động",
+  "should_trigger": false
+ },
+ {
+  "query": "Thêm bước gọi API trong kịch bản callbot Gen AI",
+  "should_trigger": false
+ },
+ {
+  "query": "Cấu hình lời chào tổng đài bằng file ghi âm",
+  "should_trigger": false
+ },
+ {
+  "query": "Viết quy trình tự động gán khách cho nhân viên theo vùng",
+  "should_trigger": false
+ },
+ {
+  "query": "Tạo trường Ngày hẹn kiểu ngày cho phiếu ghi",
+  "should_trigger": false
+ },
+ {
+  "query": "Chấm điểm cuộc gọi của nhân viên theo bộ tiêu chí",
+  "should_trigger": false
+ },
+ {
+  "query": "Giải thích mô hình nhận dạng giọng nói hoạt động thế nào",
+  "should_trigger": false
+ }
+]

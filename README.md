@@ -170,6 +170,9 @@ Quy trình mỗi lần sửa, giống nhau trên mọi máy:
 
 **Máy đang chép tay skill (không phải git clone)**: không chép ngược từ thư mục skill lên repo, vì sẽ ghi đè công việc từ máy khác. Chuyển sang git clone: sao lưu thư mục skill hiện có; clone repo; so sánh từng file với bản đang dùng (bỏ qua `credentials.md`) để tìm chỗ chỉ sửa riêng trên máy này; đưa các chỗ đó vào clone và phát hành bằng `release.py`; rồi thay thư mục skill bằng junction/symlink vào clone.
 
+## Đánh giá skill (eval)
+Người bảo trì đo hai thứ trước khi phát hành thay đổi lớn: skill có được gọi đúng không (`tools/run_routing_eval.py`, câu hỏi ở `evals/<skill>/trigger.json`), và bước hiểu bài toán có ra đúng trên Haiku/Sonnet/Opus không (`tools/run_quality_eval.py`, ca ở `evals/<skill>/evals.json`). Cả hai không nạp MCP nên không chạm tài khoản thật; cách chạy và đọc kết quả: `evals/README.md`.
+
 ## Lưu ý bảo mật
 - Không commit mật khẩu, token hay thông tin tenant của khách hàng. `references/credentials.md` chỉ là mẫu.
 - Agent không tự gõ mật khẩu: bạn điền form `omi_login.py setup --ui` (mật khẩu vào kho bí mật hệ điều hành) hoặc tự đăng nhập trên trình duyệt. Không để mật khẩu trong biến môi trường hay file cấu hình MCP.

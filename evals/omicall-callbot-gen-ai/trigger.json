@@ -1,0 +1,70 @@
+[
+ {
+  "query": "Dựng callbot Gen AI nhắc lịch hẹn khám, khách nói tự do, bot hiểu ý và xác nhận lịch",
+  "should_trigger": true
+ },
+ {
+  "query": "Từ file kịch bản docx này, tạo SmartAgent tư vấn vay tiêu dùng cho OMICall",
+  "should_trigger": true
+ },
+ {
+  "query": "Mở kịch bản AI_AGENT ở trang ai/callbot/script/update, thêm bước thu thập ngày sinh",
+  "should_trigger": true
+ },
+ {
+  "query": "Tổng đài AI gọi ra chăm sóc khách sau mua hàng, hỏi mức hài lòng rồi chuyển máy nếu khách bức xúc",
+  "should_trigger": true
+ },
+ {
+  "query": "callbot smart agent của tôi không chuyển máy cho nhân viên khi khách đòi gặp người thật, sửa giúp",
+  "should_trigger": true
+ },
+ {
+  "query": "Thêm truy xuất tri thức (RAG) từ tài liệu chính sách bảo hành cho callbot AI",
+  "should_trigger": true
+ },
+ {
+  "query": "Bot gọi điện bằng giọng nói cần gọi API tra đơn hàng giữa cuộc gọi, cấu hình thế nào",
+  "should_trigger": true
+ },
+ {
+  "query": "Tối ưu lời nhắc hệ thống cho tổng đài viên AI để nói ngắn hơn, tự nhiên hơn",
+  "should_trigger": true
+ },
+ {
+  "query": "Tạo callbot AI hiểu tiếng Việt tự nhiên để đặt bàn nhà hàng qua điện thoại",
+  "should_trigger": true
+ },
+ {
+  "query": "Dựng callbot theo cây kịch bản cố định: khách nói có thì sang nhánh A, không thì nhánh B",
+  "should_trigger": false
+ },
+ {
+  "query": "Sinh 200 câu huấn luyện ý định cho callbot cổ điển (NORMAL)",
+  "should_trigger": false
+ },
+ {
+  "query": "Chatbot Zalo OA tư vấn sản phẩm bằng AI",
+  "should_trigger": false
+ },
+ {
+  "query": "Tạo menu bấm phím 1 gặp kinh doanh, 2 gặp kỹ thuật",
+  "should_trigger": false
+ },
+ {
+  "query": "Bật AI tóm tắt cuộc gọi và bóc thông tin vào trường khách hàng",
+  "should_trigger": false
+ },
+ {
+  "query": "Tạo quy trình tự động: callbot gọi xong thì tạo phiếu và gửi ZNS",
+  "should_trigger": false
+ },
+ {
+  "query": "Viết kịch bản telesale cho nhân viên đọc khi gọi khách",
+  "should_trigger": false
+ },
+ {
+  "query": "Callbot luồng cổ điển nhận sai thực thể ngày tháng, sửa dữ liệu huấn luyện",
+  "should_trigger": false
+ }
+]

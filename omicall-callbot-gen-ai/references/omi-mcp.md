@@ -47,7 +47,7 @@ Mỗi ảnh chụp tốn vài giây và nhiều token; giao diện dùng chung v
 2. **`tenant_context.json` ở scratch** của phiên (đã khảo sát thì không khảo sát lại).
 3. **Script đọc bằng API**: `tenant_survey.py` (thuộc tính phiếu, trạng thái, phân bổ, artefact) và `config_survey.py` (đầu số + giờ làm việc, kịch bản cuộc gọi, Tương tác phím, nhóm nội bộ/bên ngoài, lời chào, mục đích cuộc gọi, AI Assistant, tiêu chí Chat Insights, tiêu chí đánh giá). Một lệnh thay cho hàng chục lần mở trang.
 4. **MCP OMI** (`get_service_package`, `list_agents`, `search_*`…). Công cụ tổng đài của MCP có thể trả 404 → dùng bậc 3.
-5. **Giao diện bằng chữ**: `get_page_text` / `find` / `read_page` sau khi trang tải xong (chờ 2–3 giây; trang trống là chưa tải, không phải lỗi).
+5. **Giao diện bằng chữ**: `get_page_text` / `find` / `read_page` sau khi trang tải xong (chờ bằng `find` mốc chữ: rỗng thì `wait` 1 giây rồi tìm lại, tối đa 3 lần; trang trống là chưa tải, không phải lỗi). Đọc trạng thái form/ngăn/canvas: JS chỉ đọc ở `ui-recipes.md` mục 2.
 6. **Ảnh chụp** chỉ khi bậc 5 không thấy: danh sách chọn đang mở, canvas, bố cục. Chụp vùng nhỏ (`zoom`) hoặc `scale` 0.5.
 
 Không dùng ảnh chụp để dò vị trí menu khi đã biết đường dẫn: điều hướng thẳng URL (bảng màn hình trong reference của skill).
@@ -56,14 +56,9 @@ Không dùng ảnh chụp để dò vị trí menu khi đã biết đường d�
 Ngay khi một ảnh chụp hoặc lần đọc giao diện cho ra điều skill chưa có (đường dẫn màn hình, nhãn trường, danh sách lựa chọn, quy tắc của form, endpoint thấy được, gotcha), ghi vào reference của skill phụ trách (`pbx-config.md`, `ai-insight.md`, `crm-config.md`, `ui-build-and-test.md`…) kèm nhãn `✔ UI <tháng/năm>`. Chỉ ghi năng lực nền tảng, không ghi dữ liệu khách (tên, số, id). Ghi vào repo nguồn khi user cho phép; chưa được phép thì gom vào báo cáo cuối phiên để user duyệt.
 
 ## 4c. Điều khiển giao diện mà không chụp ảnh (BẮT BUỘC khi buộc phải dựng bằng UI)
-Chụp ảnh sau mỗi thao tác là lỗi đã gặp (một phiên dựng flow tốn hàng chục ảnh). Làm theo:
-1. **Ngân sách ảnh**: tối đa 1 ảnh cho mỗi ngăn/hộp thoại mới mở lần đầu (để biết bố cục), `scale` 0.5; ảnh thứ hai trong cùng ngăn chỉ để `zoom` vùng nhỏ. Quá ngân sách thì dừng, chuyển sang chữ.
-2. **Bấm theo `ref`, không theo toạ độ**: `find` (hoặc `read_page` filter `interactive`) ngay trước mỗi lần bấm. Toạ độ đổi mỗi lần ngăn trượt/pane đổi cỡ và gây bấm hụt (đã từng tick hụt nhân viên trong điều kiện tương tác). Hộp tick/ô chọn không hiện ở `read_page` thì `find` theo chữ hiển thị.
-3. **Gộp thao tác**: `browser_batch` (tối đa 25) cho chuỗi đã biết rõ (bấm → chờ → gõ → bấm); chỉ đọc kết quả ở cuối chuỗi.
-4. **Xác nhận bằng chữ, không bằng ảnh**: `get_page_text` / `find` đọc tóm tắt thẻ nút ("Không có tương tác trong 4 phút từ …"), hoặc `javascript_tool` đọc `input.value`. Ảnh chụp trễ 1–2 thao tác nên dễ gây hiểu nhầm; dùng `wait` 2 giây rồi đọc chữ.
-5. **Chứng cứ cuối là API, không phải ảnh**: sau khi lưu, GET lại (`flow_outline.py --save <id>`, `filter_contacts/get_list`…) và đọc trường cần kiểm. Chỉ chụp ảnh cuối phiên khi user cần xem.
-6. **Pane**: `resize_window` 1500x900 một lần đầu phiên (pane hẹp làm drawer bị cắt), nhớ trả `preset desktop` khi xong.
-7. **Dựng ít nút nhất có thể trên UI**: mỗi loại nút một lần để lấy schema, phần còn lại sinh bằng script từ bản GET (xem `omicall-omiflow/references/node-catalog.md` mục 6).
+Nguồn duy nhất: `references/ui-recipes.md` — giao thức 6 bước (URL thẳng bằng id, chờ bằng `find` mốc chữ, bấm theo ref trong `browser_batch`, kiểm bằng JS đọc trạng thái hoặc GET, ảnh là bậc cuối ≤ 1 mỗi màn hình), đoạn JS đọc trạng thái, bảng URL và công thức theo thao tác. Thêm hai điều:
+1. **Pane**: `resize_window` 1500x900 một lần đầu phiên (pane hẹp làm drawer bị cắt), nhớ trả `preset desktop` khi xong.
+2. **Dựng ít nút nhất có thể trên UI**: mỗi loại nút một lần để lấy schema, phần còn lại sinh bằng script từ bản GET (xem `omicall-omiflow/references/node-catalog.md` mục 6).
 
 ## 6. Xử lý lỗi thường gặp
 - `npm error code ETARGET` / "No matching version found": npm giữ metadata cũ sau khi gói vừa ra bản mới → xoá cache npx (`rm -rf ~/.npm/_npx`, Windows: `%LOCALAPPDATA%\npm-cache\_npx`) rồi chạy `npx omicall-mcp@latest`.
