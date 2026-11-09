@@ -58,6 +58,10 @@ Hệ quả: bước "đọc lại cho khách xác nhận" đặt sau khi thu đ�
 2. Câu đọc lại thông tin đặt ở Kịch bản chung (ngoặc kép).
 3. Tạo Ý định riêng "Khách xác nhận đúng thông tin đã đọc lại" → nút phân loại / chuyển máy / kết thúc.
 
+**Nút gọi API (SEND_WEBHOOK) gửi dữ liệu đã chốt** (đặt lịch, tạo đơn): theo bảng trên, nối API ngay sau Ý định thu biến thì API chạy khi vừa đủ biến, **trước** câu đọc lại và trước khi khách sửa → dữ liệu gửi đi có thể chưa được xác nhận, phần sửa sau đó không được gửi. Nối API sau Ý định "khách xác nhận" (bước 3), còn Ý định thu biến để trống nút kế tiếp. Biến của Ý định khác có dùng được trong body API nối sau Ý định xác nhận hay không: Cần xác nhận bằng một cuộc gọi thử (xem payload ở tab Lịch sử của flow nhận). Rút ra khi rà một kịch bản dựng 11/2026, chưa gọi thử so sánh hai cách nối.
+
+**Kịch bản chung phải khớp canvas**: rà trước khi giao. Ví dụ: có nút TRANSFER_CALL (kể cả nhánh `bot_can_not_answer`) thì không viết "hiện chưa chuyển máy được"; câu "đã gửi thông tin" chỉ nói ở chỗ nút API thật sự chạy; tên biến nhắc trong kịch bản phải tồn tại trong `variables`.
+
 Thu một cụm thông tin liên quan chặt chẽ: để trống "nút tiếp theo" để giữ ngữ cảnh, tránh chuyển nút liên tục; có thể dùng một Ý định xác định nhu cầu rồi rẽ nhánh sang các Ý định thu từng nhóm biến riêng.
 
 ## 5. Nút Ngắt cuộc gọi (END_CALL)

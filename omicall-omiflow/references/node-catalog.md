@@ -142,6 +142,15 @@ Kiểu AI bóc thực thể (chọn nội dung cần phân tích + Đối tượ
 ### 2.5 ZALO_PERSONAL_MESSAGE → REQUEST_FRIEND [verify JSON]
 `{"type":"REQUEST_FRIEND","data":{"message_type":"REQUEST_FRIEND","message":"<lời mời kết bạn>","target":"","quick_reply":[]}}`
 
+Bổ sung đã kiểm chứng bằng GET (✔ UI 11/2026, flow trigger API):
+- **Một nút làm được cả hai việc**: ngăn "Nội dung" của nút Zalo cá nhân nhận nhiều mục (Thêm nội dung → Văn bản, Hình ảnh, …, Gửi lời mời kết bạn, mời/xoá khỏi nhóm…), chạy tuần tự, cách nhau "Thời gian chờ giữa các tin" (mặc định 0,5 giây). Không cần nút Zalo thứ hai hay DELAY để gửi lời mời rồi gửi tin.
+- Tin văn bản runtime: `{"type":"TEXT","data":{"message_type":"TEXT","message":"<nội dung, xuống dòng \n>","payload":[],"zlp_urgency":0,"quick_reply":[]}}` (state editor gọi là `REPLY`, GET lưu `TEXT`).
+- **Người nhận** lưu ở cấp nút: `prioriy_conv_id:"{{<mã biến SĐT>}}"` (Người nhận → Tùy chỉnh), `prioriy_channel_id:"-1"` = "Gửi từ: Tài khoản Zalo cá nhân trong luồng kịch bản"; mọi mã biến dùng trong nút liệt kê ở `variables[]` của nút.
+- "Gửi từ: Tài khoản Zalo cá nhân tùy chỉnh" bắt buộc ô "Số điện thoại tài khoản Zalo cá nhân dùng để gửi"; đóng ngăn khi ô trống → báo lỗi và **mất toàn bộ cấu hình nút**. Tenant chưa kết nối Zalo cá nhân vẫn lưu/xuất bản được nếu để "trong luồng kịch bản"; flow trigger API không có hội thoại nên trước khi chạy thật nên đổi sang "tùy chỉnh" + SĐT tài khoản (cách chạy khi để "trong luồng": Cần xác nhận).
+- Ô lời mời kết bạn không có `maxlength` trên UI; giới hạn ký tự phía Zalo: Cần xác nhận.
+- `name_mappings`: nút `{"id","type":"ZALO_PERSONAL_MESSAGE","intentsOptNode":[],"collectionInfo":[]}`; trigger API `{"id","type":"BEGIN","isFirstNode":true,"actionType":"WEB_HOOK"}`.
+- Bẫy UI: ngăn mở từ "Bước tiếp theo" của nút khác có danh sách "Biến liên kết tuỳ chỉnh" rỗng → gõ tay `{{mã}}` hoặc mở nút từ canvas. Flow nháp chưa xuất bản: sau lần "Lưu lại" đầu, editor không còn nút lưu nháp (chỉ "Xuất bản"), nút thêm sau không lên server → dựng đủ trước lần lưu đầu hoặc sửa qua `omi_save.py`. Sau khi xuất bản mới có lại "Cập nhật" (lưu nháp). Mỗi lần lưu có hộp "Thông tin về URL" thì **URL webhook có thể sinh mới** → ghi chú chứa URL phải cập nhật theo GET cuối. Nút ✕ đóng ngăn nằm đè logo trang chủ: bấm 2 lần là rời trang, mất flow chưa lưu. Agent bấm "Xuất bản" hoặc "Cập nhật" trong hộp URL có thể bị hệ thống phân quyền chặn → để user tự bấm.
+
 ### 2.6 MARKETING → AUTOCALL (Gọi tự động, đọc TTS) [verify JSON]
 ```json
 {"node_type":"MARKETING","actions":[{"id":"<a>","type":"AUTOCALL","data":{"name":"<tên phiên>",
@@ -200,6 +209,21 @@ Mã chi tiết hơn (lưu bên trong khi chọn trường trong "Cập nhật �
 - `created_by.option`: `SYSTEM` hoặc `CAMPAIGN_CALLBOT_CREATOR` (người tạo = người phụ trách chiến dịch callbot).
 - `priority_option`: ưu tiên nhân viên đã nghe cuộc gọi hoặc đang ở hội thoại, rồi mới đến cấu hình phân bổ.
 - Phiếu vừa tạo trở thành **đối tượng phiếu ghi** của luồng: các hành động `ASSIGN_TICKET_*` sau đó áp lên phiếu này.
+- ✔ GET 11/2026 (dựng UI, flow trigger API) — **giao nhân viên cụ thể + thuộc tính phiếu ngay trong ADD_TICKET** (không cần nút `ASSIGN_TICKET_ATTRIBUTE_STRUCTURE` riêng):
+```json
+{"ticket_detail":{"name":"<tiêu đề {{mã_biến}}>","ticket_category_id":"<categoryId>","priority":"from_topic",
+  "assignee_config":{"use_topic_config":false,"sale_allocation_type":"specific_allocation",
+     "sale_allocation_ids":["<contact_id nhân viên>"],"priority_option":{"agent_join_conv":false,"contact_owner":false,"agent_of_call":false}},
+  "assignee_contact_ids":["<contact_id nhân viên>"],"user_id":"<user id nhân viên>","user_name":"<tên>",
+  "attribute_structure":[
+    {"attribute_id":"<id thuộc tính>","field_code":"<mã>","field_type":"single_text","data_format":{"type":"text"},
+     "value":[{"display_value":"{{<mã biến>}}","value_type":"","data_type":"","value_id":"<id>"}]},
+    {"attribute_id":"<id>","field_code":"<mã>","field_type":"multi_text",
+     "value":[{"display_value":"<div ...>{{<mã biến>}}</div>","value_type":"","data_type":"","value_id":"<id>"}]}],
+  "description":"<HTML>","is_not_draft":true,"source":"crud","current_status":0},
+ "created_by":{"option":"SYSTEM"}}
+```
+  UI "Nhân viên cụ thể" lưu thành `specific_allocation` với **contact_id** nhân viên (không phải user id). Mỗi thuộc tính phiếu thêm bằng "Thêm thuộc tính" ở cuối ngăn; ô để trống vẫn lưu `display_value:""`. Thuộc tính `multi_text` lưu HTML bọc `<div>`. Giá trị cố định gõ thẳng chữ được. Kiểm sau lưu: duyệt `attribute_structure[]` theo `field_code`, ô nào `display_value` rỗng là chưa gán.
 
 ### 3.2 Cập nhật phiếu ghi (`ASSIGN_TICKET_*`) [verify JSON]
 ```json
@@ -365,7 +389,7 @@ Cách học nhanh: dựng **một** flow mẫu trên editor (mỗi loại nút m
 - **Hạn mức**: thanh trên canvas ghi "Số lượng nút N / 20" (gói ví dụ); một flow 17 nút lưu được.
 
 
-**Tắt chatbot của hội thoại** (Hành động → Cập nhật cuộc trò chuyện → "Trạng thái Chatbot" Bật/Tắt) → runtime `{"type":"UPDATE_SOCIAL_CHATBOT_STATUS","data":{"enable_chatbot":false}}`; editor (trong `datas.assign[]` của UPDATE_CONVERSATION) `{"name":"updateSocialChatbotStatus","value":"update_social_chatbot_status","options":[{"value":"true","label":"on"},{"value":"false","label":"off"}],"kind":"assign","children":{"value":"false","label":"off"}}` (✔ GET 11/2026). Gán nhân viên cụ thể: `{"type":"ASSIGN_CONVERSATION_MEMBER","data":{"ids":["<contact id nhân viên>"],"assign_agent_option":{"agent_emails":[],"allocate_type":"SPECIFIC","agent_groups":[],"priority_agent_of_contact":false},"assign_criteria":{"use_criteria":false,"re_assign_when_match_previous":false,"match_all":false,"criteria":[]}}}`.
+**Tắt chatbot của hội thoại** [verify JSON] (Hành động → Cập nhật cuộc trò chuyện → "Trạng thái Chatbot" Bật/Tắt) → runtime `{"type":"UPDATE_SOCIAL_CHATBOT_STATUS","data":{"enable_chatbot":false}}`; editor (trong `datas.assign[]` của UPDATE_CONVERSATION) `{"name":"updateSocialChatbotStatus","value":"update_social_chatbot_status","options":[{"value":"true","label":"on"},{"value":"false","label":"off"}],"kind":"assign","children":{"value":"false","label":"off"}}` (✔ GET 11/2026). Gán nhân viên cụ thể: `{"type":"ASSIGN_CONVERSATION_MEMBER","data":{"ids":["<contact id nhân viên>"],"assign_agent_option":{"agent_emails":[],"allocate_type":"SPECIFIC","agent_groups":[],"priority_agent_of_contact":false},"assign_criteria":{"use_criteria":false,"re_assign_when_match_previous":false,"match_all":false,"criteria":[]}}}`.
 
 **Nhánh "BOT chủ động kết thúc" của `OMI_BOT_AI` cũng chạy khi khách im lặng hết thời gian chờ** (`customer_not_response.waiting_time`, mặc định 180 giây) — log 11/2026: bot trả lời đúng lúc 13:59, không có tin mới, 14:02 flow đi tiếp nhánh sau-kết-thúc. Đừng đặt chuyển nhân viên / tin "ngoài giờ" ở nhánh này nếu chỉ muốn chạy khi bot không biết; dùng ACTION gọi flow phụ thuộc trong bot.
 - Phiên `OMI_BOT_AI` giữ cho tới khi bot kết thúc: tin tiếp theo của khách trong phiên không chạy lại trigger, bot trả lời luôn (kể cả sau khi flow phụ thuộc đã `RE_DISTRIBUTE`) → cần `UPDATE_SOCIAL_CHATBOT_STATUS` false khi bàn giao.

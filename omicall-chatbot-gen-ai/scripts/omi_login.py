@@ -506,7 +506,7 @@ eye.setAttribute('aria-pressed',show);eye.setAttribute('aria-label',show?'Ẩn m
 f.onsubmit=async e=>{e.preventDefault();b.disabled=true;msg.className='';
 msg.textContent='Đang đăng nhập...';
 try{const r=await fetch(location.pathname+'/login',{method:'POST',headers:{'Content-Type':'application/json'},
-body:JSON.stringify(Object.fromEntries(new FormData(f)))});const d=await r.json();
+body:JSON.stringify(Object.fromEntries([...new FormData(f)].map(([k,v])=>[k,typeof v==='string'?v.trim():v])))});const d=await r.json();
 msg.className=d.ok?'ok':'err';msg.textContent=d.message;
 if(d.ok){f.hidden=true;f.password.value=''}else{b.disabled=false;if(d.need_tenant)document.getElementById('tr').hidden=false}}
 catch(x){msg.className='err';msg.textContent='Mất kết nối với script. Chạy lại lệnh setup.';b.disabled=false}};
@@ -565,10 +565,10 @@ def cmd_setup_ui(a):
             def fail(message, **extra):
                 return dict(ok=False, message=message, **extra)
             try:
-                domain = omi_session._norm_domain(str(data.get('domain', '')))
+                domain = omi_session._norm_domain(str(data.get('domain', '')).strip())
             except (SystemExit, ValueError):
                 domain = ''
-            email, pw = str(data.get('email', '')).strip(), str(data.get('password', ''))
+            email, pw = str(data.get('email', '')).strip(), str(data.get('password', '')).strip()
             tenant_id = str(data.get('tenant_id', '')).strip() or a.tenant_id
             if not (domain and email and pw):
                 return fail('Điền đủ domain, email và mật khẩu.')

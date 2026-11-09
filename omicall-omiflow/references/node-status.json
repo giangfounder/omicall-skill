@@ -31,7 +31,7 @@
   "side": "runtime",
   "status": "verified",
   "template": null,
-  "source": "references/node-catalog.md:323",
+  "source": "references/node-catalog.md:347",
   "verified_on": "2026-11",
   "ui_hint": "Trigger Điều kiện → Khách hàng → trạng thái (hộp tick, bấm theo ref)"
  },
@@ -103,7 +103,7 @@
   "side": "runtime",
   "status": "verified",
   "template": null,
-  "source": "references/node-catalog.md:331",
+  "source": "references/node-catalog.md:355",
   "verified_on": "2026-11",
   "ui_hint": "Mở rộng → Kiểm tra tương tác khách hàng"
  },
@@ -166,7 +166,7 @@
   "side": "runtime",
   "status": "verified",
   "template": null,
-  "source": "references/node-catalog.md:145",
+  "source": "references/node-catalog.md:154",
   "verified_on": null,
   "ui_hint": "Marketing → Gọi tự động"
  },
@@ -202,7 +202,7 @@
   "side": "runtime",
   "status": "verified",
   "template": null,
-  "source": "references/node-catalog.md:287",
+  "source": "references/node-catalog.md:311",
   "verified_on": null,
   "ui_hint": "Cửa sổ tương tác → thông tin; kiểm mục Nhân viên từng nút"
  },
@@ -211,7 +211,7 @@
   "side": "runtime",
   "status": "verified",
   "template": null,
-  "source": "references/node-catalog.md:295",
+  "source": "references/node-catalog.md:319",
   "verified_on": null,
   "ui_hint": "Cửa sổ tương tác → biểu mẫu; nhánh success_action_step"
  },
@@ -220,7 +220,7 @@
   "side": "runtime",
   "status": "enum",
   "template": null,
-  "source": "references/node-catalog.md:289",
+  "source": "references/node-catalog.md:313",
   "verified_on": null,
   "ui_hint": "Dựng thử 1 lần trên UI → GET"
  },
@@ -247,7 +247,7 @@
   "side": "action",
   "status": "verified",
   "template": null,
-  "source": "references/node-catalog.md:190",
+  "source": "references/node-catalog.md:199",
   "verified_on": null,
   "ui_hint": "Hành động → Tạo phiếu ghi"
  },
@@ -256,7 +256,7 @@
   "side": "action",
   "status": "verified",
   "template": null,
-  "source": "references/node-catalog.md:204",
+  "source": "references/node-catalog.md:228",
   "verified_on": null,
   "ui_hint": "Hành động → Cập nhật phiếu ghi"
  },
@@ -265,7 +265,7 @@
   "side": "action",
   "status": "verified",
   "template": null,
-  "source": "references/node-catalog.md:216",
+  "source": "references/node-catalog.md:264",
   "verified_on": "2026-11",
   "ui_hint": "Hành động → Tạo thông báo; nội dung gõ tay mã biến"
  },
@@ -274,7 +274,7 @@
   "side": "action",
   "status": "verified",
   "template": null,
-  "source": "references/node-catalog.md:222",
+  "source": "references/node-catalog.md:246",
   "verified_on": null,
   "ui_hint": "Hành động → API (chỉ gửi, không đọc kết quả)"
  },
@@ -292,7 +292,7 @@
   "side": "action",
   "status": "enum",
   "template": null,
-  "source": "references/node-catalog.md:263",
+  "source": "references/node-catalog.md:287",
   "verified_on": null,
   "ui_hint": "Catalog có khối CHAT_GPT [verify JSON] (mục 3.5) nhưng tab LLM bản 10/2026 chưa đối chiếu GET: Cần xác nhận. Dựng 1 nút LLM trên UI → GET → extract_template"
  },
@@ -301,7 +301,7 @@
   "side": "action",
   "status": "enum",
   "template": null,
-  "source": "references/node-catalog.md:236",
+  "source": "references/node-catalog.md:260",
   "verified_on": null,
   "ui_hint": "Dựng thử 1 lần trên UI → GET"
  },
@@ -310,7 +310,7 @@
   "side": "action",
   "status": "enum",
   "template": null,
-  "source": "references/node-catalog.md:237",
+  "source": "references/node-catalog.md:261",
   "verified_on": null,
   "ui_hint": "Dựng thử 1 lần trên UI → GET"
  },
@@ -319,7 +319,7 @@
   "side": "action",
   "status": "enum",
   "template": null,
-  "source": "references/node-catalog.md:238",
+  "source": "references/node-catalog.md:262",
   "verified_on": null,
   "ui_hint": "Dựng thử 1 lần trên UI → GET"
  },
@@ -328,7 +328,7 @@
   "side": "action",
   "status": "verified",
   "template": null,
-  "source": "references/node-catalog.md:267",
+  "source": "references/node-catalog.md:291",
   "verified_on": null,
   "ui_hint": "Có DELAY trước CLOSEST_CALL khi đi sau ADD_TICKET"
  },
@@ -337,7 +337,7 @@
   "side": "action",
   "status": "verified",
   "template": null,
-  "source": "references/node-catalog.md:341",
+  "source": "references/node-catalog.md:365",
   "verified_on": "2026-10",
   "ui_hint": "Runtime đã thấy qua GET; bản editor một phần"
  },
@@ -346,7 +346,7 @@
   "side": "editor",
   "status": "ui_only",
   "template": null,
-  "source": "references/node-catalog.md:165",
+  "source": "references/node-catalog.md:174",
   "verified_on": null,
   "ui_hint": "UI đã dựng; runtime verify ở mục 6, editor một phần"
  },
@@ -355,7 +355,7 @@
   "side": "editor",
   "status": "ui_only",
   "template": null,
-  "source": "references/node-catalog.md:166",
+  "source": "references/node-catalog.md:184",
   "verified_on": null,
   "ui_hint": "UI đã dựng; runtime verify ở mục 6, editor một phần"
  },
@@ -373,7 +373,7 @@
   "side": "action",
   "status": "enum",
   "template": null,
-  "source": "references/node-catalog.md:172",
+  "source": "references/node-catalog.md:181",
   "verified_on": null,
   "ui_hint": "Trả dữ liệu động cho caller; chưa có JSON mẫu: dựng thử → GET"
  },
@@ -382,7 +382,7 @@
   "side": "action",
   "status": "enum",
   "template": null,
-  "source": "references/node-catalog.md:184",
+  "source": "references/node-catalog.md:193",
   "verified_on": null,
   "ui_hint": "Flow đích phải là loại phụ thuộc; chưa có JSON mẫu"
  },
@@ -391,7 +391,7 @@
   "side": "action",
   "status": "enum",
   "template": null,
-  "source": "references/node-catalog.md:170",
+  "source": "references/node-catalog.md:188",
   "verified_on": null,
   "ui_hint": "Dựng thử 1 lần trên UI → GET → extract_template"
  },
@@ -400,7 +400,7 @@
   "side": "action",
   "status": "enum",
   "template": null,
-  "source": "references/node-catalog.md:171",
+  "source": "references/node-catalog.md:189",
   "verified_on": null,
   "ui_hint": "Dựng thử 1 lần trên UI → GET → extract_template"
  },
@@ -418,7 +418,7 @@
   "side": "action",
   "status": "enum",
   "template": null,
-  "source": "references/node-catalog.md:176",
+  "source": "references/node-catalog.md:194",
   "verified_on": null,
   "ui_hint": "Dựng thử 1 lần trên UI → GET → extract_template"
  },
@@ -427,7 +427,7 @@
   "side": "action",
   "status": "enum",
   "template": null,
-  "source": "references/node-catalog.md:177",
+  "source": "references/node-catalog.md:195",
   "verified_on": null,
   "ui_hint": "Dựng thử 1 lần trên UI → GET → extract_template"
  },
@@ -436,7 +436,7 @@
   "side": "action",
   "status": "enum",
   "template": null,
-  "source": "references/node-catalog.md:178",
+  "source": "references/node-catalog.md:187",
   "verified_on": null,
   "ui_hint": "Dựng thử 1 lần trên UI → GET → extract_template"
  },
@@ -463,7 +463,7 @@
   "side": "action",
   "status": "enum",
   "template": null,
-  "source": "references/node-catalog.md:182",
+  "source": "references/node-catalog.md:191",
   "verified_on": null,
   "ui_hint": "Dựng thử 1 lần trên UI → GET → extract_template"
  },
@@ -472,7 +472,7 @@
   "side": "action",
   "status": "enum",
   "template": null,
-  "source": "references/node-catalog.md:183",
+  "source": "references/node-catalog.md:192",
   "verified_on": null,
   "ui_hint": "Dựng thử 1 lần trên UI → GET → extract_template"
  },
@@ -508,7 +508,7 @@
   "side": "editor",
   "status": "unverified",
   "template": null,
-  "source": "references/node-catalog.md:321",
+  "source": "references/node-catalog.md:345",
   "verified_on": null,
   "ui_hint": "Bản editor camelCase, nút đầu BEGIN; chưa có mẫu JSON: lấy từ GET thật, sửa song song với nodes"
  },
@@ -517,7 +517,7 @@
   "side": "runtime",
   "status": "verified",
   "template": null,
-  "source": "references/node-catalog.md (Tắt chatbot của hội thoại)",
+  "source": "references/node-catalog.md:392",
   "verified_on": "2026-11",
   "ui_hint": "Cập nhật cuộc trò chuyện → Trạng thái Chatbot; data.enable_chatbot=false."
  },
@@ -526,7 +526,7 @@
   "side": "runtime",
   "status": "verified",
   "template": null,
-  "source": "references/node-catalog.md (Chuyển hội thoại cho nhân viên)",
+  "source": "references/node-catalog.md:113",
   "verified_on": "2026-11",
   "ui_hint": "Cập nhật cuộc trò chuyện → Phân bổ cuộc trò chuyện."
  },
@@ -535,7 +535,7 @@
   "side": "runtime",
   "status": "verified",
   "template": null,
-  "source": "references/node-catalog.md",
+  "source": "references/node-catalog.md:392",
   "verified_on": "2026-11",
   "ui_hint": "Cập nhật cuộc trò chuyện → Nhân viên phụ trách (cụ thể)."
  },
@@ -544,7 +544,7 @@
   "side": "runtime",
   "status": "verified",
   "template": null,
-  "source": "references/node-catalog.md (Gửi tin LiveTalk)",
+  "source": "references/node-catalog.md:114",
   "verified_on": "2026-11",
   "ui_hint": "Người nhận mặc định Cuộc trò chuyện liên quan."
  },
@@ -553,7 +553,7 @@
   "side": "runtime",
   "status": "verified",
   "template": null,
-  "source": "references/node-catalog.md (Khung giờ làm việc)",
+  "source": "references/node-catalog.md:103",
   "verified_on": "2026-11",
   "ui_hint": "Phải đi cùng ≥1 điều kiện khác, chế độ VÀ; key '1'=CN."
  }

@@ -124,7 +124,7 @@ class TestDocs(unittest.TestCase):
                 self.assertTrue(os.path.exists(path), r["source"])
                 n = len(read(path).splitlines())
                 self.assertTrue(1 <= int(ln) <= n, r["source"])
-        for t in ("PUSH_NOTIFICATION", "SEND_WEBHOOK", "START_OTHER_CAMPAIGN"):
+        for t in ("PUSH_NOTIFICATION", "START_OTHER_CAMPAIGN"):  # SEND_WEBHOOK: verified 11/2026 (api-reference mục Nút gọi API)
             self.assertNotEqual(next(r for r in rows if r["type"] == t)["status"], "verified")
 
     def test_api_json_blocks_load(self):

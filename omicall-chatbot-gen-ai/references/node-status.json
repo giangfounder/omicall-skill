@@ -181,10 +181,10 @@
  },
  {
   "type": "ACTION START_OTHER_CAMPAIGN",
-  "side": "runtime-json",
+  "side": "runtime",
   "status": "verified",
   "template": null,
-  "source": "references/api-reference.md (Bot ACTION START_OTHER_CAMPAIGN — JSON runtime)",
+  "source": "references/api-reference.md:273",
   "verified_on": "2026-11",
   "ui_hint": "data.ids=[flow uuid]; next_nodes:[] vẫn để bot gửi 1 câu LLM (không im lặng)."
  },
@@ -193,7 +193,7 @@
   "side": "runtime",
   "status": "verified",
   "template": null,
-  "source": "references/ui-gotchas.md (Hành động trong bot)",
+  "source": "references/ui-gotchas.md:39",
   "verified_on": "2026-11",
   "ui_hint": "data.ids=[tên nhãn]; nhãn khai ở campaign.classifies[{name}]."
  }
