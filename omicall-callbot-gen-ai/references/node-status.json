@@ -3,71 +3,89 @@
   "type": "BEGIN",
   "side": "runtime",
   "status": "verified",
+  "builder": "sinh",
   "template": null,
-  "source": "references/api-reference.md:48",
+  "source": "references/api-reference.md#BEGIN (runtime",
   "verified_on": null,
-  "ui_hint": "Nhãn kiểm chứng: api-reference mục \"Bài học tenant trống — đã verify\" (add_v2 tối thiểu BEGIN + ADD_CLASSIFY + END_CALL đã chạy). Trường mặc định lấy từ GET baseline; tenant trống: Cần xác nhận."
+  "ui_hint": "Kiểm chứng: api-reference mục 'Bài học tenant trống' (add_v2 tối thiểu BEGIN + ADD_CLASSIFY + END_CALL đã chạy). Trường mặc định lấy từ GET baseline; tenant trống: Cần xác nhận."
  },
  {
   "type": "BEGIN",
   "side": "editor",
   "status": "unverified",
+  "builder": "sinh",
   "template": null,
-  "source": "references/api-reference.md:61",
+  "source": "references/api-reference.md#BEGIN (runtime",
   "verified_on": null,
-  "ui_hint": "Hạ xuống unverified: tài liệu không ghi nhãn verify trực tiếp cho loại này, nhãn cũ là suy luận từ câu tóm tắt add_v2 tối thiểu (api-reference ghi 'chưa có fixture JSON thật'). Chỉ nhân bản từ GET baseline; nâng verified qua extract_template --mark-verified kèm validator post PASS trên GET thật, do agent chính/user duyệt. Ghi chú cũ: Nhãn kiểm chứng: api-reference mục \"Bài học tenant trống — đã verify\" (add_v2 tối thiểu BEGIN + ADD_CLASSIFY + END_CALL đã chạy). collapseObj cần 1 entry mỗi intent."
+  "ui_hint": "Chỉ nhân bản từ GET baseline (lý do unverified: đầu api-reference). collapseObj cần 1 entry mỗi intent."
  },
  {
   "type": "CUSTOM_INTENT",
   "side": "runtime",
   "status": "unverified",
+  "builder": "sinh",
   "template": null,
-  "source": "references/api-reference.md:63",
+  "source": "references/api-reference.md#Intent — (A)",
   "verified_on": null,
-  "ui_hint": "Hạ xuống unverified: tài liệu không ghi nhãn verify trực tiếp cho loại này, nhãn cũ là suy luận từ câu tóm tắt add_v2 tối thiểu (api-reference ghi 'chưa có fixture JSON thật'). Chỉ nhân bản từ GET baseline; nâng verified qua extract_template --mark-verified kèm validator post PASS trên GET thật, do agent chính/user duyệt. Ghi chú cũ: Nhãn kiểm chứng: api-reference mục \"Bài học tenant trống — đã verify\" (add_v2 tối thiểu BEGIN + ADD_CLASSIFY + END_CALL đã chạy). data[].type = OMI_BOT_INTENT."
+  "ui_hint": "Chỉ nhân bản từ GET baseline. data[].type = OMI_BOT_INTENT."
  },
  {
   "type": "CUSTOM_INTENT",
   "side": "editor",
   "status": "unverified",
+  "builder": "sinh",
   "template": null,
-  "source": "references/api-reference.md:72",
+  "source": "references/api-reference.md#Intent — (B)",
   "verified_on": null,
-  "ui_hint": "Hạ xuống unverified: tài liệu không ghi nhãn verify trực tiếp cho loại này, nhãn cũ là suy luận từ câu tóm tắt add_v2 tối thiểu (api-reference ghi 'chưa có fixture JSON thật'). Chỉ nhân bản từ GET baseline; nâng verified qua extract_template --mark-verified kèm validator post PASS trên GET thật, do agent chính/user duyệt. Ghi chú cũ: Nhãn kiểm chứng: api-reference mục \"Bài học tenant trống — đã verify\" (add_v2 tối thiểu BEGIN + ADD_CLASSIFY + END_CALL đã chạy). data[] cần isCustomComp:true + targetType; hậu tố webhookId: Cần xác nhận."
+  "ui_hint": "Chỉ nhân bản từ GET baseline. data[] cần isCustomComp:true + targetType; hậu tố webhookId: Cần xác nhận."
  },
  {
   "type": "bot_can_not_answer / customer_not_response (system condition)",
   "side": "runtime",
   "status": "unverified",
+  "builder": "sinh",
   "template": null,
-  "source": "references/api-reference.md:83",
+  "source": "references/api-reference.md#System conditions",
   "verified_on": null,
-  "ui_hint": "Hạ xuống unverified: tài liệu không ghi nhãn verify trực tiếp cho loại này, nhãn cũ là suy luận từ câu tóm tắt add_v2 tối thiểu (api-reference ghi 'chưa có fixture JSON thật'). Chỉ nhân bản từ GET baseline; nâng verified qua extract_template --mark-verified kèm validator post PASS trên GET thật, do agent chính/user duyệt. Ghi chú cũ: Nhãn kiểm chứng: api-reference mục \"Bài học tenant trống — đã verify\" (add_v2 tối thiểu BEGIN + ADD_CLASSIFY + END_CALL đã chạy). Luôn ở cuối conditions."
+  "ui_hint": "Chỉ nhân bản từ GET baseline. Luôn ở cuối conditions."
  },
  {
   "type": "bot_can_not_answer / customer_not_response (system condition)",
   "side": "editor",
   "status": "unverified",
+  "builder": "sinh",
   "template": null,
-  "source": "references/api-reference.md:84",
+  "source": "references/api-reference.md#System conditions",
   "verified_on": null,
-  "ui_hint": "Hạ xuống unverified: tài liệu không ghi nhãn verify trực tiếp cho loại này, nhãn cũ là suy luận từ câu tóm tắt add_v2 tối thiểu (api-reference ghi 'chưa có fixture JSON thật'). Chỉ nhân bản từ GET baseline; nâng verified qua extract_template --mark-verified kèm validator post PASS trên GET thật, do agent chính/user duyệt. Ghi chú cũ: Nhãn kiểm chứng: api-reference mục \"Bài học tenant trống — đã verify\" (add_v2 tối thiểu BEGIN + ADD_CLASSIFY + END_CALL đã chạy). Luôn ở cuối conditions."
+  "ui_hint": "Chỉ nhân bản từ GET baseline. Luôn ở cuối conditions."
  },
  {
   "type": "TRANSFER_CALL Extension",
   "side": "action",
   "status": "unverified",
+  "builder": "sinh",
   "template": null,
-  "source": "references/api-reference.md:86",
+  "source": "references/api-reference.md#ACTION — TRANSFER_CALL chuyển nhân viên",
   "verified_on": null,
-  "ui_hint": "Hạ xuống unverified: tài liệu không ghi nhãn verify trực tiếp cho loại này, nhãn cũ là suy luận từ tiêu đề mục SKILL.md 'Quy ước biên soạn và thao tác giao diện đã kiểm chứng'. Chỉ nhân bản từ GET baseline; nâng verified qua extract_template --mark-verified kèm validator post PASS trên GET thật, do agent chính/user duyệt. Ghi chú cũ: option.value là _id hay agent_id: Cần xác nhận theo GET thật. Editor không nạp lại nhân viên: GET kiểm ids sau mỗi lần lưu UI."
+  "ui_hint": "Chỉ nhân bản từ GET baseline. ids/value là _id hay agent_id: Cần xác nhận (một chỗ duy nhất: mục nguồn). Editor không nạp lại nhân viên: GET kiểm ids sau mỗi lần lưu UI (validator X3)."
  },
  {
-  "type": "TRANSFER_CALL Ring_group / Outer_group",
+  "type": "TRANSFER_CALL Ring_group",
+  "side": "action",
+  "status": "unverified",
+  "builder": "khong",
+  "template": "references/templates/TRANSFER_CALL_Ring_group.json",
+  "source": "references/api-reference.md#ACTION — TRANSFER_CALL nhóm nội bộ",
+  "verified_on": null,
+  "ui_hint": "Bằng chứng mới ở mức cấu trúc (GET thật 11/2026), chưa qua quy trình nâng verified ở đầu api-reference (extract_template --mark-verified + validator post, người duyệt) và chưa gọi thử. JSON từ GET sau khi chọn nhóm nội bộ trên giao diện; node ghép vào payload API, lưu add_v2 rồi GET lại vẫn giữ Ring_group (nhiều kịch bản thử 11/2026). Builder dừng exit 2: ghép tay node từ template vào payload rồi omi_save --update --confirm-update; validator X3 nhận Ring_group."
+ },
+ {
+  "type": "TRANSFER_CALL Outer_group",
   "side": "action",
   "status": "enum",
+  "builder": "khong",
   "template": null,
-  "source": "references/api-reference.md:93",
+  "source": "references/api-reference.md#Các loại hành động",
   "verified_on": null,
   "ui_hint": "Chỉ thấy tên trong typeOptions, chưa có JSON → dựng 1 nút trên UI, GET, extract_template."
  },
@@ -75,80 +93,89 @@
   "type": "ADD_CLASSIFY",
   "side": "action",
   "status": "verified",
+  "builder": "sinh",
   "template": null,
-  "source": "references/api-reference.md:102",
+  "source": "references/api-reference.md#ADD_CLASSIFY",
   "verified_on": null,
-  "ui_hint": "Nhãn kiểm chứng: api-reference mục \"Bài học tenant trống — đã verify\" (add_v2 tối thiểu BEGIN + ADD_CLASSIFY + END_CALL đã chạy). Runtime key data, editor key datas."
+  "ui_hint": "Kiểm chứng: api-reference mục 'Bài học tenant trống'. Runtime key data, editor key datas."
  },
  {
   "type": "END_CALL",
   "side": "runtime",
   "status": "verified",
+  "builder": "sinh",
   "template": null,
-  "source": "references/api-reference.md:111",
+  "source": "references/api-reference.md#END_CALL",
   "verified_on": null,
-  "ui_hint": "Nhãn kiểm chứng: api-reference mục \"Bài học tenant trống — đã verify\" (add_v2 tối thiểu BEGIN + ADD_CLASSIFY + END_CALL đã chạy). description runtime + data.description/data.content editor."
+  "ui_hint": "Kiểm chứng: api-reference mục 'Bài học tenant trống'. description runtime + data.description/data.content editor; quy tắc nội dung: playbook mục 'Kết thúc và chuyển cuộc gọi'."
  },
  {
   "type": "connection intent → node",
   "side": "edge",
   "status": "unverified",
+  "builder": "sinh",
   "template": null,
-  "source": "references/api-reference.md:115",
+  "source": "references/api-reference.md#Connection",
   "verified_on": null,
-  "ui_hint": "Hạ xuống unverified: tài liệu không ghi nhãn verify trực tiếp cho loại này, nhãn cũ là suy luận từ câu tóm tắt add_v2 tối thiểu (api-reference ghi 'chưa có fixture JSON thật'). Chỉ nhân bản từ GET baseline; nâng verified qua extract_template --mark-verified kèm validator post PASS trên GET thật, do agent chính/user duyệt. Ghi chú cũ: Nhãn kiểm chứng: api-reference mục \"Bài học tenant trống — đã verify\" (add_v2 tối thiểu BEGIN + ADD_CLASSIFY + END_CALL đã chạy). Định dạng id cạnh: Cần xác nhận, chép theo GET thật."
+  "ui_hint": "Bằng chứng mới ở mức cấu trúc (GET thật 11/2026), chưa qua quy trình nâng verified ở đầu api-reference (extract_template --mark-verified + validator post, người duyệt) và chưa gọi thử. id cạnh = reactflow__edge-<source><sourceHandle>-<target><targetHandle>, khớp các cạnh do giao diện tạo (11/2026). Builder chép định dạng theo cạnh mẫu của base."
  },
  {
-  "type": "ACTION → ACTION (nối tiếp sau node hành động)",
+  "type": "ACTION→ACTION (nối tiếp sau node hành động)",
   "side": "edge",
   "status": "unverified",
+  "builder": "khong",
   "template": null,
-  "source": "references/api-reference.md:100",
+  "source": "references/api-reference.md#Nút gọi API (SEND_WEBHOOK)",
   "verified_on": null,
-  "ui_hint": "Chưa có mẫu cạnh đi ra từ node ACTION (sourceHandle) → dựng trên UI rồi GET."
+  "ui_hint": "Bằng chứng mới ở mức cấu trúc (GET thật 11/2026), chưa qua quy trình nâng verified ở đầu api-reference (extract_template --mark-verified + validator post, người duyệt) và chưa gọi thử. sourceHandle \"2\" (NEXT_STEP), targetHandle \"1\", runtime node không có next_node. Builder dừng exit 2: ghép tay."
  },
  {
   "type": "collect_variables (action_steps / actionStep)",
   "side": "editor",
   "status": "unverified",
+  "builder": "sinh",
   "template": null,
-  "source": "references/api-reference.md:128",
+  "source": "references/api-reference.md#Thu thập thông tin theo intent",
   "verified_on": null,
-  "ui_hint": "Tài liệu có JSON nhưng mục này không ghi nhãn verify; nhân bản từ GET baseline có mẫu thu biến."
+  "ui_hint": "Tài liệu có JSON nhưng mục này không ghi nhãn kiểm chứng; nhân bản từ GET baseline có mẫu thu biến."
  },
  {
   "type": "knowledge.apis",
   "side": "runtime",
   "status": "verified",
+  "builder": "giu_nguyen",
   "template": null,
-  "source": "references/api-reference.md:135",
+  "source": "references/api-reference.md#Cấu hình API cho agent",
   "verified_on": null,
-  "ui_hint": "Header che khi in; endpoint chỉ dùng khi tài liệu khách nêu, không bịa."
+  "ui_hint": "Builder chép từ spec.knowledge.apis hoặc giữ theo base (--update). Header che khi in; endpoint chỉ dùng khi tài liệu khách nêu, không bịa."
  },
  {
   "type": "search_knowledge (action_steps / actionStep)",
   "side": "editor",
   "status": "verified",
+  "builder": "khong",
   "template": null,
-  "source": "references/api-reference.md:142",
+  "source": "references/api-reference.md#Cấu hình API cho agent",
   "verified_on": null,
-  "ui_hint": "Thuộc mục 'mẫu verify từ script thật'."
+  "ui_hint": "Thuộc mục 'mẫu verify từ script thật'. Builder chưa sinh: thêm tay sau bước collect_variables (api-reference mục 'Bài học tenant trống', ý Builder)."
  },
  {
   "type": "biến ACTION top-level (kết quả API)",
   "side": "runtime",
   "status": "verified",
+  "builder": "khong",
   "template": null,
-  "source": "references/api-reference.md:141",
+  "source": "references/api-reference.md#Cấu hình API cho agent",
   "verified_on": null,
-  "ui_hint": "Thuộc mục 'mẫu verify từ script thật'."
+  "ui_hint": "Thuộc mục 'mẫu verify từ script thật'. Builder chưa sinh: thêm tay vào top-level variables."
  },
  {
   "type": "PUSH_NOTIFICATION",
   "side": "action",
   "status": "enum",
+  "builder": "khong",
   "template": null,
-  "source": "references/api-reference.md:100",
+  "source": "references/api-reference.md#Các loại hành động",
   "verified_on": null,
   "ui_hint": "Chỉ có tên loại, chưa có JSON → UI, GET, extract_template."
  },
@@ -156,17 +183,19 @@
   "type": "SEND_WEBHOOK",
   "side": "action",
   "status": "verified",
+  "builder": "khong",
   "template": null,
-  "source": "references/api-reference.md:100",
+  "source": "references/api-reference.md#Nút gọi API (SEND_WEBHOOK)",
   "verified_on": "2026-11",
-  "ui_hint": "Đã dựng bằng UI (hành động 'API', nút kế tiếp của intent) rồi ghép vào payload gốc bằng add_v2, GET lại khớp. JSON mẫu và dây nối: api-reference mục 'Nút gọi API (SEND_WEBHOOK)'."
+  "ui_hint": "Dựng bằng UI (hành động 'API', nút kế tiếp của intent) rồi ghép vào payload gốc bằng add_v2, GET lại khớp. Builder dừng exit 2: ghép tay theo mục nguồn; nối sau intent 'khách xác nhận' (validator WARN X13)."
  },
  {
   "type": "START_OTHER_CAMPAIGN",
   "side": "action",
   "status": "enum",
+  "builder": "khong",
   "template": null,
-  "source": "references/api-reference.md:100",
+  "source": "references/api-reference.md#Các loại hành động",
   "verified_on": null,
   "ui_hint": "Chỉ có tên loại, chưa có JSON → UI, GET, extract_template."
  },
@@ -174,9 +203,10 @@
   "type": "RAG upload (knowledge.files)",
   "side": "runtime",
   "status": "unverified",
+  "builder": "giu_nguyen",
   "template": null,
-  "source": "references/api-reference.md:142",
+  "source": "references/api-reference.md#RAG — File đào tạo",
   "verified_on": null,
-  "ui_hint": "scripts/rag_upload.py: filestore put business_type=callbot_recording_file → knowledge.files + org selectedTraining → omi_save --update. Chuỗi đọc từ mã editor, khớp dữ liệu thật; chạy end-to-end lần đầu thì GET + gọi thử rồi đổi status sang verified."
+  "ui_hint": "scripts/rag_upload.py: filestore put_v2 (field file_0) business_type=callbot_recording_file, lỗi thì thử put (field image) → knowledge.files + org selectedTraining → omi_save --update. Tải lên put_v2 chạy được 11/2026; bot truy xuất nội dung chưa kiểm: gọi thử hỏi câu trong file rồi đổi status sang verified. Dự phòng: rag_other.py (Dữ liệu khác). Builder: --new xoá file của base trừ khi spec.knowledge.files khai báo."
  }
 ]

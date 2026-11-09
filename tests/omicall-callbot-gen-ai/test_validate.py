@@ -88,6 +88,29 @@ class TestValidate(unittest.TestCase):
         self.assertEqual(code, 1, out + err)
         self.assertRegex(out, r"(?m)^FAIL C8 ")
 
+    def test_good_has_no_x13(self):
+        code, out, err = run("validate_smartagent.py", os.path.join(FIX, "good.json"))
+        self.assertEqual(code, 0, out + err)
+        self.assertNotRegex(out, r"(?m)^WARN X13 ")
+        self.assertRegex(out, r"(?m)^PASS X13 ")
+
+    def test_collect_intent_to_webhook_warns_x13(self):
+        def m(g):
+            n = next(x for x in g["nodes"] if x["id"] == "clf_co_nhu_cau")
+            n["actions"].append({"id": "wh_1", "type": "SEND_WEBHOOK", "data": {"method": "POST", "url": "https://api.example.invalid/x"}})
+        code, out, err = run("validate_smartagent.py", self._variant(m))
+        self.assertRegex(out, r"(?m)^WARN X13 .*Khách có nhu cầu.*SEND_WEBHOOK")
+        self.assertNotRegex(out, r"(?m)^FAIL X13 ")
+
+    def test_collect_intent_to_end_warns_x13(self):
+        def m(g):
+            conds = g["nodes"][0]["ai_agent_config"]["ai_analyze"]["conditions"]
+            next(c for c in conds if c["id"] == "i_co_nhu_cau")["next_node"] = "end_1"
+            next(c for c in g["connections"] if c["sourceHandle"] == "i_co_nhu_cau")["target"] = "end_1"
+        code, out, err = run("validate_smartagent.py", self._variant(m))
+        self.assertRegex(out, r"(?m)^WARN X13 .*Khách có nhu cầu.*END_CALL")
+        self.assertRegex(out, r"(?m)^FAIL X6 ")  # tên không phải Hoàn tất nên X6 cũng FAIL
+
     def test_post_without_sent_warns_x10(self):
         code, out, err = run("validate_smartagent.py", "--mode", "post", os.path.join(FIX, "good.json"))
         self.assertEqual(code, 0, out + err)

@@ -76,8 +76,8 @@ def decide(domain, min_minutes=5):
         out['next_step'] = ('Cần user làm MỘT việc: chạy trong terminal `%s`, nhập email và mật khẩu ở ô nhập ẩn '
                             '(mật khẩu cất vào kho bí mật của hệ điều hành, không qua hội thoại). Script tự đăng nhập '
                             'MCP OMI và đăng ký server MCP; agent đi đường API ngay trong phiên này. Client có công cụ '
-                            'mở terminal thì agent mở sẵn lệnh này cho user. Cần Node.js 18+. Dự phòng: lệnh mcp add '
-                            'theo references/omi-mcp-extra.md Phụ lục A, hoặc user tự đặt OMI_TOKEN_FILE. '
+                            'mở terminal thì agent mở sẵn lệnh này cho user. Cần Node.js 18+. Dự phòng: đăng ký MCP cho client '
+                            'khác theo README mục "Cài MCP cho client khác", hoặc user tự đặt OMI_TOKEN_FILE. '
                             'Trong lúc chờ: làm tiếp phần offline (extract_text, phân tích, spec).'
                             % setup_command(domain))
     return out

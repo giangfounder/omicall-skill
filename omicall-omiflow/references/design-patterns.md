@@ -53,7 +53,7 @@ App Script trên sheet POST vào trigger API khi cột "Trạng thái" = "Xác n
 
 ## B. Mẫu đã chạy trong flow thật (đã ẩn danh, khung dùng chung)
 
-### B1. Callbot → webhook → tra hệ thống ngoài (CRM, ERP, HIS…) → phiếu ghi gắn cuộc gọi [đã chạy]
+### B1. Callbot → webhook → tra hệ thống ngoài (CRM, ERP…) → phiếu ghi gắn cuộc gọi [đã chạy]
 Bài toán: ngoài giờ, callbot tiếp nhận; bot không xử lý được thì tạo phiếu cho nhân viên gọi lại.
 ```
 WEB_HOOK(full_name, phone_number, summary, call_id)
@@ -110,10 +110,13 @@ WEB_HOOK(digits, customer_phone, ct_transaction_id)
  → mỗi trường hợp 1 INFO_DIALOG "Khách {{customer_phone}} bấm phím N - <tên nơi N>" (nhân viên nhận: chỉ định người hoặc "trong luồng")
  → nhánh mặc định: INFO_DIALOG "Phím không xác định {{digits}}"
 ```
-Quota: M nơi = M+3 nút (trigger, điều kiện, M cửa sổ, 1 cửa sổ mặc định). Điều kiện cần có: TTP đã khai báo đủ phím 1..M, mỗi phím trỏ tới một nhóm nội bộ riêng; flow đã xuất bản trước khi gắn URL vào TTP (xem Gotchas). Tên nơi lấy từ user, thiếu thì ghi "Cần xác nhận", không bịa.
+Quota: M nơi = M+3 nút (trigger, điều kiện, M cửa sổ, 1 cửa sổ mặc định). Điều kiện cần có: TTP đã khai báo đủ phím 1..M, mỗi phím trỏ tới một nhóm nội bộ riêng; flow đã được user Xuất bản trước khi gắn URL vào TTP (xem Gotchas; id/URL: `api-reference.md` mục *Ba loại id và URL webhook*). Tên nơi lấy từ user, thiếu thì ghi "Cần xác nhận", không bịa.
 
 ### B5. Ghi kết quả AI Assistant vào phiếu [đã chạy]
-`GENERAL` (cuộc gọi kết thúc) → `DELAY 5 giây` → `GET_RELATED CLOSEST_TICKET` (thuộc tính phiếu "mã cuộc gọi" = `{{ct_transaction_id}}`) → `ASSIGN_TICKET_DESCRIPTION` chèn `{{ca_ai_assistant}}` vào cuối mô tả.
+`GENERAL` (cuộc gọi kết thúc) → `DELAY` → `GET_RELATED CLOSEST_TICKET` (thuộc tính phiếu "mã cuộc gọi" = `{{ct_transaction_id}}`) → `ASSIGN_TICKET_DESCRIPTION` chèn `{{ca_ai_assistant}}` vào cuối mô tả.
+Hai thời gian chờ khác nhau, đừng gộp:
+- Chờ **bản ghi cuộc gọi/phiếu** có trong hệ thống: 5–10 giây (X6). Bản đã chạy dùng 5 giây.
+- Chờ **AI Assistant ghi kết quả** (`{{ca_ai_assistant}}`, `{{ca_summarize}}`): trễ cỡ phút sau khi cuộc gọi kết thúc (`omicall-ai-insight`). B4 dùng 3 phút [đã chạy]; mức chờ tối thiểu: Cần xác nhận. → đặt `DELAY` tính bằng phút trước nút đọc biến AI; chờ quá ngắn thì flow nhận gì: Cần xác nhận.
 
 ### B6. Zalo cá nhân: gửi lời mời kết bạn khi chưa có hội thoại [đã chạy]
 `WEB_HOOK(<sdt_khach>, <tai_khoan_zalo>)` → node `ZALO_PERSONAL_MESSAGE` hành động `REQUEST_FRIEND`.
@@ -125,7 +128,7 @@ Flow A — FORM (hoặc WEB_HOOK / sự kiện kênh) · không giới hạn lư
  → ACTION: ADD_NEW_CONTACT (ánh xạ biến form) + UPDATE_INFO_CONTACT (phụ trách = người duyệt, trạng thái = "chờ duyệt" + ghi chú)
            + PUSH_NOTIFICATION cho người duyệt
         ↓ người duyệt đổi trạng thái pipeline sang "đã duyệt"  (mốc nối, không cần tag/form mới)
-Flow B — GENERAL: thuộc tính trạng thái = "đã duyệt" · giới hạn lượt có chủ đích
+Flow B — GENERAL: thuộc tính trạng thái = "đã duyệt" · giới hạn lượt chỉ khi user chọn (X11: lệch quy ước mặc định, chỉ giữ nếu user yêu cầu)
  → ACTION: UPDATE_INFO_CONTACT (phụ trách = người xử lý hoặc cấu hình phân bổ) + PUSH_NOTIFICATION "xử lý trong N phút"
  → DELAY N → CONDITION Mở rộng "Kiểm tra tương tác khách hàng": Không có tương tác [Cuộc gọi] trong N phút
        ├─ thoả → PUSH_NOTIFICATION cảnh báo → DELAY M → CONDITION: Không có tương tác [Cuộc gọi, Ghi chú] trong N+M phút
@@ -145,14 +148,14 @@ Flow B — GENERAL: thuộc tính trạng thái = "đã duyệt" · giới hạn
 | **Chatbot hoặc callbot cần tra CRM giữa hội thoại** | `WEB_HOOK(sđt)` → `GET_RELATED CLOSEST_CONTACT` (SĐT = biến) → `CONDITION` có hay không → `SEND_RESPONSE_WEBHOOK_API` trả JSON gồm thuộc tính khách. Không tìm thấy → `ADD_NEW_CONTACT` → trả `{"is_new":true}`. Bot khai URL ở mục Truy vấn API. |
 | **Lead từ biểu mẫu hoặc quảng cáo** | Khung đã chạy: B7. Biến thể: bỏ bước duyệt (Flow A phân sale thẳng bằng cấu hình phân bổ), hoặc nhánh quá hạn → `PUSH_REMINDER` + `MARKETING CALLBOT` gọi chào thay vì thu hồi. |
 | **OTP / tin giao dịch đa kênh (Zalo trước, lỗi thì SMS)** | `WEB_HOOK` (app gửi `phone`, `otp`) → nút Zalo OA gửi OTP → nhánh **Thất bại** → `MARKETING SMS` Brandname tới `{{phone}}`. Chỉ 3 nút, không cần `DELAY` + `CONDITION` (`concepts.md` mục 6). Credit ví dụ (giá 20/nút): Zalo được 40, lỗi chuyển SMS 60; phí tin tính riêng (mục 6a). |
-| **Nhắc lịch hẹn, tái khám, bảo dưỡng** | `PERIOD` hằng ngày (hoặc `EXCEL`) → `CONDITION` ngày hẹn = ngày mai → `MARKETING SEND_ZNS` → `DELAY` → `CONDITION` trạng thái gửi ZNS thất bại → `MARKETING CALLBOT` (gọi nhắc) → `ADD_CLASSIFY` kết quả. |
+| **Nhắc lịch hẹn** | `PERIOD` hằng ngày (hoặc `EXCEL`) → `CONDITION` ngày hẹn = ngày mai → `MARKETING SEND_ZNS` → gửi lỗi thì `MARKETING CALLBOT` (gọi nhắc) → `ADD_CLASSIFY` kết quả. Rẽ khi gửi lỗi: mở ngăn nút gửi trước; có nhánh **Thất bại** thì nối thẳng nhánh đó sang Callbot, không thêm `DELAY` + `CONDITION` (`concepts.md` mục 6). Nút `MARKETING SEND_ZNS` có nhánh Thất bại hay không: Cần xác nhận (mới kiểm chứng ở nút Zalo OA trong nhóm Trò chuyện). Không có thì mới dùng `DELAY` → `CONDITION` Mở rộng trạng thái ZBS/ZNS (`node-catalog.md` mục 2.1). |
 | **Chăm sóc sau bán, khảo sát CSAT** | Trigger `TICKET` (phiếu sang "Hoàn tất") → `DELAY 1 ngày` trong khung 8h–20h → `MARKETING CALLBOT` khảo sát → callbot gọi lại `WEB_HOOK` gửi điểm → `CONDITION` điểm ≤ 2 → `ADD_TICKET` "Khách không hài lòng" + `PUSH_NOTIFICATION` cho trưởng nhóm. |
 | **SLA phiếu ghi, leo thang** | Trigger `TICKET` (trạng thái "Mới") → `DELAY 2 giờ` → `GET_RELATED` lại phiếu → `CONDITION` vẫn "Mới" → `ASSIGN_TICKET_PRIORITY` cao + `ASSIGN_TICKET_ASSIGNEE` trưởng nhóm + `PUSH_NOTIFICATION`. |
 | **Thương mại điện tử: đơn hàng đối tác** | `HARAVAN`/`SAPO`/`KIOTVIET`/`SHOPIFY` (đơn tạo mới) → `ADD_NEW_CONTACT` hoặc `UPDATE_INFO_CONTACT` → `SEND_ZNS` xác nhận đơn. Đơn COD giá trị cao → `MARKETING CALLBOT` xác nhận → callbot gọi `WEB_HOOK` → `ORDER_*_ACTION` cập nhật trạng thái đơn. |
-| **Thu hồi nợ, nhắc thanh toán** | `EXCEL` (danh sách đến hạn) → `RANDOM` 50/50 (A/B kịch bản) → `MARKETING CALLBOT` → `ADD_CLASSIFY` (hứa trả, từ chối, không nghe) → `CONDITION` không nghe → `DELAY 1 ngày` → gọi lại, tối đa N lần (`iteration_config`). |
+| **Thu hồi nợ, nhắc thanh toán** | `EXCEL` (danh sách đến hạn) → `RANDOM` 50/50 (A/B kịch bản) → `MARKETING CALLBOT` → `ADD_CLASSIFY` (hứa trả, từ chối, không nghe) → `CONDITION` không nghe → `DELAY 1 ngày` → gọi lại, tối đa N lần (`iteration_config` giới hạn lượt: X11 lệch quy ước mặc định, chỉ giữ nếu user yêu cầu). |
 | **Phân luồng cuộc gọi theo khách VIP** | `DIRECT_CALL` → `HOLDING_CALL` → `API_V2` tra hạng khách → `CONDITION` VIP → `TRANSFER_CALL` nhóm VIP + `INFO_DIALOG` thông tin khách; còn lại → `TRANSFER_CALL` nhóm chung. |
 | **Đa kênh: khách nhắn ngoài giờ** | `GENERAL` (hội thoại mới) → `CONDITION` TIME_FRAME ngoài giờ → node AI Chatbot xử lý → `CHAT_GPT` phân loại → `ADD_TICKET` + `UPDATE_CONVERSATION` gắn nhãn → sáng hôm sau `PUSH_REMINDER`. |
-| **Đón tin nhắn LiveTalk giao cho AI Chatbot (chat thử bot)** | `GENERAL` (hội thoại thêm mới; điều kiện kênh LiveTalk **và đúng widget test** — thiếu điều kiện widget là bắt cả khách thật) → `OMI_BOT_AI` chọn bot; `iteration_config` để mỗi hội thoại giao bot một lần; nhân viên nhận thì `UPDATE_SOCIAL_CHATBOT_STATUS` tắt bot. Chỉ dựng khi kênh không có ô chọn bot sẵn (tốn quota flow). Quy trình kiểm thử bot: skill `omicall-chatbot-gen-ai`, `references/livetalk-test-optimize.md`. |
+| **Đón tin nhắn LiveTalk giao cho AI Chatbot (chat thử bot)** | `GENERAL` (hội thoại thêm mới; điều kiện kênh LiveTalk **và đúng widget test** — thiếu điều kiện widget là bắt cả khách thật) → `OMI_BOT_AI` chọn bot; `iteration_config` để mỗi hội thoại giao bot một lần (X11: lệch quy ước mặc định, chỉ giữ nếu user yêu cầu); nhân viên nhận thì `UPDATE_SOCIAL_CHATBOT_STATUS` tắt bot. Chỉ dựng khi kênh không có ô chọn bot sẵn (tốn quota flow). Quy trình kiểm thử bot: skill `omicall-chatbot-gen-ai`, `references/livetalk-test-optimize.md`. |
 | **Báo cáo nhanh ra Google Sheet** | Bất kỳ trigger → `UPLOAD_GOOGLE_SHEET` ghi dòng (thời gian, SĐT, kết quả, nhãn) cho bộ phận không dùng CRM. |
 | **Ưu đãi, voucher** | `FORM` đăng ký → `CREATE_CUSTOM_VARIABLE` RANDOM (mã) hoặc gán voucher (`ASSIGN_VOUCHER_LINK_CONTACT`) → `SEND_ZNS`; `invitation` (COMBINE_IMAGE) tạo ảnh thư mời cá nhân hoá. |
 
@@ -162,4 +165,4 @@ Flow B — GENERAL: thuộc tính trạng thái = "đã duyệt" · giới hạn
 - Hai trường hợp trùng nghĩa (`"2"` và `"02"`) do phím IVR có thể được ghi khác nhau: gộp bằng `IN` hoặc `CONTAIN`, hoặc giữ cả hai có chủ đích.
 - Nhiều nút ACTION y hệt nhau (cùng tạo một loại phiếu) ở các nhánh: gom bằng cách cho các trường hợp trỏ cùng một nút để giảm số nút.
 - Kiểm tra "chưa gọi trong N phút" bằng cách tự đếm (chụp `interactive_call` vào biến, so `last_call_transaction_time` với mốc giao): phức tạp và dễ sai → dùng điều kiện Mở rộng "Kiểm tra tương tác khách hàng".
-- Để giới hạn số lần đi qua mặc định (2) mà không cân nhắc: đối tượng được duyệt/giao lại lần 3 bị flow bỏ qua im lặng.
+- Để nguyên giới hạn số lần đi qua mặc định **của giao diện** (2) mà không cân nhắc: đối tượng được duyệt/giao lại lần 3 bị flow bỏ qua im lặng. Quy ước của skill là Không giới hạn lượt (X11).

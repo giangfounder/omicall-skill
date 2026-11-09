@@ -99,5 +99,6 @@ Cấu hình → Thuộc tính có thêm tab **Đa kênh** (`/config/attribute/so
 ## Cấu hình phân bổ (Cấu hình → Doanh nghiệp → Khác → Cấu hình phân bổ) — đã kiểm chứng 10/2026
 - API đọc: `POST tenant-v1-stg.omicrm.com/sale_allocation/search?page=1&size=50` body `{}` → `payload.items[]` `{_id,name,type,staffs:[{contact_id,full_name,percent}]}`.
 - `type`: `split_evenly` (Phân chia đồng đều) · `prioritize_employees_with_fewer_customers` (Ưu tiên nhân viên có ít dữ liệu nhất) · `specific_division` (Phân chia cụ thể theo %; `staffs[].percent`, tổng phải = 100, form hiện "Phần trăm hiện tại"). Tuỳ chọn áp dụng: nhân viên cụ thể / nhóm nhân viên / nhóm nội bộ (chọn nhóm thì mất lựa chọn "theo %").
-- Flow dùng qua hành động `ASSIGN_SALE_ALLOCATION` `data.ids:[<_id>]`. Đổi cơ chế cho mọi flow cùng lúc: sửa "Hình thức" của chính cấu hình đang gắn; đổi riêng từng flow: chọn cấu hình khác trong nút Thêm khách hàng rồi xuất bản.
+- Flow dùng qua hành động `ASSIGN_SALE_ALLOCATION` `data.ids:[<_id>]`. Đổi cơ chế cho mọi flow cùng lúc: sửa "Hình thức" của chính cấu hình đang gắn; đổi riêng từng flow: chọn cấu hình khác trong nút Thêm khách hàng, lưu nháp, rồi user Xuất bản flow.
+- Không đưa tài khoản admin (nơi nhận lead thu hồi) vào danh sách chia của cấu hình phân bổ.
 - Gotcha UI: ô "Nhóm nhân viên" nằm ngay dưới danh sách chọn nhân viên — bấm ra ngoài để đóng danh sách dễ trúng ô này và reset form; đóng danh sách bằng Esc.

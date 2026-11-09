@@ -5,7 +5,7 @@
 ## 1. Phạm vi và số lượng
 - Chỉ gồm **ý định và thực thể kịch bản dùng**. Không thêm ý định cho câu hỏi đáp (dùng ý định "khách đặt câu hỏi" + thực thể chủ đề).
 - **≥200 câu mới cho mỗi ý định và mỗi thực thể** (không tính câu mẫu hệ thống). Ý định chỉ đi kèm thực thể (đặt câu hỏi, lời hẹn có thời gian) được tính bằng tổng câu của các thực thể đó; ý định có cả câu không thực thể thì phần không thực thể cũng ≥200.
-- Tenant trống → nạp dữ liệu mẫu hệ thống trước (`training/reset`), rồi bổ sung bằng file của dự án.
+- Tenant trống (`training/search_v3` `total_items == 0`) → **sau khi user đồng ý riêng**, nạp dữ liệu mẫu hệ thống (`training/reset`), rồi bổ sung bằng file của dự án. Tenant đã có câu huấn luyện → không reset.
 - **Gom vào một file, đẩy một lần** (mỗi lần nhập = huấn luyện lại toàn bộ 10–20 phút). Lần bổ sung sau: lọc trùng với mọi file đã đẩy (`--existing`).
 
 ## 2. Mẫu Excel hệ thống

@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-"""validate_bot.py trên fixture ghép từ api-reference.md:90-140, :205-216, :246-262 (chỉ nhất quán nội bộ)."""
+"""validate_bot.py trên fixture ghép từ api-reference.md (mục Bot object, API Knowledge, bot gọi flow / thu SĐT,
+START_OTHER_CAMPAIGN JSON runtime) — chỉ nhất quán nội bộ."""
 import copy
 import os
 import tempfile
@@ -142,6 +143,36 @@ class TestValidate(unittest.TestCase):
         b["system_prompt"] = "***Lưu ý***: trả lời ngắn"
         code, out, _ = run("validate_bot.py", self.write(b))
         self.assertEqual(code, 0, out)
+
+    def _flow_action(self, b):
+        return next(a for n in b["campaign"]["nodes"] for a in n.get("actions") or []
+                    if a.get("type") == "START_OTHER_CAMPAIGN")
+
+    def test_start_other_campaign_ids_mismatch_editor_fails_x10(self):
+        b = copy.deepcopy(self.bot)
+        self._flow_action(b)["data"]["ids"] = ["flow-uuid-khac"]
+        code, out, _ = run("validate_bot.py", self.write(b))
+        self.assertEqual(code, 1, out)
+        self.assertIn("X10", fails(out))
+
+    def test_start_other_campaign_missing_ids_fails_x10(self):
+        # không ghép được editor (bỏ name_mappings của nút) + data.ids rỗng → vẫn FAIL
+        for data in ({}, {"ids": []}, None):
+            b = copy.deepcopy(self.bot)
+            b["campaign"]["name_mappings"] = [m for m in b["campaign"]["name_mappings"]
+                                              if m.get("id") != "<flow_action_node_id>"]
+            act = self._flow_action(b)
+            act.pop("data")
+            if data is not None:
+                act["data"] = data
+            code, out, _ = run("validate_bot.py", self.write(b))
+            self.assertEqual(code, 1, (data, out))
+            self.assertIn("X10", fails(out))
+
+    def test_start_other_campaign_match_passes_x10(self):
+        code, out, _ = run("validate_bot.py", BASE_FIXTURE)
+        self.assertEqual(code, 0, out)
+        self.assertRegex(out, r"(?m)^PASS X10 data.ids khớp")
 
     def test_is_publish_true_pre_warns(self):
         b = copy.deepcopy(self.bot)

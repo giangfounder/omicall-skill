@@ -4,9 +4,10 @@
          [--replace] [--dry-run]
   python <thư mục skill>/scripts/omi_save.py callbot payload.json --domain <domain> --update --confirm-update --base GET.json
 
-Chuỗi lấy từ mã editor (chunk kịch bản callbot, đọc 10/2026), khớp dữ liệu thật của kịch bản đã tải file qua giao diện:
-  1) POST filestore /file_store/put?business_type=callbot_recording_file&keep_content_type=true
-     multipart: 'image' = file, 'name' = tên file (một file mỗi request, giống editor).
+Chuỗi theo references/api-reference.md mục "RAG — File đào tạo":
+  1) POST filestore /file_store/put_v2?business_type=callbot_recording_file&keep_content_type=true
+     multipart: 'file_0' = file (một file mỗi request). ◐ 11/2026: tải lên chạy được; bot truy xuất nội dung: Cần xác nhận.
+     put_v2 lỗi → thử đường cũ của editor /file_store/put (multipart 'image' + 'name'); đường này có thể trả -9999.
      Phản hồi: payload[0].object_info.name = "<tenant_id>/callbot_recording_file/<yyyy>/<mm>/<uuid>.<đuôi>".
   2) url = "https://cdn.omicrm.com/crm/" + object name; id = uuid mới; name = tên file gốc.
   3) Ghi {"id","name","url"} vào CẢ HAI chỗ (editor đọc org_nodes, runtime đọc nodes):
@@ -32,7 +33,8 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 import omi_api  # noqa: E402
 
-UPLOAD_PATH = '/file_store/put?business_type=callbot_recording_file&keep_content_type=true'
+UPLOAD_PATH = '/file_store/put_v2?business_type=callbot_recording_file&keep_content_type=true'  # field file_0
+LEGACY_PATH = '/file_store/put?business_type=callbot_recording_file&keep_content_type=true'  # field image, dự phòng
 CDN = 'https://cdn.omicrm.com/crm/'
 EXTS = ('.doc', '.docx', '.pdf', '.txt', '.xls', '.xlsx', '.rtf')
 MAX_MB = 15  # theo giới hạn Dữ liệu khác bên chatbot; Cần xác nhận cho callbot
@@ -57,19 +59,33 @@ def begin_nodes(script):
     return node, org
 
 
-def upload(path):
+def _post(path, upload_path, field, extra):
     rq = omi_api._requests()
     name = os.path.basename(path)
     ctype = mimetypes.guess_type(name)[0] or 'application/octet-stream'
     with open(path, 'rb') as f:
-        r = rq.post(omi_api.url('filestore', UPLOAD_PATH), headers=omi_api._headers(),
-                    files={'image': (name, f, ctype)}, data={'name': name}, timeout=omi_api.TIMEOUT)
+        r = rq.post(omi_api.url('filestore', upload_path), headers=omi_api._headers(),
+                    files={field: (name, f, ctype)}, data=extra, timeout=omi_api.TIMEOUT)
     body = payload_of(omi_api._handle(r))
     item = body[0] if isinstance(body, list) and body else body
     obj_name = ((item or {}).get('object_info') or {}).get('name') if isinstance(item, dict) else None
     if not obj_name:
         raise omi_api.ApiError('phản hồi upload không có payload[0].object_info.name: %s'
                                % omi_api.mask_text(json.dumps(body, ensure_ascii=False)[:300]))
+    return obj_name
+
+
+def upload(path):
+    """put_v2 (file_0); lỗi thì thử put (image + name) một lần."""
+    name = os.path.basename(path)
+    try:
+        obj_name = _post(path, UPLOAD_PATH, 'file_0', None)
+    except omi_api.ApiError as e1:
+        sys.stderr.write('put_v2 lỗi (%s) → thử /file_store/put\n' % e1)
+        try:
+            obj_name = _post(path, LEGACY_PATH, 'image', {'name': name})
+        except omi_api.ApiError as e2:
+            raise omi_api.ApiError('put_v2: %s; put: %s' % (e1, e2))
     return {'id': str(uuid.uuid1()), 'name': name, 'url': CDN + obj_name}
 
 
@@ -108,7 +124,7 @@ def main(argv=None):
             continue
         names.add(name)
         if a.dry_run:
-            print('[dry-run] POST filestore%s  image=%s' % (UPLOAD_PATH, name))
+            print('[dry-run] POST filestore%s  file_0=%s (lỗi thì thử %s image=)' % (UPLOAD_PATH, name, LEGACY_PATH))
             continue
         try:
             entry = upload(p)

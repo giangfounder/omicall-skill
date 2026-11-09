@@ -8,12 +8,15 @@
   system_prompt; BEGIN ai_analyze.content; Trường hợp CUSTOM_INTENT ngôn ngữ tự nhiên ở CẢ editor lẫn runtime
   (api-reference.md mục "Trường hợp mô tả bằng ngôn ngữ tự nhiên"); OMI_BOT_COLLECT_INFO + case COMPARE NOT_EQUAL;
   ACTION SEND_WEBHOOK; ACTION START_OTHER_CAMPAIGN; api_knowledge + api_knowledge_ids (mục "API Knowledge").
+- `handoff` (bí danh `transfer`, `chuyen_nhan_vien`) = chuyển nhân viên. Không phải nút giao diện: dựng thành ACTION
+  START_OTHER_CAMPAIGN gọi flow phụ thuộc (khung giờ → RE_DISTRIBUTE + tắt chatbot, dựng bằng skill omicall-omiflow),
+  nên spec phải khai `flow` {value: uuid, _id, label}. Thiếu `flow` → exit 2 kèm hướng dẫn. Bot vẫn gửi 1 câu LLM.
 - SEND_WEBHOOK mới: header = spec.headers, không khai thì Content-Type: application/json; KHÔNG kế thừa header
   của webhook mẫu. Editor của loại này chưa kiểm chứng → không chép mẫu editor, WARN dựng/kiểm trên UI.
 - --out nằm trong thư mục skill hoặc repo → exit 2 (payload chưa che, có thể chứa bí mật; ghi vào scratch).
 - Node mới, cạnh mới chép theo MẪU có sẵn trong base (cùng node_type / cùng loại hành động); base thiếu mẫu → exit 2,
   dựng 1 nút loại đó trên UI rồi GET lại làm base. Không tự bịa cấu trúc.
-- Loại chưa có JSON (send_message, end, handoff/chuyển nhân viên, kick_off_context) hoặc ý định hệ thống → exit 2.
+- Loại chưa có JSON (send_message, end, kick_off_context) hoặc ý định hệ thống → exit 2.
 - Id sinh tất định từ _id của bot + khoá trong spec → chạy lại cho output giống từng byte.
 - Cuối cùng tự chạy validate_bot.py --mode pre; có FAIL → exit 1.
 Mẫu spec: references/spec-bot.example.json.
@@ -32,9 +35,16 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 SYSTEM_TAIL = ["bot_can_not_answer", "customer_not_response"]
 TOP_KEYS = {"_ghi_chu", "system_prompt", "begin_content", "intents", "api_knowledge"}
 STEP_TYPES = {"collect_info", "send_webhook", "start_other_campaign"}
-UI_ONLY = {"send_message": "Gửi tin nhắn chung", "end": "Kết thúc trò chuyện", "handoff": "chuyển nhân viên",
-           "transfer": "chuyển nhân viên", "chuyen_nhan_vien": "chuyển nhân viên",
+UI_ONLY = {"send_message": "Gửi tin nhắn chung", "end": "Kết thúc trò chuyện",
            "kick_off_context": "Kích hoạt ngữ cảnh"}
+# Chuyển nhân viên = ACTION START_OTHER_CAMPAIGN gọi flow phụ thuộc (api-reference.md mục "Bot ACTION
+# START_OTHER_CAMPAIGN — JSON runtime"), không phải nút giao diện.
+HANDOFF = {"handoff", "transfer", "chuyen_nhan_vien"}
+HANDOFF_MSG = ("chuyển nhân viên = ACTION START_OTHER_CAMPAIGN gọi flow phụ thuộc (không phải nút giao diện). "
+               "Dựng flow phụ thuộc bằng skill omicall-omiflow (dependent_config.is_dependent:true; khung giờ → "
+               "RE_DISTRIBUTE + UPDATE_SOCIAL_CHATBOT_STATUS enable_chatbot:false), xuất bản flow, rồi khai trong spec: "
+               "{\"type\": \"handoff\", \"flow\": {\"value\": \"<flow uuid>\", \"_id\": \"<flow _id>\", "
+               "\"label\": \"<tên flow>\"}}")
 DEFAULT_WEBHOOK_HEADERS = [{"key": "Content-Type", "value": "application/json"}]
 UI_MSG = ("chưa có JSON kiểm chứng (references/api-reference.md mục 'Kịch bản' — palette và 'Quy trình build "
           "Kịch bản bằng API' bước 3; references/node-status.json) → làm UI: điền → đóng hết ngăn kéo → Lưu lại → GET")
@@ -154,7 +164,7 @@ class Builder:
 
     # ---- các bước ----
     def build_step(self, step, key, parent, depth, row):
-        t = step.get("type")
+        t = str(step.get("type", "")).lower()
         nid = self.hid(key, "node", depth, t)
         dy = 360 * row if depth == 0 else 0
         if t == "collect_info":
@@ -224,14 +234,19 @@ class Builder:
             self.warn.append("intent %s: ACTION không có 'Bước tiếp theo' → bot không trả lời tin đã kích hoạt; "
                              "SEND_WEBHOOK chưa chạy khi bot được giao qua OMI_BOT_AI trên kênh thật — test đúng kênh" % key)
             return nid
-        if t == "start_other_campaign":
+        if t in HANDOFF or t == "start_other_campaign":
             flow = step.get("flow") or {}
             if not (flow.get("value") and flow.get("_id")):
                 raise SpecError("intent %s: start_other_campaign cần flow.value (uuid) và flow._id" % key)
             n, ed = self.clone(self.template("ACTION", "START_OTHER_CAMPAIGN"), nid, parent, 440, dy)
             act = copy.deepcopy(next(a for a in n["actions"] if a.get("type") == "START_OTHER_CAMPAIGN"))
             sel = {"value": flow["value"], "_id": flow["_id"], "label": flow.get("label") or "", "isDependent": True}
-            act.setdefault("datas", {})["selected"] = sel
+            # Runtime chạy theo data.ids = [flow uuid] (api-reference.md mục "Bot ACTION START_OTHER_CAMPAIGN — JSON
+            # runtime"); datas.selected chỉ thuộc editor (name_mappings). Bỏ datas sót từ mẫu để chỉ còn 1 schema.
+            data = act.get("data") if isinstance(act.get("data"), dict) else {}
+            data["ids"] = [flow["value"]]
+            act["data"] = data
+            act.pop("datas", None)
             n["actions"] = [act]
             def set_sel(d):
                 d["selected"] = copy.deepcopy(sel)
@@ -242,6 +257,9 @@ class Builder:
                 self.put_map(ed)
             self.warn.append("intent %s: flow phụ thuộc phải dependent_config.is_dependent:true và đã xuất bản; "
                              "không nhận biến hội thoại" % key)
+            if t in HANDOFF:
+                self.warn.append("intent %s: chuyển nhân viên qua flow phụ thuộc — bot vẫn gửi 1 câu LLM tự soạn trước "
+                                 "khi chuyển (giới hạn nền tảng, báo user); flow phải tắt chatbot khi bàn giao" % key)
             return nid
         raise SpecError("loại bước không hỗ trợ: %s" % t)
 
@@ -320,8 +338,9 @@ class Builder:
             headers = [{"id": self.hid(ref, "h", i), "key": h.get("key", ""), "value": h.get("value", "")}
                        for i, h in enumerate(hdrs)] or [{"id": self.hid(ref, "h", 0), "key": "", "value": ""}]
             if any(str(h["key"]).lower() == "authorization" and h["value"] for h in headers):
-                self.warn.append("Truy vấn %s có header Authorization tĩnh: token đổi từ apiKey hết hạn sau 24 giờ "
-                                 "(Cần xác nhận cách làm mới); spec/payload chứa bí mật → để ở scratch, không đưa vào repo" % ref)
+                self.warn.append("Truy vấn %s có header Authorization tĩnh (Hướng A): token đổi từ apiKey HẾT HẠN SAU "
+                                 "24 GIỜ → chỉ thử nhanh/demo ngắn, cần user đồng ý; bot chạy thật dùng Hướng B (webhook "
+                                 "OMIFlow). Spec/payload chứa bí mật → để ở scratch, không đưa vào repo" % ref)
             entry = {"ref_id": ref, "name": q["name"], "url": q["url"], "method": q["method"], "headers": headers,
                      "body_type": "raw", "body_json": q.get("body_json") or "", "variables": None,
                      "prompt": q["prompt"], "query_prompt": q["query_prompt"], "param_type": "json",
@@ -362,8 +381,14 @@ def check_spec(spec):
         t = str(step.get("type", "")).lower()
         if t in UI_ONLY:
             raise SpecError("intent %s: loại '%s' (%s) %s" % (key, t, UI_ONLY[t], UI_MSG))
+        if t in HANDOFF:
+            flow = step.get("flow") if isinstance(step.get("flow"), dict) else {}
+            if not (flow.get("value") and flow.get("_id")):
+                raise SpecError("intent %s: loại '%s' thiếu flow.value (uuid) / flow._id — %s" % (key, t, HANDOFF_MSG))
+            return
         if t not in STEP_TYPES:
-            raise SpecError("intent %s: loại bước '%s' không hỗ trợ (hỗ trợ: %s)" % (key, t, ", ".join(sorted(STEP_TYPES))))
+            raise SpecError("intent %s: loại bước '%s' không hỗ trợ (hỗ trợ: %s)"
+                            % (key, t, ", ".join(sorted(STEP_TYPES | HANDOFF))))
         if t == "collect_info" and step.get("when_collected"):
             walk(step["when_collected"].get("then"), key)
 
@@ -372,7 +397,7 @@ def check_spec(spec):
         key = it.get("key")
         if it.get("type") not in (None, "CUSTOM_INTENT") or it.get("intent_code") or it.get("system_intent") or it.get("intent"):
             raise SpecError("intent %s: ý định hệ thống không dùng — quy ước chỉ dùng CUSTOM_INTENT mô tả tự nhiên "
-                            "(SKILL.md Gotchas 'Trường hợp trong Ngữ cảnh bắt đầu')" % key)
+                            "(references/playbook.md Gotchas 'Trường hợp trong Ngữ cảnh bắt đầu')" % key)
         if not key or not re.fullmatch(r"[a-z0-9_]+", str(key)):
             raise SpecError("intent thiếu key hoặc key không phải [a-z0-9_]: %r" % key)
         if key in keys:

@@ -1,7 +1,7 @@
 # OMiCALL AI Chatbot (OmiBot) — API Reference & Schemas
 
 ## Base URL & Auth
-`https://chatbot-gateway-v1-stg.omicrm.com` (cùng gateway callbot). Header `Authorization: Bearer <accessToken>`. Token: chỉ lấy qua `scripts/omi_session.py` (phiên MCP OMI `login_omicall_mcp`, hoặc `OMI_TOKEN_FILE` do user tự đặt) — không đọc cookie bằng JS/CDP, không điền form đăng nhập hộ user (SKILL.md mục "Đăng nhập an toàn").
+`https://chatbot-gateway-v1-stg.omicrm.com` (cùng gateway callbot). Header `Authorization: Bearer <accessToken>`. Token: chỉ lấy qua `scripts/omi_session.py` (phiên MCP OMI `login_omicall_mcp`, hoặc `OMI_TOKEN_FILE` do user tự đặt) — không đọc cookie bằng JS/CDP, không điền form đăng nhập hộ user (`playbook.md` mục "Đăng nhập an toàn").
 
 > Đã verify trên tenant thật — bot kênh Zalo OA, gpt-4o-mini, SCENARIO_HANDLER.
 
@@ -37,7 +37,14 @@ r = requests.post(base + "/omiai_assistant/save_draft_v2",
     files={"file": ("blob", json.dumps(bot, ensure_ascii=False).encode("utf-8"), "application/json")}, timeout=120)
 # r.json()["payload"]["_id"] — GIỮ NGUYÊN id. is_draft:true, is_newest_version:false.
 ```
-Verifed: gửi lại nguyên payload + sửa `system_prompt` → lưu 200, id không đổi, GET lại thấy prompt mới. Đường nhanh: `scripts/omi_save.py bot payload.json --domain <domain>` (lưu nháp → GET lại → `scripts/validate_bot.py --mode post --sent`).
+Ví dụ trên chỉ chứng minh lưu/GET lại; prompt chính nằm ở `ai_analyze.content` (mục "Prompt chính" ngay dưới).
+Đã kiểm chứng: gửi lại nguyên payload + sửa `system_prompt` → lưu 200, id không đổi, GET lại thấy prompt mới. Đường nhanh: `scripts/omi_save.py bot payload.json --domain <domain>` (lưu nháp → GET lại → `scripts/validate_bot.py --mode post --sent`).
+
+## Prompt chính: `ai_analyze.content` và `system_prompt` (nguồn duy nhất, chỗ khác trỏ về đây)
+- `campaign.nodes[BEGIN].ai_analyze.content` = ô **"Hướng dẫn & Tính cách BOT"** trong ngăn kéo Ngữ cảnh bắt đầu (✔ ghi qua API → editor hiển thị). Khu "Khách hàng bắt đầu cuộc trò chuyện" trên canvas dùng chung trường này.
+- Top-level `system_prompt`: lưu và GET lại đúng (✔ round-trip ở trên). Ô hiển thị trên giao diện: Cần xác nhận.
+- Runtime ưu tiên hay ghép hai trường thế nào: Cần xác nhận.
+- Quy ước tới khi xác nhận: **prompt chính viết ở `ai_analyze.content`** (spec `begin_content`; nội dung theo `playbook.md` Bước 4) vì user thấy và sửa được trên editor. `system_prompt`: chép y hệt, hoặc bỏ khỏi spec để giữ giá trị cũ. Không để hai trường chứa hai prompt khác nhau. `validate_bot.py` C1 chỉ WARN khi `system_prompt` rỗng.
 
 ## RAG — "Dữ liệu khác" (warehouse_of_knowledge/other) — VERIFIED end-to-end
 UI: **Đào tạo tab → Dữ liệu khác → Quản lý Dữ liệu khác → Thêm mới** (dropzone). Giới hạn: **mỗi file ≤ 15MB**; hỗ trợ `.xls,.xlsx,.doc,.docx,.pdf,.txt,.rtf`. Slot thông tin: Tên (bắt buộc), Mô tả, Ngôn ngữ (vi/en), "BOT được đào tạo" (linked bots).
@@ -83,7 +90,7 @@ r = requests.post("https://filestore-v1-stg.omicrm.com/file_store/put_v2"
 - `campaign.nodes[BEGIN].ai_analyze.vector_store_ids = ["<record _id>"]`.
 - Frontend serializer (chunk 57015): `vector_store_ids = vector_store.vector_store_files.map(e=>e.ref_id)` — **`ref_id` = record `_id` của `other/add`** (KHÔNG phải `file_id`). Sau save, GET lại: `file_training_status:"completed"` = training xong; `vector_store_id`/`vector_store_file_id` server tự sinh.
 
-6) **Prompt trong Ngữ cảnh bắt đầu**: "Hướng dẫn & Tính cách BOT" = `campaign.nodes[BEGIN].ai_analyze.content` (verify: set qua API → editor hiển thị trong drawer); "Khách hàng bắt đầu cuộc trò chuyện" dùng luôn `content`. Top-level `system_prompt` bổ sung prompt chung (2 nơi đều được).
+6) **Prompt trong Ngữ cảnh bắt đầu**: mục "Prompt chính" ở trên.
 
 7) **Bot `uuid` cần cho `add_bot_uuids`** = top-level `uuid` của bot (dạng `<bot uuid>`, UUID v4), khác `_id`.
 
@@ -143,11 +150,11 @@ CUSTOM_INTENT chèn vào `conditions[]` TRƯỚC 2 system. Schema mặc định 
 
 ## Kịch bản (scenario) — VERIFIED build nhanh chưa có action
 
-Editor là **React Flow canvas** (như callbot). Palette bot: Ngữ cảnh (BEGIN_CONTEXT) / Kích hoạt ngữ cảnh (KICK_OFF_CONTEXT) / Điều kiện (CONDITION) / Hành động (ACTION) / Gửi tin nhắn chung (SEND_MESSAGE) / Thu thập thông tin (`$Pl.OMI_BOT_COLLECT_INFO`) / Kết thúc trò chuyện (`$Pl.END`). Node BEGIN ("Ngữ cảnh bắt đầu") có 2 khu: **Khách hàng bắt đầu cuộc trò chuyện** (= `ai_analyze.content`) và **Các trường hợp BOT nhận dạng** (= intents). Tab này = "Kịch bản".
+Editor là **React Flow canvas** (như callbot). Palette bot: Ngữ cảnh (BEGIN_CONTEXT) / Kích hoạt ngữ cảnh (KICK_OFF_CONTEXT) / Điều kiện (CONDITION) / Hành động (ACTION) / Gửi tin nhắn chung (SEND_MESSAGE) / Thu thập thông tin (`$Pl.OMI_BOT_COLLECT_INFO`) / Kết thúc trò chuyện (`$Pl.END`). Node BEGIN ("Ngữ cảnh bắt đầu") có 2 khu: **Khách hàng bắt đầu cuộc trò chuyện** (= `ai_analyze.content`, mục "Prompt chính") và **Các trường hợp BOT nhận dạng** (= intents). Tab này = "Kịch bản".
 
 > Ký hiệu `[BEGIN]` trong tài liệu này (vd. `campaign.nodes[BEGIN]`, `campaign.name_mappings[BEGIN]`) = phần tử BEGIN_CONTEXT tìm theo `node_type`/`type`, không dựa vào vị trí `[0]` (cách `validate_bot.py`/`build_bot.py` tìm).
 
-### Intent custom — DUAL-SCHEMA kiểu chip (đã verify render + runtime accept) — CHỈ ĐỂ ĐỌC BOT CŨ
+### Intent custom — DUAL-SCHEMA kiểu chip (đã kiểm chứng hiển thị + runtime nhận) — CHỈ ĐỂ ĐỌC BOT CŨ
 Bot mới dùng kiểu ngôn ngữ tự nhiên (mục "Trường hợp mô tả bằng ngôn ngữ tự nhiên (CUSTOM_INTENT)"); giữ schema chip dưới đây để đọc/hiểu bot cũ.
 - **Editor** `campaign.name_mappings[BEGIN].conditions` (CUSTOM_INTENT, 2 system CUỐI cùng):
 ```json
@@ -164,23 +171,23 @@ Bot mới dùng kiểu ngôn ngữ tự nhiên (mục "Trường hợp mô tả 
 - `hid` dùng CHUNG id cho cặp editor+runtime (trong quá trình làm: mỗi cái dùng uuid riêng vẫn render OK; dùng chung = sạch hơn).
 - `name_mappings[BEGIN].conditions` phải kết thúc bằng đúng 2 system: `bot_can_not_answer` rồi `customer_not_response` (đừng chèn sau).
 - Editor pre-fill: `"data":[{"isCustomComp":true,"targetType":"OMI_BOT_INTENT","id":...,"content":...}]` → hiển thị nhận diện; thiếu isCustomComp/targetType → hàng intent TRỐNG.
-- Frontend serializer (chunk 57015, hàm G): runtime C-entry custom = `{id,type,next_node:"",name}` — không kèm data; data ở editor (`k.conditions`). Camera: rảnh data runtime vẫn OK.
+- Frontend serializer (chunk 57015, hàm G): runtime C-entry custom = `{id,type,next_node:"",name}` — không kèm data; data ở editor (`k.conditions`). Runtime thiếu `data` vẫn chạy.
 - save_draft_v2 round-trip GIỮ NGUYÊN; `bot_testing_v2` trả `{"payload":true}` cho cấu hình hợp lệ (chỉ ACK, text thật chạy qua LiveTalk realtime).
 
 ### Quy trình build Kịch bản bằng API
 1. GET bot → sửa `campaign.name_mappings[BEGIN].conditions` (custom + 2 system cuối) và `campaign.nodes[BEGIN].ai_analyze.conditions` (custom).
 2. `save_draft_v2` (multipart file) → GET lại → reload editor page (CDP `Page.navigate` + sleep 4s) → đọc node text `.react-flow__node` để xác nhận.
-3. Hành động đã có JSON kiểm chứng: Thu thập thông tin, case COMPARE, ACTION `SEND_WEBHOOK`, `START_OTHER_CAMPAIGN` (mục "Bot gọi kịch bản OMIFlow theo ý định" → "Bot thu SĐT rồi gọi webhook OMIFlow" bên dưới). Gửi tin nhắn chung, Kết thúc trò chuyện, chuyển nhân viên, Kích hoạt ngữ cảnh: chưa có JSON → làm trên UI (xem `references/node-status.json`).
+3. Hành động đã có JSON kiểm chứng: Thu thập thông tin, case COMPARE, ACTION `SEND_WEBHOOK`, `START_OTHER_CAMPAIGN` (mục "Bot gọi kịch bản OMIFlow theo ý định" → "Bot thu SĐT rồi gọi webhook OMIFlow" bên dưới). Chuyển nhân viên không phải nút riêng: là ACTION `START_OTHER_CAMPAIGN` gọi flow phụ thuộc (mục "Bot ACTION `START_OTHER_CAMPAIGN` — JSON runtime"; spec `handoff`). Gửi tin nhắn chung, Kết thúc trò chuyện, Kích hoạt ngữ cảnh: chưa có JSON → làm trên UI (xem `references/node-status.json`).
 
 ## UI mapping (đã thấy trên editor Zalo OA Bot)
-- **Kịch bản tab**: "Ngữ cảnh bắt đầu" (= `system_prompt`), "Khách hàng bắt đầu cuộc trò chuyện", "Các trường hợp BOT nhận dạng" (= intents: bot_can_not_answer + customer_not_response + custom intent), nút **Xuất bản** / **Lưu lại**.
+- **Kịch bản tab**: "Ngữ cảnh bắt đầu" (ngăn kéo; ô "Hướng dẫn & Tính cách BOT" = `ai_analyze.content`, mục "Prompt chính"), "Khách hàng bắt đầu cuộc trò chuyện", "Các trường hợp BOT nhận dạng" (= intents: bot_can_not_answer + customer_not_response + custom intent), nút **Xuất bản** / **Lưu lại**.
 - **Đào tạo tab**: upload RAG file (docx/txt), trạng thái training.
-- **Trò chuyện thử**: cửa sổ LiveTalk test (có nút "Tham gia", "Chuyển nhân viên phụ trách").
+- **Trò chuyện thử**: cửa sổ LiveTalk test (có nút "Tham gia", "Chuyển nhân viên phụ trách" — nút của cửa sổ thử, không phải nút trong kịch bản bot).
 - Đường dẫn: `/ai/bot/edit/{bot_id}?lng=vi` (sửa bot), `/ai/bot/create` (tạo mới), `/ai/bot` (danh sách).
 
 ## Validation checklist (sau mỗi save — GET lại)
-Tự động: `scripts/validate_bot.py <GET.json> --mode post --sent <payload.json>` (mã C1–C7 = mục 1–7 dưới đây; X1–X9 bổ sung, mô tả trong đầu script).
-1. `system_prompt` = nội dung mới (đã ghi).
+Tự động: `scripts/validate_bot.py <GET.json> --mode post --sent <payload.json>` (mã C1–C7 = mục 1–7 dưới đây; X1–X10 bổ sung, mô tả trong đầu script).
+1. `system_prompt` = nội dung đã gửi (C1). Prompt chính `ai_analyze.content` (mục "Prompt chính") chưa có mã kiểm tự động: GET lại hoặc `bot_outline.py` (dòng độ dài `BEGIN ai_analyze.content`).
 2. `is_draft:true`, `_id` giữ nguyên.
 3. Intents (khi cấu hình): đủ ở `campaign.name_mappings[BEGIN].conditions` LẪN `campaign.nodes[BEGIN].ai_analyze.conditions`; 2 system CUỐI.
 4. `history_config`, `max_characters_reply`, `mode_reply` đúng yêu cầu.
@@ -189,25 +196,7 @@ Tự động: `scripts/validate_bot.py <GET.json> --mode post --sent <payload.js
 7. Không sửa `is_publish` trừ khi user yêu cầu xuất bản.
 
 ## Học schema intent/action từ UI (captor)
-Inject script sau vào trang editor (CDP `Runtime.evaluate`), user thao tác trong Chrome, rồi đọc `window.__omiCaps`:
-```python
-sniff = r"""(() => { if (window.__omiCapsInjected) return {already:true}; window.__omiCaps=[];
- const want = u => (/omiai_assistant|omiai_v2|chatbot-gateway/i.test(u) && !/\.png|\.svg|\.js|\.css/.test(u));
- const push=(kind,url,body,resp)=>{ try{ if(window.__omiCaps.length>200) window.__omiCaps.shift();
-   window.__omiCaps.push({t:Date.now(),kind,url:String(url).slice(0,300),body:String(body||'').slice(0,300000),resp:String(resp||'').slice(0,300000)});}catch(e){} };
- const of=window.fetch; window.fetch=function(u,o){ try{ const url=typeof u==='string'?u:(u&&u.url)||'';
-   if(want(url)){ let b=''; if(o&&o.body){ b=typeof o.body==='string'?o.body:'';
-     try{ if(o.body instanceof FormData){ b='[FormData]'; for(const kv of o.body.entries()) b+='\n'+kv[0]+': '+(typeof kv[1]==='string'?kv[1].slice(0,300):'['+kv[1].constructor.name+']');}}catch(e){} }
-     push('fetch',url,b); }
-   return of.apply(this,arguments).then(r=>{ const c=r.clone(); c.text().then(t=>{try{push('fetch-resp',url,null,t);}catch(e){}}).catch(()=>{}); return r; }); }catch(e){ return of.apply(this,arguments); } };
- const ox=window.XMLHttpRequest.prototype.open; window.XMLHttpRequest.prototype.open=function(m,url){ this.__u=url; return ox.apply(this,arguments); };
- const os=window.XMLHttpRequest.prototype.send; window.XMLHttpRequest.prototype.send=function(body){ try{ const url=this.__u||'';
-   if(want(url)){ let b=body; try{ if(body instanceof FormData){ b='[FormData]'; for(const kv of body.entries()) b+='\n'+kv[0]+': '+(typeof kv[1]==='string'?kv[1].slice(0,300):'['+kv[1].constructor.name+']'); } }catch(e){}
-     push('xhr',url,typeof b==='string'?b:String(b)); this.addEventListener('load',()=>{try{push('xhr-resp',url,null,this.responseText);}catch(e){}}); } }catch(e){}
-    return os.apply(this,arguments); };
- window.__omiCapsInjected=true; return {ok:true}; })()"""
-```
-Rồi: `c.eval_js("JSON.stringify(window.__omiCaps.filter(x=>x.kind!=='fetch-resp'&&x.kind!=='xhr-resp').slice(-15))")`. Ghi schema học được vào đây.
+Chạy `python scripts/inject_captor.py [domain]` (Chrome CDP 127.0.0.1): script gắn bộ ghi fetch/XHR vào trang editor, **che bí mật trước khi lưu** (khoá khớp authorization/token/secret/api key/password/cookie và chuỗi JWT → `***`); user thao tác trong Chrome rồi đọc `window.__omiCaps`. Ghi schema học được vào đây (không chép giá trị bí mật).
 ## API Knowledge ("Truy vấn" trong Kho tri thức) — VERIFIED (save_draft_v2 round-trip OK)
 - Khai ở top-level `bot.api_knowledge[]` + bật cho Ngữ cảnh bắt đầu bằng `campaign.nodes[BEGIN].ai_analyze.api_knowledge_ids` (list `ref_id`). Entry không nằm trong `api_knowledge_ids` = có trong kho nhưng node không dùng.
 - Biến đa kênh có sẵn ở `campaign.variables` (type `SOCIAL`): `social_phone_number_linked` (SĐT khách liên kết Zalo OA/FB), `social_customer_name_linked`. Dùng trong body dạng `{{social_phone_number_linked}}`.
@@ -222,7 +211,7 @@ Rồi: `c.eval_js("JSON.stringify(window.__omiCaps.filter(x=>x.kind!=='fetch-res
 ```
 - `ref_id` = `request_` + slug tên (không dấu, `_`). Header rỗng mặc định: `[{"id":..,"key":"","value":""}]`.
 - Gọi API bằng token từ `scripts/omi_session.py` (phiên MCP OMI hoặc `OMI_TOKEN_FILE` do user đặt); không lấy token từ cookie trang editor.
-- Public API OMICall (contact search…): xem `omicall-public-api.md` (token hết hạn 24h → header Authorization phải thay định kỳ).
+- Public API OMICall (contact search…): xem `omicall-public-api.md`. Header Authorization tĩnh hết hạn sau 24 giờ: quy tắc chọn hướng ở `playbook.md` mục "Bot cần dữ liệu CRM — chọn hướng".
 
 ## Diagnostic checks for customer API and LiveTalk tester — verified 2026-10-01
 
@@ -245,8 +234,8 @@ Public implementation evidence: `_app-577b9e01f73ca56b.js` (module 92318), `page
 5. Cửa sổ "Trò chuyện thử" trong browser pane dễ đóng/lệch khi pane đổi kích thước; nên cho người dùng tự thử.
 
 ### Bot gọi kịch bản OMIFlow theo ý định (đã kiểm chứng 2026-10)
-- BEGIN_CONTEXT `name_mappings[].conditions[]` thêm case `{id, type:"INTENT", intent:{value:<intentId>, label, code:"omi_intent_phone", is_tenant:true, is_system:true}, data:[]}`; edge `sourceHandle` = case id → node ACTION.
-- Node ACTION: `actions:[{type:"START_OTHER_CAMPAIGN", datas:{selected:{value:<flow uuid>, _id:<flow _id>, label, isDependent:true}}}]`. Chỉ liệt kê flow có `dependent_config.is_dependent:true`; flow phải xuất bản mới chạy.
+- Ví dụ case ý định hệ thống dưới đây **chỉ để đọc bot cũ**; bot mới dùng `CUSTOM_INTENT` mô tả tự nhiên (mục "Trường hợp mô tả bằng ngôn ngữ tự nhiên" ngay dưới), `build_bot.py` từ chối ý định hệ thống. Case cũ: `name_mappings[].conditions[]` dạng `{id, type:"INTENT", intent:{value:<intentId>, label, code:"omi_intent_phone", is_tenant:true, is_system:true}, data:[]}`; edge `sourceHandle` = case id → node ACTION.
+- Node ACTION gọi flow: schema runtime (`data.ids`) và editor (`datas.selected`) xem mục "Bot ACTION `START_OTHER_CAMPAIGN` — JSON runtime" bên dưới. Chỉ liệt kê flow có `dependent_config.is_dependent:true`; flow phải xuất bản mới chạy.
 - Gotcha UI: nút X đóng ngăn kéo nằm trùng icon menu "Tổng đài" — cú bấm X cuối cùng xuyên qua và rời trang (mất thay đổi). Đóng ngăn kéo ngoài cùng bằng cách bấm vùng mờ bên trái (vd. x≈150,y≈300); Esc không đóng.
 
 ### Trường hợp mô tả bằng ngôn ngữ tự nhiên (CUSTOM_INTENT) — MẶC ĐỊNH dùng kiểu này (đã kiểm chứng 2026-10)
@@ -268,9 +257,10 @@ Luồng: Trường hợp (CUSTOM_INTENT) → `OMI_BOT_COLLECT_INFO` → (case bi
 - Hành động API — runtime `{"type":"SEND_WEBHOOK","data":{"url","method":"POST","headers":[{"key":"Content-Type","value":"application/json"}],"param_type":"json","body_type":"raw","body_json":"<chuỗi JSON có {{var_...}}, {{social_customer_name}}>"}}`; editor `datas.bodyJson.text` = cùng chuỗi. Trình soạn body không tự đóng `}`.
 - Thời điểm: nút thu thập trả lời khách (theo hướng dẫn) rồi ở trạng thái `waiting_reply`; case được xét và webhook chạy **ở tin nhắn kế tiếp của khách**, không phải ngay tin có số. Lượt test ghi nhận 2 lần gọi webhook cùng giây (lần 2 trùng khách → CONTACT_EXIST).
 - Gotcha UI: tạo nút con bằng "Nút kế tiếp" ngay trong ngăn kéo cha rồi đi tiếp sang nút cháu → cấu hình nút con bị mất khi lưu. Mỗi nút: điền → đóng hết ngăn kéo → "Lưu lại" → GET kiểm tra, rồi mới mở nút kế. Nối cạnh còn thiếu thì sửa bằng API (`save_draft_v2`).
-- **Khác biệt kênh thật (10/2026)**: cùng bot, chat qua "Trò chuyện thử" thì SEND_WEBHOOK chạy; chat qua widget LiveTalk đi qua OMIFlow (`OMI_BOT_AI` node) thì bot trả lời bình thường nhưng **webhook không được gọi** sau 3 lượt khách (log flow ở `waiting_reply`, flow webhook không có lượt chạy). Chưa xác định nguyên nhân; trước khi dựa vào hành động trong bot cho kênh thật phải test qua đúng kênh. ("2 lượt chạy cùng giây" trong log flow webhook = bước CONDITION + ACTION của một lượt, không phải gọi trùng.)
+- **Khác biệt kênh thật (10/2026, chỉ ghi nhận với `SEND_WEBHOOK` sau nút Thu thập thông tin)**: cùng bot, chat qua "Trò chuyện thử" thì SEND_WEBHOOK chạy; chat qua widget LiveTalk đi qua OMIFlow (`OMI_BOT_AI` node) thì bot trả lời bình thường nhưng **webhook không được gọi** sau 3 lượt khách (log flow ở `waiting_reply`, flow webhook không có lượt chạy). Chưa xác định nguyên nhân. Không suy rộng cho mọi hành động: `START_OTHER_CAMPAIGN` nối thẳng từ trường hợp đã chạy qua `OMI_BOT_AI` trên LiveTalk (✔ 11/2026, `ui-gotchas.md`). Dựa vào `SEND_WEBHOOK` cho kênh thật thì phải test qua đúng kênh. ("2 lượt chạy cùng giây" trong log flow webhook = bước CONDITION + ACTION của một lượt, không phải gọi trùng.)
 
 ### Bot ACTION `START_OTHER_CAMPAIGN` — JSON runtime (✔ GET 11/2026)
 - Node: `{"node_type":"ACTION","actions":[{"id":"<10 ký tự>","type":"START_OTHER_CAMPAIGN","data":{"ids":["<flow uuid>"]}}],"next_nodes":[]}` (`ids` là **uuid** của flow, không phải `_id`). Editor: `{"type":"START_OTHER_CAMPAIGN","datas":{"selected":{"value":"<flow uuid>","_id":"<id>","label":"<tên flow>","isDependent":true}}}`.
 - Một nút ACTION chứa được nhiều hành động (vd. `ADD_CLASSIFY` + `START_OTHER_CAMPAIGN`). Bỏ "Nút kế tiếp" ngay trong ngăn (nút ✕ đỏ) → `next_nodes:[]`, cạnh tự gỡ; nút `END_BOT` cũ còn lại mồ côi, vô hại.
-- Dùng cho "bot không biết thì im lặng, chuyển nhân viên": trường hợp → ACTION (không bước tiếp) → flow phụ thuộc làm khung giờ/gửi tin/`RE_DISTRIBUTE`.
+- **Chuyển nhân viên = cách này** (không có nút "chuyển nhân viên" riêng trong kịch bản bot): trường hợp → ACTION (không bước tiếp) → flow phụ thuộc làm khung giờ/gửi tin/`RE_DISTRIBUTE` + tắt chatbot (`UPDATE_SOCIAL_CHATBOT_STATUS` `enable_chatbot:false`, skill `omicall-omiflow` node-catalog). Spec `build_bot.py`: `{"type":"handoff","flow":{...}}` = `start_other_campaign`. Bot vẫn gửi 1 câu LLM tự soạn (`ui-gotchas.md` mục "Bot không im lặng được").
+- Chỉ một schema: runtime `campaign.nodes[].actions[].data.ids` (nền tảng chạy theo đây), editor `name_mappings[].actions[].datas.selected` (chỉ hiển thị). `build_bot.py` gán cả hai; `validate_bot.py` FAIL X10 khi `data.ids` rỗng hoặc lệch `datas.selected.value`.

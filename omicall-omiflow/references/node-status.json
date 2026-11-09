@@ -42,7 +42,7 @@
   "template": null,
   "source": "references/node-catalog.md:17",
   "verified_on": null,
-  "ui_hint": "Chỉ liệt kê biểu mẫu đã xuất bản (ui-build-and-test.md mục 1)"
+  "ui_hint": "Chỉ liệt kê biểu mẫu đã xuất bản (ui-build-and-test.md mục 2, Biểu mẫu)"
  },
  {
   "type": "PERIOD",
@@ -364,7 +364,7 @@
   "side": "action",
   "status": "enum",
   "template": null,
-  "source": "references/ui-build-and-test.md:112",
+  "source": "references/ui-build-and-test.md:107",
   "verified_on": null,
   "ui_hint": "Không nhận biến: rẽ nhánh theo giá trị, mỗi nhánh chọn một giá trị cố định trên UI; JSON chưa kiểm chứng"
  },
@@ -499,7 +499,7 @@
   "side": "edge",
   "status": "verified",
   "template": null,
-  "source": "references/api-reference.md:54",
+  "source": "references/api-reference.md:55",
   "verified_on": null,
   "ui_hint": "sourceHandle: case id | \"2\" | success_action_step | fail_action_step; targetHandle \"1\""
  },

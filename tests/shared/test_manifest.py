@@ -119,5 +119,58 @@ class TestManifest(unittest.TestCase):
         self.assertEqual(self.run_m("check", "--strict")[0], 1)
 
 
+def _ctx_worker(args):
+    ctx, i = args
+    sys.path.insert(0, str(SCRIPTS))
+    import manifest
+    for n in range(20):
+        manifest.cmd_ctx_set(ctx, "crm.truong_%d" % i, json.dumps(n), owner="agent%d" % i)
+    return i
+
+
+class TestTenantContext(unittest.TestCase):
+    """tenant_context.json chỉ đọc sau đợt 0; giá trị nền mới ghi qua ctx-set (có khoá, giữ khoá khác, chặn bí mật)."""
+
+    def setUp(self):
+        self.tmp = Path(tempfile.mkdtemp(prefix="omi_ctx_"))
+        self.ctx = self.tmp / "tenant_context.json"
+        self.ctx.write_text(json.dumps({"tenant": {"tenant_id": "t1"}, "pbx": {"hotlines": []}}), encoding="utf-8")
+
+    def tearDown(self):
+        shutil.rmtree(self.tmp, ignore_errors=True)
+
+    def run_m(self, *args):
+        p = subprocess.run([sys.executable, "-B", str(SCRIPT), *map(str, args)],
+                           capture_output=True, text=True, encoding="utf-8", errors="replace")
+        return p.returncode, p.stdout + p.stderr
+
+    def test_set_get_keeps_other_keys(self):
+        code, out = self.run_m("ctx-set", "--ctx", self.ctx, "crm.field_code_nhu_cau", "--json", '"nhu_cau"',
+                               "--owner", "crm")
+        self.assertEqual(code, 0, out)
+        data = json.loads(self.ctx.read_text(encoding="utf-8"))
+        self.assertEqual(data["tenant"]["tenant_id"], "t1")
+        self.assertEqual(data["crm"]["field_code_nhu_cau"], "nhu_cau")
+        self.assertEqual(data["_ghi_boi"]["crm.field_code_nhu_cau"]["owner"], "crm")
+        code, out = self.run_m("ctx-get", "--ctx", self.ctx, "crm.field_code_nhu_cau")
+        self.assertEqual((code, json.loads(out)), (0, "nhu_cau"))
+        self.assertEqual(self.run_m("ctx-get", "--ctx", self.ctx, "crm.khong_co")[0], 1)
+
+    def test_refuses_secret_and_missing_file(self):
+        self.assertEqual(self.run_m("ctx-set", "--ctx", self.ctx, "api.token", "--json", '"x"')[0], 2)
+        self.assertEqual(self.run_m("ctx-set", "--ctx", self.ctx, "a.b", "--json", '"%s"' % ("ey" + "JhbGciOiJIUzI1"))[0], 2)
+        self.assertEqual(self.run_m("ctx-set", "--ctx", self.tmp / "khong_co.json", "a", "--json", "1")[0], 2)
+
+    def test_parallel_ctx_writers(self):
+        ctx = multiprocessing.get_context("spawn")
+        with ctx.Pool(6) as pool:
+            pool.map(_ctx_worker, [(str(self.ctx), i) for i in range(6)])
+        data = json.loads(self.ctx.read_text(encoding="utf-8"))
+        self.assertEqual(sorted(data["crm"]), ["truong_%d" % i for i in range(6)])
+        self.assertTrue(all(v == 19 for v in data["crm"].values()))
+        self.assertEqual(data["tenant"]["tenant_id"], "t1")
+        self.assertFalse(Path(str(self.ctx) + ".lock").exists())
+
+
 if __name__ == "__main__":
     unittest.main()

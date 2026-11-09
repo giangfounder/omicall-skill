@@ -29,15 +29,15 @@ ENDPOINTS = [
     {'key': 'flows', 'service': 'campaign', 'method': 'POST', 'path': '/omi_v2/campaign/search?page=1&size=50', 'body': {},
      'verified': True, 'nguon': 'omicall-omiflow/references/api-reference.md:8 (✔ đọc); omicall-omiflow/SKILL.md:41'},
     {'key': 'callbot_scripts', 'service': 'chatbot', 'method': 'GET', 'path': '/callbot/script/list-by-tenant/{tenant_id}',
-     'verified': True, 'nguon': 'omicall-callbot-flow/SKILL.md:41; omicall-callbot-flow/references/browser-snippets.md:18; '
+     'verified': True, 'nguon': 'omicall-callbot-flow/references/playbook.md "Bước 0"; '
                                 'omicall-callbot-gen-ai/references/api-reference.md:163'},
     {'key': 'intents', 'service': 'chatbot', 'method': 'GET', 'path': '/callbot/intent/list-by-tenant/{tenant_id}',
-     'verified': True, 'nguon': 'omicall-callbot-flow/SKILL.md:41; omicall-callbot-flow/references/browser-snippets.md:19'},
+     'verified': True, 'nguon': 'omicall-callbot-flow/references/playbook.md "Bước 0"'},
     {'key': 'entity_types', 'service': 'chatbot', 'method': 'POST', 'path': '/callbot/entity-type/search',
      'body': {'page': 1, 'size': 100, 'keyword': '', 'tenantId': '{tenant_id}', 'isSearch': True, 'with_entity_data_type': True},
-     'verified': True, 'nguon': 'omicall-callbot-flow/references/browser-snippets.md:20; omicall-callbot-flow/references/api-reference.md:11'},
+     'verified': True, 'nguon': 'omicall-callbot-flow/references/playbook.md "Bước 0"; omicall-callbot-flow/references/api-reference.md:11'},
     {'key': 'training_history', 'service': 'chatbot', 'method': 'GET', 'path': '/callbot/training/history/search?page=1&size=3',
-     'verified': True, 'nguon': 'omicall-callbot-flow/references/browser-snippets.md:22; omicall-callbot-flow/references/api-reference.md:17'},
+     'verified': True, 'nguon': 'omicall-callbot-flow/references/playbook.md "Bước 0"; omicall-callbot-flow/references/api-reference.md:17'},
     {'key': 'sale_allocations', 'service': 'tenant', 'method': 'POST', 'path': '/sale_allocation/search?page=1&size=50', 'body': {},
      'verified': True, 'nguon': 'omicall-omiflow/references/crm-config.md:46 (đã kiểm chứng 10/2026); omicall-omiflow/SKILL.md:43'},
     {'key': 'attributes', 'service': 'tenant', 'method': 'GET', 'path': '/attribute/get_all?has_attr=true',
@@ -47,7 +47,7 @@ ENDPOINTS = [
     {'key': 'bots', 'service': 'chatbot', 'method': 'POST', 'path': '/omiai_assistant/get_list', 'body': {},
      'verified': False, 'nguon': 'omicall-chatbot-gen-ai/references/api-reference.md:12 — body chưa ghi'},
     {'key': 'agents_api', 'service': 'agent', 'method': None, 'path': None,
-     'verified': False, 'nguon': 'omicall-callbot-flow/SKILL.md:41 ("agent-v1-stg …/get_all_agent/no_role" — thiếu tiền tố đường dẫn); '
+     'verified': False, 'nguon': 'omicall-callbot-flow/references/playbook.md "Bước 0" ("agent-v1-stg …/get_all_agent/no_role" — thiếu tiền tố đường dẫn); '
                                  'dùng MCP list_agents'},
 ]
 
@@ -226,6 +226,44 @@ def survey(domain=None, tenant_id=None, replay=None, include_unverified=False, n
     return ctx
 
 
+def _lock(path):
+    try:
+        import manifest
+        return manifest.Lock(path)
+    except ImportError:  # skill không có manifest.py: ghi không khoá
+        import contextlib
+        return contextlib.nullcontext()
+
+
+def _keep_ctx_set(path, ctx):
+    """Khảo sát lại không xoá giá trị nền đã ghi bằng `manifest.py ctx-set` (liệt kê trong `_ghi_boi`)."""
+    try:
+        with open(path, encoding='utf-8') as f:
+            old = json.load(f)
+    except (OSError, ValueError):
+        return 0
+    marks = old.get('_ghi_boi') if isinstance(old, dict) else None
+    if not isinstance(marks, dict):
+        return 0
+    n = 0
+    for dotted in marks:
+        parts = [x for x in dotted.split('.') if x]
+        src = old
+        for x in parts:
+            src = src.get(x) if isinstance(src, dict) else None
+        if src is None:
+            continue
+        cur = ctx
+        for x in parts[:-1]:
+            if not isinstance(cur.get(x), dict):
+                cur[x] = {}
+            cur = cur[x]
+        cur[parts[-1]] = src
+        n += 1
+    ctx['_ghi_boi'] = marks
+    return n
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument('--out', required=True)
@@ -260,8 +298,14 @@ def main(argv=None):
     out = os.path.abspath(a.out)
     omi_api.scratch_dir(os.path.dirname(out))  # từ chối ghi vào thư mục skill
     os.makedirs(os.path.dirname(out) or '.', exist_ok=True)
-    with open(out, 'w', encoding='utf-8') as f:
-        json.dump(omi_api.mask_secrets(ctx), f, ensure_ascii=False, indent=1)
+    with _lock(out):  # khoá chung với manifest.py ctx-set / config_survey.py
+        kept = _keep_ctx_set(out, ctx)
+        tmp = out + '.tmp'
+        with open(tmp, 'w', encoding='utf-8') as f:
+            json.dump(omi_api.mask_secrets(ctx), f, ensure_ascii=False, indent=1)
+        os.replace(tmp, out)
+    if kept:
+        print('Giữ %d giá trị đã ghi bằng manifest.py ctx-set (_ghi_boi).' % kept)
     print('Đã ghi %s: %d endpoint đã đọc, %d lỗi, %d artefact, %d mục Cần xác nhận.'
           % (out, len(ok), len(failed), len(ctx['existing_artefacts']), len(ctx['can_xac_nhan'])))
     if failed:

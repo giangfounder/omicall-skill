@@ -9,7 +9,7 @@
 - Host lấy theo bảng BASE (môi trường stg, theo tài liệu skill). Env OMI_API_BASE ghi đè MỌI host, OMI_API_BASE_<TÊN>
   (ví dụ OMI_API_BASE_CHATBOT) ghi đè một host — CHỈ dành cho stub test: chỉ nhận host 127.0.0.1/localhost/[::1]
   (host khác -> ApiError, không gửi token đi), và luôn in WARN ra stderr khi đang bật.
-- Header Authorization lấy từ omi_session.headers() (kiểm hạn và domain). 401 -> ApiError 'token hết hạn -> omi_preflight'.
+- Header Authorization lấy từ omi_session.headers() (kiểm hạn và domain). 401 -> ApiError 'token hết hạn -> omi_login.py login'.
 - `requests` chỉ được import khi thật sự gọi mạng.
 - File ghi ra mặc định nằm trong env OMI_SCRATCH hoặc thư mục tạm; không ghi vào thư mục skill.
 """
@@ -22,7 +22,7 @@ import tempfile
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 # Nguồn: chatbot-gateway (callbot-gen-ai/references/api-reference.md, chatbot api-reference.md),
-# campaign (omiflow/references/api-reference.md), tenant/ticket (omiflow SKILL.md Bước 0), agent (callbot-gen-ai SKILL.md),
+# campaign (omiflow/references/api-reference.md), tenant/ticket (omiflow SKILL.md Bước 0), agent (Cần xác nhận đường dẫn; callbot-flow references/playbook.md "Bước 0"),
 # external/filestore (chatbot api-reference.md mục RAG).
 BASE = {
     'chatbot': 'https://chatbot-gateway-v1-stg.omicrm.com',
@@ -92,7 +92,7 @@ def _headers(expect_domain=None):
 
 def _handle(r):
     if r.status_code == 401:
-        raise ApiError('401: token hết hạn hoặc sai tenant -> chạy omi_preflight.py rồi đăng nhập lại (login_omicall_mcp)')
+        raise ApiError('401: token hết hạn hoặc sai tenant -> agent tự chạy omi_login.py login --domain <domain> rồi chạy lại lệnh (login_omicall_mcp chỉ dùng khi đang gọi công cụ MCP)')
     if r.status_code >= 400:
         raise ApiError('HTTP %d: %s' % (r.status_code, mask_text(r.text[:300])))
     try:

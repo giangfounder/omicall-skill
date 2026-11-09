@@ -71,8 +71,10 @@ class TestExtractTemplate(unittest.TestCase):
             self.check_clean(out)
             t = json.loads(text)
             self.assertEqual(t["runtime"]["id"], "<node_id>")
-            self.assertEqual(len(t["editor"]), 1)
-            self.assertEqual(t["editor"][0]["item"]["id"], "<node_id>")
+            self.assertEqual(len(t["editor_all"]), 1)
+            self.assertEqual(t["editor_all"][0]["item"]["id"], "<node_id>")
+            self.assertIsInstance(t["editor"], dict, "builder (load_template) cần editor là object")
+            self.assertEqual(t["editor"]["id"], "<node_id>")
             self.assertTrue(t["edges"], "phải có edge dính vào nút")
             for e in t["edges"]:
                 self.assertIn("<node_id>", (e["source"], e["target"]))
@@ -119,6 +121,31 @@ class TestExtractTemplate(unittest.TestCase):
         self.assertIs(meta["verified"], True)
         self.assertEqual(meta["source"], "GET")
         self.assertEqual(len(meta["evidence_sha256"]), 64)
+
+    def test_verified_template_loads_in_smartagent_builder(self):
+        # mẫu rút đúng quy trình phải nạp được bằng load_template của build_smartagent.py (editor là object)
+        ok = self.tmp / "ok.txt"
+        ok.write_text("PASS C1 x\nRESULT PASS\n", encoding="utf-8")
+        skill = self.tmp / "skill"
+        tdir = skill / "references" / "templates"
+        tdir.mkdir(parents=True)
+        code, out, path = self.run_x(ACT, "ADD_TICKET", "ADD_TICKET.json", "--mark-verified", "--evidence", ok)
+        self.assertEqual(code, 0, out)
+        shutil.copy(path, tdir / "ADD_TICKET.json")
+        builder = ROOT / "omicall-callbot-gen-ai" / "scripts" / "build_smartagent.py"
+        if not builder.is_file():
+            self.skipTest("không có build_smartagent.py")
+        import importlib.util
+        spec = importlib.util.spec_from_file_location("build_smartagent_t", builder)
+        m = importlib.util.module_from_spec(spec)
+        sys.path.insert(0, str(builder.parent))
+        spec.loader.exec_module(m)
+        m.SKILL = str(skill)
+        got = m.load_template("ADD_TICKET")
+        self.assertIsNotNone(got, "load_template không nạp được mẫu do extract_template.py xuất")
+        rt, ed = got
+        self.assertEqual(rt["id"], "<node_id>")
+        self.assertEqual(ed["id"], "<node_id>")
 
     def test_residual_sensitive_exit1(self):
         # số điện thoại nằm trong một khoá lạ, dạng enum (không dấu cách) -> không bị che theo khoá -> phải bị chặn

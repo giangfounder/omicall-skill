@@ -14,8 +14,10 @@ Các mục:
  (e) Mọi đường dẫn references/... và scripts/... nhắc trong SKILL.md đều tồn tại.
  (f) Dữ liệu nhạy cảm: SĐT VN, JWT (eyJ...), email, '<tên>.omicrm.io', '*_session.json'.
      Ngoại lệ ở tools/sensitive_allowlist.json. Mọi file credentials.md bị bỏ qua theo đường dẫn, không mở.
- (g) Không còn chuỗi '3 skill' (đã có 4 skill).
+ (g) Không còn chuỗi '3 skill' (bộ hiện có 7 skill chuyên trách và omicall-assistant).
  (h) Kích thước SKILL.md so với baseline (chỉ WARN).
+ (i) Khối sinh từ shared/skill-graph.json (tools/gen_skill_links.py --check) khớp.
+Kiểm cả omicall-assistant (cửa vào, điều phối) như skill đầy đủ.
 """
 import argparse
 import glob
@@ -31,7 +33,7 @@ ROOT = TOOLS.parent
 sys.path.insert(0, str(TOOLS))
 
 SKILLS = ["omicall-callbot-gen-ai", "omicall-callbot-flow", "omicall-chatbot-gen-ai", "omicall-omiflow",
-          "omicall-crm-config", "omicall-pbx-config", "omicall-ai-insight"]
+          "omicall-crm-config", "omicall-pbx-config", "omicall-ai-insight", "omicall-assistant"]
 SKIP_DIRS = {".git", "__pycache__", "node_modules", ".pytest_cache"}
 SKIP_NAMES = {"credentials.md"}  # không bao giờ mở
 TEXT_EXT = {".md", ".py", ".json", ".txt", ".html", ".js", ".yml", ".yaml", ".toml", ".cfg", ".ini", ".csv", ""}
@@ -44,6 +46,7 @@ EXTRA_PHRASES = {
     "omicall-crm-config": ["field_code", "is_list"],
     "omicall-pbx-config": ["update_hotline", "nhóm nội bộ"],
     "omicall-ai-insight": ["ca_ai_assistant", "bản gốc"],
+    "omicall-assistant": ["check_callin", "CẤM", "chỉ đọc"],
 }
 
 FAST_HEADING = "## Đường nhanh"
@@ -318,6 +321,26 @@ def check_sizes(rep, root, skills, baseline):
             rep.add("PASS", "h", f"{s}/SKILL.md {c} dòng")
 
 
+def check_generated(rep, root):
+    try:
+        import gen_skill_links
+    except ImportError as e:
+        rep.add("FAIL", "i", f"không nạp được tools/gen_skill_links.py: {e}")
+        return
+    try:
+        files, errs = gen_skill_links.plan(root)
+    except (OSError, ValueError, KeyError) as e:
+        rep.add("FAIL", "i", f"gen_skill_links lỗi: {e}")
+        return
+    for p, raw, new in files:
+        if new != raw:
+            errs.append(f"{Path(p).relative_to(root).as_posix()}: khối sinh lệch skill-graph.json (chạy tools/gen_skill_links.py)")
+    for e in errs:
+        rep.add("FAIL", "i", e)
+    if not errs:
+        rep.add("PASS", "i", f"khối sinh khớp skill-graph.json ({len(files)} file)")
+
+
 def run(root=ROOT, baseline=None, allowlist=None):
     root = Path(root).resolve()
     baseline = Path(baseline).resolve() if baseline else None
@@ -335,6 +358,7 @@ def run(root=ROOT, baseline=None, allowlist=None):
     check_sensitive(rep, root, allow)
     check_3skill(rep, root, skills)
     check_sizes(rep, root, skills, baseline)
+    check_generated(rep, root)
     print(f"RESULT {'FAIL' if rep.fails else 'PASS'} ({rep.fails} FAIL)")
     return rep
 

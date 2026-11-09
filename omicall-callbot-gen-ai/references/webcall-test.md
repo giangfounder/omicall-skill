@@ -1,6 +1,6 @@
 # Gọi thử kịch bản bằng web call (OMICallSDK web v3)
 
-Dùng ở Bước 6.3 sau khi kịch bản đã lưu, **xuất bản** và có số gọi trỏ vào nó. Mỗi lần chạy là một cuộc gọi thật (tính phút tổng đài): chỉ chạy khi user đồng ý.
+Dùng ở `references/playbook.md` Bước 6 ý 3 (gọi thử) sau khi kịch bản đã lưu, **xuất bản** và có số gọi trỏ vào nó. Mỗi lần chạy là một cuộc gọi thật (tính phút tổng đài): chỉ chạy khi user đồng ý.
 
 Hai chế độ của `scripts/webcall_test.py`:
 - `open`: mở trang web call có phụ đề trực tiếp, **user tự nói** bằng micro thật.
@@ -52,11 +52,11 @@ Ca có trường `persona` thì không soạn câu sẵn: sau mỗi lượt bot,
 {
   "id": "ai01-dat-hang-doi-y",
   "name": "Khách AI: đặt hàng rồi đổi số lượng",
-  "persona": "Nông dân trồng lúa, nói ngắn, hơi vội",
-  "goal": "Đặt hai bao Urê; sau khi tổng đài xác nhận thì đổi thành năm bao; trả lời đủ rồi chào",
-  "facts": { "ten": "Minh", "noi_o": "Cần Thơ", "so_luong_sau_khi_doi": "năm bao" },
+  "persona": "Khách mua lẻ, nói ngắn, hơi vội",
+  "goal": "Đặt hai hộp sản phẩm mẫu; sau khi tổng đài xác nhận thì đổi thành năm hộp; trả lời đủ rồi chào",
+  "facts": { "ten": "Minh", "noi_o": "quận Một", "so_luong_sau_khi_doi": "năm hộp" },
   "max_turns": 8,
-  "expect": ["Bot xác nhận năm bao sau khi khách đổi ý"]
+  "expect": ["Bot xác nhận năm hộp sau khi khách đổi ý"]
 }
 ```
 - Claude chỉ dùng dữ liệu trong `facts`; bot hỏi thứ không có thì khách nói chưa rõ (không bịa). `facts` chỉ chứa dữ liệu giả hoặc từ tài liệu nghiệp vụ, không dùng thông tin cá nhân của khách thật.
@@ -79,7 +79,7 @@ python "<thư mục skill>/scripts/webcall_test.py" open  --domain <domain> --ex
 
 ## 5. Đọc kết quả
 
-Với từng ca, so `transcript.txt` với thiết kế kịch bản: câu mở đầu, nhận đúng ý định, hỏi đủ biến theo thứ tự, không đọc ra chữ nội bộ (mô tả node, tên biến, chỉ dẫn hệ thống), xưng hô đúng, kết thúc đúng trình tự END_CALL. Câu nghi lỗi nhưng có thể do nhận dạng sai chữ → ghi "Cần nghe lại bản ghi", không kết luận là lỗi kịch bản.
+Với từng ca, so phụ đề `results/<id>.txt` với thiết kế kịch bản: câu mở đầu, nhận đúng ý định, hỏi đủ biến theo thứ tự, không đọc ra chữ nội bộ (mô tả node, tên biến, chỉ dẫn hệ thống), xưng hô đúng, kết thúc đúng trình tự END_CALL. Câu nghi lỗi nhưng có thể do nhận dạng sai chữ → ghi "Cần nghe lại bản ghi", không kết luận là lỗi kịch bản.
 
 ## 6. Lỗi thường gặp
 
@@ -92,7 +92,7 @@ Với từng ca, so `transcript.txt` với thiết kế kịch bản: câu mở 
 | Có tiếng nhưng không có phụ đề lời bot | Chrome cũ hơn 135, hoặc đang chạy trong browser pane. |
 | Lời khách bị gộp nhiều lượt vào một dòng | Đã xử lý: câu nháp kẹt quá 3 giây được chốt và mở phiên nhận dạng mới. Còn gặp thì xem `events` để biết thời điểm từng lượt. |
 
-## 7. Bộ ca kiểm thử cho vòng lặp (SKILL.md Bước 7)
+## 7. Bộ ca kiểm thử cho vòng lặp (gọi thử, sửa, gọi lại)
 
 Mỗi ca một file, `id` ngắn không dấu, `expect` là điều kiểm được bằng tai (lời bot), không phải trạng thái nội bộ:
 ```json
@@ -121,14 +121,14 @@ Bộ ca tối thiểu (bỏ ca nào kịch bản không có nhánh tương ứng
 | Kho tri thức | Câu hỏi có trong tài liệu (bot trả lời đúng nội dung); câu hỏi không có (bot không bịa) |
 | Chuyển máy | Khách đòi gặp nhân viên; nhánh nghiệp vụ dẫn tới chuyển máy |
 | Ngoài phạm vi | Câu không liên quan nghiệp vụ → `bot_can_not_answer` → chuyển máy |
-| Từ chối, bận | Khách từ chối hoặc hẹn gọi lại: bot tôn trọng, kết thúc lịch sự |
-| Kết thúc | Khách chào: đúng trình tự cảm ơn → chúc → xin phép kết thúc → tạm biệt |
+| Từ chối, bận | Khách từ chối hoặc hẹn gọi lại: bot tôn trọng, không cúp ngay, hỏi khách còn cần hỗ trợ gì không; chỉ kết thúc sau khi khách xác nhận không còn (playbook mục *Kết thúc và chuyển cuộc gọi*) |
+| Kết thúc | Khách nói hết nhu cầu: bot hỏi còn cần hỗ trợ gì không, khách xác nhận hết rồi mới đúng trình tự cảm ơn → chúc → xin phép kết thúc → tạm biệt |
 | Khó: đổi ý | Khách sửa số lượng, sản phẩm hoặc thông tin đã nói: bot xác nhận theo giá trị mới |
 | Khó: dồn thông tin | Khách nói nhiều biến trong một câu: bot không hỏi lại thứ đã có |
 | Khó: mơ hồ | Khách nói không rõ ("cái loại hôm trước"): bot hỏi làm rõ, không đoán |
 | Khó: hỏi giá, khuyến mãi | Bot chỉ nói thông tin có trong Kho tri thức, không bịa |
 | Khó: đổi chủ đề | Đang tư vấn chuyển sang đặt hàng (hoặc ngược lại): bot theo kịp, không lặp lại từ đầu |
-| Khó: im lặng | Lượt `silence`: bot nhắc lại hoặc kết thúc lịch sự |
+| Khó: im lặng | Lượt `silence`: bot hỏi lại một lần, vẫn im mới kết thúc lịch sự |
 | Khó: chen ngang | Lượt `bargeMs`: bot dừng, trả lời đúng câu khách vừa chen |
 | Khó: ngoài ngành | Hỏi chuyện không liên quan: bot từ chối khéo hoặc chuyển máy theo thiết kế |
 

@@ -17,35 +17,44 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 
 BUILDERS = ["omicall-callbot-gen-ai", "omicall-callbot-flow", "omicall-chatbot-gen-ai", "omicall-omiflow"]
-# skill con của omicall-omiflow (cấu hình nền): chỉ nhận phần đăng nhập, gọi API, khảo sát, đọc tài liệu
+# skill con của omicall-omiflow (cấu hình nền): chỉ nhận phần đăng nhập, gọi API, khảo sát, đọc tài liệu, sổ chung
 SUBSKILLS = ["omicall-crm-config", "omicall-pbx-config", "omicall-ai-insight"]
 ALL = BUILDERS + SUBSKILLS
-# cửa vào chung: chỉ hiểu việc và gọi skill khác, không gọi API
+# cửa vào chung, có điều phối: đăng nhập, khảo sát một lần (đợt 0), sổ chung, kiểm luồng gọi vào; không dựng
 ENTRY = ["omicall-assistant"]
+# skill có điều phối nhiều artefact: nhận omi-mcp-extra.md (chỉ dẫn tới orchestration.md, parallel.md, README)
+ORCHESTRATORS = ENTRY
 
-# file trong shared/ -> danh sách skill nhận bản chép (cùng đường dẫn tương đối)
+# file trong shared/ -> danh sách skill nhận bản chép (cùng đường dẫn tương đối).
+# sync không xoá bản chép cũ ở skill đã bỏ khỏi danh sách: xoá tay (xem STALE_COPIES).
 MAP = {
-    "references/omi-mcp.md": ALL,
-    "references/omi-mcp-extra.md": ALL,
+    "references/omi-mcp.md": ALL + ENTRY,
+    "references/omi-mcp-tools.md": ALL + ENTRY,
+    "references/omi-mcp-extra.md": ORCHESTRATORS,
     "references/conversation.md": ALL + ENTRY,
     "references/system-model.md": ALL + ENTRY,
     "references/solution-method.md": ALL + ENTRY,
     "references/parallel.md": ALL + ENTRY,
     "references/default-behaviors.md": ["omicall-callbot-gen-ai", "omicall-callbot-flow", "omicall-chatbot-gen-ai"] + ENTRY,
     "references/test-cases.md": ["omicall-callbot-gen-ai", "omicall-callbot-flow", "omicall-chatbot-gen-ai"] + ENTRY,
-    "references/tenant_context.template.json": ALL,
+    "references/tenant_context.template.json": ALL + ENTRY,
     "scripts/self_update.py": ALL + ENTRY,
-    "scripts/omi_session.py": ALL,
-    "scripts/omi_preflight.py": ALL,
-    "scripts/omi_login.py": ALL,
-    "scripts/omi_api.py": ALL,
+    "scripts/omi_session.py": ALL + ENTRY,
+    "scripts/omi_preflight.py": ALL + ENTRY,
+    "scripts/omi_login.py": ALL + ENTRY,
+    "scripts/omi_api.py": ALL + ENTRY,
     "scripts/omi_save.py": BUILDERS,
-    "scripts/tenant_survey.py": ALL,
-    "scripts/manifest.py": BUILDERS,
+    "scripts/tenant_survey.py": ALL + ENTRY,
+    "scripts/manifest.py": ALL + ENTRY,
     "scripts/extract_text.py": ALL,
     "scripts/extract_template.py": BUILDERS,
-    "scripts/config_survey.py": ["omicall-omiflow", "omicall-callbot-gen-ai", "omicall-callbot-flow"] + SUBSKILLS,
+    "scripts/config_survey.py": ["omicall-omiflow", "omicall-callbot-gen-ai", "omicall-callbot-flow"] + SUBSKILLS + ENTRY,
     "scripts/cdp.py": ["omicall-callbot-gen-ai", "omicall-chatbot-gen-ai"],
+}
+
+# bản chép đã bỏ khỏi MAP nhưng sync không tự xoá: --check báo WARN, người bảo trì xoá tay (git rm)
+STALE_COPIES = {
+    "references/omi-mcp-extra.md": ALL,
 }
 
 
@@ -79,6 +88,10 @@ def check(root=ROOT, out=print):
                 errors += 1
             else:
                 out(f"OK   {d[:16]} {s}/{rel}")
+    for rel, skills in STALE_COPIES.items():
+        for s in skills:
+            if (root / s / rel).is_file() and s not in MAP.get(rel, []):
+                out(f"WARN bản chép cũ {s}/{rel} (đã bỏ khỏi MAP; xoá tay bằng git rm)")
     return errors
 
 

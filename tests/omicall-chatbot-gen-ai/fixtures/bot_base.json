@@ -1,5 +1,5 @@
 {
- "_fixture_note": "Ghép từ omicall-chatbot-gen-ai/references/api-reference.md:90-140, :205-216, :76-83, :246-262 (gồm START_OTHER_CAMPAIGN ở mục 'Bot gọi kịch bản OMIFlow theo ý định') (đã làm sạch). Hình cạnh source/target theo omicall-omiflow/references/api-reference.md:52, chưa kiểm chứng riêng cho chatbot. Chỉ chứng minh nhất quán nội bộ, KHÔNG chứng minh hợp lệ với nền tảng.",
+ "_fixture_note": "Ghép từ omicall-chatbot-gen-ai/references/api-reference.md (mục Bot object, RAG, API Knowledge, bot gọi flow / thu SĐT; START_OTHER_CAMPAIGN: runtime data.ids + editor datas.selected theo mục 'Bot ACTION START_OTHER_CAMPAIGN — JSON runtime') (đã làm sạch). Hình cạnh source/target theo omicall-omiflow/references/api-reference.md:52, chưa kiểm chứng riêng cho chatbot. Chỉ chứng minh nhất quán nội bộ, KHÔNG chứng minh hợp lệ với nền tảng.",
  "_id": "<bot_id>",
  "created_date": null,
  "create_by": null,
@@ -166,6 +166,23 @@
       "variable_name": "so_dien_thoai",
       "variable_value": "<mô tả biến>",
       "save_to_conv": false
+     }
+    ]
+   },
+   {
+    "id": "<flow_action_node_id>",
+    "type": "ACTION",
+    "actions": [
+     {
+      "type": "START_OTHER_CAMPAIGN",
+      "datas": {
+       "selected": {
+        "value": "<flow uuid>",
+        "_id": "<flow _id>",
+        "label": "<tên flow>",
+        "isDependent": true
+       }
+      }
      }
     ]
    }
@@ -472,13 +489,10 @@
     "actions": [
      {
       "type": "START_OTHER_CAMPAIGN",
-      "datas": {
-       "selected": {
-        "value": "<flow uuid>",
-        "_id": "<flow _id>",
-        "label": "<tên flow>",
-        "isDependent": true
-       }
+      "data": {
+       "ids": [
+        "<flow uuid>"
+       ]
       }
      }
     ],

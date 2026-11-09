@@ -51,11 +51,41 @@ class TestBuildBot(unittest.TestCase):
         return dump(spec, os.path.join(self.tmp, "spec_%s.json" % step_type))
 
     def test_ui_only_types_exit_2(self):
-        for t in ("end", "handoff", "send_message", "kick_off_context"):
+        for t in ("end", "send_message", "kick_off_context"):
             code, so, se, _ = self.build(self._spec_with_step(t))
             self.assertEqual(code, 2, t)
             self.assertIn(t, se)
             self.assertIn("làm UI", se)
+
+    def test_handoff_without_flow_exit_2_with_guidance(self):
+        # chuyển nhân viên không phải nút giao diện: thiếu flow phụ thuộc → exit 2, chỉ cách dựng flow
+        for t in ("handoff", "transfer", "chuyen_nhan_vien", "HANDOFF"):
+            code, so, se, _ = self.build(self._spec_with_step(t))
+            self.assertEqual(code, 2, t)
+            self.assertIn("flow phụ thuộc", se, t)
+            self.assertIn("omicall-omiflow", se, t)
+            self.assertNotIn("làm UI", se, t)
+
+    def test_handoff_maps_to_dependent_flow(self):
+        spec = load(SPEC)
+        spec["intents"][2]["then"] = {"type": "handoff",
+                                      "flow": {"value": "flow-uuid-handoff", "_id": "flow-id-handoff", "label": "CNV"}}
+        code, so, se, out = self.build(dump(spec, os.path.join(self.tmp, "spec_handoff.json")))
+        self.assertEqual(code, 0, so + se)
+        self.assertIn("RESULT PASS", so)
+        self.assertIn("vẫn gửi 1 câu", so)
+        bot = load(out)
+        acts = [(n["id"], a) for n in bot["campaign"]["nodes"] for a in n.get("actions") or []
+                if a.get("type") == "START_OTHER_CAMPAIGN" and a.get("data", {}).get("ids") == ["flow-uuid-handoff"]]
+        self.assertEqual(len(acts), 1)
+        nid, act = acts[0]
+        self.assertNotIn("datas", act)
+        ed = [m for m in bot["campaign"]["name_mappings"] if m.get("id") == nid]
+        self.assertEqual(ed[0]["actions"][0]["datas"]["selected"]["value"], "flow-uuid-handoff")
+        begin = next(n for n in bot["campaign"]["nodes"] if n.get("node_type") == "BEGIN_CONTEXT")
+        self.assertIn(nid, [c.get("next_node") for c in begin["ai_analyze"]["conditions"]])
+        code, so, _ = run("validate_bot.py", out)
+        self.assertEqual(code, 0, so)
 
     def test_nested_ui_only_exit_2(self):
         spec = load(SPEC)
@@ -126,6 +156,35 @@ class TestBuildBot(unittest.TestCase):
         nid = self._webhooks(bot)[0][0]
         self.assertFalse([m for m in bot["campaign"]["name_mappings"] if m.get("id") == nid])
         self.assertIn("dựng/kiểm nút trên UI", so)
+
+    def test_start_other_campaign_sets_runtime_ids(self):
+        # runtime chạy theo data.ids (api-reference.md mục "Bot ACTION START_OTHER_CAMPAIGN — JSON runtime");
+        # dùng uuid khác placeholder của mẫu để chắc builder gán chứ không kế thừa ids của mẫu
+        base = load(BASE_FIXTURE)
+        for n in base["campaign"]["nodes"]:
+            for a in n.get("actions") or []:
+                if a.get("type") == "START_OTHER_CAMPAIGN":
+                    a["data"]["keep_me"] = 1
+                    a["datas"] = {"selected": {"value": "<flow uuid>"}}  # schema cũ sót trên runtime
+        b = dump(base, os.path.join(self.tmp, "base_flow.json"))
+        spec = load(SPEC)
+        spec["intents"][1]["then"]["flow"] = {"value": "flow-uuid-test-1", "_id": "flow-id-test-1", "label": "F"}
+        code, so, se, out = self.build(dump(spec, os.path.join(self.tmp, "spec_flow.json")), base=b)
+        self.assertEqual(code, 0, so + se)
+        self.assertIn("RESULT PASS", so)
+        bot = load(out)
+        acts = [(n["id"], a) for n in bot["campaign"]["nodes"] for a in n.get("actions") or []
+                if a.get("type") == "START_OTHER_CAMPAIGN" and n["id"] != "<flow_action_node_id>"]
+        self.assertEqual(len(acts), 1)
+        nid, act = acts[0]
+        self.assertEqual(act["data"]["ids"], ["flow-uuid-test-1"])
+        self.assertEqual(act["data"]["keep_me"], 1)
+        self.assertNotIn("datas", act)
+        ed = [m for m in bot["campaign"]["name_mappings"] if m.get("id") == nid]
+        self.assertEqual(ed[0]["actions"][0]["datas"]["selected"]["value"], "flow-uuid-test-1")
+        code, so, _ = run("validate_bot.py", out)
+        self.assertEqual(code, 0, so)
+        self.assertRegex(so, r"PASS X10 data.ids khớp")
 
     def test_out_inside_skill_or_repo_refused(self):
         for d in (SKILL, os.path.dirname(SKILL)):

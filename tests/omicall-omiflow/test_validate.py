@@ -181,6 +181,75 @@ class ValidateFlowTest(unittest.TestCase):
         rc, out = self.run_validator(flow)
         self.assertIn('WARN C6 payload có is_publish=true', out)
 
+    @staticmethod
+    def bot_flow(end_id='<case_bot_end>', edge_handle='<case_bot_end>'):
+        """DELAY → OMI_BOT_AI → ACTION; nhánh "BOT chủ động kết thúc" = next_nodes + edge handle id trường hợp kết thúc."""
+        flow = load_base()
+        bot = {'id': '<node_bot>', 'node_type': 'OMI_BOT_AI', 'is_first_node': False, 'conditions': [], 'actions': [],
+               'next_nodes': ['<node_ticket>'], 'fail_next_nodes': None, 'success_next_nodes': None}
+        if end_id:
+            bot['ai_analyze'] = {'customer_not_response': {'id': end_id, 'waiting_time': 180}}
+        flow['nodes'].append(bot)
+        node(flow, '<node_delay>')['next_nodes'] = ['<node_bot>']
+        for e in flow['edges']['connections']:
+            if e['source'] == '<node_delay>':
+                e['target'] = '<node_bot>'
+        flow['edges']['connections'].append({'id': 'reactflow__edge-<node_bot>%s-<node_ticket>1' % edge_handle,
+                                             'source': '<node_bot>', 'sourceHandle': edge_handle,
+                                             'target': '<node_ticket>', 'targetHandle': '1'})
+        return flow
+
+    def test_bot_end_branch_x1(self):
+        rc, out = self.run_validator(self.bot_flow())
+        self.assertEqual(rc, 0, out)
+        self.assertIn('PASS X1', out)
+        self.assertNotIn('X1', ' '.join(l for l in out.splitlines() if l.startswith(('FAIL', 'WARN'))))
+        # id kết thúc nằm trong actions[].data (chưa có JSON mẫu nên dò mọi tầng)
+        flow = self.bot_flow()
+        bot = node(flow, '<node_bot>')
+        bot['actions'] = [{'type': 'OMI_BOT_AI', 'data': {'ai_analyze': bot.pop('ai_analyze')}}]
+        rc, out = self.run_validator(flow)
+        self.assertEqual(rc, 0, out)
+        # sai handle so với id kết thúc vẫn FAIL
+        self.assert_fail(self.bot_flow(edge_handle='2'), 'X1', 'C2')
+        # không thấy customer_not_response.id: WARN Cần xác nhận, không chặn lưu
+        rc, out = self.run_validator(self.bot_flow(end_id=None))
+        self.assertEqual(rc, 0, out)
+        self.assertRegex(out, r'WARN X1 nút AI Chatbot .*Cần xác nhận')
+        # nút thường sai handle vẫn FAIL như cũ
+        flow = load_base()
+        for e in flow['edges']['connections']:
+            if e['source'] == '<node_delay>':
+                e['sourceHandle'] = '<case_x>'
+        self.assert_fail(flow, 'X1')
+
+    def test_default_convention_x11(self):
+        rc, out = self.run_validator(load_base())
+        self.assertIn('PASS X11', out)
+        self.assertNotIn('WARN X11', out)
+        cases = [
+            (lambda f: f['iteration_config'].update(is_limit=True), 'iteration_config.is_limit'),
+            (lambda f: f.update(start_date='2026-11-09'), 'start_date'),
+            (lambda f: f.update(end_date='2026-11-16'), 'end_date'),
+            (lambda f: f.update(is_pause=True), 'is_pause'),
+            (lambda f: f.update(is_stopped=True), 'is_stopped'),
+        ]
+        for mutate, path in cases:
+            with self.subTest(path=path):
+                flow = load_base()
+                mutate(flow)
+                rc, out = self.run_validator(flow)
+                self.assertEqual(rc, 0, out)  # chỉ WARN, không chặn lưu
+                warn = [l for l in out.splitlines() if l.startswith('WARN X11 ')]
+                self.assertEqual(len(warn), 1, out)
+                self.assertIn('lệch quy ước mặc định, chỉ giữ nếu user yêu cầu', warn[0])
+                self.assertTrue(warn[0].endswith('[%s]' % path), warn[0])
+                self.assertNotIn('PASS X11', out)
+        flow = load_base()
+        flow.update(start_date=None, end_date=None, is_pause=False, is_stopped=False)
+        rc, out = self.run_validator(flow)
+        self.assertIn('PASS X11', out)
+
     def test_unknown_plain_variable_warns_c3(self):
         flow = load_base()
         node(flow, '<node_ticket>')['actions'][0]['data']['ticket_detail']['name'] = 'X {{zzz}}'

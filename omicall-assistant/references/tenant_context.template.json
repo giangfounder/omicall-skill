@@ -1,0 +1,36 @@
+{
+  "_ghi_chu": "Khuôn tenant_context.json: khảo sát tenant MỘT lần mỗi phiên rồi mọi bước sau đọc file này. Sinh bằng scripts/tenant_survey.py --out <scratch>/tenant_context.json, rồi agent điền các trường có _nguon 'MCP ...' bằng công cụ MCP tương ứng. File thật chỉ nằm ở scratch, không đưa vào skill hay repo. Chỗ thiếu ghi vào can_xac_nhan.",
+  "tenant": {"domain": "<domain>", "tenant_id": "<tenant_id>"},
+  "survey_at": null,
+  "modules_enabled": [],
+  "attributes": [],
+  "ticket_categories": [],
+  "status_sets": [],
+  "sale_allocations": [],
+  "agents": [],
+  "extensions": [],
+  "hotlines": [],
+  "channels": [],
+  "quota": {"flows": null, "nodes_per_flow": null, "bots": null, "rag_files": null, "nguon": null},
+  "integrations": {},
+  "kho_tri_thuc": {"intents": [], "entity_types": [], "training_history": []},
+  "existing_artefacts": [],
+  "can_xac_nhan": [],
+  "_nguon": {
+    "modules_enabled": "MCP get_service_package",
+    "quota": "MCP get_service_package; quota flow/nút đọc ở giao diện ('Thêm mới N/M', 'Số lượng nút N/M')",
+    "ticket_categories": "MCP get_ticket_categories",
+    "agents": "MCP list_agents",
+    "extensions": "MCP list_extensions",
+    "hotlines": "MCP list_hotlines",
+    "channels": "MCP get_all_channels",
+    "integrations": "MCP get_all_channels, list_webhooks; tích hợp SMS/ZNS/đối tác: Cần xác nhận"
+  },
+  "_khuon": {
+    "attributes": {"code": "<code10>", "name": "<tên>", "type": "<field_type>", "is_list": null, "options": []},
+    "channels": {"type": "<zalo|facebook|livetalk|...>", "id": "<id>", "name": "<tên>", "is_test": null},
+    "agents": {"_id": "<id>", "agent_id": "<id>", "contact_id": "<id>", "full_name": "<tên>", "sip_user": "<máy lẻ>"},
+    "existing_artefacts": {"kind": "<flow|callbot|bot>", "id": "<id>", "uuid": "<uuid>", "name": "<tên>", "published": null, "hotline_attached": null},
+    "sale_allocations": {"_id": "<id>", "name": "<tên>", "type": "<split_evenly|prioritize_employees_with_fewer_customers|specific_division>", "staffs": []}
+  }
+}

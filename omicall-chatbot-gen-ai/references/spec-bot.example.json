@@ -1,7 +1,7 @@
 {
- "_ghi_chu": "Mẫu spec cho scripts/build_bot.py (vá trên GET thật của bot, giữ _id). Mọi giá trị <...> là chỗ điền từ tài liệu nghiệp vụ; thiếu thì ghi 'Cần xác nhận', không bịa. Loại bước hỗ trợ: collect_info (Thu thập thông tin + case biến khác rỗng), send_webhook (ACTION SEND_WEBHOOK), start_other_campaign (ACTION gọi flow phụ thuộc) — base phải có sẵn 1 nút cùng loại làm mẫu. Không hỗ trợ (làm UI): send_message, end, handoff/chuyển nhân viên, kick_off_context, ý định hệ thống. Chỉ khai trường hợp cần hành động riêng; hỏi đáp thuần để system_prompt + RAG lo.",
- "system_prompt": "<Vai trò; luồng hội thoại chung; quy tắc đối thoại; guardrails; BIẾN DỮ LIỆU; định dạng; Definition of Success — SKILL.md Bước 4>",
- "begin_content": "<Hướng dẫn & Tính cách BOT ở Ngữ cảnh bắt đầu (ai_analyze.content)>",
+ "_ghi_chu": "Mẫu spec cho scripts/build_bot.py (vá trên GET thật của bot, giữ _id). Mọi giá trị <...> là chỗ điền từ tài liệu nghiệp vụ; thiếu thì ghi 'Cần xác nhận', không bịa. Loại bước hỗ trợ: collect_info (Thu thập thông tin + case biến khác rỗng), send_webhook (ACTION SEND_WEBHOOK), start_other_campaign (ACTION gọi flow phụ thuộc), handoff (chuyển nhân viên = start_other_campaign gọi flow phụ thuộc làm RE_DISTRIBUTE + tắt chatbot; khai {\"type\":\"handoff\",\"flow\":{value,_id,label}}) — base phải có sẵn 1 nút cùng loại làm mẫu. Không hỗ trợ (làm UI): send_message, end, kick_off_context, ý định hệ thống. Prompt chính: begin_content (ai_analyze.content); system_prompt chép y hệt hoặc bỏ khoá để giữ giá trị cũ — references/api-reference.md mục 'Prompt chính'. Chỉ khai trường hợp cần hành động riêng; hỏi đáp thuần để system_prompt + RAG lo. api_knowledge mẫu là Hướng B (Truy vấn trỏ webhook OMIFlow) — mặc định cho bot chạy thật. Hướng A (gọi thẳng Public API với header Authorization: Bearer tĩnh) chỉ để thử nhanh/demo ngắn: token đổi từ apiKey hết hạn sau 24 giờ, phải được user đồng ý (validate_bot.py WARN X8); khi đó spec chứa bí mật → để ở scratch, không đưa vào repo.",
+ "system_prompt": "<Chép y hệt begin_content, hoặc bỏ khoá này để giữ giá trị cũ>",
+ "begin_content": "<Prompt chính = Hướng dẫn & Tính cách BOT (ai_analyze.content): vai trò; luồng hội thoại chung; quy tắc đối thoại; guardrails; BIẾN DỮ LIỆU; định dạng; Definition of Success — playbook.md Bước 4>",
  "intents": [
   {
    "key": "dang_ky_tu_van",
@@ -39,16 +39,15 @@
  ],
  "api_knowledge": [
   {
-   "name": "Lấy thông tin chi tiết khách hàng từ CRM",
-   "url": "https://public-v1-stg.omicall.com/api/v2/contact/search?page=1&size=1",
+   "name": "Lấy thông tin khách hàng qua OMIFlow",
+   "url": "<URL webhook OMIFlow (trigger WEB_HOOK) đọc/tạo khách — dựng bằng skill omicall-omiflow>",
    "method": "POST",
    "headers": [
-    {"key": "Content-Type", "value": "application/json"},
-    {"key": "Authorization", "value": "Bearer <access_token>"}
+    {"key": "Content-Type", "value": "application/json"}
    ],
-   "body_json": "{\n  \"keyword\": \"{{social_phone_number_linked}}\"\n}",
+   "body_json": "{\n  \"so_dien_thoai\": \"{{social_phone_number_linked}}\",\n  \"ten\": \"{{social_customer_name_linked}}\"\n}",
    "prompt": "<Hướng dẫn BOT: khi nào gọi>",
-   "query_prompt": "<Hướng dẫn BOT đọc kết quả: schema trả về, xử lý khi trống hoặc status_code khác 9999>",
+   "query_prompt": "<Hướng dẫn BOT đọc kết quả: theo 'Kết quả trả về' cấu hình trong flow, xử lý khi trống hoặc status_code khác 9999>",
    "time_out": 60
   }
  ]

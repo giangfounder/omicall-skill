@@ -45,7 +45,7 @@ Form chỉnh sửa:
 [API công khai] `POST /api/call_center/key-interaction/add`: bắt buộc `script_name` (không trùng), `max_failure`, `time_out`, `scripts` (danh sách phím), `greeting_id` (phải upload audio trước); tuỳ chọn `invalid_sound_id`, `action`/`action_type` (`Ring_group`, `Ivr_menu`, `Recording`) cho trường hợp không bấm/sai quá lần.
 
 Gotchas ✔:
-- Ô URL webhook **không lưu được khi flow đích còn nháp** (Cập nhật không báo lỗi, ngày sửa đổi không đổi) → user Xuất bản flow trước, gắn sau, tải lại để kiểm. Xuất bản đổi id flow → dùng URL sau xuất bản.
+- Ô URL webhook **không lưu được khi flow đích còn nháp** (Cập nhật không báo lỗi, ngày sửa đổi không đổi) → user Xuất bản flow trước, gắn sau, tải lại để kiểm. Id/URL webhook: `omicall-omiflow/references/api-reference.md` mục *Ba loại id và URL webhook* (trước khi gắn: `flow_outline.py --list` rồi GET lại `kick_off.id`).
 - Gõ xong ô nhập phải click ra ngoài rồi mới bấm Cập nhật.
 - Chọn thử trong danh sách hành động **đã đổi giá trị trên form** dù chưa lưu → khảo sát xong bấm **Đóng**, mở lại danh sách kiểm cột "Ngày sửa đổi" không đổi.
 
@@ -58,14 +58,14 @@ Gotchas ✔:
 `python <thư mục skill>/scripts/config_survey.py --out <scratch>/tenant_context.json --domain <domain>` → khoá `pbx` (đầu số + giờ làm việc, kịch bản cuộc gọi, Tương tác phím, nhóm nội bộ/bên ngoài, lời chào). Công cụ tổng đài của MCP (`list_groups`, `list_ivr`, `list_scripts`, `list_audio`, `list_hotlines`, `list_eval_criteria`) **trả 404 trên tenant miền `.omicrm.com` (10/2026)** — không dùng. Public API (mục 3–6) cần **apiKey của doanh nghiệp**: bí mật, agent không tự lấy hay nhập.
 
 ### API nội bộ của giao diện (token phiên, host `pbx-v1-stg.omicrm.com`, ✔ GET 10/2026)
-| Đối tượng | Đọc | Ghi (thấy trong mã giao diện, **chưa chạy** — chỉ dùng khi user đồng ý, thử trên bản mới trước) |
+| Đối tượng | Đọc | Ghi (chỉ khi user đồng ý từng việc; dòng không ghi ✔ = mới thấy trong mã giao diện, chưa chạy) |
 |---|---|---|
-| Đầu số | `GET public_number_of_tenant/list_active` → `payload.items[]` | `public_number_of_tenant/update/with_set_job_v2/<id>` |
-| Kịch bản cuộc gọi | `GET call_script/get?page=0&size=0` → `payload.items[]` (hoặc `POST call_script/getV2?page=&size=`) | `call_script/add`, `call_script/update/<id>` |
-| Tương tác phím | `POST key_interactive_script/get/list` body `{}`; `GET key_interactive_script/get/id/<id>` | `key_interactive_script/add`, `…/update/<id>` |
-| Nhóm nội bộ | `POST internal_group/get/list`; `…/get/id/<id>` | `internal_group/add`, `…/update/<id>` |
-| Nhóm bên ngoài | `POST outer_group/get/list` | `outer_group/add` |
-| Lời chào | `POST greeting/get/list` | `greeting/text_to_speech_v2` (tạo TTS) |
+| Đầu số | `GET public_number_of_tenant/list_active` → `payload.items[]` | `public_number_of_tenant/update/with_set_job_v2/<id>` (chưa chạy) |
+| Kịch bản cuộc gọi | `GET call_script/get?page=0&size=0` → `payload.items[]` (hoặc `POST call_script/getV2?page=&size=`) | `call_script/add` ✔ 11/2026 (mục 9); `call_script/update/<id>` chưa chạy |
+| Tương tác phím | `POST key_interactive_script/get/list` body `{}`; `GET key_interactive_script/get/id/<id>` | `key_interactive_script/add`, `…/update/<id>` ✔ 11/2026 (mục 9) |
+| Nhóm nội bộ | `POST internal_group/get/list`; `…/get/id/<id>` | `internal_group/add` ✔ 11/2026 (mục 9, bắt buộc ≥1 thành viên); `…/update/<id>` chưa chạy |
+| Nhóm bên ngoài | `POST outer_group/get/list` | `outer_group/add` (chưa chạy) |
+| Lời chào | `POST greeting/get/list` | `greeting/add` ✔ 11/2026 (mục 2); `greeting/text_to_speech_v2` lỗi -9999 (đường cũ), không dùng |
 
 Xoá (`…/delete/<id>`, `…/delete_many`) không bao giờ gọi.
 
@@ -80,9 +80,6 @@ Khuôn dữ liệu đáng nhớ:
 - Sau khi tạo: mở lại từng màn hình, đối chiếu từng phím, thành viên nhóm, lời chào, kịch bản gắn đầu số.
 - Gọi thử chỉ khi user đồng ý và đưa số; xem Lịch sử cuộc gọi (đường đi, phím đã bấm); flow nhận webhook TTP → tab Lịch sử của flow.
 
-## 9. Còn phải khảo sát
-Danh sách loại **tiêu chí** (`criterias`) của kịch bản cuộc gọi và nhóm nội bộ (theo khách, theo người phụ trách), mã `weekday` của Chủ nhật, Nhóm bên ngoài, Hộp thư thoại (nghe ở đâu), cấu hình Truy vấn mở rộng, ghi âm. Khảo sát được mục nào thì ghi vào đây kèm ✔ và tháng.
-
 ## 9. Cấu trúc thật của Tương tác phím (✔ UI + API 11/2026, tenant .omicrm.io)
 - Lưu: `POST pbx/key_interactive_script/add` (body bắt từ giao diện), sửa `POST …/update/<id>` (thành công trả `status_code` 9999 kèm bản ghi).
 - Body: `{script_name, max_failure, time_out, greeting_id, invalid_sound_id, greeting_short_id, action, action_type, ivr_direct_menu_dial:"false", webhook{enable,url}, scripts[{ivr:"<phím>", action_type, action}]}`.
@@ -90,3 +87,6 @@ Danh sách loại **tiêu chí** (`criterias`) của kịch bản cuộc gọi v
 - Form giao diện: nhấn "+" thêm dòng phím; dòng đầu trống `ivr:""` là dòng mặc định. Lời chào (ba ô nhạc chờ) chỉ chọn từ danh sách Lời chào có sẵn; form Lời chào "Khác" chỉ có giọng tiếng Anh (Roger, Sarah…).
 - Nhóm nội bộ: `internal_group/add` bắt buộc ≥1 thành viên.
 - Kịch bản cuộc gọi (✔ API 11/2026): `POST pbx/call_script/add` body `{script_name, enable_criteria:false, criterias:[], scripts:[{order:0, action_type:"Ivr_menu", action_id:"<id Tương tác phím>"}]}` → trả `_id` và `extension` (số nội bộ đại diện); thành công `status_code` 9999. Gắn đầu số vẫn là bước riêng.
+
+## 10. Còn phải khảo sát
+Danh sách loại **tiêu chí** (`criterias`) của kịch bản cuộc gọi và nhóm nội bộ (theo khách, theo người phụ trách), mã `weekday` của Chủ nhật, Nhóm bên ngoài, Hộp thư thoại (nghe ở đâu), cấu hình Truy vấn mở rộng, ghi âm. Khảo sát được mục nào thì ghi vào đây kèm ✔ và tháng.

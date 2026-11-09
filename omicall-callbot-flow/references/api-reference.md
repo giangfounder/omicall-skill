@@ -28,7 +28,7 @@ Intent hệ thống thường có (sau `training/reset`): `omi_intent_agree`, `o
 | Method | Path | Ghi chú |
 |---|---|---|
 | GET | `callbot/training/reset` | **Đã kiểm chứng**: = nút "Đào tạo dữ liệu mẫu của hệ thống" (trang Kho tri thức trống). Nạp 29 intent + 13 entity hệ thống + roles + ~4.800 câu có gắn thực thể, tự huấn luyện (~10 phút). Web gọi tiếp `callbot/model/load-model`. Trên tenant đã có dữ liệu: Cần xác nhận (có thể xoá dữ liệu cũ) — chỉ dùng khi tenant trống và user đồng ý |
-| POST | `callbot/training/upload_excel` | **Đã kiểm chứng** (qua UI): multipart field `excel` (.xlsx/.xls/.csv ≤5MB) → `payload.import_training_session_id`. Tạo intent/entity mới theo mã, dùng lại cái trùng mã, tính `start_char/end_char`, rồi **tự huấn luyện lại toàn bộ** |
+| POST | `callbot/training/upload_excel` | Kiểm chứng qua giao diện; gọi trực tiếp bằng API: chưa. Multipart field `excel` (.xlsx/.xls/.csv ≤5MB) → `payload.import_training_session_id`. Tạo intent/entity mới theo mã, dùng lại cái trùng mã, tính `start_char/end_char`, rồi **tự huấn luyện lại toàn bộ** |
 | GET | `callbot/training/upload_excel/status/{session}` | `{"completed":true,"total":N,"successTotalRecord":N,"errorTotalRecord":0,"errCode":null}` |
 | POST | `callbot/training/download_excel_template` | body `{}` → `payload.value.object_info.name` = `/callbot/Import_training_data_template.xlsx`; tải công khai `https://cdn.omicrm.com/callbot/Import_training_data_template.xlsx` |
 | GET | `callbot/training/retraining` | huấn luyện lại thủ công |
@@ -89,7 +89,7 @@ Runtime không có trường lặp: **số câu trong `return_contents` = số l
   - BEGIN → bước đầu: handle `"1"`. STAFF nhánh INTENT: handle = id điều kiện. Hệ thống: handle `CUSTOMER_NOT_RESPONSE`/`CUSTOMER_RESPONSE_WRONG` + `"conditionId"`. ACTION/STAFF→ACTION/FROM_SYSTEM còn lại: handle `"2"`. FROM_SYSTEM nhánh: handle = id điều kiện. STAFF → COLLECT_INFO: handle `COLLECT_INFO`, `"animated":true`, + `conditionId`.
 
 ## 6. Checklist sau mỗi lần lưu (GET lại)
-Tự động: `scripts/verify_callflow.py <bản GET>.json --sent payload.json --context tenant_context.json --mode post --base <bản mới nhất trước khi sửa>.json` (mã C1..C7 dưới đây; X<n> là mục bổ sung: X3 còn placeholder `<...>`, X4 chỉ có một trong id/uuid, X5 số node/dây lệch payload đã gửi). `omi_save.py` tự chạy sau khi lưu nhưng chưa truyền `--context`/`--base` → C4 và version tăng chỉ ra WARN; chạy lại tay đủ tham số trên bản GET đã lưu. Dự phòng khi chỉ kiểm được trong trang: `references/browser-snippets.md` §6.
+Tự động: `scripts/verify_callflow.py <bản GET>.json --sent payload.json --context tenant_context.json --mode post --base <bản mới nhất trước khi sửa>.json` (mã C1..C7 dưới đây; X<n> là mục bổ sung: X3 còn placeholder `<...>`, X4 chỉ có một trong id/uuid, X5 số node/dây lệch payload đã gửi). `omi_save.py` tự chạy lệnh này sau khi lưu, chuyền `--context` khi được truyền `--context`, và với `--update` chuyền `--base <file --base>` hoặc `--base-version <version bản mới nhất ở bước guard>`. Quên `--context` → C4 chỉ ra WARN; chạy lại tay đủ tham số trên bản GET đã lưu (`*_get_<id>.json`).
 1. **C1** `next_nodes` mọi node trỏ tới node tồn tại; mỗi CONDITION của STAFF có trong `org_nodes[STAFF].data.conditions`.
 2. **C2** Nhánh có `return_contents` đều có `next_nodes`; hỏi đáp/lặp lại/phản hồi sai trỏ bước báo chuyển (script in WARN, soát theo spec); repeat editor khớp số câu.
 3. **C3** Mỗi STAFF chờ khách có NOT_RESPONSE + RESPONSE_WRONG; STAFF kết thúc không `next_nodes`.

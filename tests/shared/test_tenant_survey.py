@@ -41,6 +41,19 @@ class TestSurvey(unittest.TestCase):
         exp = json.loads((HERE / "fixtures" / "survey_expected.json").read_text(encoding="utf-8"))
         self.assertEqual(got, exp)
 
+    def test_resurvey_keeps_ctx_set_values(self):
+        # giá trị nền ghi bằng manifest.py ctx-set (liệt kê ở _ghi_boi) không mất khi khảo sát lại
+        self.survey()
+        out = self.tmp / "ctx.json"
+        r = subprocess.run([sys.executable, "-B", str(ROOT / "shared" / "scripts" / "manifest.py"), "ctx-set",
+                            "--ctx", str(out), "crm.ma_truong_moi", "--json", '"nhu_cau"', "--owner", "crm"],
+                           capture_output=True, text=True, encoding="utf-8", errors="replace")
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        got, _ = self.survey()
+        self.assertEqual(got["crm"]["ma_truong_moi"], "nhu_cau")
+        self.assertIn("crm.ma_truong_moi", got["_ghi_boi"])
+        self.assertFalse(Path(str(out) + ".lock").exists())
+
     def test_unverified_not_called_by_default(self):
         got, text = self.survey()
         called = {r["key"] for r in got["_endpoints"] if r["goi"]}
@@ -48,7 +61,7 @@ class TestSurvey(unittest.TestCase):
             if not r["verified"]:
                 self.assertNotIn(r["key"], called)
                 self.assertTrue(any(c.startswith(r["key"] + ":") for c in got["can_xac_nhan"]), r["key"])
-            self.assertRegex(r["nguon"], r"\S+\.md:\d+")
+            self.assertRegex(r["nguon"], r"\S+\.md(:\d+| \"[^\"]+\")")  # trỏ theo dòng hoặc theo tên mục
         self.assertIn("attributes", called)
         self.assertEqual(got["_nguon"]["agents"], "MCP list_agents")
         self.assertEqual(got["agents"], [])

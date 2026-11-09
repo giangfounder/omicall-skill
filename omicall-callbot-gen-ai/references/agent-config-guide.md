@@ -42,8 +42,8 @@ Editor có 2 loại hành động trong một trường hợp Ý định:
 Quy tắc:
 - Hướng dẫn Agent viết **ngắn, dạng chỉ dẫn cách lấy thông tin**. Hạn chế hội thoại mẫu trong phần này (câu thoại để ở Kịch bản chung).
 - Tra cứu **kho tri thức** để giải đáp thắc mắc: đặt khối Hướng dẫn Agent TRƯỚC khối Thu thập thông tin, để Agent giải đáp trước khi quay lại luồng hỏi–đáp thu biến.
-- Gọi **API (Truy vấn) cần tham số là biến thu thập**: đặt khối **Thu thập thông tin TRƯỚC**, khối **Hướng dẫn Agent SAU**, và trong hướng dẫn gọi hành động bằng biến của nhóm chip "Hành động": `{{request_api_<tên truy vấn>}}` (tên truy vấn bỏ dấu, nối gạch dưới, ví dụ truy vấn "API tra cứu sản phẩm phù hợp" → `{{request_api_tra_cuu_san_pham_phu_hop}}`). Cùng nhóm chip có `{{collect_<biến>}}` để nhắc tới bước thu biến. Đã kiểm chứng theo chỉ dẫn của user.
-- Ví dụ: Ý định "Đăng ký khám mới" — mô tả "Khách chưa từng khám và muốn đăng ký thông tin mới"; biến Họ tên, Ngày sinh, Số điện thoại; hướng dẫn "Truy cập knowledge base để hỗ trợ lần lượt xác nhận Họ tên, Ngày sinh và Số điện thoại để tạo hồ sơ."
+- Gọi **API (Truy vấn) cần tham số là biến thu thập**: đặt khối **Thu thập thông tin TRƯỚC**, khối **Hướng dẫn Agent SAU**, và trong hướng dẫn gọi hành động bằng biến của nhóm chip "Hành động": `{{request_api_<tên truy vấn>}}` (tên truy vấn bỏ dấu, nối gạch dưới, ví dụ truy vấn "API tra cứu sản phẩm phù hợp" → `{{request_api_tra_cuu_san_pham_phu_hop}}`). Cùng nhóm chip có `{{collect_<biến>}}` để nhắc tới bước thu biến. Đã kiểm chứng theo chỉ dẫn của user. **Chỉ áp dụng cho API tra cứu** (chỉ đọc: tìm sản phẩm, tra đơn, tra lịch trống). API ghi dữ liệu (tạo đơn, đặt lịch, ghi CRM) không gọi trong ý định thu biến: đặt sau Ý định "khách xác nhận" (mục 4).
+- Ví dụ: Ý định "Đăng ký tài khoản mới" — mô tả "Khách chưa có tài khoản và muốn đăng ký thông tin mới"; biến Họ tên, Ngày sinh, Số điện thoại; hướng dẫn "Truy cập knowledge base để hỗ trợ lần lượt xác nhận Họ tên, Ngày sinh và Số điện thoại để tạo hồ sơ."
 
 ## 4. Cơ chế chuyển nút
 | Trường hợp | Agent xử lý |
@@ -56,7 +56,8 @@ Hệ quả: bước "đọc lại cho khách xác nhận" đặt sau khi thu đ�
 **Cách làm đúng cho luồng cần xác nhận (đơn hàng, lịch hẹn…):**
 1. Ý định thu thập (tra cứu → thu biến) để **trống "nút kế tiếp"**.
 2. Câu đọc lại thông tin đặt ở Kịch bản chung (ngoặc kép).
-3. Tạo Ý định riêng "Khách xác nhận đúng thông tin đã đọc lại" → nút phân loại / chuyển máy / kết thúc.
+3. Tạo Ý định riêng "Khách xác nhận đúng thông tin đã đọc lại" → nút phân loại / API / chuyển máy (không nối END_CALL: chỉ Ý định "Hoàn tất" được kết thúc, validator X6).
+Dựng bằng `build_smartagent.py`: Ý định thu biến `kind:"collect"` + `confirm_by:"<key>"`, Ý định xác nhận `kind:"confirm"` + `confirms:"<key ý định collect>"` (+ `classify_labels`); xem `references/spec-smartagent.example.json`.
 
 **Nút gọi API (SEND_WEBHOOK) gửi dữ liệu đã chốt** (đặt lịch, tạo đơn): theo bảng trên, nối API ngay sau Ý định thu biến thì API chạy khi vừa đủ biến, **trước** câu đọc lại và trước khi khách sửa → dữ liệu gửi đi có thể chưa được xác nhận, phần sửa sau đó không được gửi. Nối API sau Ý định "khách xác nhận" (bước 3), còn Ý định thu biến để trống nút kế tiếp. Biến của Ý định khác có dùng được trong body API nối sau Ý định xác nhận hay không: Cần xác nhận bằng một cuộc gọi thử (xem payload ở tab Lịch sử của flow nhận). Rút ra khi rà một kịch bản dựng 11/2026, chưa gọi thử so sánh hai cách nối.
 
@@ -65,13 +66,11 @@ Hệ quả: bước "đọc lại cho khách xác nhận" đặt sau khi thu đ�
 Thu một cụm thông tin liên quan chặt chẽ: để trống "nút tiếp theo" để giữ ngữ cảnh, tránh chuyển nút liên tục; có thể dùng một Ý định xác định nhu cầu rồi rẽ nhánh sang các Ý định thu từng nhóm biến riêng.
 
 ## 5. Nút Ngắt cuộc gọi (END_CALL)
-- Lệnh endcall thực thi ngay sau khi model làm xong hướng dẫn trong nút endcall.
-- Ý định có biến thu thập mà nút kế tiếp là endcall: hệ thống ngắt ngay khi đủ biến, bỏ qua xác nhận lại. Không nối thẳng Ý định thu biến → END_CALL.
-- Đặt endcall ngay sau Ý định cuối cùng của cuộc gọi (thường là "Hoàn tất", không có biến) để luồng chạy trọn vẹn.
+Mọi quy tắc END_CALL (cách hệ thống chạy endcall, chỉ Ý định "Hoàn tất" được nối, không nối Ý định thu biến hay điều kiện biến thẳng tới END_CALL, mô tả trình tự kết thúc, hỏi còn nhu cầu trước khi cúp) nằm ở một chỗ: `references/playbook.md` mục *Kết thúc và chuyển cuộc gọi*.
 
 ## 6. Điều kiện biến thu thập
 - Có thể cấu hình điều kiện kiểm tra giá trị biến; hệ thống rẽ nhánh ngay khi vừa nhận giá trị, điều kiện được quét ở mỗi lượt hội thoại.
-- Chỉ kiểm tra một biến thì dùng trực tiếp điều kiện biến thu thập, không tạo Ý định. Ví dụ biến chuyên khoa = "ngoài chuyên khoa" → rẽ sang end_call.
+- Chỉ kiểm tra một biến thì dùng trực tiếp điều kiện biến thu thập, không tạo Ý định. Ví dụ biến loại yêu cầu = "ngoài phạm vi hỗ trợ" → rẽ sang node Phân loại hoặc chuyển máy cho nhân viên. Nhánh điều kiện biến không nối END_CALL (validator X6); kết thúc chỉ qua Ý định "Hoàn tất".
 
 ## 7. API (Truy vấn) trên giao diện
 - Truy vấn nằm ở BEGIN → "Truy vấn": tên, cấu hình (GET/POST, URL, header, body raw JSON), thời gian chờ, "Hướng dẫn Agent lấy kết quả trả về từ API" (bắt buộc).
@@ -94,7 +93,7 @@ Thu một cụm thông tin liên quan chặt chẽ: để trống "nút tiếp t
 - Menu "Thêm hành động" của một node Hành động gồm: Tạo thông báo, API, Chuyển tiếp cuộc gọi, Gọi đến kịch bản OMIFlow. **Sau Phân loại, mục Chuyển tiếp cuộc gọi bị mờ**: không đặt Phân loại và Chuyển máy chung một node. Làm chuỗi: node Phân loại → "Bước tiếp theo" → node Hành động mới → Chuyển tiếp cuộc gọi. Tạo thông báo thì đặt chung node với Phân loại được.
 - Chuyển tiếp cuộc gọi: chọn Nhân viên / Nhóm nội bộ / Nhóm bên ngoài; mặc định chọn sẵn nhân viên đầu danh sách. Bật "Đính kèm thông tin: Dữ liệu thu thập" để nhân viên nhận đủ biến.
 - Tạo thông báo: Tiêu đề, Nội dung (ô soạn thảo định dạng), Gửi đến nhân viên (mặc định nhân viên đầu danh sách), Nền tảng Web / Mobile / Custom App. Biến gõ dạng `{{var_…}}` trong ô này **không được tô màu** như ở prompt nhưng đúng cú pháp danh sách biến; cần gọi thử để xác nhận giá trị được thay. Mẫu cho đơn hàng: tiêu đề kèm họ tên và số điện thoại; nội dung liệt kê sản phẩm, số lượng, người nhận, số điện thoại, địa chỉ, nhu cầu và việc nhân viên cần làm.
-- Node Kết thúc cuộc gọi có một ô "Nhập mô tả hướng dẫn Agent kết thúc cuộc gọi": ghi trình tự cảm ơn, chúc, xin phép, tạm biệt.
+- Node Kết thúc cuộc gọi có một ô "Nhập mô tả hướng dẫn Agent kết thúc cuộc gọi" (nội dung: playbook mục *Kết thúc và chuyển cuộc gọi*).
 - Mỗi trường hợp Ý định có "Giới hạn số lần kích hoạt" (0–9, để trống là không giới hạn).
 
 ### 8.2 Canvas và liên kết node
@@ -113,13 +112,12 @@ Thu một cụm thông tin liên quan chặt chẽ: để trống "nút tiếp t
 - Phần phải làm lại ở tenant đích: chọn nhân viên nhận chuyển máy và thông báo, dán khoá API, tải file RAG.
 
 ## 9. Đăng nhập MCP trong Claude desktop (tab Code)
-- Không có lệnh `claude mcp add`. Thêm server vào `mcpServers` của `~/.claude.json` (đọc và trộn, không ghi đè server khác), email điền sẵn, ô mật khẩu để `<mật khẩu>` cho user tự điền; MCP chỉ nạp khi mở phiên mới hoặc khi app kết nối lại. Agent không ghi mật khẩu kể cả khi user gửi mật khẩu trong chat.
-- Khi chưa có MCP: user đăng nhập web trong browser pane, agent dựng bằng giao diện; không đọc cookie hay token.
+Đăng nhập và đăng ký MCP bằng `omi_login.py setup --ui` (mật khẩu cất trong kho bí mật hệ điều hành, cấu hình MCP chỉ chứa lệnh `omi_login.py serve`, không chứa mật khẩu); không tự ghi server hay mật khẩu vào `~/.claude.json`. Xem `references/conversation.md` mục 1 và `references/omi-mcp.md` mục 2a.
 
 ## 10. Luồng sản phẩm và đặt hàng (mẫu dùng lại)
-- Hai trường hợp trong Kịch bản chung: khách chưa rõ sản phẩm → hỏi nhu cầu (cây trồng/đối tượng, giai đoạn, vấn đề) → gọi API → gợi ý 1–2 sản phẩm; khách đã nói rõ tên → tra đúng tên, xác nhận lại tên và quy cách, có biến thể thì hỏi chọn, không hỏi lại thông tin tư vấn.
-- Ý định Đặt hàng: Thu thập thông tin đơn → Hướng dẫn Agent gọi `{{request_api_…}}`; để trống nút kế tiếp. Ý định riêng "Khách xác nhận đơn đã đọc lại" → node Phân loại + Tạo thông báo cho nhân viên.
-- Body API tìm kiếm ngữ nghĩa ghép nhiều biến thành một câu (`"Tìm … {{var_san_pham}} cho {{var_doi_tuong}} giai đoạn {{var_giai_doan}}, nhu cầu {{var_nhu_cau}}"`) vẫn tìm đúng khi chỉ có tên sản phẩm và các biến khác trống; thử trên API thật trước khi lưu.
+- Hai trường hợp trong Kịch bản chung: khách chưa rõ sản phẩm → hỏi nhu cầu (đối tượng sử dụng, mục đích, vấn đề đang gặp) → gọi API → gợi ý 1–2 sản phẩm; khách đã nói rõ tên → tra đúng tên, xác nhận lại tên và quy cách, có biến thể thì hỏi chọn, không hỏi lại thông tin tư vấn.
+- Ý định Đặt hàng: Thu thập thông tin đơn → Hướng dẫn Agent gọi `{{request_api_…}}` **chỉ để tra cứu** (sản phẩm, giá, tồn kho); để trống nút kế tiếp. Ý định riêng "Khách xác nhận đơn đã đọc lại" → node Phân loại + Tạo thông báo cho nhân viên, và API tạo đơn/ghi dữ liệu (nếu có) đặt ở nhánh này, không đặt trong Ý định Đặt hàng.
+- Body API tìm kiếm ngữ nghĩa ghép nhiều biến thành một câu (`"Tìm … {{var_san_pham}} cho {{var_doi_tuong}}, mục đích {{var_muc_dich}}, nhu cầu {{var_nhu_cau}}"`) vẫn tìm đúng khi chỉ có tên sản phẩm và các biến khác trống; thử trên API thật trước khi lưu.
 
 ## Xuất bản (đã kiểm chứng, khi user đã duyệt)
 - Nút **Xuất bản** ở thanh trên cùng, cạnh nút Cập nhật; khung hẹp có thể nằm ngoài vùng nhìn, bấm bằng JS theo chữ nút. Hộp "Xác nhận" (Callbot sẽ hoạt động theo phiên bản này...) → bấm Xác nhận.

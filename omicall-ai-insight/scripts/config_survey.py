@@ -3,7 +3,8 @@
   python <thư mục skill>/scripts/config_survey.py --out <scratch>/tenant_context.json [--domain <domain>]
 
 - Gọi các endpoint đọc mà giao diện OMICRM dùng (✔ GET 10/2026, bảng ENDPOINTS), token lấy từ omi_session (không in).
-- Ghi/gộp vào file --out (thường là tenant_context.json ở scratch) hai khoá: `pbx` và `ai_config`; giữ nguyên các khoá khác.
+- Ghi/gộp vào file --out hai khoá: `pbx` và `ai_config`; giữ nguyên các khoá khác; có khoá file (manifest.Lock).
+  Đợt 0: --out <scratch>/tenant_context.json. Sau đợt 0 tenant_context.json chỉ đọc: kiểm lại thì --out ra file riêng.
 - In ra màn hình chỉ số lượng và tên; không in token, không in số điện thoại.
 - Endpoint lỗi (404, 401, mạng) → ghi vào `can_xac_nhan`, chạy tiếp phần còn lại.
 Không tạo, sửa hay xoá gì trên tenant.
@@ -100,6 +101,15 @@ def survey(call=None):
     return pbx, ai, errors
 
 
+def _lock(path):
+    try:
+        import manifest
+        return manifest.Lock(os.path.abspath(path))
+    except ImportError:  # skill không có manifest.py: ghi không khoá (chỉ một tiến trình khảo sát ở đợt 0)
+        import contextlib
+        return contextlib.nullcontext()
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument('--out', required=True, help='file JSON ở scratch (gộp vào nếu đã có)')
@@ -110,14 +120,17 @@ def main(argv=None):
     if a.domain:
         omi_api._headers(expect_domain=a.domain)  # dừng sớm nếu token sai tenant
     pbx, ai, errors = survey()
-    ctx = {}
-    if os.path.exists(a.out):
-        with open(a.out, encoding='utf-8') as f:
-            ctx = json.load(f)
-    ctx['pbx'], ctx['ai_config'] = pbx, ai
-    ctx['can_xac_nhan'] = [c for c in ctx.get('can_xac_nhan', []) if not c.startswith(tuple(ENDPOINTS))] + errors
-    with open(a.out, 'w', encoding='utf-8') as f:
-        json.dump(omi_api.mask_secrets(ctx), f, ensure_ascii=False, indent=1)
+    with _lock(a.out):  # đọc-gộp-ghi có khoá (manifest.Lock) để không mất khoá của tiến trình khác
+        ctx = {}
+        if os.path.exists(a.out):
+            with open(a.out, encoding='utf-8') as f:
+                ctx = json.load(f)
+        ctx['pbx'], ctx['ai_config'] = pbx, ai
+        ctx['can_xac_nhan'] = [c for c in ctx.get('can_xac_nhan', []) if not c.startswith(tuple(ENDPOINTS))] + errors
+        tmp = a.out + '.tmp'
+        with open(tmp, 'w', encoding='utf-8') as f:
+            json.dump(omi_api.mask_secrets(ctx), f, ensure_ascii=False, indent=1)
+        os.replace(tmp, a.out)
     for k, v in list(pbx.items()) + list(ai.items()):
         names = [x.get('name') for x in v or [] if x.get('name')][:8]
         print(f"{k}: {'LỖI' if v is None else len(v)} {names if names else ''}")

@@ -142,7 +142,7 @@
  "can_xac_nhan": [
   "ticket_status_sets: không đọc được (không có dữ liệu replay ticket_status_sets.json)",
   "bots: không đọc được (không có dữ liệu replay bots.json)",
-  "agents_api: chưa đủ đường dẫn để gọi (omicall-callbot-flow/SKILL.md:41 (\"agent-v1-stg …/get_all_agent/no_role\" — thiếu tiền tố đường dẫn); dùng MCP list_agents)",
+  "agents_api: chưa đủ đường dẫn để gọi (omicall-callbot-flow/references/playbook.md \"Bước 0\" (\"agent-v1-stg …/get_all_agent/no_role\" — thiếu tiền tố đường dẫn); dùng MCP list_agents)",
   "existing_artefacts[callbot].hotline_attached: kiểm bằng MCP list_hotlines (inbound_script_id)",
   "attributes.is_list: suy từ field_type theo bảng LIST_TYPES — Cần xác nhận mã kiểu thật; is_list=null nghĩa là chưa biết, kiểm trên giao diện trước khi gán biến",
   "attributes: API chỉ trả bộ thuộc tính Phiếu ghi; thuộc tính Khách hàng xem Cấu hình > Thuộc tính > Khách hàng (crm-config.md mục 3)",
@@ -169,28 +169,28 @@
   {
    "key": "callbot_scripts",
    "verified": true,
-   "nguon": "omicall-callbot-flow/SKILL.md:41; omicall-callbot-flow/references/browser-snippets.md:18; omicall-callbot-gen-ai/references/api-reference.md:163",
+   "nguon": "omicall-callbot-flow/references/playbook.md \"Bước 0\"; omicall-callbot-gen-ai/references/api-reference.md:163",
    "goi": true,
    "ket_qua": "ok"
   },
   {
    "key": "intents",
    "verified": true,
-   "nguon": "omicall-callbot-flow/SKILL.md:41; omicall-callbot-flow/references/browser-snippets.md:19",
+   "nguon": "omicall-callbot-flow/references/playbook.md \"Bước 0\"",
    "goi": true,
    "ket_qua": "ok"
   },
   {
    "key": "entity_types",
    "verified": true,
-   "nguon": "omicall-callbot-flow/references/browser-snippets.md:20; omicall-callbot-flow/references/api-reference.md:11",
+   "nguon": "omicall-callbot-flow/references/playbook.md \"Bước 0\"; omicall-callbot-flow/references/api-reference.md:11",
    "goi": true,
    "ket_qua": "ok"
   },
   {
    "key": "training_history",
    "verified": true,
-   "nguon": "omicall-callbot-flow/references/browser-snippets.md:22; omicall-callbot-flow/references/api-reference.md:17",
+   "nguon": "omicall-callbot-flow/references/playbook.md \"Bước 0\"; omicall-callbot-flow/references/api-reference.md:17",
    "goi": true,
    "ket_qua": "ok"
   },
@@ -225,7 +225,7 @@
   {
    "key": "agents_api",
    "verified": false,
-   "nguon": "omicall-callbot-flow/SKILL.md:41 (\"agent-v1-stg …/get_all_agent/no_role\" — thiếu tiền tố đường dẫn); dùng MCP list_agents",
+   "nguon": "omicall-callbot-flow/references/playbook.md \"Bước 0\" (\"agent-v1-stg …/get_all_agent/no_role\" — thiếu tiền tố đường dẫn); dùng MCP list_agents",
    "goi": false,
    "ket_qua": null
   }

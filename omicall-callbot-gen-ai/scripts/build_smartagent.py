@@ -6,12 +6,21 @@
 - Không lấy khung từ tài liệu: mọi node, intent, điều kiện hệ thống, cạnh, option nhân viên đều nhân bản từ --base.
   Kind chỉ sinh được khi base có ít nhất một mẫu cùng loại, hoặc references/templates/<TYPE>.json có _meta.verified=true.
   Thiếu mẫu → exit 2: '<TYPE> chưa kiểm chứng → dựng 1 nút trên editor, GET, extract_template'.
-- PUSH_NOTIFICATION, SEND_WEBHOOK, START_OTHER_CAMPAIGN, Ring_group/Outer_group, nối ACTION→ACTION: luôn exit 2.
+- PUSH_NOTIFICATION, SEND_WEBHOOK, START_OTHER_CAMPAIGN, Ring_group/Outer_group, nối ACTION→ACTION: builder chưa sinh, luôn
+  exit 2 (khớp cột builder = khong trong references/node-status.json; trạng thái kiểm chứng chỉ ghi ở file đó).
 - --new xoá id/uuid/public_key, version, created_*/last_updated_* (server tự sinh) và đặt is_publish=false (chỉ lưu nháp;
   ngữ nghĩa is_publish còn 'Cần xác nhận'). --update bắt buộc base có cả id lẫn uuid, giữ nguyên is_publish/version của base.
 - knowledge.apis: --update mà spec.knowledge.apis rỗng/vắng → GIỮ NGUYÊN apis của base (không xoá cấu hình API của khách);
   chỉ thay khi spec có apis khác rỗng, và in ref_id bị thay/bỏ. --new mà spec không có apis → không chép apis của base.
-  knowledge.files giữ theo base. Bản gửi có ít api/file hơn base → WARN X12.
+- knowledge.files (RAG): --update giữ theo base; --new XOÁ knowledge.files (runtime) và selectedTraining/typeTrainingFile
+  (editor BEGIN) của base (file RAG thuộc tenant/kịch bản nguồn), trừ khi spec.knowledge.files khai báo file → chép vào cả
+  hai chỗ. Bản gửi có ít api/file hơn base → WARN X12 (chỉ in khi --update).
+- Luồng cần khách xác nhận (đơn hàng, lịch hẹn): ý định kind "collect" có confirm_by:"<key ý định confirm>", hoặc được
+  một ý định kind "confirm" tham chiếu bằng confirms:"<key ý định collect>" (key = trường "key", vắng thì dùng "name")
+  → ý định thu biến để TRỐNG nút kế tiếp, không có node phân loại riêng. Ý định "confirm" không thu biến, mang
+  carry_variables (mặc định = biến của ý định collect được xác nhận) vào node phân loại theo classify_labels.
+  Spec cũ (collect không có ý định xác nhận) vẫn dựng như trước (nối thẳng node phân loại) nhưng in WARN X14:
+  dữ liệu được ghi/gửi trước khi khách xác nhận.
 - Base hoặc payload còn giá trị đã che '***' (ví dụ bản lưu của script_outline --save/omi_save) → exit 2, không ghi '***'
   đè lên header thật.
 - --out nằm trong thư mục skill → exit 2.
@@ -32,7 +41,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 SKILL = os.path.dirname(HERE)
 sys.path.insert(0, HERE)
 
-KINDS = ("handled", "collect", "classify", "transfer", "finish")
+KINDS = ("handled", "collect", "confirm", "classify", "transfer", "finish")
 UNSUPPORTED = {
     "webhook": "SEND_WEBHOOK", "send_webhook": "SEND_WEBHOOK",
     "push_notification": "PUSH_NOTIFICATION", "notify": "PUSH_NOTIFICATION", "notification": "PUSH_NOTIFICATION",
@@ -53,6 +62,11 @@ class BuildError(Exception):
 
 def unverified(type_name):
     return BuildError("%s chưa kiểm chứng → dựng 1 nút trên editor, GET, extract_template (xem references/node-status.json)" % type_name)
+
+
+def unsupported(type_name):
+    return BuildError("%s: builder chưa sinh loại này → ghép tay theo references/api-reference.md (mẫu ở references/templates/ nếu có) "
+                      "hoặc dựng trên editor; trạng thái kiểm chứng: references/node-status.json" % type_name)
 
 
 def unaccent(s):
@@ -166,7 +180,7 @@ def edge_id(sample, src, sh, tgt, th, pending):
             return "reactflow__edge-%s%s-%s%s" % (src, sh, tgt, th)
         if sid == "reactflow__edge-%s%s-%s%s1" % (s, h, t, k):
             return "reactflow__edge-%s%s-%s%s1" % (src, sh, tgt, th)
-    msg = "Cần xác nhận: định dạng id cạnh (base không có mẫu cạnh khớp) — đang dùng reactflow__edge-<source><handle>-<target><targetHandle>"
+    msg = "base không có cạnh mẫu khớp → dùng định dạng id cạnh chuẩn reactflow__edge-<source><handle>-<target><targetHandle> (api-reference mục Connection)"
     if msg not in pending:
         pending.append(msg)
     return "reactflow__edge-%s%s-%s%s" % (src, sh, tgt, th)
@@ -202,7 +216,57 @@ def set_if(d, key, val):
         d[key] = val
 
 
-def build(spec, base_obj, mode, context=None):
+def intent_key(it):
+    return str(it.get("key") or it.get("name") or "").strip()
+
+
+def link_confirms(intents):
+    """Ghép ý định collect ↔ confirm. Trả về (confirm_of {i_collect: j_confirm}, collect_of {j_confirm: i_collect})."""
+    keys = {}
+    for i, it in enumerate(intents):
+        keys.setdefault(intent_key(it), []).append(i)
+
+    class _ByKey:
+        @staticmethod
+        def get(k):
+            hit = keys.get(k) or []
+            if len(hit) > 1:
+                raise BuildError("key/tên ý định '%s' bị trùng nên không ghép confirm được (đặt trường key riêng)" % k)
+            return hit[0] if hit else None
+
+    by_key = _ByKey()
+    kind = [(it.get("kind") or "").strip().lower() for it in intents]
+    confirm_of, collect_of = {}, {}
+
+    def pair(i, j):
+        if confirm_of.get(i, j) != j or collect_of.get(j, i) != i:
+            raise BuildError("ý định '%s' và '%s': mỗi ý định collect chỉ ghép với một ý định confirm và ngược lại"
+                             % (intents[i].get("name"), intents[j].get("name")))
+        confirm_of[i], collect_of[j] = j, i
+
+    for j, it in enumerate(intents):
+        ref = it.get("confirms")
+        if not ref:
+            continue
+        i = by_key.get(str(ref).strip())
+        if kind[j] != "confirm" or i is None or kind[i] != "collect":
+            raise BuildError("ý định '%s': confirms '%s' chỉ dùng ở kind confirm và phải trỏ tới ý định kind collect" % (it.get("name"), ref))
+        pair(i, j)
+    for i, it in enumerate(intents):
+        ref = it.get("confirm_by")
+        if not ref:
+            continue
+        j = by_key.get(str(ref).strip())
+        if kind[i] != "collect" or j is None or kind[j] != "confirm":
+            raise BuildError("ý định '%s': confirm_by '%s' chỉ dùng ở kind collect và phải trỏ tới ý định kind confirm" % (it.get("name"), ref))
+        pair(i, j)
+    return confirm_of, collect_of
+
+
+def build(spec, base_obj, mode, context=None, warns=None):
+    """warns: list nhận các dòng WARN của builder (X14). Trả về (payload, pending)."""
+    if warns is None:
+        warns = []
     pending = list(spec.get("pending") or [])
     name = (spec.get("name") or "").strip()
     if not name:
@@ -213,13 +277,14 @@ def build(spec, base_obj, mode, context=None):
     for it in intents:
         k = (it.get("kind") or "").strip().lower()
         if k in UNSUPPORTED:
-            raise unverified(UNSUPPORTED[k])
+            raise unsupported(UNSUPPORTED[k])
         if k not in KINDS:
             raise BuildError("kind '%s' của intent '%s' không hỗ trợ (chỉ %s)" % (k, it.get("name"), ", ".join(KINDS)))
+    confirm_of, collect_of = link_confirms(intents)
     tr = spec.get("transfer") or {}
     ttype = (tr.get("type") or "Extension").strip()
     if ttype.lower() in UNSUPPORTED:
-        raise unverified(UNSUPPORTED[ttype.lower()])
+        raise unsupported(UNSUPPORTED[ttype.lower()])
     if ttype != "Extension":
         raise unverified("TRANSFER_CALL %s" % ttype)
 
@@ -256,7 +321,7 @@ def build(spec, base_obj, mode, context=None):
     if not xfer_s:
         raise unverified("TRANSFER_CALL")
     clf_s = None
-    if "classify" in kinds or "collect" in kinds:
+    if "classify" in kinds or "collect" in kinds or "confirm" in kinds:
         clf_s = b.node_with_action("ADD_CLASSIFY") or load_template("ADD_CLASSIFY")
         if not clf_s:
             raise unverified("ADD_CLASSIFY")
@@ -292,6 +357,22 @@ def build(spec, base_obj, mode, context=None):
                 raise BuildError("biến '%s' của intent '%s' chưa khai báo ở spec.variables" % (code, it.get("name")))
             if code not in used_vars:
                 used_vars.append(code)
+    carry_of = {}
+    for j, it in enumerate(intents):
+        if (it.get("kind") or "").strip().lower() != "confirm":
+            continue
+        if it.get("collect_vars"):
+            raise BuildError("ý định confirm '%s' không thu biến (bỏ collect_vars; biến thu ở ý định collect)" % it.get("name"))
+        carry = it.get("carry_variables")
+        if carry is None:
+            if j not in collect_of:
+                raise BuildError("ý định confirm '%s' cần confirms (key ý định collect) hoặc carry_variables[]" % it.get("name"))
+            carry = intents[collect_of[j]].get("collect_vars") or []
+        carry = [v.get("code") if isinstance(v, dict) else v for v in carry]
+        for code in carry:
+            if code not in used_vars:
+                raise BuildError("biến '%s' trong carry_variables của '%s' không được ý định collect nào thu" % (code, it.get("name")))
+        carry_of[j] = carry
 
     bid = b.begin["id"]
     obx = (b.org_begin.get("position") or {}).get("x", 0) or 0
@@ -402,11 +483,20 @@ def build(spec, base_obj, mode, context=None):
                 pending.append("Cần xác nhận: cách sinh hậu tố webhookId (đang sinh 20 ký tự tất định)")
         target = None
         cvars = [v.get("code") if isinstance(v, dict) else v for v in (it.get("collect_vars") or [])]
+        confirmed = i in confirm_of
         if kind == "collect":
             if not cvars:
                 raise BuildError("intent '%s' kind collect cần collect_vars[]" % iname)
-            if not it.get("classify_labels"):
-                raise BuildError("intent '%s' kind collect cần classify_labels[] (sau khi thu phải phân loại hoặc xác nhận trước khi chuyển)" % iname)
+            if confirmed and it.get("classify_labels"):
+                raise BuildError("intent '%s' kind collect đã có ý định xác nhận '%s': đặt classify_labels ở ý định xác nhận"
+                                 % (iname, intents[confirm_of[i]].get("name")))
+            if not confirmed and not it.get("classify_labels"):
+                raise BuildError("intent '%s' kind collect cần một ý định kind confirm (confirm_by/confirms) hoặc classify_labels[] "
+                                 "(sau khi thu phải xác nhận rồi mới phân loại/gửi)" % iname)
+            if not confirmed:
+                warns.append("WARN X14 intent '%s' kind collect nối thẳng node phân loại khi vừa đủ biến: dữ liệu được ghi/gửi "
+                             "trước khi khách xác nhận — thêm ý định kind confirm (confirm_by/confirms), xem "
+                             "references/agent-config-guide.md mục 4" % iname)
             rs = copy.deepcopy(col_s[2])
             rs["variables_code"] = list(cvars)
             rc["action_steps"] = [rs]
@@ -424,10 +514,11 @@ def build(spec, base_obj, mode, context=None):
             es["variablesCode"] = vc
             set_if(es, "id", ids.make("step_", "collect|%d" % i))
             ec["actionStep"] = [es]
-        if kind in ("collect", "classify"):
+        node_vars = carry_of.get(i, []) if kind == "confirm" else cvars
+        if kind in ("classify", "confirm") or (kind == "collect" and not confirmed):
             labels = [str(x) for x in (it.get("classify_labels") or [])]
             if not labels:
-                raise BuildError("intent '%s' kind classify cần classify_labels[]" % iname)
+                raise BuildError("intent '%s' kind %s cần classify_labels[]" % (iname, kind))
             cr, co = copy.deepcopy(clf_s[0]), copy.deepcopy(clf_s[1])
             cid = ids.make("clf_", "classify|%d" % i)
             cr["id"] = cid
@@ -451,11 +542,11 @@ def build(spec, base_obj, mode, context=None):
                 if isinstance(x, dict) and "datas" in x:
                     x["datas"] = {"ids": list(labels), "classifies": copy.deepcopy(cls)}
             rv, ov = [], []
-            if cvars:
+            if node_vars:
                 if clf_var_sample is None or clf_org_var_sample is None:
                     pending.append("Cần xác nhận: biến ở node phân loại %s (base không có mẫu variables ở node ACTION)" % cid)
                 else:
-                    for code in cvars:
+                    for code in node_vars:
                         x = copy.deepcopy(clf_var_sample)
                         x.update({"field_code": code})
                         set_if(x, "field_name", var_defs[code].get("name") or code)
@@ -555,9 +646,21 @@ def build(spec, base_obj, mode, context=None):
                            % (len(base_apis), ref_ids(base_apis)))
         if isinstance(cfg.get("knowledge"), dict):
             cfg["knowledge"]["apis"] = []
-    if mode == "new" and (base_kn.get("files") or []):
-        pending.append("Cần xác nhận: kịch bản mới đang giữ %d file RAG (knowledge.files) của base" % len(base_kn.get("files") or []))
     bd = bo.setdefault("data", {})
+    spec_files = [f for f in (kn.get("files") if isinstance(kn.get("files"), list) else []) if isinstance(f, dict)]
+    if mode == "new":
+        n_old = max(len([f for f in (base_kn.get("files") or []) if isinstance(f, dict)]), len(bd.get("selectedTraining") or []))
+        if n_old:
+            pending.append("Cần xác nhận: không chép %d file RAG của base (knowledge.files, selectedTraining) sang kịch bản mới; "
+                           "tải tài liệu của khách bằng rag_upload.py sau khi lưu" % n_old)
+        cfg.setdefault("knowledge", {})["files"] = copy.deepcopy(spec_files)
+        bd["selectedTraining"] = copy.deepcopy(spec_files)
+        if spec_files:
+            bd["typeTrainingFile"] = "other" if any(f.get("other_wok_id") for f in spec_files) else "file"
+        else:
+            bd.pop("typeTrainingFile", None)
+    elif spec_files:
+        pending.append("Cần xác nhận: spec.knowledge.files chỉ áp dụng cho --new; --update giữ file RAG của base (thêm file bằng rag_upload.py)")
     bd["conditions"] = ed_list
     if spec.get("start_call"):
         set_if(bd, "startCallInstruction", spec["start_call"])
@@ -679,7 +782,8 @@ def main(argv=None):
         print("Không đọc được JSON: %s" % e, file=sys.stderr)
         return 2
     try:
-        payload, pending = build(spec, base, "new" if a.new else "update", ctx)
+        warns = []
+        payload, pending = build(spec, base, "new" if a.new else "update", ctx, warns)
     except BuildError as e:
         print("LỖI: %s" % e, file=sys.stderr)
         return e.code
@@ -689,6 +793,8 @@ def main(argv=None):
     print("Đã ghi payload: %s" % a.out)
     for p in pending:
         print("PENDING %s" % p)
+    for w in warns:
+        print(w)
     import validate_smartagent as v
     r = v.check(v.Script(payload), "pre", None, ctx)
     for line in r.lines:

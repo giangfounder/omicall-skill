@@ -14,7 +14,7 @@ Mã X<n> = mục bổ sung:
   X3  TRANSFER_CALL có data.ids khác rỗng và khác [""]
   X4  ADD_CLASSIFY runtime dùng `data`, editor dùng `datas`, khớp classifies top-level
   X5  mọi next_node có node đích và có connection; connection có source/target tồn tại
-      (không kiểm định dạng id cạnh: tài liệu còn "Cần xác nhận")
+      (không kiểm định dạng id cạnh; định dạng chuẩn: api-reference mục Connection)
   X6  chỉ intent Hoàn tất đi tới END_CALL
   X7  END_CALL mô tả trình tự kết thúc (cảm ơn ... tạm biệt) — WARN
   X8  không còn placeholder dạng <...>
@@ -23,6 +23,10 @@ Mã X<n> = mục bổ sung:
       mode post thiếu --sent → WARN X10 bỏ qua
   X11 có --context: nhân viên ở TRANSFER_CALL có trong tenant_context.agents — WARN
   X12 (build_smartagent.py --update in ra, không phải validator) knowledge.apis/files bản gửi ít hơn base — WARN
+  X13 ý định có biến thu thập (collect_variables) mà next_node trỏ thẳng tới node ACTION có SEND_WEBHOOK hoặc END_CALL:
+      hệ thống chuyển nút ngay khi đủ biến → gửi dữ liệu/cúp máy trước khi khách xác nhận — WARN
+      (cách đúng: ý định thu biến để trống nút kế tiếp → ý định "khách xác nhận" → phân loại/API; agent-config-guide mục 4)
+  X14 (build_smartagent.py in ra, không phải validator) intent kind collect không có ý định confirm — WARN
 C6 kiểm: không connection/next_node về BEGIN, không connection đi ra từ END_CALL. Phần "node cuối của nhánh không
 terminal không có connection đi ra" với node ACTION thì validator không biết nhánh nào là cuối → agent tự kiểm theo thiết kế.
 """
@@ -408,6 +412,26 @@ def check(sc, mode, sent=None, context=None):
             x6 = False
     if x6:
         r.ok("X6", "chỉ intent Hoàn tất đi tới END_CALL")
+
+    # X13
+    x13 = True
+    for c in sc.rt_intents:
+        has_vars = any(isinstance(st, dict) and st.get("action") == "collect_variables" and st.get("variables_code")
+                       for st in (c.get("action_steps") or []))
+        tgt = sc.node_by_id.get(c.get("next_node")) if c.get("next_node") else None
+        if not has_vars or tgt is None:
+            continue
+        what = None
+        if tgt.get("node_type") == "END_CALL":
+            what = "END_CALL (cúp máy)"
+        elif tgt.get("node_type") == "ACTION" and sc.actions_of(tgt, "SEND_WEBHOOK"):
+            what = "SEND_WEBHOOK (gửi dữ liệu)"
+        if what:
+            r.add("WARN", "X13", "intent '%s' thu biến rồi nối thẳng %s: chạy ngay khi đủ biến, trước khi khách xác nhận — để trống nút kế tiếp, "
+                  "nối từ ý định \"khách xác nhận\"" % (c.get("name") or c.get("id"), what), sc.rt_cond_path(sc.rt_conds.index(c)) + ".next_node")
+            x13 = False
+    if x13:
+        r.ok("X13", "không có ý định thu biến nối thẳng SEND_WEBHOOK hay END_CALL")
 
     # X8
     x8 = True

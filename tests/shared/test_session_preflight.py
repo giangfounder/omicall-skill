@@ -30,7 +30,8 @@ class Base(unittest.TestCase):
         self.home = self.tmp / "home"
         self.home.mkdir()
         self.env = {k: v for k, v in os.environ.items()
-                    if k not in ("OMI_TOKEN", "OMI_TOKEN_FILE", "OMI_DOMAIN", "OMI_MIN_SECONDS")}
+                    if k not in ("OMI_TOKEN", "OMI_TOKEN_FILE", "OMI_DOMAIN", "OMI_MIN_SECONDS",
+                                 "CLAUDE_CODE_SESSION_ID", "OMI_SESSION_KEY")}
         self.env.update(HOME=str(self.home), USERPROFILE=str(self.home), PYTHONIOENCODING="utf-8")
 
     def tearDown(self):
@@ -89,7 +90,7 @@ class TestPreflight(Base):
         self.assertEqual(j["route"], "blocked")
         self.assertIn("omi_login.py\" setup --domain congtyabc", j["next_step"])
         self.assertIn("ô nhập ẩn", j["next_step"])
-        self.assertIn("Phụ lục A", j["next_step"])
+        self.assertIn("Cài MCP cho client khác", j["next_step"])
         self.assertNotIn("<cli>", j["next_step"])
         self.assertFalse(j["credential_stored"])
         self.assertIn("OMI_TOKEN_FILE", j["next_step"])
@@ -116,6 +117,33 @@ class TestPreflight(Base):
         self.assertEqual(code, 0)
         self.assertEqual(j["source"], "MCP session.json")
         self.assertTrue(j["mcp_session_file"])
+
+    def test_session_key_isolates_file(self):
+        # file chung cũ có token nhưng phiên có khoá riêng thì không được dùng file chung
+        legacy = self.home / ".omicall-mcp"
+        legacy.mkdir()
+        (legacy / "session.json").write_text(json.dumps({"accessToken": fake_jwt()}), encoding="utf-8")
+        self.env["OMI_SESSION_KEY"] = "phien-a"
+        code, j, _, _ = self.preflight()
+        self.assertNotEqual(j.get("source"), "MCP session.json")
+        own = legacy / "sessions" / "phien-a" / ".omicall-mcp"
+        own.mkdir(parents=True)
+        (own / "session.json").write_text(json.dumps({"accessToken": fake_jwt()}), encoding="utf-8")
+        code, j, _, _ = self.preflight()
+        self.assertEqual(code, 0)
+        self.assertEqual(j["source"], "MCP session.json")
+
+    def test_server_session_fallback_by_domain(self):
+        # đăng nhập bằng công cụ MCP ghi vào thư mục của server; script có --domain thì đọc được file đó
+        self.env["OMI_SESSION_KEY"] = "phien-b"
+        srv = self.home / ".omicall-mcp" / "servers" / "congtyabc" / ".omicall-mcp"
+        srv.mkdir(parents=True)
+        (srv / "session.json").write_text(json.dumps({"accessToken": fake_jwt()}), encoding="utf-8")
+        code, j, _, _ = self.preflight()
+        self.assertEqual(code, 0)
+        self.assertEqual(j["source"], "MCP server session.json")
+        code, j, _, _ = self.preflight(domain="congtykhac")
+        self.assertNotEqual(code, 0)
 
 
 class TestSession(Base):

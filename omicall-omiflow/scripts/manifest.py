@@ -15,6 +15,14 @@ Lệnh:
                                       producer đang stale. --strict: artefact chưa lưu cũng FAIL.
   gates                               liệt kê cổng còn chờ user (xuất bản, gắn hotline, gọi thử ...)
   stale <key> [--clear]               đánh dấu producer cần GET lại (ví dụ sau khi user xuất bản -> đổi id)
+  ctx-get --ctx <tenant_context.json> <khoá.con>
+        đọc một giá trị trong tenant_context.json (JSON); không có -> exit 1. Không cần --path.
+  ctx-set --ctx <tenant_context.json> <khoá.con> --json '<giá trị>' [--owner <tên>]
+        ghi MỘT giá trị nền mới (mã trường, id nhóm...) vào tenant_context.json dưới khoá, có khoá file; tạo khoá con
+        nếu thiếu, giữ nguyên phần còn lại; ghi kèm `_ghi_boi.<khoá.con>` = owner. Từ chối bí mật như `set`.
+
+tenant_context.json: khảo sát MỘT lần ở đợt 0 (tenant_survey.py, config_survey.py), sau đó CHỈ ĐỌC; mọi giá trị mới
+ghi qua `ctx-set` (hoặc vào sổ bằng `set`), không mở file ra sửa tay, không chạy lại khảo sát ghi đè file này.
 
 Không gọi mạng. Từ chối trường tên token/password/authorization/cookie/secret và giá trị dạng JWT (eyJ...).
 Ghi an toàn khi nhiều tiến trình: khoá bằng os.open(O_CREAT|O_EXCL) có retry/timeout, ghi file tạm rồi os.replace.
@@ -283,6 +291,50 @@ def cmd_stale(path, key, clear=False):
     return 0
 
 
+def cmd_ctx_get(ctx, dotted):
+    with Lock(ctx):
+        data = _load(ctx) or {}
+    try:
+        v = _dig(data, dotted)
+    except KeyError:
+        print('Không có %s trong %s' % (dotted, ctx), file=sys.stderr)
+        return 1
+    print(json.dumps(v, ensure_ascii=False))
+    return 0
+
+
+def cmd_ctx_set(ctx, dotted, raw, owner=None):
+    try:
+        val = json.loads(raw)
+    except ValueError as e:
+        raise Refused('--json không hợp lệ: %s' % e)
+    parts = [x for x in dotted.split('.') if x]
+    if not parts:
+        raise Refused('thiếu khoá')
+    for x in parts:
+        if FORBIDDEN_KEY.search(x):
+            raise Refused('từ chối khoá %r: tenant_context không chứa bí mật' % x)
+    _check_secrets(val, dotted)
+    owner = owner or os.environ.get('OMI_AGENT') or 'unknown'
+    with Lock(ctx):
+        data = _load(ctx)
+        if data is None:
+            raise Refused('chưa có %s: khảo sát đợt 0 tạo file này trước (tenant_survey.py --out)' % ctx)
+        cur = data
+        for x in parts[:-1]:
+            nxt = cur.get(x)
+            if nxt is None:
+                nxt = cur[x] = {}
+            if not isinstance(nxt, dict):
+                raise Refused('%s không phải object, không ghi khoá con được' % x)
+            cur = nxt
+        cur[parts[-1]] = val
+        data.setdefault('_ghi_boi', {})[dotted] = {'owner': owner, 'at': _now()}
+        _save(ctx, data)
+    print('Đã ghi %s vào %s' % (dotted, ctx))
+    return 0
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument('--path', default=os.environ.get('OMI_MANIFEST'))
@@ -302,12 +354,32 @@ def main(argv=None):
     p = sub.add_parser('stale')
     p.add_argument('key')
     p.add_argument('--clear', action='store_true')
+    p = sub.add_parser('ctx-get')
+    p.add_argument('--ctx', required=True)
+    p.add_argument('ref')
+    p = sub.add_parser('ctx-set')
+    p.add_argument('--ctx', required=True)
+    p.add_argument('ref')
+    p.add_argument('--json', required=True)
+    p.add_argument('--owner')
     a = ap.parse_args(argv)
     if hasattr(sys.stdout, 'reconfigure'):
         sys.stdout.reconfigure(encoding='utf-8', errors='replace')
     if not a.cmd:
         ap.print_help()
         return 2
+    if a.cmd in ('ctx-get', 'ctx-set'):
+        ctx = os.path.abspath(a.ctx)
+        try:
+            if a.cmd == 'ctx-get':
+                return cmd_ctx_get(ctx, a.ref)
+            return cmd_ctx_set(ctx, a.ref, a.json, a.owner)
+        except Refused as e:
+            print('TỪ CHỐI: %s' % e, file=sys.stderr)
+            return 2
+        except TimeoutError as e:
+            print('LỖI: %s' % e, file=sys.stderr)
+            return 3
     if not a.path:
         print('Thiếu --path hoặc env OMI_MANIFEST', file=sys.stderr)
         return 2

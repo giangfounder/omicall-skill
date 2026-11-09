@@ -1,6 +1,14 @@
 """Lấy Bearer token OMICRM cho các API mà MCP OMI chưa có (callbot, chatbot, OMIFlow).
 
-Thứ tự: biến môi trường OMI_TOKEN -> file OMI_TOKEN_FILE (do user tự đặt) -> phiên MCP ~/.omicall-mcp/session.json.
+Thứ tự: biến môi trường OMI_TOKEN -> file OMI_TOKEN_FILE (do user tự đặt) -> phiên MCP (session.json, xem dưới).
+
+Phiên MCP tách riêng (✔ 11/2026, gói omicall-mcp lấy tenant từ session.json và ghi đè tenant khai báo, nên một file
+chung làm mọi server/phiên dùng nhầm tenant):
+- Mỗi phiên Claude Code một file: ~/.omicall-mcp/sessions/<CLAUDE_CODE_SESSION_ID>/.omicall-mcp/session.json
+  (env OMI_SESSION_KEY ghi đè khoá). Không có khoá phiên -> file chung cũ ~/.omicall-mcp/session.json.
+- Mỗi server MCP `OMICall-<domain>` một file: ~/.omicall-mcp/servers/<domain>/.omicall-mcp/session.json
+  (omi_login.py serve). Có expect_domain mà file phiên chưa có token -> đọc file của server domain đó
+  (đường đăng nhập bằng công cụ login_omicall_mcp); claim domain vẫn được kiểm.
 Không đọc cookie, không bao giờ in token. Tiền tố 'Bearer ' trong file/biến được tự bỏ.
 
 Dùng trong script:
@@ -19,18 +27,44 @@ import base64
 import binascii
 import json
 import os
+import re
 import sys
 import time
 
-SESSION = os.path.join(os.path.expanduser('~'), '.omicall-mcp', 'session.json')
+MCP_DIR_NAME = '.omicall-mcp'
 KEYS = ('accessToken', 'access_token')
 DEFAULT_MIN_SECONDS = 300
 FIX_HINT = ('gọi lại login_omicall_mcp (MCP OMI), hoặc nhờ user tự cập nhật file OMI_TOKEN_FILE; '
             'chạy omi_preflight.py để biết bước kế tiếp')
 
 
-def _session_path():
-    return os.path.join(os.path.expanduser('~'), '.omicall-mcp', 'session.json')
+def mcp_dir():
+    return os.path.join(os.path.expanduser('~'), MCP_DIR_NAME)
+
+
+def session_key():
+    """Khoá phiên Claude Code (env OMI_SESSION_KEY > CLAUDE_CODE_SESSION_ID), chỉ giữ ký tự an toàn; '' nếu không có."""
+    k = os.environ.get('OMI_SESSION_KEY') or os.environ.get('CLAUDE_CODE_SESSION_ID') or ''
+    return re.sub(r'[^A-Za-z0-9_.-]', '', k)[:80]
+
+
+def session_home():
+    """Thư mục đặt làm USERPROFILE/HOME cho omicall-mcp khi đăng nhập từ script; None = home thật (file chung cũ)."""
+    k = session_key()
+    return os.path.join(mcp_dir(), 'sessions', k) if k else None
+
+
+def server_home(domain):
+    """Thư mục home riêng của server MCP OMICall-<domain> (omi_login.py serve)."""
+    d = re.sub(r'[^A-Za-z0-9_.-]', '', _norm_domain(domain) or '') or 'default'
+    return os.path.join(mcp_dir(), 'servers', d)
+
+
+def _session_path(home=None):
+    """session.json mà omicall-mcp đọc/ghi khi chạy với home này (mặc định: home của phiên hiện tại)."""
+    if home is None:
+        home = session_home() or os.path.expanduser('~')
+    return os.path.join(home, MCP_DIR_NAME, 'session.json')
 
 
 def _find(obj):
@@ -57,7 +91,18 @@ def _clean(tok):
     return tok
 
 
-def find_token():
+def _read_session(path):
+    if not os.path.exists(path):
+        return None
+    try:
+        with open(path, encoding='utf-8') as f:
+            return _find(json.load(f))
+    except (OSError, ValueError):
+        print('CẢNH BÁO: không đọc được phiên MCP %s' % path, file=sys.stderr)
+        return None
+
+
+def find_token(expect_domain=None):
     """Trả về (token, nguồn) hoặc (None, None). Không kiểm hạn, không in token."""
     if os.environ.get('OMI_TOKEN'):
         return _clean(os.environ['OMI_TOKEN']), 'env OMI_TOKEN'
@@ -71,17 +116,22 @@ def find_token():
             print('CẢNH BÁO: OMI_TOKEN_FILE rỗng: %s' % path, file=sys.stderr)
         else:
             print('CẢNH BÁO: OMI_TOKEN_FILE trỏ tới file không tồn tại: %s' % path, file=sys.stderr)
-    sess = _session_path()
-    if os.path.exists(sess):
-        try:
-            with open(sess, encoding='utf-8') as f:
-                tok = _find(json.load(f))
-        except (OSError, ValueError):
-            tok = None
-            print('CẢNH BÁO: không đọc được phiên MCP %s' % sess, file=sys.stderr)
-        if tok:
-            return _clean(tok), 'MCP session.json'
+    tok = _read_session(_session_path())
+    tok = _clean(tok) if tok else None
+    if expect_domain and not (tok and _token_domain(tok) == _norm_domain(expect_domain)):
+        alt = _read_session(_session_path(server_home(expect_domain)))
+        if alt and _token_domain(_clean(alt)) == _norm_domain(expect_domain):
+            return _clean(alt), 'MCP server session.json'
+    if tok:
+        return tok, 'MCP session.json'
     return None, None
+
+
+def _token_domain(tok):
+    try:
+        return _norm_domain(claims(tok).get('domain'))
+    except ValueError:
+        return None
 
 
 def claims(tok):
@@ -116,7 +166,7 @@ def inspect(min_seconds=None, expect_domain=None):
     if min_seconds is None:
         min_seconds = int(os.environ.get('OMI_MIN_SECONDS') or DEFAULT_MIN_SECONDS)
     expect = _norm_domain(expect_domain or os.environ.get('OMI_DOMAIN'))
-    tok, src = find_token()
+    tok, src = find_token(expect)
     info = {'token_ok': False, 'source': src, 'seconds_left': None, 'tenant_id': None, 'agent_id': None,
             'domain_claim': None, 'domain_match': None, 'error': None}
     if not tok:

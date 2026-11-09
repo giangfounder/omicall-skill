@@ -11,7 +11,7 @@ Bảng endpoint CHỈ gồm đường đã kiểm chứng:
   callbot, callflow : chatbot-gateway /callbot/script/add_v2 (multipart 'file'); GET /callbot/script/get/{id}
   bot               : chatbot-gateway /omiai_assistant/save_draft_v2 (multipart 'file', giữ _id); GET POST /omiai_assistant/get/{id}
   flow              : campaign-v1 /omi_v2/campaign/save_draft_v2 (multipart 'file') — CHỈ cho flow nháp có _id
-                      (add_v2/update_v2 của OMIFlow chưa kiểm chứng nên không có ở đây).
+                      (không dùng add_v2 của OMIFlow: ✔ 11/2026 nhưng tạo luôn bản ĐÃ xuất bản, chỉ dùng khi user duyệt; update_v2 chưa kiểm chứng).
 Không có cờ xuất bản; is_publish giữ nguyên như payload. --new KHÔNG tự đổi is_publish: payload --new có is_publish:true
 -> exit 2 (kịch bản mới chỉ lưu nháp; đặt is_publish:false trong payload, hoặc dựng bằng build_smartagent.py --new /
 build_callflow.py — hai builder tự đặt false).
@@ -338,7 +338,7 @@ def run(a):
                           '(lưu nháp), GET lấy _id rồi dựng tiếp.' % a.kind)
         if not payload.get('_id'):
             raise Stop(2, 'payload %s thiếu _id. Chỉ lưu được %s đã có: tạo vỏ trên giao diện (%s nháp), GET lấy _id, '
-                          'rồi chạy lại. (add_v2/update_v2 chưa kiểm chứng nên không dùng.)'
+                          'rồi chạy lại. (không dùng add_v2: tạo luôn bản đã xuất bản; update_v2 chưa kiểm chứng.)'
                        % (a.kind, a.kind, 'flow' if a.kind == 'flow' else 'bot'))
 
     out_dir = omi_api.scratch_dir(a.out_dir)

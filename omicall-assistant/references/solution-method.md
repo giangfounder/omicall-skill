@@ -35,7 +35,7 @@ Mỗi mắt xích ghi: năng lực · skill · đường (MCP → script API →
 `get_service_package` (module, cờ tính năng), quota flow/nút/bot/trợ lý AI, `tenant_context.json` (kênh, nhóm, thuộc tính đã có). Thiếu gói hoặc quota thì đổi phương án ở mục 2, không dựng rồi mới biết.
 
 ## 6. Kế hoạch dựng
-Danh sách việc ghi theo thứ tự mục 3, mỗi việc: công cụ (script/MCP) · chạy thử (`--mode pre`, dry-run) · ghi · GET lại kiểm (`--mode post`) · cổng duyệt của user. Việc nhiều artefact phụ thuộc nhau: `omi-mcp-extra.md` mục 7.
+Danh sách việc ghi theo thứ tự mục 3, mỗi việc: công cụ (script/MCP) · chạy thử (`--mode pre`, dry-run) · ghi · GET lại kiểm (`--mode post`) · cổng duyệt của user. Việc nhiều artefact phụ thuộc nhau: `parallel.md` mục 2 và 5; ghi vào từ 2 skill trở lên thì giao `omicall-assistant` điều phối (thứ tự đợt và cổng: `orchestration.md` mục 2 của skill đó).
 
 ## 7. Học theo năng lực, không theo ca
 Khi hoàn thành một bài toán, chỉ cập nhật cái tái dùng được: dòng năng lực trong `system-model.md` (đường mới, trạng thái mới), gotcha nền tảng trong reference của skill. Không ghi chi tiết nghiệp vụ hay dữ liệu của khách.

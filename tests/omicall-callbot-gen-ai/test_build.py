@@ -207,6 +207,128 @@ class TestBuild(unittest.TestCase):
         self.assertIn("extract_template", err)
         self.assertNotIn("Traceback", err)
 
+    # --- collect + confirm (agent-config-guide mục 4: không gửi/ghi dữ liệu trước khi khách xác nhận)
+    def conds(self, payload):
+        return {c.get("name") or c["id"]: c for c in payload["nodes"][0]["ai_agent_config"]["ai_analyze"]["conditions"]}
+
+    def legacy_spec(self):
+        s = self.spec()
+        s["intents"] = [it for it in s["intents"] if it["kind"] != "confirm"]
+        col = next(it for it in s["intents"] if it["kind"] == "collect")
+        col.pop("confirm_by")
+        col["classify_labels"] = ["Có nhu cầu"]
+        return s
+
+    def test_example_collect_confirm(self):
+        code, out, err = self.build(SPEC, "--new", "--out", self.p("o.json"))
+        self.assertEqual(code, 0, out + err)
+        self.assertNotIn("WARN X14", out)
+        self.assertNotRegex(out, r"(?m)^WARN X13 ")
+        p = self.load_out()
+        c = self.conds(p)
+        col, conf = c["Khách có nhu cầu"], c["Khách xác nhận thông tin"]
+        self.assertIsNone(col["next_node"])
+        self.assertEqual([s["variables_code"] for s in col["action_steps"]], [["var_ten", "var_nhu_cau"]])
+        self.assertIsNone(conf["action_steps"])
+        begin = p["nodes"][0]["id"]
+        self.assertFalse([e for e in p["connections"] if e["source"] == begin and e["sourceHandle"] == col["id"]])
+        tgt = next(n for n in p["nodes"] if n["id"] == conf["next_node"])
+        self.assertTrue(any(a.get("type") == "ADD_CLASSIFY" for a in tgt["actions"]))
+        self.assertEqual([v["field_code"] for v in tgt["variables"]], ["var_ten", "var_nhu_cau"])
+        org = next(o for o in p["org_nodes"] if o["id"] == tgt["id"])
+        self.assertEqual([v["variable"] for v in org["data"]["variables"]], ["var_ten", "var_nhu_cau"])
+        self.assertTrue([e for e in p["connections"] if e["source"] == begin and e["sourceHandle"] == conf["id"] and e["target"] == tgt["id"]])
+        # chỉ một node phân loại có nhãn "Có nhu cầu" (collect không có node riêng)
+        clf = [n for n in p["nodes"] if any(a.get("type") == "ADD_CLASSIFY" and "Có nhu cầu" in a["data"]["ids"] for a in n.get("actions") or [])]
+        self.assertEqual(len(clf), 1)
+
+    def test_confirm_by_on_collect_side_only(self):
+        s = self.spec()
+        next(it for it in s["intents"] if it["kind"] == "confirm").pop("confirms")
+        code, out, err = self.build(self.write("s.json", s), "--new", "--out", self.p("o.json"))
+        self.assertEqual(code, 0, out + err)
+        self.assertIsNone(self.conds(self.load_out())["Khách có nhu cầu"]["next_node"])
+
+    def test_legacy_collect_still_builds_with_warn(self):
+        code, out, err = self.build(self.write("s.json", self.legacy_spec()), "--new", "--out", self.p("o.json"))
+        self.assertEqual(code, 0, out + err)
+        self.assertRegex(out, r"(?m)^WARN X14 .*Khách có nhu cầu.*trước khi khách xác nhận")
+        self.assertIsNotNone(self.conds(self.load_out())["Khách có nhu cầu"]["next_node"])
+
+    def test_duplicate_names_without_confirm_still_build(self):
+        s = self.legacy_spec()
+        s["intents"].insert(2, {"name": "Khách bận", "kind": "handled", "content": "Khách nói đang bận việc khác, ví dụ: anh đang bận chút."})
+        code, out, err = self.build(self.write("s.json", s), "--new", "--out", self.p("o.json"))
+        self.assertEqual(code, 0, out + err)
+
+    def test_confirm_bad_reference_exit_2(self):
+        s = self.spec()
+        next(it for it in s["intents"] if it["kind"] == "confirm")["confirms"] = "khong_co"
+        code, out, err = self.build(self.write("s.json", s), "--new", "--out", self.p("o.json"))
+        self.assertEqual(code, 2, out + err)
+        self.assertIn("confirms", err)
+        self.assertNotIn("Traceback", err)
+
+    def test_confirmed_collect_with_labels_exit_2(self):
+        s = self.spec()
+        next(it for it in s["intents"] if it["kind"] == "collect")["classify_labels"] = ["Có nhu cầu"]
+        code, out, err = self.build(self.write("s.json", s), "--new", "--out", self.p("o.json"))
+        self.assertEqual(code, 2, out + err)
+        self.assertIn("ý định xác nhận", err)
+
+    # --- --new không mang file RAG của base
+    def base_with_files(self):
+        with open(BASE, encoding="utf-8") as f:
+            b = json.load(f)
+        files = [{"url": "https://files.example.invalid/a.pdf", "id": "f1", "name": "a.pdf"}]
+        b["nodes"][0]["ai_agent_config"]["knowledge"]["files"] = files
+        ob = next(o for o in b["org_nodes"] if o["id"] == b["nodes"][0]["id"])
+        ob["data"]["selectedTraining"] = json.loads(json.dumps(files))
+        ob["data"]["typeTrainingFile"] = "file"
+        return b
+
+    def begin_org(self, p):
+        return next(o for o in p["org_nodes"] if o["id"] == p["nodes"][0]["id"])["data"]
+
+    def test_new_drops_base_rag_files(self):
+        code, out, err = self.build(SPEC, "--new", "--out", self.p("o.json"), base=self.write("b.json", self.base_with_files()))
+        self.assertEqual(code, 0, out + err)
+        p = self.load_out()
+        self.assertEqual(p["nodes"][0]["ai_agent_config"]["knowledge"]["files"], [])
+        d = self.begin_org(p)
+        self.assertEqual(d["selectedTraining"], [])
+        self.assertNotIn("typeTrainingFile", d)
+        self.assertIn("không chép 1 file RAG", out)
+
+    def test_new_keeps_spec_rag_files(self):
+        s = self.spec()
+        s["knowledge"] = {"files": [{"id": "f2", "name": "b.pdf", "other_wok_id": "rec_1"}]}
+        code, out, err = self.build(self.write("s.json", s), "--new", "--out", self.p("o.json"), base=self.write("b.json", self.base_with_files()))
+        self.assertEqual(code, 0, out + err)
+        p = self.load_out()
+        self.assertEqual([f["id"] for f in p["nodes"][0]["ai_agent_config"]["knowledge"]["files"]], ["f2"])
+        d = self.begin_org(p)
+        self.assertEqual([f["id"] for f in d["selectedTraining"]], ["f2"])
+        self.assertEqual(d["typeTrainingFile"], "other")
+
+    def test_rag_upload_dry_run_uses_put_v2(self):
+        f = self.p("faq.txt")
+        with open(f, "w", encoding="utf-8") as fh:
+            fh.write("Câu hỏi mẫu")
+        code, out, err = run("rag_upload.py", f, "--base", BASE, "--out", self.p("r.json"), "--dry-run")
+        self.assertEqual(code, 0, out + err)
+        self.assertIn("/file_store/put_v2?business_type=callbot_recording_file", out)
+        self.assertIn("file_0=faq.txt", out)
+
+    def test_update_keeps_base_rag_files(self):
+        code, out, err = self.build(SPEC, "--update", "--out", self.p("o.json"), base=self.write("b.json", self.base_with_files()))
+        self.assertEqual(code, 0, out + err)
+        p = self.load_out()
+        self.assertEqual([f["id"] for f in p["nodes"][0]["ai_agent_config"]["knowledge"]["files"]], ["f1"])
+        d = self.begin_org(p)
+        self.assertEqual([f["id"] for f in d["selectedTraining"]], ["f1"])
+        self.assertEqual(d["typeTrainingFile"], "file")
+
 
 if __name__ == "__main__":
     unittest.main()

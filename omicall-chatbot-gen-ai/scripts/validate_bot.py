@@ -18,8 +18,11 @@ Mã C1..C7 = mục 1..7 "Validation checklist" trong references/api-reference.md
      `Bearer ***`, `"***"` trong chuỗi body JSON) — api_knowledge, actions[].data.headers, datas của editor...:
      lưu payload đó sẽ ghi đè token thật bằng `***`
   X7 (WARN) Trường hợp dùng ý định hệ thống (type INTENT) — quy ước chỉ dùng CUSTOM_INTENT
-  X8 (WARN) Truy vấn có header Authorization tĩnh — token đổi từ apiKey hết hạn sau 24 giờ
+  X8 (WARN) Truy vấn có header Authorization tĩnh — token đổi từ apiKey hết hạn sau 24 giờ; chỉ để thử nhanh/demo
+     ngắn, dùng thật cần user đồng ý (mặc định Hướng B: webhook OMIFlow)
   X9 tenant_id của bot khớp tenant_context (khi có --context)
+  X10 node ACTION START_OTHER_CAMPAIGN: runtime data.ids khác rỗng và khớp datas.selected.value của editor
+      (name_mappings cùng id) — runtime chạy theo data.ids, editor chỉ hiển thị
 Mức cảnh báo có chủ ý (WARN, không FAIL): C1 system_prompt rỗng, C4 history_config.enable khác true (bot vẫn chạy
 được, cần người duyệt), C7 is_publish:true ở mode pre (payload sẽ giữ trạng thái xuất bản — chỉ khi user đã duyệt).
 Exit: 0 khi không có FAIL (WARN vẫn cho qua), 1 khi có FAIL, 2 khi sai cách gọi.
@@ -338,8 +341,45 @@ def check_secrets(r, bot):
         r.bad("X6", "giá trị đang là bản đã che (***) — lưu sẽ ghi đè bí mật thật; "
                     "dùng bản GET chưa che làm base", p)
     for p in static:
-        r.warn("X8", "Truy vấn có header Authorization tĩnh — token đổi từ apiKey hết hạn sau 24 giờ "
-                     "(Cần xác nhận cách làm mới, hoặc đi Hướng B qua OMIFlow)", p)
+        r.warn("X8", "Truy vấn có header Authorization tĩnh (Hướng A) — token đổi từ apiKey HẾT HẠN SAU 24 GIỜ, "
+                     "Truy vấn sẽ hỏng; chỉ dùng thử nhanh/demo ngắn và phải được user đồng ý — bot chạy thật "
+                     "mặc định Hướng B (webhook OMIFlow)", p)
+
+
+def check_start_other_campaign(r, bot):
+    """X10. Runtime START_OTHER_CAMPAIGN chạy theo data.ids (uuid flow); editor datas.selected chỉ hiển thị."""
+    camp = campaign(bot)
+    maps = {m.get("id"): m for m in camp.get("name_mappings") or [] if isinstance(m, dict)}
+    seen = 0
+    for i, n in enumerate(camp.get("nodes") or []):
+        if not isinstance(n, dict) or n.get("node_type") != "ACTION":
+            continue
+        ed = maps.get(n.get("id")) or {}
+        ed_acts = [a for a in ed.get("actions") or []
+                   if isinstance(a, dict) and a.get("type") == "START_OTHER_CAMPAIGN"]
+        k = 0
+        for j, a in enumerate(n.get("actions") or []):
+            if not isinstance(a, dict) or a.get("type") != "START_OTHER_CAMPAIGN":
+                continue
+            seen += 1
+            path = "$.campaign.nodes[%d].actions[%d].data.ids" % (i, j)
+            ids = (a.get("data") or {}).get("ids") if isinstance(a.get("data"), dict) else None
+            ea = ed_acts[k] if k < len(ed_acts) else None
+            k += 1
+            if not (isinstance(ids, list) and ids and all(isinstance(x, str) and x for x in ids)):
+                r.bad("X10", "START_OTHER_CAMPAIGN thiếu data.ids (runtime không biết gọi flow nào)", path)
+                continue
+            sel = ((ea or {}).get("datas") or {}).get("selected") if isinstance((ea or {}).get("datas"), dict) else None
+            val = sel.get("value") if isinstance(sel, dict) else None
+            if not val:
+                r.ok("X10", "data.ids có giá trị (không ghép được editor để so)", path)
+            elif ids != [val]:
+                r.bad("X10", "data.ids lệch datas.selected.value của editor — runtime sẽ gọi flow khác flow hiển thị",
+                      path)
+            else:
+                r.ok("X10", "data.ids khớp datas.selected.value của editor", path)
+    if not seen:
+        r.ok("X10", "không có ACTION START_OTHER_CAMPAIGN", "$.campaign.nodes")
 
 
 def check_context(r, bot, ctx_path):
@@ -368,6 +408,7 @@ def validate(bot, mode="pre", sent=None, context=None):
     check_publish(r, bot, sent, mode)
     check_edges(r, bot)
     check_secrets(r, bot)
+    check_start_other_campaign(r, bot)
     if context:
         check_context(r, bot, context)
     return r

@@ -6,9 +6,12 @@ import unittest
 from _util import REFS, SKILL, SPEC_FLOW, load
 
 # File dùng chung do owner 'shared' tạo/đồng bộ — có thể chưa có khi chạy test của skill này.
-SHARED = {"references/omi-mcp.md", "references/omi-mcp-extra.md", "references/tenant_context.template.json", "scripts/self_update.py",
-          "scripts/omi_session.py", "scripts/omi_preflight.py", "scripts/omi_api.py", "scripts/omi_save.py",
-          "scripts/tenant_survey.py", "scripts/manifest.py", "scripts/extract_text.py", "scripts/extract_template.py"}
+SHARED = {"references/omi-mcp.md", "references/omi-mcp-extra.md", "references/tenant_context.template.json",
+          "references/conversation.md", "references/system-model.md", "references/solution-method.md",
+          "references/parallel.md", "references/default-behaviors.md", "references/test-cases.md",
+          "scripts/self_update.py", "scripts/omi_session.py", "scripts/omi_preflight.py", "scripts/omi_login.py",
+          "scripts/omi_api.py", "scripts/omi_save.py", "scripts/tenant_survey.py", "scripts/manifest.py",
+          "scripts/extract_text.py", "scripts/extract_template.py", "scripts/config_survey.py"}
 
 
 def read(p):

@@ -17,4 +17,4 @@ Chạy sau mỗi lần dựng hoặc sửa, trước khi giao. Kỳ vọng lấy
 | 11 | Kết thúc bình thường | Nói hết nhu cầu | Bot hỏi "còn cần hỗ trợ gì không" rồi mới chào kết thúc |
 | 12 | Nói nhiều ý trong một câu | Vừa đồng ý vừa hỏi giá | Xử lý ý chính, không rơi vào nhánh sai |
 
-Báo kết quả theo mẫu: `Đạt n/12`, liệt kê tình huống không đạt kèm câu thực tế của bot, và tình huống bỏ qua (kèm lý do). Không đạt: sửa rồi chạy lại đúng tình huống đó; không tự cho là đạt khi chưa thử.
+Báo kết quả theo mẫu: callbot `Đạt n/12`; chatbot chấm theo G1–G14 (`livetalk-test-optimize.md`). Liệt kê tình huống không đạt kèm câu thực tế của bot, và tình huống bỏ qua (kèm lý do). Không đạt: sửa rồi chạy lại đúng tình huống đó; không tự cho là đạt khi chưa thử.

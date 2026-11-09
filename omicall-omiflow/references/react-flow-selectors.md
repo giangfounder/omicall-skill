@@ -33,7 +33,7 @@ Góc dưới trái canvas:
 - Toggle interactivity (khoá canvas): `button[aria-label="toggle interactivity"]`
 
 ## Kéo edge qua JS (KHÔNG khuyến nghị)
-Cách chính để nối hai nút có sẵn là `left_click_drag` của công cụ trình duyệt từ chấm nguồn tới chấm đích (`ui-build-and-test.md` mục 7, đã kiểm chứng); không được thì sửa `next_nodes` + `edges.connections` trong JSON rồi lưu nháp. Giả lập PointerEvent dưới đây thường không ăn (`ui-build-and-test.md` mục 6), chỉ giữ làm tham khảo khi cần đọc toạ độ handle.
+Cách nối cạnh chính: `ui-build-and-test.md` mục *Canvas: nối, xoá, sửa cạnh* (mục duy nhất về kéo nối). Giả lập PointerEvent dưới đây thường không ăn, chỉ giữ làm tham khảo khi cần đọc toạ độ handle.
 
 ```js
 function fire(el, type, x, y) {
@@ -88,5 +88,5 @@ document.querySelector('button[aria-label="Xóa node"]').click();
 ## Đọc data internal của React Flow (khó — không public API)
 React Flow lưu state trong context không expose ra DOM dataset. Nếu cần đọc/set state trực tiếp, phải hack qua `__reactFiber` (rủi ro, không stable). Tránh — dùng DOM selectors + dispatch events là đủ cho hầu hết use case.
 
-## Viewport mapping (browser pane 800×xxx vs actual viewport 1142×962)
-Coordinates từ `getBoundingClientRect()` là **actual viewport coords**. Browser pane tools nhận **screenshot coords** với scale ≈ 0.7 (800/1142). Khi thao tác qua screenshot → nhân 0.7. Khi qua JS → dùng actual coords trực tiếp (không cần scale).
+## Quy đổi toạ độ JS sang ảnh chụp
+Toạ độ từ `getBoundingClientRect()` là toạ độ thật của trang. Ảnh chụp của browser pane có thể bị thu nhỏ → tỉ lệ = chiều rộng ảnh chụp ÷ `window.innerWidth`, đo lại mỗi lần (pane đổi kích thước là tỉ lệ đổi). Thao tác theo ảnh chụp → nhân toạ độ JS với tỉ lệ; thao tác bằng JS → dùng toạ độ thật.

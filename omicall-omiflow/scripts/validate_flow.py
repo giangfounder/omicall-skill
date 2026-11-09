@@ -4,7 +4,7 @@
 
 <flow.json>: object flow (như GET /omi_v2/campaign/get/{id}) hoặc bọc trong {"payload": {...}}.
 Mỗi dòng output: `PASS|FAIL|WARN <mã> <mô tả> [json path]`; dòng cuối `RESULT PASS|FAIL`.
-Mã C1..C7 = mục checklist trong references/api-reference.md; X1..X10 = mục bổ sung.
+Mã C1..C7 = mục checklist trong references/api-reference.md; X1..X11 = mục bổ sung.
 Exit 0: không có FAIL (WARN vẫn cho qua) · 1: có FAIL · 2: sai cách gọi hoặc file không đọc được.
 
 Validator chỉ chứng minh JSON nhất quán với các quy tắc đã ghi trong skill, KHÔNG thay cho bước test
@@ -18,7 +18,7 @@ import sys
 LINK_HANDLES = {'next_nodes': '2', 'success_next_nodes': 'success_action_step', 'fail_next_nodes': 'fail_action_step'}
 VAR_RE = re.compile(r'\{\{\s*([^{}\s]+)\s*\}\}')
 RANDOM_CODE_RE = re.compile(r'^(?=.*[A-Z])(?=.*[a-z])[A-Za-z0-9]{10}$')
-# Biến hệ thống đã ghi trong references (concepts.md mục 3, node-catalog.md mục 5, ui-build-and-test.md mục 1, 4).
+# Biến hệ thống đã ghi trong references (concepts.md mục 3, node-catalog.md mục 5, ui-build-and-test.md mục 2, 3).
 SYSTEM_PREFIXES = ('ct_', 'ca_', 'social_', 'form_', 'utm_', 'current_', 'contact_', 'ticket_', 'interactive_',
                    'last_', 'total_', 'closest_', 'user_owner_', 'change_status_', 'transfer_agent_', 'opportunity_')
 SYSTEM_NAMES = {'full_name', 'phone_number', 'mail', 'email', 'age', 'gender1', 'note', 'win_lose'}
@@ -68,6 +68,19 @@ def as_list(v):
     return [v]
 
 
+def bot_end_handle(node):
+    """Nút AI Chatbot (OMI_BOT_AI): nhánh "BOT chủ động kết thúc" nằm ở next_nodes nhưng edge dùng
+    sourceHandle = id trường hợp kết thúc (trùng ai_analyze.customer_not_response.id; node-catalog.md mục 2.1,
+    ✔ UI 10/2026). Chưa có JSON mẫu nên dò ở mọi tầng của node. Không thấy → None."""
+    if node.get('node_type') != 'OMI_BOT_AI':
+        return None
+    for d in walk_dicts(node):
+        c = d.get('customer_not_response')
+        if isinstance(c, dict) and c.get('id') not in (None, ''):
+            return str(c.get('id'))
+    return None
+
+
 def node_links(node, i):
     """Trả về [(handle, target, json_path)] của mọi liên kết khai trong node."""
     out = []
@@ -75,7 +88,10 @@ def node_links(node, i):
         if isinstance(c, dict):
             for t in as_list(c.get('next_nodes')):
                 out.append((str(c.get('id')), hk(t), f'nodes[{i}].conditions[{ci}].next_nodes'))
+    end = bot_end_handle(node)
     for key, handle in LINK_HANDLES.items():
+        if key == 'next_nodes' and end:
+            handle = end
         for t in as_list(node.get(key)):
             out.append((handle, hk(t), f'nodes[{i}].{key}'))
     return out
@@ -244,8 +260,18 @@ def check(flow, mode='pre', sent=None, quota=None, context=None):
         if str(e.get('targetHandle')) != '1':
             r.add('WARN', 'X1', f'targetHandle nên là "1", đang là {e.get("targetHandle")!r}', f'edges.connections[{ei}].targetHandle')
     link_set = set()
+    all_links = {(s, h, t) for s, h, t, _ in links}
+    bot_ids = {hk(n.get('id')) for _, n in work if n.get('node_type') == 'OMI_BOT_AI' and not bot_end_handle(n)}
     for src, handle, tgt, path in links:
         link_set.add((src, handle, tgt))
+        if (src, handle, tgt) not in edge_set and src in bot_ids and handle == LINK_HANDLES['next_nodes']:
+            # AI Chatbot không có customer_not_response.id: chấp nhận edge cùng nguồn/đích khác handle, nhưng WARN
+            alt = [k for k in edge_set if k[0] == src and k[2] == tgt and k not in all_links]
+            if alt:
+                link_set.add(alt[0])
+                r.add('WARN', 'X1', f'nút AI Chatbot {src}: edge --{alt[0][1]}--> {tgt} không đối chiếu được với '
+                      'ai_analyze.customer_not_response.id (không thấy trong node) — Cần xác nhận', path)
+                continue
         if (src, handle, tgt) not in edge_set:
             r.add('FAIL', 'X1', f'thiếu edge {src} --{handle}--> {tgt}', path)
             x1 += 1
@@ -438,6 +464,25 @@ def check(flow, mode='pre', sent=None, quota=None, context=None):
         r.add('WARN', 'C6', 'payload có is_publish=true: script chỉ được lưu nháp (omi_save không có cờ xuất bản); '
               'flow mới phải để chưa xuất bản tới khi user duyệt. Sửa flow đang chạy thì lưu nháp hoặc tạo flow mới',
               'is_publish')
+
+    # X11 quy ước mặc định mọi flow: Hoạt động, Không giới hạn lượt, không khoảng hiệu lực (trừ khi user nói khác).
+    # Chỉ đọc trường có trong GET (api-reference.md mục Đối tượng flow); thiếu trường coi như null. Không đọc status/is_active.
+    tail = 'lệch quy ước mặc định, chỉ giữ nếu user yêu cầu'
+    x11 = 0
+    it = flow.get('iteration_config')
+    if isinstance(it, dict) and it.get('is_limit') is True:
+        r.add('WARN', 'X11', f'iteration_config.is_limit=true (Giới hạn số lần đi qua): {tail}', 'iteration_config.is_limit')
+        x11 += 1
+    for k in ('start_date', 'end_date'):
+        if flow.get(k) not in (None, ''):
+            r.add('WARN', 'X11', f'{k}={flow.get(k)!r} (đặt khoảng hiệu lực): {tail}', k)
+            x11 += 1
+    for k in ('is_pause', 'is_stopped'):
+        if flow.get(k) is True:
+            r.add('WARN', 'X11', f'{k}=true (flow Ngưng/tạm dừng, không Hoạt động): {tail}', k)
+            x11 += 1
+    if not x11:
+        r.add('PASS', 'X11', 'đúng quy ước mặc định: không giới hạn lượt, không khoảng hiệu lực, không ngưng')
 
     # C7 test thật
     r.add('WARN', 'C7', 'validator không thay test: gọi URL webhook bằng cURL hoặc tạo sự kiện thật (khi user đồng ý), '

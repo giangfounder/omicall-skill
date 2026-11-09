@@ -27,6 +27,18 @@ def skill_files(root):
             yield os.path.join(d, f)
 
 
+def shared_copies():
+    """Đường dẫn (tương đối trong skill) của file chép từ shared/ — sửa ở shared/, không sửa ở đây."""
+    import importlib.util
+    tool = os.path.join(os.path.dirname(SKILL), "tools", "sync_shared.py")
+    if not os.path.isfile(tool):
+        return set()
+    spec = importlib.util.spec_from_file_location("_sync_shared_for_test", tool)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return {rel for rel, skills in mod.MAP.items() if os.path.basename(SKILL) in skills}
+
+
 def read(p):
     with open(p, encoding="utf-8") as f:
         return f.read()
@@ -95,6 +107,19 @@ class TestDocs(unittest.TestCase):
         api = read(os.path.join(SKILL, "references", "api-reference.md"))
         self.assertNotIn("đang xác minh qua captor)", api)
         self.assertIn("Cần xác nhận", api[api.index("## RAG"):api.index("## Bot object")])
+        # captor chỉ còn ở scripts/inject_captor.py (có che bí mật), không chép code trong tài liệu
+        self.assertNotIn("window.fetch=function", api.replace(" ", ""))
+        self.assertIn("scripts/inject_captor.py", api)
+        # START_OTHER_CAMPAIGN: chỉ một schema runtime (data.ids); không còn dòng ghi runtime là datas.selected
+        self.assertNotIn('actions:[{type:"START_OTHER_CAMPAIGN", datas:', api)
+        self.assertNotIn("bot không biết thì im lặng, chuyển nhân viên", api)
+        # nhánh "BOT chủ động kết thúc" cũng chạy khi khách im lặng → không gợi ý rẽ khung giờ ở đó
+        self.assertNotIn("flow rẽ `TIME_FRAME` sau nút `OMI_BOT_AI`", gotchas)
+        # Hướng A (token tĩnh 24 giờ) không còn là mặc định
+        self.assertNotIn("Hướng A (mặc định)", pb)
+        self.assertNotIn("Hướng A (khuyên dùng)", read(os.path.join(SKILL, "references", "crm-integration.md")))
+        spec = read(os.path.join(SKILL, "references", "spec-bot.example.json"))
+        self.assertNotIn("Bearer <access_token>", spec)
         crm = read(os.path.join(SKILL, "references", "crm-integration.md"))
         self.assertNotIn("status_code:200", crm.replace(" ", ""))
         self.assertNotIn("!= 200", crm)
@@ -112,10 +137,66 @@ class TestDocs(unittest.TestCase):
             self.assertTrue(os.path.exists(full), path)
             self.assertLessEqual(int(line), len(read(full).splitlines()), r["source"])
         st = {r["type"]: r["status"] for r in rows}
-        for t in ("SEND_MESSAGE (Gửi tin nhắn chung)", "END (Kết thúc trò chuyện)", "Chuyển nhân viên",
+        for t in ("SEND_MESSAGE (Gửi tin nhắn chung)", "END (Kết thúc trò chuyện)",
                   "KICK_OFF_CONTEXT (Kích hoạt ngữ cảnh)"):
             self.assertEqual(st[t], "ui_only")
+        # chuyển nhân viên = ACTION START_OTHER_CAMPAIGN gọi flow phụ thuộc, không phải nút giao diện
+        self.assertEqual(st["Chuyển nhân viên"], "verified")
+        # source trỏ đúng dòng (theo số dòng nên dễ lệch khi sửa tài liệu): kiểm vài dòng mốc
+        anchors = {"Chuyển nhân viên": "huyển nhân viên", "ACTION START_OTHER_CAMPAIGN": "START_OTHER_CAMPAIGN",
+                   "ACTION SEND_WEBHOOK": "SEND_WEBHOOK", "OMI_BOT_COLLECT_INFO": "collect_variables",
+                   "INTENT (ý định hệ thống)": "omi_intent_phone", "api_knowledge (Truy vấn)": "API Knowledge"}
+        for r in rows:
+            if r["type"] in anchors:
+                path, line = r["source"].rsplit(":", 1)
+                text = read(os.path.join(SKILL, path)).splitlines()[int(line) - 1]
+                self.assertIn(anchors[r["type"]], text, r["source"])
         self.assertTrue(any("OMI_BOT_AI" in r["ui_hint"] for r in rows if r["type"].startswith("ACTION SEND_WEBHOOK")))
+
+    def test_consistency_round2(self):
+        """Đợt dọn mâu thuẫn: một hệ chấm, một cách đăng nhập, một nguồn cho prompt/`/end`/24 giờ."""
+        own = {os.path.relpath(p, SKILL).replace(os.sep, "/"): read(p) for p in skill_files(SKILL)}
+        shared = shared_copies()
+        mine = {k: v for k, v in own.items() if k not in shared}
+        # 1 hệ chấm (G1–G14): không còn thang 12 tình huống ở file của skill này (test-cases.md là bản chép shared/)
+        self.assertEqual([k for k, v in mine.items() if "n/12" in v], [])
+        self.assertIn("G1–G14", self.skill_md)
+        # đăng nhập: một cách (form cục bộ --ui); terminal chỉ dự phòng
+        pb = own["references/playbook.md"]
+        self.assertIn("setup --ui", self.skill_md)
+        self.assertIn("setup --ui", pb)
+        self.assertNotIn("setup --domain <domain> --email", pb)
+        # attribute_structure là mảng
+        for k in ("references/omicall-public-api.md", "references/crm-integration.md"):
+            self.assertNotRegex(own[k], r'"attribute_structure":\s*\{', k)
+            self.assertNotIn("object hay mảng", own[k], k)
+        # prompt chính: một mục nguồn trong api-reference, UI mapping không còn gán Ngữ cảnh bắt đầu = system_prompt
+        api = own["references/api-reference.md"]
+        self.assertEqual(api.count("## Prompt chính"), 1)
+        self.assertNotIn('"Ngữ cảnh bắt đầu" (= `system_prompt`)', api)
+        self.assertNotIn("System Prompt nằm ở top-level `system_prompt`", pb)
+        # nút gọi flow: một schema runtime (data.ids); datas.selected chỉ là editor
+        self.assertEqual(len(re.findall(r'"data":\{"ids":\["<flow uuid>"\]\}', api)), 1)
+        self.assertNotIn('actions:[{type:"START_OTHER_CAMPAIGN", datas:', api)
+        # chuyển nhân viên: flow phụ thuộc, không phải nút giao diện; bot không im lặng
+        for k, v in mine.items():
+            self.assertNotIn("handoff/chuyển nhân viên, kick_off_context", v, k)
+            self.assertNotIn("bot không biết thì im lặng", v, k)
+        # OMI_BOT_AI: chỉ ghi nhận với SEND_WEBHOOK, không suy rộng cho mọi hành động
+        self.assertNotIn("hành động trong kịch bản bot có thể không chạy", pb)
+        # crm-integration không chép lại OMIFlow (trỏ sang skill omicall-omiflow)
+        crm = own["references/crm-integration.md"]
+        self.assertNotIn("## OMIFlow —", crm)
+        self.assertNotIn("## Kiến trúc chuẩn: 2 OMIFlow", crm)
+        self.assertIn("omicall-omiflow", crm)
+        # quy tắc gốc `/end` chỉ ở playbook Gotchas; SKILL.md không nhắc lại chi tiết "không bật lại"
+        self.assertEqual(pb.count("**`/end` (quy tắc gốc"), 1)
+        self.assertNotIn("không bật lại bot", self.skill_md)
+        # tham chiếu sai: mục playbook không còn trỏ về SKILL.md
+        for k in ("references/ui-gotchas.md", "references/livetalk-test-optimize.md", "references/api-reference.md"):
+            self.assertNotRegex(own[k], r"SKILL\.md\)? ?(Gotchas \"Editor|mục \"(Đăng nhập an toàn|Bảo trì skill)\")", k)
+        self.assertNotIn("Verifed", api)
+        self.assertNotIn("Camera:", api)
 
     def test_spec_example_loads(self):
         with open(os.path.join(SKILL, "references", "spec-bot.example.json"), encoding="utf-8") as f:

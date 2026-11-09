@@ -186,7 +186,7 @@ def main():
         vf = ROOT / t / "VERSION"
         old = vf.read_text(encoding="utf-8").strip() if vf.exists() else "0.0.0"
         new = bump(old, part)
-        vf.write_text(new + "\n", encoding="utf-8")
+        vf.write_text(new + "\n", encoding="utf-8", newline="\n")  # giữ LF trên Windows (giới hạn byte SKILL.md)
         # version hiển thị trong mô tả skill (danh sách /) và bước bắt buộc
         sk = ROOT / t / "SKILL.md"
         s = sk.read_text(encoding="utf-8")
@@ -195,7 +195,7 @@ def main():
         s = re.sub(r"(dùng v)\d+\.\d+\.\d+(\))", rf"\g<1>{new}\g<2>", s)
         if not k1:
             print(f"CẢNH BÁO: {t}/SKILL.md chưa có [vX.Y.Z] trong mô tả — thêm tay đầu dòng description")
-        sk.write_text(s, encoding="utf-8")
+        sk.write_text(s, encoding="utf-8", newline="\n")
         row = f"| {new} | {today} | tag `{t}/v{new}` | {note} |\n"
         m = re.search(rf"## {re.escape(t)}\n\| Phiên bản .*?\n\|---.*?\n", text)
         if m:
@@ -203,7 +203,7 @@ def main():
         else:
             text += f"\n## {t}\n| Phiên bản | Ngày | Commit | Thay đổi |\n|---|---|---|---|\n{row}"
         released.append((t, old, new))
-    cl.write_text(text, encoding="utf-8")
+    cl.write_text(text, encoding="utf-8", newline="\n")
     infra = [p for p in INFRA if (ROOT / p).exists()]
     git("add", "CHANGELOG.md", *targets, *infra)
     msg = "; ".join(f"{t} v{new}" for t, _, new in released) + f": {note}"

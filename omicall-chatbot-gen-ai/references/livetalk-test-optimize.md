@@ -3,7 +3,8 @@
 Dùng khi cần: đưa bot (OmiBot) lên một kênh LiveTalk để chat thử, chạy bộ câu hỏi thử, chấm điểm, tối ưu rồi so sánh trước/sau.
 Áp dụng cho mọi tenant, mọi bot. Không ghi nội dung riêng của khách (prompt, FAQ, tên sản phẩm) vào skill; bộ câu hỏi và báo cáo của từng bot để ở scratchpad hoặc thư mục dự án của user.
 
-> Trạng thái xác minh: phần **5 (chấm điểm)**, **6 (tối ưu)**, **7 (báo cáo)** là quy trình, không phụ thuộc giao diện. Các đường menu và schema ở phần **2–4** đánh dấu **[chưa xác minh]** thì phải kiểm trên tenant trước khi tin, rồi cập nhật file này kèm JSON thật (mục "Bảo trì skill" của SKILL.md).
+> Trạng thái xác minh: phần **5 (chấm điểm)**, **6 (tối ưu)**, **7 (báo cáo)** là quy trình, không phụ thuộc giao diện. Các đường menu và schema ở phần **2–4** đánh dấu **[chưa xác minh]** thì phải kiểm trên tenant trước khi tin, rồi cập nhật file này kèm JSON thật (mục "Bảo trì skill" của `playbook.md`).
+> Hệ chấm duy nhất của skill chatbot: bộ câu hỏi G1–G14 (mục 4) + tiêu chí mục 5 + `eval_report.py`.
 
 ## 1. Ranh giới an toàn (đọc trước)
 - **Không gắn bot vào kênh đang phục vụ khách thật.** Luôn tạo hoặc dùng một widget LiveTalk riêng, tên có hậu tố `- TEST`.
@@ -35,7 +36,7 @@ GENERAL (đối tượng: hội thoại được thêm mới; điều kiện: k�
 ```
 - **Bắt buộc lọc đúng widget test** ở điều kiện bắt đầu; thiếu điều kiện này flow sẽ bắt cả hội thoại của kênh thật.
 - Giới hạn lặp (`iteration_config`) để một hội thoại không bị giao bot nhiều lần.
-- Muốn tắt bot giữa chừng cho một hội thoại (khi nhân viên nhận): hành động `UPDATE_SOCIAL_CHATBOT_STATUS` **[enum, chưa xác minh JSON]**.
+- Muốn tắt bot giữa chừng cho một hội thoại (khi nhân viên nhận): hành động `UPDATE_SOCIAL_CHATBOT_STATUS` `enable_chatbot:false` (JSON ở skill `omicall-omiflow` node-catalog; đã chạy 11/2026, `ui-gotchas.md`).
 - Flow phải ở trạng thái hoạt động mới chạy; bật/xuất bản flow là thao tác tác động thật → hỏi user.
 - Sau khi dựng: chụp JSON flow bằng API `campaign-v1` (theo skill OMIFlow) và ghi schema `GENERAL` hội thoại + `OMI_BOT_AI` đã xác minh vào node-catalog của skill OMIFlow.
 
@@ -107,10 +108,10 @@ Mỗi ca chấm 5 tiêu chí, mỗi tiêu chí 0 / 1 / 2 (2 = đạt, 1 = đạt
 ## 6. Tối ưu: lỗi nào sửa ở đâu
 | Triệu chứng | Nguyên nhân hay gặp | Sửa ở |
 |---|---|---|
-| Bịa số liệu, hứa hẹn | Prompt thiếu ràng buộc; dữ liệu không có | `system_prompt` + `ai_analyze.content`: "chỉ dùng dữ liệu từ Kho tri thức/Truy vấn; không có thì nói chưa có và mời gặp nhân viên" |
+| Bịa số liệu, hứa hẹn | Prompt thiếu ràng buộc; dữ liệu không có | Prompt chính (`api-reference.md` mục "Prompt chính"): "chỉ dùng dữ liệu từ Kho tri thức/Truy vấn; không có thì nói chưa có và mời gặp nhân viên" |
 | Có trong tài liệu nhưng bot nói không biết | RAG chưa train xong; file khó tách đoạn | Kiểm `file_training_status`; viết lại file RAG theo mục có tiêu đề rõ hoặc dạng hỏi–đáp; một chủ đề một mục |
 | Sai ý định / lẫn hai ý định | Mô tả ý định mơ hồ, chồng lấn | Viết lại "Hướng dẫn BOT" của ý định: khi nào chọn, khi nào KHÔNG chọn, 2–3 câu ví dụ; bỏ ý định chỉ để hỏi đáp (để RAG lo) |
-| Không chuyển nhân viên | `bot_can_not_answer` chưa nối, thiếu ý định gặp nhân viên | Nối `bot_can_not_answer.next_node` tới hành động chuyển; thêm ý định "gặp nhân viên/khiếu nại" |
+| Không chuyển nhân viên | `bot_can_not_answer` chưa nối, thiếu ý định gặp nhân viên | Nối `bot_can_not_answer.next_node` tới ACTION `START_OTHER_CAMPAIGN` gọi flow phụ thuộc chuyển nhân viên (spec `handoff`); thêm ý định "gặp nhân viên/khiếu nại" |
 | Chuyển nhân viên quá sớm | Ý định chuyển quá rộng | Thu hẹp mô tả; quy tắc "thử trả lời từ dữ liệu trước" |
 | Trả lời dài, nhiều ý | Thiếu quy tắc định dạng | Quy tắc độ dài trong prompt; `max_characters_reply` |
 | Quên ngữ cảnh lượt trước | Tắt lịch sử | `history_config.enable=true`, đặt `history_length` |
@@ -136,6 +137,6 @@ Tổng số ca tính theo `testcases.json`: ca không có kết quả tính là 
 - **Mã nhúng widget test**: `<script id="omiLiveTalk" src="https://cdn.omicrm.com/script/livetalk/main.js#domain=<tên miền tổng đài>" async></script>` — **bắt buộc `id="omiLiveTalk"`** (script tìm thẻ theo id để đọc tham số sau `#`; thiếu id thì chỉ log "initialize..." rồi không hiện gì). Tham số thêm: `name=`, `phone=`, `email=`, `uuid=` (ngăn cách bằng `;`). Phục vụ bằng `python -m http.server` → `localhost` chạy được.
 - Cấu hình widget (form trước chat, trường bắt buộc): `GET https://livetalk-v2-stg.omicrm.com/widget/config/get/<domain>` → `payload.require` (vd. `["fullName","phoneNumber"]`).
 - SĐT khách điền ở form trước chat LiveTalk = biến Đa kênh **`{{social_lt_phone_number}}`** (email: `{{social_lt_email}}`), dùng được trong nút Thêm khách hàng của OMIFlow trigger LiveTalk — không cần bot hỏi số hay nhận dạng ý định.
-- **Mỗi lần cập nhật bot (lưu/xuất bản), trong khung chat thử phải gửi `/end` để kết thúc phòng cũ rồi chat lại** — phòng chat đang mở giữ phiên bản bot cũ, nên trả lời theo cấu hình cũ dù bot đã đổi (chỉ dẫn của user, 10/2026). Chưa `/end` thì không được kết luận bản mới chạy sai hay đúng. Việc khung thử chạy bản nháp hay bản xuất bản: kiểm lại sau khi đã `/end`.
+- Bằng chứng cho quy tắc `/end` (quy tắc gốc ở `playbook.md` Gotchas): phòng chat đang mở giữ phiên bản bot cũ, nên trả lời theo cấu hình cũ dù bot đã đổi (chỉ dẫn của user, 10/2026). Việc khung thử chạy bản nháp hay bản xuất bản: kiểm lại sau khi đã `/end`.
 - `history_config.enable` mặc định có thể là `false` → bot quên lượt trước (hỏi lại, xưng hô sai). Kiểm và bật khi tối ưu.
 - RAG file hỏi–đáp dài (~28KB) có thể không kéo được câu hỏi về số liệu (giá, mức phí, điều kiện độ tuổi…). Cách chắc: đưa các số liệu chốt (chép nguyên từ nguồn) vào khối "thông tin chính" trong prompt, để RAG lo phần chi tiết.

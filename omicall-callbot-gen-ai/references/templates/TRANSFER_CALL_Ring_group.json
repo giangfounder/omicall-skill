@@ -1,0 +1,131 @@
+{
+ "_meta": {
+  "verified": false,
+  "type": "TRANSFER_CALL Ring_group",
+  "ghi_chu": "Node TRANSFER_CALL chuyển tới nhóm nội bộ (Ring_group), rút từ bản GET thật sau khi chọn nhóm trên giao diện (✔ UI 11/2026), đã bỏ giá trị tenant. build_smartagent.py KHÔNG đọc file này (transfer.type ring_group → exit 2) và tên file cố ý khác TRANSFER_CALL.json để builder không lấy nhầm làm mẫu chuyển nhân viên. Cách dùng: ghép tay theo references/api-reference.md mục 'ACTION — TRANSFER_CALL nhóm nội bộ (Ring_group)'. Thay <node_id>, <action_id> (giữ khớp runtime và editor), <begin_id>, <intent_id>, <GROUP_ID> = id nhóm pbx, <GROUP_NUMBER> = số nhóm, <GROUP_NAME> = tên nhóm, <GROUP_NAME_KHONG_DAU> = tên nhóm bỏ dấu, chữ thường. Trạng thái kiểm chứng: references/node-status.json."
+ },
+ "type": "TRANSFER_CALL Ring_group",
+ "runtime": {
+  "id": "<node_id>",
+  "node_type": "ACTION",
+  "actions": [
+   {
+    "id": "<action_id>",
+    "type": "TRANSFER_CALL",
+    "data": {
+     "actionType": "Ring_group",
+     "transfer_customize_info": false,
+     "sip_number": "<GROUP_NUMBER>",
+     "ids": [
+      "<GROUP_ID>"
+     ],
+     "transfer_collected_info": true
+    }
+   }
+  ],
+  "is_collapse": false,
+  "description": "Chuyển máy cho người thật: chuyển tới nhóm nhận cuộc gọi <GROUP_NAME>."
+ },
+ "editor": {
+  "data": {
+   "variables": [],
+   "count": 1,
+   "name": "",
+   "description": "Chuyển máy cho người thật: chuyển tới nhóm nhận cuộc gọi <GROUP_NAME>.",
+   "type": "ACTION",
+   "actions": [
+    {
+     "datas": {
+      "actionType": "Ring_group",
+      "customizeInfo": [],
+      "isTransferCollectedInfo": true,
+      "isTransferCustomizeInfo": false,
+      "selected": "<GROUP_ID>"
+     },
+     "id": "<action_id>",
+     "type": "TRANSFER_CALL"
+    }
+   ],
+   "content": "",
+   "collapseObj": {
+    "NEXT_STEP": {
+     "isCollapse": false
+    }
+   }
+  },
+  "width": 332,
+  "id": "<node_id>",
+  "position": {
+   "x": 450,
+   "y": 0
+  },
+  "relatedPosition": {
+   "agent": "",
+   "ticket": "",
+   "contact": "",
+   "conv": "",
+   "call_transaction": ""
+  },
+  "type": "ACTION",
+  "orgDatas": [
+   {
+    "datas": {
+     "typeOptions": {
+      "Extension": [],
+      "Ring_group": [
+       {
+        "sipNumber": "<GROUP_NUMBER>",
+        "members": 1,
+        "label": "<GROUP_NAME>",
+        "value": "<GROUP_ID>"
+       }
+      ],
+      "Outer_group": []
+     },
+     "transferType": "Ring_group",
+     "customizeInfo": [],
+     "isTransferCustomizeInfo": false,
+     "isTransferCollectedInfo": true,
+     "type": "TRANSFER_CALL",
+     "selected": {
+      "sipNumber": "<GROUP_NUMBER>",
+      "members": 1,
+      "label": "<GROUP_NAME>",
+      "labelUnsigned": "<GROUP_NAME_KHONG_DAU>",
+      "value": "<GROUP_ID>"
+     }
+    },
+    "type": "TRANSFER_CALL"
+   }
+  ],
+  "height": 219
+ },
+ "edges": [
+  {
+   "sourceHandle": "<intent_id>",
+   "animated": false,
+   "style": {
+    "strokeWidth": 3,
+    "stroke": "#00B1FF"
+   },
+   "id": "reactflow__edge-<begin_id><intent_id>-<node_id>1",
+   "source": "<begin_id>",
+   "type": "custom",
+   "targetHandle": "1",
+   "target": "<node_id>"
+  },
+  {
+   "sourceHandle": "bot_can_not_answer",
+   "animated": false,
+   "style": {
+    "strokeWidth": 3,
+    "stroke": "#00B1FF"
+   },
+   "id": "reactflow__edge-<begin_id>bot_can_not_answer-<node_id>1",
+   "source": "<begin_id>",
+   "type": "custom",
+   "targetHandle": "1",
+   "target": "<node_id>"
+  }
+ ]
+}

@@ -3,10 +3,12 @@
   python <thư mục skill>/scripts/extract_template.py --from <GET.json> --node <id nút> --type <TYPE> --out <file>
          [--edges] [--mark-verified --evidence <báo cáo validator mode post>] [--allowlist <json>]
 
-Xuất {_meta, type, runtime, editor[], edges[]}:
-- runtime: phần tử trong `nodes` có id = --node;
-- editor : phần tử trong `name_mappings` / `org_nodes` có id = --node (schema editor chưa kiểm chứng ở mọi loại: chỉ khớp
-           theo khoá `id`, giữ nguyên cấu trúc);
+Xuất {_meta, type, runtime, editor, editor_all[], edges[]}:
+- runtime   : phần tử trong `nodes` có id = --node (object);
+- editor    : MỘT object (dạng builder đọc, ví dụ load_template của build_smartagent.py): phần tử của `org_nodes` có
+              id = --node, không có thì của `name_mappings`; không thấy thì null;
+- editor_all: mọi phần tử khớp [{_tu: name_mappings|org_nodes, item}] (schema editor chưa kiểm chứng ở mọi loại: chỉ
+              khớp theo khoá `id`, giữ nguyên cấu trúc);
 - edges  : (với --edges) cạnh trong `edges.connections` / `connections` có source hoặc target = --node.
 Che dữ liệu (giữ nguyên khoá và kiểu, chỉ thay giá trị chuỗi):
 - id thật -> <node_id>, <node_id_2>…, <case_id>…, <action_id>…, <id>; tenant_id -> <tenant_id>; field_code -> <code10>;
@@ -100,6 +102,15 @@ def find_editor(doc, node_id):
             if isinstance(n, dict) and str(n.get('id')) == node_id:
                 out.append({'_tu': key, 'item': n})
     return out
+
+
+def pick_editor(found):
+    """Một object editor cho builder: ưu tiên org_nodes, rồi name_mappings; không có -> None."""
+    for key in ('org_nodes', 'name_mappings'):
+        for x in found or []:
+            if x.get('_tu') == key and isinstance(x.get('item'), dict):
+                return x['item']
+    return None
 
 
 def find_edges(doc, node_id):
@@ -347,7 +358,8 @@ def main(argv=None):
     except Usage as e:
         print('LỖI: %s' % e)
         return 2
-    out = {'_meta': meta, 'type': a.type, 'runtime': masked['runtime'], 'editor': masked['editor'], 'edges': masked['edges']}
+    out = {'_meta': meta, 'type': a.type, 'runtime': masked['runtime'], 'editor': pick_editor(masked['editor']),
+           'editor_all': masked['editor'], 'edges': masked['edges']}
     hits = residual(out, load_allow(a.allowlist))
     if hits:
         print('DỪNG: còn sót dữ liệu nhạy cảm sau khi che (không ghi file):')

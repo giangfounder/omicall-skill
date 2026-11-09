@@ -3,25 +3,22 @@
 ## Đọc nhanh
 - **Đã có MCP** (gọi được `get_version`, bản 1.3.x trở lên): `login_omicall_mcp` → `select_tenant` (nếu nhiều tenant) → `python <thư mục skill>/scripts/omi_preflight.py --domain <domain>` (đường dẫn tuyệt đối). `route=api` thì đi đường API.
 - **Chưa có MCP / chưa đăng nhập** (`route=blocked`): agent chạy nền `python <thư mục skill>/scripts/omi_login.py setup --ui --no-browser`, lấy địa chỉ ở dòng đầu kết quả rồi mở **form đăng nhập cục bộ** (domain, email, mật khẩu) ngay trong khung trình duyệt của agent, đưa ra trước mắt user (không có trình duyệt thì bỏ `--no-browser`). Sau khi hiện form, agent không đọc trang, không chụp ảnh. User điền một lần; mật khẩu đi thẳng từ form vào script (không qua hội thoại, agent không thấy), script cất vào kho bí mật hệ điều hành, tự đăng nhập MCP OMI, đăng ký server `OMICall-<domain>` không chứa mật khẩu; agent đọc dòng `OMI_LOGIN_RESULT=` rồi đi đường API ngay trong phiên. Dự phòng: `setup` không `--ui` trong terminal của user (ô nhập ẩn). Mục 2a.
-- **Token hết hạn / sai tenant** (`route=login`): agent TỰ chạy `omi_login.py login --domain <domain> [--tenant-id <id>]`, không hỏi user.
-- **Gặp 401 / hết phiên**: gọi lại `login_omicall_mcp`, chạy lại `omi_preflight.py`; vẫn hỏng thì theo bảng quyết định token ngay dưới.
-- **Nhiều artefact phụ thuộc nhau** (flow + bot + callbot): `omi-mcp-extra.md` mục 7. Giao việc giao diện cho subagent: `omi-mcp-extra.md` mục 8.
+- **Token hết hạn / sai tenant** (`route=login`) hoặc **script/API gặp 401**: agent TỰ chạy `omi_login.py login --domain <domain> [--tenant-id <id>]`, không hỏi user, rồi chạy lại `omi_preflight.py`.
+- **Công cụ MCP báo hết phiên**: gọi lại `login_omicall_mcp`. Vẫn hỏng thì theo bảng quyết định token ngay dưới.
+- **Nhiều artefact phụ thuộc nhau** (flow + bot + callbot): thứ tự đợt và cổng ở `omicall-assistant` (`orchestration.md` mục 2); sổ chung, mẫu giao việc, danh sách CẤM: `parallel.md` mục 5.
 - **Đọc cấu hình tenant: API trước, ảnh chụp sau cùng** — mục 4a. Tri thức học được bằng ảnh chụp phải ghi vào reference của skill (mục 4b).
+- **Công cụ MCP nào cho bước nào, danh mục theo module, tiết kiệm token**: `omi-mcp-tools.md`.
 
 ## Bảng quyết định token (duy nhất)
 | Thứ tự | Nguồn token | Ai làm | Khi nào dùng |
 |---|---|---|---|
-| 1 | MCP OMI: `login_omicall_mcp` hoặc `omi_login.py login` → phiên `~/.omicall-mcp/session.json`, script đọc bằng `scripts/omi_session.py` | agent (thông tin đăng nhập do user cất một lần bằng `omi_login.py setup`) | mặc định |
+| 1 | MCP OMI: `login_omicall_mcp` hoặc `omi_login.py login` → file phiên (mục 2 ý 3), script đọc bằng `scripts/omi_session.py` | agent (thông tin đăng nhập do user cất một lần bằng `omi_login.py setup`) | mặc định |
 | 2 | File `OMI_TOKEN_FILE` | user tự đặt biến và file | MCP chưa cài hoặc client chưa nạp |
 | 3 | Giao diện (browser pane) | user tự đăng nhập; agent dựng bằng thao tác giao diện | không có 1 và 2 |
 
-Đọc cookie bằng JS/CDP bị lớp an toàn chặn thì **dừng**, không thử đường vòng khác để lấy token; chuyển sang 1 hoặc 2 (user làm) hoặc đi giao diện. Kiểm hạn và domain token: `omi_preflight.py` (không in token).
+Không đọc cookie hay token trong trang (JS, CDP, storage) dưới mọi hình thức: đây không phải một đường lấy token. Không có 1 hoặc 2 thì đi giao diện (3). Kiểm hạn và domain token: `omi_preflight.py` (không in token).
 
-File dùng chung cho 4 skill: `omicall-callbot-gen-ai`, `omicall-callbot-flow`, `omicall-chatbot-gen-ai`, `omicall-omiflow` (mỗi skill giữ một bản giống hệt; nguồn duy nhất trong repo là `shared/references/omi-mcp.md` — sửa ở đó rồi chạy `python tools/sync_shared.py` để chép sang các skill).
-
-Package npm `omicall-mcp` của VIHAT (bản 1.3.1, server "OMICall MCP", **85 công cụ**, đã kiểm bằng `tools/list`). MCP **không** có công cụ dựng Callbot, Chatbot hay OMIFlow: phần dựng vẫn gọi API `chatbot-gateway` hoặc `campaign-v1` theo skill. MCP lo **đăng nhập, tra cứu id, kiểm thử** — những việc trước đây tốn nhiều lượt trình duyệt và token.
-
-Nguồn: https://www.npmjs.com/package/omicall-mcp (mã nguồn https://github.com/VIHATTeam/OMICALL-MCP, giấy phép MIT). Phụ thuộc `@modelcontextprotocol/sdk`, `axios`, `zod`. **Yêu cầu Node.js 18+** (`node --version`); bản cũ hơn thì server thoát ngay khi khởi động. Kiểm tra bản mới nhất: `npm view omicall-mcp version`.
+File dùng chung cho mọi skill OMI (7 skill chuyên trách và `omicall-assistant`; mỗi skill giữ một bản giống hệt; nguồn duy nhất trong repo là `shared/references/omi-mcp.md` — sửa ở đó rồi chạy `python tools/sync_shared.py` để chép sang các skill). Cài MCP cho client khác (Codex, Gemini CLI, OpenCode, Cursor, VS Code…): README mục "Cài MCP cho client khác". Node.js 18+.
 
 ## 2a. Đăng nhập một lần bằng `omi_login.py` (cách chuẩn)
 User chỉ cung cấp **domain, email, mật khẩu** — một lần cho mỗi domain, trên máy của user:
@@ -36,68 +33,13 @@ User chỉ cung cấp **domain, email, mật khẩu** — một lần cho mỗi 
 ## 2. Đăng nhập bằng MCP (ưu tiên số 1)
 1. `login_omicall_mcp` (tham số `domain`, `tenant_id` đều tuỳ chọn; mật khẩu lấy từ cấu hình) → nếu trả danh sách nhiều tenant thì `select_tenant(tenant_id)`.
 2. `get_service_package` → các module đã bật (`switchboard`, `ticket`, `integrated`, `ai`…) và hạn mức. Đọc ngay để biết thiết kế dùng được gì.
-3. **Token cho API mà MCP không có** (callbot, chatbot, OMIFlow): đọc phiên MCP ở `~/.omicall-mcp/session.json` → `accessToken`, bằng `scripts/omi_session.py`. Cùng loại JWT với web, dùng làm `Authorization: Bearer` cho `chatbot-gateway-v1-stg`, `campaign-v1-stg`, `ticket-v2-stg`, `tenant-v1-stg`… Không in token ra hội thoại.
-4. Phương án dự phòng (MCP vừa cài nhưng client chưa nạp lại, hoặc không có file phiên): theo bảng quyết định token ở đầu file — user tự đặt `OMI_TOKEN_FILE`, hoặc user đăng nhập **một lần** trong browser pane và agent làm bằng giao diện. Agent không tự gõ mật khẩu vào form hay API đăng nhập. Nếu lớp an toàn chặn việc đọc cookie thì dừng đường cookie (không thử cách khác), hoàn tất cấu hình MCP theo `omi-mcp-extra.md` Phụ lục A (user tự chạy lệnh) và yêu cầu mở lại phiên khi client bắt buộc.
-5. Hết phiên hoặc lỗi 401: gọi lại `login_omicall_mcp` (hoặc `omi_login.py login --domain <domain>` khi công cụ MCP chưa có trong phiên). Đổi tenant: `logout` rồi đăng nhập với domain mới, hoặc dùng server MCP riêng cho từng tenant.
-6. **Tên server MCP không bảo đảm đúng tenant** (✔ 11/2026): server `OMICall-<tên>` có thể đang giữ phiên của tenant khác (đăng nhập cũ, cấu hình chép từ server khác). Trước khi tin dữ liệu đọc từ MCP (kênh, phiếu, cuộc gọi, nhân viên), so `tenant_id` trong một kết quả có trường này với tenant đang làm (`omi_login.py ensure` in ra `tenant_id`; `tenant_context.json`). `list_agents` trả kèm toàn bộ quyền (hơn 100 KB dù `size` nhỏ) → để kết quả ra file rồi `grep '"tenant_id"'`, không đọc cả file. Dấu hiệu nghi: đầu số, nhân viên, cuộc gọi không khớp tenant. Lệch → bỏ số liệu của server đó, đọc bằng API (`omi_api.py`, token của `omi_login.py`) hoặc giao diện bằng chữ, báo user cấu hình lại server; mọi kết luận đã rút từ server lệch (ví dụ "chưa kết nối kênh", "chưa có phiếu") phải kiểm lại.
+3. **Token cho API mà MCP không có** (callbot, chatbot, OMIFlow): `scripts/omi_session.py` đọc `accessToken` từ file phiên: mỗi phiên Claude Code một file `~/.omicall-mcp/sessions/<CLAUDE_CODE_SESSION_ID>/.omicall-mcp/session.json` (ghi bởi `omi_login.py ensure/login`); chưa có thì đọc file của server `~/.omicall-mcp/servers/<domain>/.omicall-mcp/session.json` (ghi khi gọi công cụ `login_omicall_mcp`), luôn kiểm claim domain. Không có khoá phiên (chạy ngoài Claude Code) thì dùng file chung cũ `~/.omicall-mcp/session.json`. Cùng loại JWT với web, dùng làm `Authorization: Bearer` cho `chatbot-gateway-v1-stg`, `campaign-v1-stg`, `ticket-v2-stg`, `tenant-v1-stg`… Không in token ra hội thoại.
+4. Phương án dự phòng (MCP vừa cài nhưng client chưa nạp lại, hoặc không có file phiên): theo bảng quyết định token ở đầu file — user tự đặt `OMI_TOKEN_FILE`, hoặc user đăng nhập **một lần** trong browser pane và agent làm bằng giao diện. Agent không tự gõ mật khẩu vào form hay API đăng nhập, không đọc cookie hay token trong trang. Cần MCP thì hoàn tất cấu hình theo README mục "Cài MCP cho client khác" (user tự chạy lệnh) và yêu cầu mở lại phiên khi client bắt buộc.
+5. Hết phiên hoặc lỗi 401: script/API (`omi_api.py`, `omi_save.py`, `tenant_survey.py`…) → agent tự chạy `omi_login.py login --domain <domain>` rồi chạy lại lệnh; đang gọi công cụ MCP mà MCP báo hết phiên → gọi lại `login_omicall_mcp`. Đổi tenant: `logout` rồi đăng nhập với domain mới, hoặc dùng server MCP riêng cho từng tenant.
+6. **Tên server MCP không bảo đảm đúng tenant** (✔ 11/2026): gói `omicall-mcp` (1.3.1) nạp `session.json` lúc khởi động và lấy `tenantId` trong đó, **ghi đè** `OMICALL_TENANT_ID`; trước bản sửa, mọi server và script dùng chung một file `~/.omicall-mcp/session.json` nên tất cả chạy nhầm cùng một tenant (tenant đăng nhập gần nhất). Từ bản sửa (omicall-skill 11/2026), `omi_login.py serve` cho mỗi domain một thư mục phiên riêng (đổi `USERPROFILE`/`HOME` của tiến trình MCP sang `~/.omicall-mcp/servers/<domain>`); server đang chạy giữ phiên cũ → **phải mở lại phiên Claude** để server khởi động lại, rồi kiểm từng server. Trước khi tin dữ liệu đọc từ MCP (kênh, phiếu, cuộc gọi, nhân viên), so `tenant_id` trong một kết quả có trường này với tenant đang làm (`omi_login.py ensure` in ra `tenant_id`; `tenant_context.json`). `list_agents` trả kèm toàn bộ quyền (hơn 100 KB dù `size` nhỏ) → để kết quả ra file rồi `grep '"tenant_id"'`, không đọc cả file. Dấu hiệu nghi: đầu số, nhân viên, cuộc gọi không khớp tenant. Lệch → bỏ số liệu của server đó, đọc bằng API (`omi_api.py`, token của `omi_login.py`) hoặc giao diện bằng chữ, báo user cấu hình lại server; mọi kết luận đã rút từ server lệch (ví dụ "chưa kết nối kênh", "chưa có phiếu") phải kiểm lại.
 
-## 3. Công cụ nào cho bước nào
-
-### Dùng chung (Bước 0 của mọi skill)
-| Việc | Công cụ MCP |
-|---|---|
-| Đăng nhập, chọn tenant | `login_omicall_mcp`, `select_tenant`, `logout` |
-| Gói dịch vụ, module đã bật, hạn mức | `get_service_package`, `get_balance` |
-| Nhân viên (id, contact_id, email) | `list_agents`, `get_agent` |
-| Máy lẻ (sip_user, uuid) | `list_extensions`, `get_extension` |
-| Hotline, đầu số | `list_hotlines`, `get_hotline` |
-| Kênh đa kênh đã kết nối (OA, page, widget, bot) | `get_all_channels` |
-| Danh mục phiếu ghi | `get_ticket_categories` |
-| Nguồn khách hàng | `get_source_contacts` |
-| Webhook đã đăng ký | `list_webhooks` |
-
-### Skill Callbot
-| Bước | Công cụ |
-|---|---|
-| Cấu hình chuyển máy `TRANSFER_CALL` (agent id, ext, option) | `list_agents` + `list_extensions` / `get_extension` |
-| Gắn kịch bản vào hotline gọi vào | `list_hotlines`, `update_hotline(inbound_script_id)` — **chỉ khi user đồng ý** |
-| Gọi thử | `click_to_call(extension, hotline, phone_number)` |
-| Kiểm tra sau gọi thử: transcript, tag, ghi chú | `search_calls`, `get_call_detail(transaction_id)` |
-| Nghe thử giọng đọc | `text_to_speech(text, speaker_id, speed)` |
-| Chiến dịch gọi tự động (IVR thường, không AI) | `autocall_by_phone` |
-
-### Skill Chatbot
-| Bước | Công cụ |
-|---|---|
-| Kênh gắn bot (oa_id, page_id, widget, bot_id) | `get_all_channels` |
-| Tra khách theo SĐT (thay vì dựng flow tra cứu chỉ để test) | `get_contact_by_phone`, `search_contacts`, `get_contact` |
-| Tạo khách mẫu để test luồng "đã có hồ sơ" | `create_contact` (dữ liệu test, xoá sau bằng `delete_contact` khi user đồng ý) |
-| Xem hội thoại thật để kiểm tra bot trả lời | `search_conversations`, `get_conversation`, `search_channel_messages` |
-| Gửi tin thử (Zalo, Facebook, Telegram, LiveTalk) | `send_*_message` — **chỉ khi user đồng ý**, vì gửi cho người thật |
-| Chuyển hội thoại cho nhân viên | `transfer_conversation` |
-
-### Skill OMIFlow
-| Bước | Công cụ |
-|---|---|
-| Id cho `ADD_TICKET`, `ASSIGN_TICKET_TYPE` | `get_ticket_categories` (bộ trạng thái chưa có trong MCP → API `ticket-v2-stg/ticket/status-set/get-all`) |
-| Người nhận `PUSH_NOTIFICATION`, `ASSIGN_TICKET_REPORTER` | `list_agents` (lấy `contact_id`) |
-| Đầu số cho trigger `GENERAL` (`ct_sip_number`) | `list_hotlines` |
-| Kênh cho nút Trò chuyện và Marketing | `get_all_channels` |
-| Test trigger "cuộc gọi kết thúc" hoặc "phím IVR" | `click_to_call` rồi `search_calls` để lấy `transaction_id` |
-| Kiểm tra flow đã tạo phiếu, cập nhật khách | `search_tickets`, `get_ticket`, `list_ticket_interactions`, `get_contact_by_phone` |
-| Dọn dữ liệu test | `delete_ticket`, `delete_contact` — **chỉ khi user đồng ý** |
-
-### Chưa có trong MCP → gọi API trực tiếp bằng token ở mục 2
-Kịch bản callbot (`chatbot-gateway …/callbot/script/*`), chatbot (`…/bot/*`, `omiai_assistant/*`), OMIFlow (`campaign-v1 …/omi_v2/campaign/*`), bộ trạng thái phiếu, thuộc tính động (`tenant-v1 …/attribute/get_all`), phân bổ sale (`…/sale_allocation/search`), template ZNS, cấu hình AI.
-
-## 4. Kết hợp MCP + skill để tiết kiệm token
-1. **Đăng nhập bằng MCP**, không qua trình duyệt: bỏ hẳn các lượt mở trang, chụp màn hình, chờ user.
-2. **Tra id bằng MCP** (JSON gọn) thay vì đọc giao diện hay tải cả trang cấu hình. Tra **một lần mỗi phiên** rồi lưu `tenant_context.json` ở scratchpad (agents, extensions, hotlines, categories, channels, package); các bước sau đọc file này.
-3. **Không đổ JSON lớn vào hội thoại**: flow, kịch bản và bot có thể hàng trăm KB. Dùng script tóm tắt của skill nếu có (`scripts/*_outline.py`: `flow_outline.py` ở omiflow, `script_outline.py` ở callbot-gen-ai, `bot_outline.py` ở chatbot-gen-ai) hoặc chỉ in trường cần thiết.
-4. **Đọc reference có chọn lọc**: chỉ mở mục module hoặc schema cần cho bài toán (Grep theo tên module) thay vì đọc cả file.
-5. **Ưu tiên văn bản hơn ảnh**: `get_page_text`, `read_page` thay cho screenshot; nếu cần ảnh thì `scale` 0.4–0.6.
-6. **Dùng lại script trong `scripts/` của skill**, không viết lại mỗi lần; script mới hữu ích thì thêm vào skill.
-7. **Kiểm thử bằng MCP** (`search_calls`, `search_tickets`, `get_contact_by_phone`) thay vì mở giao diện để xem kết quả.
+## 3–5. Công cụ theo bước, tiết kiệm token, danh mục công cụ
+Đã chuyển sang `omi-mcp-tools.md` (đọc khi cần). Công cụ ghi chỉ chạy khi user đồng ý từng việc.
 
 ## 4a. Thứ tự nguồn khi cần biết tenant đang có gì (BẮT BUỘC)
 Mỗi ảnh chụp tốn vài giây và nhiều token; giao diện dùng chung với user nên mỗi thao tác còn có rủi ro đổi form. Đi theo thứ tự, dừng ở bậc đầu tiên trả lời được:
@@ -127,8 +69,4 @@ Chụp ảnh sau mỗi thao tác là lỗi đã gặp (một phiên dựng flow 
 - `npm error code ETARGET` / "No matching version found": npm giữ metadata cũ sau khi gói vừa ra bản mới → xoá cache npx (`rm -rf ~/.npm/_npx`, Windows: `%LOCALAPPDATA%\npm-cache\_npx`) rồi chạy `npx omicall-mcp@latest`.
 - Server ngắt ngay khi khởi động: kiểm tra Node.js 18+.
 - Công cụ MCP không xuất hiện trong phiên: MCP được nạp khi mở phiên → cài xong phải mở phiên mới; kiểm tra bằng `claude mcp list` hoặc danh sách connector của ứng dụng.
-- Lỗi 401 / hết phiên: gọi lại `login_omicall_mcp` (mục 2) hoặc `omi_login.py login --domain <domain>` (mục 2a).
-
-## Tài liệu mở rộng — `references/omi-mcp-extra.md` (chỉ đọc khi cần)
-- Mục 7 Dựng nhiều artefact và mục 8 Mẫu giao việc cho subagent: khi bài toán gồm flow + bot + callbot phụ thuộc nhau.
-- Phụ lục A Cài MCP theo client (Codex, Claude Code, Gemini CLI, OpenCode, Cursor, VS Code…); Phụ lục B Danh mục công cụ theo nhóm và module cần bật.
+- Lỗi 401 / hết phiên: script/API → `omi_login.py login --domain <domain>` (mục 2a); công cụ MCP → gọi lại `login_omicall_mcp` (mục 2).

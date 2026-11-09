@@ -41,18 +41,20 @@ mkdir -p ~/.claude/skills
 for d in "$PWD"/omicall-skill/omicall-*/; do n=$(basename "$d"); ln -s "${d%/}" ~/.claude/skills/$n; done
 ```
 
-Agent khác: trỏ mọi thư mục `omicall-*` vào thư mục skill của agent đó (ví dụ `~/.agents/skills`, `~/.gemini/skills`). Lỡ chép tay cũng được: lần gọi skill đầu tiên tự clone repo về `~/omicall-skill` và đổi bản chép tay thành đường dẫn (xem *Phiên bản và cập nhật*).
+Agent khác: trỏ mọi thư mục `omicall-*` vào thư mục skill của agent đó (ví dụ `~/.agents/skills`, `~/.gemini/skills`). Lỡ chép tay cũng được: skill báo có bản mới; khi bạn đồng ý, agent chạy `self_update.py --force --link` để clone repo về `~/omicall-skill` và đổi bản chép tay thành đường dẫn (xem *Phiên bản và cập nhật*).
 
 Kiểm tra: mở Claude Code, gõ `/` và thấy `omicall-assistant`, `omicall-callbot-gen-ai`, `omicall-callbot-flow`, `omicall-chatbot-gen-ai`, `omicall-omiflow`, `omicall-crm-config`, `omicall-pbx-config`, `omicall-ai-insight`.
 
 ### Bước 4 — Cài MCP OMI (đăng nhập tự động, tra cứu, kiểm thử)
-Mỗi người tự chạy với tài khoản của mình (mật khẩu chỉ nằm trên máy bạn; agent chỉ soạn sẵn lệnh với placeholder, không cầm mật khẩu):
+Mỗi người tự đăng nhập với tài khoản của mình. Thường không cần làm tay: lần đầu gọi skill, agent mở form đăng nhập cục bộ cho bạn điền. Muốn làm trước thì chạy:
 ```bash
-claude mcp add OMICall-<domain> --scope user -e OMICALL_USERNAME=<email> -e OMICALL_PASSWORD=<mật khẩu> -e OMICALL_DOMAIN=<domain> -- npx -y omicall-mcp
+python omicall-skill/omicall-omiflow/scripts/omi_login.py setup --ui
 ```
+- Form (domain, email, mật khẩu) mở ở `127.0.0.1`; mật khẩu đi thẳng vào kho bí mật của hệ điều hành (Windows Credential Manager, macOS Keychain…), không qua agent, không ghi vào file hay biến môi trường.
+- Script đăng ký server MCP `OMICall-<domain>` cho Claude Code và Codex với lệnh `omi_login.py serve --domain <domain>` (đọc kho bí mật rồi chạy `npx -y omicall-mcp`): cấu hình MCP không chứa mật khẩu. Không dùng `-e OMICALL_PASSWORD=…` trong lệnh `mcp add`.
 - `<domain>` là phần trước `.omicrm.io`, ví dụ `congtyabc` → server `OMICall-congtyabc`.
 - Nhiều tenant: mỗi tenant một server (tên `OMICall-<domain>` khác nhau).
-- Client khác (Codex, Gemini CLI, OpenCode, Cursor, VS Code…): mẫu lệnh và cấu hình ở `references/omi-mcp-extra.md` Phụ lục A. Cài xong mở phiên mới.
+- Client khác (Codex, Gemini CLI, OpenCode, Cursor, VS Code…): mục *Cài MCP cho client khác* bên dưới. Cài xong mở phiên mới.
 - Kiểm nhanh trong phiên: `python <thư mục skill>/scripts/omi_preflight.py --domain <domain>` (in 1 dòng JSON, không in token).
 - Không chạy được MCP thì skill vẫn dùng được: agent mở trang đăng nhập để bạn tự đăng nhập một lần, hoặc bạn tự đặt biến `OMI_TOKEN_FILE`.
 
@@ -70,13 +72,64 @@ Callbot luồng cổ điển (call flow):
 Agent gửi bảng ý định/thực thể và file dữ liệu huấn luyện để bạn duyệt, đẩy file một lần qua Kho tri thức, dựng kịch bản trong lúc hệ thống huấn luyện, rồi gọi thử khi bạn đưa số điện thoại.
 
 ### Dựng nhiều artefact cùng lúc
-Bài toán gồm nhiều phần phụ thuộc nhau (ví dụ chatbot thu SĐT → flow webhook tạo phiếu → callbot gọi lại): agent khảo sát tenant một lần (`tenant_context.json`), giao mỗi artefact cho một subagent, ghi id/URL vào sổ chung `scripts/manifest.py` và chỉ nối các phần khi đã GET và kiểm lại. Quy trình và mẫu giao việc: `references/omi-mcp.md` mục 7–8. Xuất bản, gắn hotline, gọi thử vẫn chờ bạn đồng ý.
+Bài toán gồm nhiều phần phụ thuộc nhau (ví dụ chatbot thu SĐT → flow webhook tạo phiếu → callbot gọi lại): agent khảo sát tenant một lần (`tenant_context.json`), giao mỗi artefact cho một subagent, ghi id/URL vào sổ chung `scripts/manifest.py` và chỉ nối các phần khi đã GET và kiểm lại. Thứ tự đợt và các cổng chờ bạn (xuất bản flow, xuất bản bot, gắn số, gọi thử): `omicall-assistant/references/orchestration.md` mục 2; sổ chung, mẫu giao việc và danh sách CẤM cho subagent: `references/parallel.md` mục 5. Sau khảo sát đầu, `tenant_context.json` chỉ đọc; giá trị mới ghi qua `manifest.py` (có khoá).
+
+## Cài MCP cho client khác
+Cách chuẩn là `omi_login.py setup --ui` (Bước 4), tự đăng ký cho Claude và Codex. Mục này cho client khác (Gemini CLI, OpenCode, Cursor, VS Code…): user chạy `python <thư mục skill>/scripts/omi_login.py setup --ui --client none` (cất mật khẩu vào kho bí mật hệ điều hành, không đăng ký client nào), rồi đăng ký server MCP với lệnh `python <thư mục skill>/scripts/omi_login.py serve --domain <domain>`. Lệnh này đọc kho bí mật rồi chạy `npx -y omicall-mcp`, nên cấu hình MCP **không chứa mật khẩu**. `<thư mục skill>` là thư mục của một skill bất kỳ, ví dụ `<repo>/omicall-omiflow`.
+
+Khi bắt đầu một tác vụ OMI, agent phải tự kiểm tra MCP OMI (`get_version`, `omi_preflight.py`). Nếu chưa có, agent tự làm mọi phần không cần bí mật (nhận diện client, kiểm `node`/`npx`, xác nhận cú pháp, soạn lệnh, kiểm cấu hình sau khi cài) và đưa user đúng MỘT việc: tự chạy lệnh cài đã soạn sẵn (mật khẩu để placeholder) rồi mở phiên mới. Agent không cầm mật khẩu dạng rõ, không tự gõ mật khẩu vào lệnh, form hay API đăng nhập.
+
+1. Kiểm tra các công cụ MCP đang có. Nếu gọi được `get_version` và phiên bản trả về là `1.3.x` hoặc mới hơn thì dùng luôn.
+2. Lấy `domain` và email từ yêu cầu hiện tại. Mật khẩu không đi qua agent: user tự điền vào form `setup --ui` (hoặc ô nhập ẩn của `setup` trong terminal), script cất vào kho bí mật của hệ điều hành. Không in lại mật khẩu/token và không ghi chúng vào repo hay file tạm. Thiếu domain hoặc email thì hỏi gộp đúng một lần.
+3. Kiểm tra `node` và `npx`. Dùng `npx -y omicall-mcp` để gói được tải tự động khi MCP khởi chạy; không cần cài npm toàn cục.
+4. Tự nhận diện **agent/client đang thực thi** qua danh mục công cụ, tiến trình hoặc CLI có trên máy. Skill không được mặc định chỉ có Codex hay Claude. Chỉ cấu hình client đang chạy ở phạm vi người dùng; mỗi môi trường khác khi dùng skill cũng phải tự thực hiện quy trình này. Đặt tên server theo domain (`OMICall-<domain>`) để nhiều tenant không ghi đè nhau.
+5. Ưu tiên trình quản lý MCP gốc của client nếu có. Trước khi chạy, gọi `<cli> mcp add --help` để xác nhận cú pháp của phiên bản đang cài; các mẫu chuẩn:
+
+| Agent/client | Lệnh user tự chạy (agent soạn sẵn, phạm vi người dùng) | Xác minh |
+|---|---|---|
+| Codex CLI/IDE | `codex mcp add OMICall-<domain> -- python <thư mục skill>/scripts/omi_login.py serve --domain <domain>` | `codex mcp list` |
+| Claude Code | `claude mcp add OMICall-<domain> --scope user -- python <thư mục skill>/scripts/omi_login.py serve --domain <domain>` (thường không cần: `setup --ui` tự đăng ký) | `claude mcp list` |
+| Gemini CLI | `gemini mcp add --scope user --transport stdio OMICall-<domain> python <thư mục skill>/scripts/omi_login.py serve --domain <domain>` (Cần xác nhận cú pháp) | `gemini mcp list` |
+| OpenCode | `opencode mcp add OMICall-<domain> --global -- python <thư mục skill>/scripts/omi_login.py serve --domain <domain>` (Cần xác nhận cú pháp) | `opencode mcp list` |
+
+6. Nếu client không có lệnh quản lý MCP, agent tự cập nhật cấu hình **phạm vi người dùng** theo định dạng mà client hỗ trợ; phải đọc và trộn với cấu hình hiện có, không ghi đè các server khác:
+   - VS Code/Copilot: ưu tiên `code --add-mcp <JSON>` hoặc User Profile `mcp.json`; Copilot CLI dùng `~/.copilot/mcp-config.json`.
+   - Cursor: `~/.cursor/mcp.json`.
+   - Claude Desktop: `%APPDATA%\Claude\claude_desktop_config.json` (Windows) hoặc `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS).
+   - Windsurf: `~/.codeium/windsurf/mcp_config.json`.
+   - Gemini CLI không có CLI quản lý: `~/.gemini/settings.json`.
+   - Agent khác: tìm cấu hình MCP phạm vi người dùng trong tài liệu/cài đặt của chính client rồi thêm server theo schema của client. Không tạo file chứa mật khẩu trong thư mục dự án.
+   - Cấu hình không có ô mật khẩu: lệnh server là `omi_login.py serve`, mật khẩu nằm trong kho bí mật.
+
+Mẫu phổ biến cho Cursor, Claude Desktop, Windsurf, Gemini và các client dùng `mcpServers`:
+```json
+{
+  "mcpServers": {
+    "OMICall-<domain>": {
+      "command": "python",
+      "args": ["<thư mục skill>/scripts/omi_login.py", "serve", "--domain", "<domain>"]
+    }
+  }
+}
+```
+
+VS Code dùng khóa gốc `servers` và thêm `"type": "stdio"`. OpenCode v2 dùng `mcp.servers`, `type: "local"`, `command: ["python", "<thư mục skill>/scripts/omi_login.py", "serve", "--domain", "<domain>"]` và `enabled: true`. Trên Windows, nếu client không tìm thấy `python` thì dùng đường dẫn đầy đủ tới `python.exe` hoặc `py`.
+
+7. Biến môi trường tuỳ chọn: `OMICALL_ENV` (mặc định `stg`), `OMICALL_TENANT_ID` (tài khoản có nhiều tenant), `OMICALL_API_KEY`.
+8. Xác minh bằng danh sách/trạng thái MCP của client, sau đó gọi `get_version` và `login_omicall_mcp`. Tên công cụ có thể mang tiền tố khác nhau; agent phải dò theo hậu tố `get_version`/`login_omicall_mcp`, không hard-code một tiền tố. Nếu client chỉ nạp server mới khi khởi động lại, báo người dùng mở lại phiên một lần và tiếp tục phần việc có thể làm bằng API/giao diện trong phiên hiện tại.
+9. Nếu client không hỗ trợ MCP, không cố sửa cấu hình không tồn tại; dùng API/giao diện dự phòng của skill và báo rõ giới hạn đó.
+
+Không cài lại khi server đúng domain đã hoạt động. Nếu cấu hình cùng tên đã tồn tại nhưng sai, agent đọc cấu hình hiện tại, chỉ thay đúng server đó rồi xác minh lại.
+
+Tên công cụ đầy đủ tuỳ client, ví dụ Claude Code dùng `mcp__<tên-server>__<tool>`, OpenCode dùng `<server>_<tool>`. Nếu công cụ đang ở dạng deferred, tải bằng cơ chế tìm công cụ của client một lần cho cả nhóm cần dùng.
+
+**Rủi ro, Cần xác nhận**: client không chạy được lệnh `python … serve` (chỉ nhận `npx -y omicall-mcp` kèm `env`) thì mật khẩu phải nằm trong biến môi trường của file cấu hình, tức là lưu dạng chữ thường trên đĩa. Không dùng cách này khi chưa hỏi user; cách thay thế (kho bí mật hoặc biến tham chiếu của chính client) cần xác nhận theo từng client.
 
 ## Phiên bản và cập nhật
-- **Gọi một skill là cập nhật cả bộ**: bước đầu tiên của mọi skill là chạy `scripts/self_update.py`, tối đa 1 lần mỗi giờ cho cả bộ (`--force` để kiểm ngay).
+- **Gọi một skill là cập nhật cả bộ**: bước đầu tiên của mọi skill là chạy `scripts/self_update.py`, tối đa 1 lần mỗi giờ cho cả bộ (`--force` để kiểm ngay). Mốc giờ ghi cả khi cập nhật lỗi, nên mất mạng không làm mỗi lần nạp skill chờ lâu. Subagent và chế độ hỏi đáp bỏ qua bước này (`--subagent` hoặc `OMI_SUBAGENT=1`).
   - Cài theo Bước 3 (junction/symlink vào bản git clone): `git pull` cả repo, báo mọi skill vừa đổi phiên bản, nhắc đọc lại SKILL.md nếu vừa đổi.
-  - **Skill mới** thêm vào repo: tự tạo junction/symlink trong thư mục skill của agent (`~/.claude/skills`, `~/.agents/skills`, `~/.gemini/skills`, `~/.codex/skills`); mở phiên mới để thấy. Đường dẫn trỏ vào skill đã bỏ: chỉ cảnh báo, không xoá.
-  - Cài bằng cách chép tay: tự clone cả repo về `~/omicall-skill`, chuyển thư mục chép tay sang `~/.cache/omicall-skill/backup/` (không xoá) rồi thay bằng đường dẫn vào bản clone. Máy không có git: chỉ báo khi có bản mới.
+  - **Skill mới** thêm vào repo: mặc định chỉ báo. Khi bạn đồng ý, agent chạy lại với `--link` để tạo junction/symlink trong thư mục skill của agent (`~/.claude/skills`, `~/.agents/skills`, `~/.gemini/skills`, `~/.codex/skills`); mở phiên mới để thấy. Đường dẫn trỏ vào skill đã bỏ: chỉ cảnh báo, không xoá.
+  - Cài bằng cách chép tay: mặc định chỉ báo khi có bản mới. Với `--link` (bạn đồng ý): clone cả repo về `~/omicall-skill`, chuyển thư mục chép tay sang `~/.cache/omicall-skill/backup/` (không xoá) rồi thay bằng đường dẫn vào bản clone. Máy không có git: chỉ báo khi có bản mới.
 - Cập nhật tay: `cd omicall-skill && git pull`.
 - Phiên bản từng skill nằm ở file `VERSION` (dạng MAJOR.MINOR.PATCH); lịch sử ở [CHANGELOG.md](CHANGELOG.md); mỗi bản có tag `<tên skill>/v<phiên bản>`.
 - Quay về bản cũ của một skill: `git checkout omicall-omiflow/v1.4.0 -- omicall-omiflow` (thay tên skill và phiên bản).
@@ -88,7 +141,7 @@ python tools/release.py minor "Mô tả thay đổi" omicall-callbot-flow --push
 ```
 - `major`: đổi quy trình/đầu vào; `minor`: thêm quy tắc, bước, script; `patch`: sửa lỗi, sửa chữ.
 - Nhiều skill cùng lúc: liệt kê tên skill, hoặc `--all` khi sửa file dùng chung.
-- **File dùng chung** (giữ giống hệt ở mọi skill): nguồn duy nhất nằm trong `shared/`, sửa ở đó rồi chạy `python tools/sync_shared.py` (kiểm: `--check`). Gồm `references/omi-mcp.md`, `references/tenant_context.template.json`, `scripts/self_update.py`, `scripts/omi_session.py`, `scripts/omi_preflight.py`, `scripts/omi_api.py`, `scripts/omi_save.py`, `scripts/tenant_survey.py`, `scripts/manifest.py`, `scripts/extract_text.py`, `scripts/extract_template.py` (skill con không nhận `omi_save.py`, `manifest.py`, `extract_template.py`); `scripts/cdp.py` chỉ ở `omicall-callbot-gen-ai` và `omicall-chatbot-gen-ai`.
+- **File dùng chung** (giữ giống hệt ở mọi skill): nguồn duy nhất nằm trong `shared/`, sửa ở đó rồi chạy `python tools/sync_shared.py` (kiểm: `--check`). Danh sách file và skill nhận bản chép: bảng `MAP` trong `tools/sync_shared.py` (nguồn duy nhất). Khối sinh trong SKILL.md, `orchestration.md`, `plan-and-approval.md` và `shared/references/parallel.md` (thứ tự đợt, cổng, quy tắc duyệt, chế độ subagent/hỏi đáp, danh sách CẤM) lấy từ `shared/skill-graph.json`: sửa ở đó, chạy `python tools/gen_skill_links.py` rồi `python tools/sync_shared.py` (kiểm: `--check` cho cả hai).
 - Kiểm trước khi phát hành (chạy offline): `python tools/check_skills.py` (Đường nhanh, cụm an toàn, đường dẫn, dữ liệu nhạy cảm; thêm `--baseline-dir <bản chụp>` để so với bản trước khi sửa) và `python tools/selftest.py` (test trong `tests/`, chặn mạng). `release.py` tự từ chối khi file dùng chung lệch, `check_skills` có FAIL, hoặc git theo dõi `credentials.md` ngoài bản mẫu. Commit phát hành gồm thư mục skill được nêu, `CHANGELOG.md` và hạ tầng chung (`shared/`, `tools/`, `tests/`, `README.md`, `.gitignore`, `.gitattributes`). Sửa file dùng chung thì nên phát hành `--all`, vì `sync_shared.py` ghi bản mới vào mọi skill.
 - Script tăng `VERSION`, sửa version hiển thị trong `SKILL.md` (`[vX.Y.Z]` đầu mô tả — hiện khi gõ `/`, và dòng "Phiên bản skill"), ghi dòng vào `CHANGELOG.md`, commit, gắn tag và push kèm tag.
 - Khi gọi skill, câu đầu tiên agent trả lời là `Đang dùng <tên skill> v<phiên bản>`.
@@ -119,5 +172,5 @@ Quy trình mỗi lần sửa, giống nhau trên mọi máy:
 
 ## Lưu ý bảo mật
 - Không commit mật khẩu, token hay thông tin tenant của khách hàng. `references/credentials.md` chỉ là mẫu.
-- Agent không tự gõ mật khẩu: đăng nhập qua MCP OMI (bạn tự cấu hình) hoặc bạn tự đăng nhập trên trình duyệt.
+- Agent không tự gõ mật khẩu: bạn điền form `omi_login.py setup --ui` (mật khẩu vào kho bí mật hệ điều hành) hoặc tự đăng nhập trên trình duyệt. Không để mật khẩu trong biến môi trường hay file cấu hình MCP.
 - Agent không tự bấm Xuất bản, không xoá hay ghi đè dữ liệu của khách nếu chưa được bạn đồng ý.

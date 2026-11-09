@@ -12,7 +12,7 @@ ensure : AGENT chạy đầu mỗi việc. Token dùng được → in {"ok":tru
          Chưa có → in {"ok":false,"need":"setup","command":"<lệnh setup>"} (exit 3) để agent mở terminal cho user.
 setup  : USER chạy trong terminal của mình. Hỏi email (nếu thiếu) và mật khẩu bằng ô nhập ẩn, cất vào kho bí mật của
          hệ điều hành (Windows Credential Manager / macOS Keychain / Secret Service, hoặc thư viện keyring), đăng nhập
-         thử qua MCP OMI (ghi phiên ~/.omicall-mcp/session.json), rồi đăng ký server MCP `OMICall-<domain>` cho client.
+         thử qua MCP OMI (ghi phiên vào file của phiên Claude Code, xem omi_session.py), rồi đăng ký server MCP `OMICall-<domain>` cho client.
          Cấu hình MCP chỉ chứa lệnh `omi_login.py serve`, không chứa mật khẩu. Không có terminal (stdin không phải
          TTY) thì dừng: mật khẩu không được đi qua hội thoại hay ống dẫn của agent. Sai mật khẩu → cho nhập lại
          (tối đa 3 lần); nhiều tenant → hỏi chọn ngay trong terminal. Dòng cuối luôn là
@@ -26,7 +26,12 @@ login  : AGENT tự chạy khi token hết hạn / sai tenant: lấy thông tin 
          (+ select_tenant), phiên mới dùng được ngay cho omi_session.py. Không hỏi user, không in mật khẩu hay token.
 status : in JSON {credential_stored, email, tenant_id, token_ok, minutes_left, mcp_registered}; không gọi mạng.
 forget : xoá thông tin đăng nhập đã cất (chỉ khi user yêu cầu).
-serve  : đọc kho bí mật rồi chạy `npx -y omicall-mcp` với biến OMICALL_* (stdio đi thẳng tới client).
+serve  : đọc kho bí mật rồi chạy `npx -y omicall-mcp` với biến OMICALL_* (stdio đi thẳng tới client). Mỗi domain một
+         thư mục phiên riêng (USERPROFILE/HOME = ~/.omicall-mcp/servers/<domain>) vì omicall-mcp lấy tenant từ
+         session.json và ghi đè tenant khai báo: dùng chung một file thì mọi server chạy nhầm cùng một tenant.
+
+Phiên tách riêng (11/2026): login/ensure ghi phiên vào thư mục của phiên Claude Code hiện tại
+(omi_session.session_home(), theo CLAUDE_CODE_SESSION_ID); không có khoá phiên thì dùng file chung cũ.
 
 Exit: 0 xong; 1 lỗi đăng nhập hoặc thiếu thông tin đã cất; 2 tham số sai / không có terminal; 4 tài khoản nhiều
 tenant, chạy lại với --tenant-id (danh sách tenant được in ra).
@@ -182,12 +187,19 @@ def _save_account(domain, **fields):
         json.dump(data, f, ensure_ascii=False, indent=2)
 
 
-def _mcp_env(domain):
+def _mcp_env(domain, home=None):
+    """Biến môi trường cho omicall-mcp. home: thư mục làm USERPROFILE/HOME để gói ghi session.json riêng."""
     email, pw = cred_load(domain)
     if not pw:
         return None
     acc = _accounts().get(domain, {})
     env = dict(os.environ, OMICALL_USERNAME=email, OMICALL_PASSWORD=pw, OMICALL_DOMAIN=domain)
+    if home:
+        real_npmrc = os.path.join(os.path.expanduser('~'), '.npmrc')
+        os.makedirs(home, exist_ok=True)
+        env.update(USERPROFILE=home, HOME=home)
+        if os.path.exists(real_npmrc) and 'NPM_CONFIG_USERCONFIG' not in env:
+            env['NPM_CONFIG_USERCONFIG'] = real_npmrc
     if acc.get('tenant_id'):
         env['OMICALL_TENANT_ID'] = acc['tenant_id']
     if acc.get('env'):
@@ -256,20 +268,21 @@ class _Mcp:
             pass
 
 
-def _drop_session_if_other_tenant(tenant_id):
+def _drop_session_if_other_tenant(tenant_id, path=None):
     """MCP lấy tenant từ phiên cũ ở session.json; phiên của tenant khác thì xoá để đăng nhập lại từ đầu."""
+    path = path or omi_session._session_path()
     try:
-        with open(omi_session.SESSION, encoding='utf-8') as f:
+        with open(path, encoding='utf-8') as f:
             old = json.load(f).get('tenantId')
         if old and old != tenant_id:
-            os.remove(omi_session.SESSION)
+            os.remove(path)
     except (OSError, ValueError):
         pass
 
 
 def do_login(domain, tenant_id=None, _retry=True):
     """Đăng nhập qua MCP OMI. Trả về (exit code, thông báo) — không chứa mật khẩu hay token."""
-    env = _mcp_env(domain)
+    env = _mcp_env(domain, home=omi_session.session_home())
     if env is None:
         return 1, ('Chưa có thông tin đăng nhập đã cất cho %s: user chạy `omi_login.py setup --domain %s` '
                    'trong terminal (một lần).' % (domain, domain))
@@ -677,7 +690,11 @@ def cmd_forget(a):
 
 
 def cmd_serve(a):
-    env = _mcp_env(a.domain)
+    home = omi_session.server_home(a.domain)
+    env = _mcp_env(a.domain, home=home)
+    tenant_id = _accounts().get(a.domain, {}).get('tenant_id')
+    if tenant_id:
+        _drop_session_if_other_tenant(tenant_id, omi_session._session_path(home))
     if env is None:
         print('omi_login serve: chưa có thông tin đăng nhập cho %s; chạy omi_login.py setup.' % a.domain,
               file=sys.stderr)

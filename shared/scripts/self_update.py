@@ -1,17 +1,20 @@
 """Cập nhật TOÀN BỘ bộ skill OMI (cả repo omicall-skill) trước khi dùng — gọi một skill là cập nhật mọi skill.
 
-  python <thư mục skill>/scripts/self_update.py [--force]
+  python <thư mục skill>/scripts/self_update.py [--force] [--link] [--subagent]
 
 - Skill nằm trong bản git clone (cài theo README bằng junction/symlink): `git pull --ff-only` cả repo, báo mọi skill
   vừa đổi phiên bản và nhắc ĐỌC LẠI SKILL.md nếu file của skill đang gọi vừa đổi (nội dung agent đã nạp là bản cũ).
-- Skill chép tay (không phải git clone): tự clone cả repo về `~/omicall-skill` (đã có thì pull), rồi thay từng thư mục
-  chép tay bằng junction/symlink trỏ vào bản clone; thư mục cũ được CHUYỂN sang `~/.cache/omicall-skill/backup/`, không xoá.
-  Máy không có git: chỉ so `VERSION` với GitHub và báo nếu có bản mới.
-- Skill mới trong repo: tự tạo junction/symlink trong mọi thư mục skill của agent đang trỏ vào bản clone
-  (`~/.claude/skills`, `~/.agents/skills`, `~/.gemini/skills`, `~/.codex/skills`, thư mục chứa skill đang gọi).
-  Agent chỉ thấy skill mới khi mở phiên mới. Đường dẫn trỏ vào thư mục không còn tồn tại: chỉ cảnh báo, không xoá.
+- Skill mới trong repo chưa có trong thư mục skill của agent (`~/.claude/skills`, `~/.agents/skills`, `~/.gemini/skills`,
+  `~/.codex/skills`, thư mục chứa skill đang gọi): mặc định CHỈ BÁO. Chỉ tạo junction/symlink khi có `--link`
+  (agent thêm cờ này sau khi user đồng ý). Đường dẫn trỏ vào thư mục không còn tồn tại: chỉ cảnh báo, không xoá.
+- Skill chép tay (không phải git clone): mặc định chỉ so `VERSION` với GitHub và báo. Với `--link` (user đồng ý):
+  clone cả repo về `~/omicall-skill` (đã có thì pull), CHUYỂN thư mục chép tay sang `~/.cache/omicall-skill/backup/`
+  (không xoá) rồi thay bằng junction/symlink vào bản clone. Máy không có git: chỉ báo.
 - Không cập nhật được (mất mạng, có sửa đổi chưa commit...): báo lý do, vẫn cho làm tiếp với bản hiện có.
-- Bất kỳ skill OMI nào đã kiểm tra thành công trong 1 giờ gần nhất: bỏ qua, không gọi mạng (thêm `--force` để kiểm tra lại).
+- Mốc kiểm tra ghi sau MỌI lần thử (kể cả khi lỗi): trong 1 giờ sau đó mọi skill OMI bỏ qua, không gọi mạng
+  (thêm `--force` để kiểm tra lại). Tránh mỗi lần nạp skill (kể cả từng subagent) lại chờ fetch tới 90 giây.
+- Chạy trong subagent: `--subagent` hoặc biến môi trường `OMI_SUBAGENT=1` → bỏ qua hẳn (không git, không mạng),
+  chỉ in dòng SKILL_VERSION. Subagent vốn không cần chạy script này (khối "Chế độ subagent / hỏi đáp" trong SKILL.md).
 Không sửa nội dung, không commit trong repo skill. Dòng cuối luôn là `SKILL_VERSION=<tên skill> <phiên bản>`.
 `--help` chỉ in hướng dẫn (không gọi git hay mạng); tham số lạ -> exit 2; thư mục không có VERSION (ví dụ shared/) -> exit 2.
 """
@@ -256,7 +259,13 @@ def report_links(added, warns):
         print("CẢNH BÁO: " + w)
 
 
-def update_clone(top):
+def pending_links(top, dirs):
+    """Đường dẫn skill mới sẽ tạo nếu có --link (không ghi gì)."""
+    names = repo_skills(top)
+    return [str(Path(d) / n) for d in dirs for n in names if not ((Path(d) / n).exists() or (Path(d) / n).is_symlink())]
+
+
+def update_clone(top, link=False):
     code, msg, before, after, changed = pull(top)
     if code != 0:
         print(f"KHÔNG CẬP NHẬT ĐƯỢC bộ skill OMI (đang dùng {NAME} {version()}): {msg}")
@@ -264,8 +273,16 @@ def update_clone(top):
               " Không tự sửa/xoá/commit trong thư mục skill.")
     else:
         report(before, after, changed, top)
-    # vẫn nối skill còn thiếu dù pull lỗi (repo có thể đã có skill mới từ lần pull trước)
-    report_links(*link_skills(top, agent_dirs(top)))
+    # skill còn thiếu (kể cả khi pull lỗi: repo có thể đã có skill mới từ lần pull trước)
+    dirs = agent_dirs(top)
+    if link:
+        report_links(*link_skills(top, dirs))
+    else:
+        todo = pending_links(top, dirs)
+        if todo:
+            print("CÓ SKILL MỚI chưa nối vào thư mục của agent (chưa tạo gì):")
+            print("\n".join("  " + x for x in todo))
+            print("Hỏi user; đồng ý thì chạy lại với --force --link (tạo junction/symlink), rồi mở phiên mới.")
     return code == 0
 
 
@@ -322,24 +339,33 @@ def report_remote_only():
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--force", action="store_true", help="kiểm tra lại dù vừa kiểm trong 1 giờ")
+    ap.add_argument("--link", action="store_true",
+                    help="user đã đồng ý: tạo junction/symlink cho skill mới, thay bản chép tay bằng bản clone")
+    ap.add_argument("--subagent", action="store_true", help="đang chạy trong subagent: bỏ qua, không git/mạng")
     a = ap.parse_args(argv)  # --help -> in hướng dẫn, exit 0; tham số lạ -> exit 2 (không gọi git hay mạng)
     if not (SKILL_DIR / "VERSION").is_file():
         print(f"DỪNG: {SKILL_DIR} không có file VERSION — không phải thư mục skill (ví dụ shared/ là nguồn dùng chung). "
               "Chạy bản trong thư mục skill: <thư mục skill>/scripts/self_update.py")
         return 2
+    if a.subagent or os.environ.get("OMI_SUBAGENT") == "1":
+        print("Chế độ subagent: bỏ qua cập nhật skill (không git, không mạng).")
+        print(f"SKILL_VERSION={NAME} {version()}")
+        return 0
     if not a.force and recently_checked():
         print(f"Bộ skill OMI đã kiểm tra cập nhật lúc {time.strftime('%H:%M', time.localtime(STAMP.stat().st_mtime))} (dưới 1 giờ) — bỏ qua.")
         print(f"SKILL_VERSION={NAME} {version()}")
         return
     code, top, _ = run(["git", "-C", str(SKILL_DIR), "rev-parse", "--show-toplevel"], 15)
     if code == 0 and top:
-        ok = update_clone(Path(top))
+        update_clone(Path(top), link=a.link)
     else:
-        ok = adopt_copy()
+        ok = adopt_copy() if a.link else None
         if ok is None:
-            ok = report_remote_only()
-    if ok:
-        mark_checked()
+            report_remote_only()
+            if not a.link:
+                print("Skill đang là bản chép tay. Muốn tự cập nhật về sau: hỏi user, đồng ý thì chạy lại với "
+                      "--force --link (clone repo về ~/omicall-skill, chuyển bản chép tay sang backup, tạo đường dẫn).")
+    mark_checked()  # ghi mốc cả khi lỗi: không fetch lại ở mỗi lần nạp skill trong 1 giờ
     final = read_version(SKILL_DIR) or read_version(SKILL_DIR.parent / NAME) or "chưa có"
     print(f"SKILL_VERSION={NAME} {final}")
 

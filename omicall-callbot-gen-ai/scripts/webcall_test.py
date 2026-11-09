@@ -7,7 +7,7 @@
       Mở trang web call có phụ đề trực tiếp; user tự nói bằng micro thật.
   python webcall_test.py auto  --domain <sipRealm> --ext <sipUser> --number <số gọi> --plan <plan.json|thư mục ca>
       Tự kiểm thử: đọc các câu khách của từng ca thành giọng nói (edge-tts), mỗi ca một cuộc gọi, phát câu khách
-      sau khi bot nói xong, gác máy; lưu suite.json + results/<ca>.txt|json (vòng lặp: SKILL.md Bước 7).
+      sau khi bot nói xong, gác máy; lưu suite.json + results/<ca>.txt|json (vòng lặp: references/webcall-test.md mục 7).
       Ca có "persona": khách AI, Claude (--model) soạn từng câu khách theo câu bot vừa nói (cần ANTHROPIC_API_KEY).
 
 Ý nghĩa và nguồn của từng tham số: references/webcall-test.md. Mỗi lần open/auto là một cuộc gọi thật

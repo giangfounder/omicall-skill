@@ -41,11 +41,11 @@ Response (minh hoạ có chú thích `//` và `...`, không phải JSON hợp l�
       "phones": [{"data": "<so_dien_thoai>", "type": "personal"}],
       "emails": [...],
       "address": "...",
-      "attribute_structure": {   // Cần xác nhận: object hay mảng — xem ghi chú ngay dưới khối này
-        "field_ma_tuy_chinh_1": "value",
-        "field_ma_tuy_chinh_2": "value",
+      "attribute_structure": [   // MẢNG — xem ghi chú ngay dưới khối này
+        {"field_code": "<ma_truong>", "field_type": "single_text",
+         "value": [{"display_value": "<giá trị>", "data_type": "...", "value_type": "..."}]},
         ...
-      },
+      ],
       "tags": [...],
       "business": [...],
       "categories": [...]
@@ -54,7 +54,7 @@ Response (minh hoạ có chú thích `//` và `...`, không phải JSON hợp l�
 }
 ```
 
-⚠ **Cần xác nhận** dạng `attribute_structure`: ví dụ trên ghi dạng object, còn theo docs thật là **MẢNG** `[{field_code, field_type, value:[{display_value,data_type,value_type}]}]` (field_code: full_name, gender, phone_number, mail, address, job_title, note, ...). Chưa có lần gọi thật nào trong skill chốt dạng nào — gọi thử một lần với khách mẫu rồi ghi lại tại đây. `attribute_structure` chứa **toàn bộ** thuộc tính KH bao gồm custom attributes theo cấu hình tenant.
+`attribute_structure` là **MẢNG** `[{field_code, field_type, value:[{display_value,data_type,value_type}]}]` (field_code: full_name, gender, phone_number, mail, address, job_title, note, ... và mã thuộc tính tuỳ chỉnh). Căn cứ: docs Public API; cùng dạng mảng đã ✔ GET ở thuộc tính phiếu ghi (skill `omicall-omiflow` node-catalog, `ADD_TICKET`); skill `omicall-crm-config` cũng ghi `attribute_structure[]`. Đọc giá trị: tìm phần tử theo `field_code` → `value[0].display_value`. Còn Cần xác nhận: chưa chụp response thật của `contact/search` (kiểu `field_type` tuỳ chỉnh, `value` rỗng trông thế nào) → lần gọi đầu đối chiếu rồi ghi lại tại đây. `attribute_structure` chứa **toàn bộ** thuộc tính KH bao gồm custom attributes theo cấu hình tenant.
 
 ### cURL mẫu
 ```bash
@@ -105,7 +105,7 @@ curl -X POST https://public-v1-stg.omicall.com/api/v2/contact/add \
 
 ## GET /api/v2/contact/get/:id — Chi tiết KH theo ID
 
-Nhanh hơn search khi đã có contact_id. Response schema giống 1 phần tử trong `payload` của search.
+Nhanh hơn search khi đã có contact_id. Response schema giống 1 phần tử trong `payload.items[]` của search.
 
 ## POST /api/v2/contact/update — Cập nhật KH
 
@@ -150,4 +150,5 @@ Header: `x-api-key` (khác Bearer). Body: `sourceEmail*`, `targetEmail*`, `previ
 - **API Token khác JWT session**: JWT phiên đăng nhập chỉ dùng cho chatbot-gateway (internal). Public API (`https://public-v1-stg.omicall.com`; `api.omicall.com` chỉ là trang docs) cần access token đổi từ API Key của tenant (Cấu hình → Tích hợp → Quản lý API), hết hạn 24h.
 - **`keyword` search khớp SĐT ở nhiều dạng**: `0989...`, `+84989...`, `84989...` — search thường trả kết quả cho cả 3.
 - **`size=1` khi chatbot dùng**: chỉ cần 1 KH khớp, không cần phân trang.
-- **Custom attributes trong `attribute_structure`**: field name = mã trường (không phải tên hiển thị) — dùng đúng mã đã cấu hình khi tạo attribute.
+- **Custom attributes trong `attribute_structure[]`**: khoá tra là `field_code` = mã trường (không phải tên hiển thị) — dùng đúng mã đã cấu hình khi tạo attribute.
+- **Token 24 giờ**: dùng token này làm header tĩnh trong Truy vấn của chatbot → quy tắc ở `playbook.md` mục "Bot cần dữ liệu CRM — chọn hướng".
