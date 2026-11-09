@@ -222,7 +222,7 @@
     {
       "id": "gan_so",
       "ten": "Gắn số",
-      "pham_vi": "gắn kịch bản gọi vào cho hotline, phím/webhook Tương tác phím, map lại khi `check_callin.py` báo STALE/MISSING: đổi đường đi cuộc gọi thật"
+      "pham_vi": "gắn kịch bản gọi vào cho hotline, phím/webhook Tương tác phím, chọn lại Callbot trong kịch bản cuộc gọi, map lại khi `check_callin.py` báo STALE/MISSING: đổi đường đi cuộc gọi thật"
     },
     {
       "id": "goi_thu",

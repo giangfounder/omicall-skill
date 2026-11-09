@@ -23,7 +23,7 @@ Ngay sau khi hiểu việc, hiện bảng kế hoạch rồi mới làm:
 | `training_reset` | callbot-flow: `training/reset` | nạp dữ liệu mẫu hệ thống vào Kho tri thức trống; hỏi riêng trước khi chạy |
 | `xuat_ban_flow` | User xuất bản flow | xuất bản đổi id flow → `manifest.py stale <flow>`, GET lại id/URL mới |
 | `xuat_ban_bot` | User xuất bản bot/callbot | xuất bản đổi id bot (uuid giữ nguyên) → `manifest.py stale <bot>`, GET lại id mới |
-| `gan_so` | Gắn số | gắn kịch bản gọi vào cho hotline, phím/webhook Tương tác phím, map lại khi `check_callin.py` báo STALE/MISSING: đổi đường đi cuộc gọi thật |
+| `gan_so` | Gắn số | gắn kịch bản gọi vào cho hotline, phím/webhook Tương tác phím, chọn lại Callbot trong kịch bản cuộc gọi, map lại khi `check_callin.py` báo STALE/MISSING: đổi đường đi cuộc gọi thật |
 | `goi_thu` | Gọi thử, nhắn thật | gọi hoặc nhắn cho người thật, kể cả số của user |
 | `xoa_bat_tat` | Xoá, bật/tắt, ghi đè bản đang chạy | từng việc một |
 <!-- /gen:gates -->

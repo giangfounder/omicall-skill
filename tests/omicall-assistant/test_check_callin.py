@@ -27,10 +27,16 @@ SCRIPTS = [
 ]
 
 
-def pbx(keys, hotlines=None):
+def pbx(keys, hotlines=None, call_scripts=None):
     return {"internal_groups": [{"_id": "g1"}],
             "key_interactions": [{"_id": "m1", "name": "Menu", "keys": keys}],
+            "call_scripts": call_scripts or [],
             "hotlines": hotlines or []}
+
+
+def call_in(steps):
+    return [{"_id": "cs1", "name": "Call in",
+             "scripts": [{"order": i, "action_type": t, "action_id": a} for i, (t, a) in enumerate(steps)]}]
 
 
 class TestEvaluate(unittest.TestCase):
@@ -67,6 +73,31 @@ class TestEvaluate(unittest.TestCase):
         text = "\n".join(lines)
         self.assertIn("WARN chưa gắn kịch bản", text)
         self.assertIn("kịch bản k1", text)
+
+    def test_call_script_callbot_stale_without_ivr(self):
+        # Tenant không dùng Tương tác phím: Callbot gắn thẳng vào kịch bản cuộc gọi "Call in", id cũ sau xuất bản.
+        p = pbx([], hotlines=[{"number": "<so>", "default_script": "cs1"}],
+                call_scripts=call_in([("Callbot", "s1-old")]))
+        p["key_interactions"] = []
+        lines, bad = self.m.evaluate(p, SCRIPTS)
+        self.assertEqual(bad, 1)
+        text = "\n".join(lines)
+        self.assertIn('Kịch bản cuộc gọi "Call in"', text)
+        self.assertIn("bước 0: STALE", text)
+        self.assertIn("s1-new", text)
+        self.assertIn('kịch bản cs1 ("Call in")', text)
+        self.assertEqual(lines[-1], "RESULT FAIL")
+
+    def test_call_script_ok_and_missing_targets(self):
+        p = pbx([], call_scripts=call_in([("Callbot", "s2"), ("Ivr_menu", "m1"), ("Ring_group", "g9"),
+                                          ("Callbot", "khong-co")]))
+        lines, bad = self.m.evaluate(p, SCRIPTS)
+        self.assertEqual(bad, 2)
+        text = "\n".join(lines)
+        self.assertIn("bước 0: OK", text)
+        self.assertIn("bước 1: OK", text)
+        self.assertIn("bước 2: MISSING  nhóm g9", text)
+        self.assertIn("bước 3: MISSING", text)
 
 
 class TestMainReadOnlyContext(unittest.TestCase):
