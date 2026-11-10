@@ -1,13 +1,13 @@
 ---
 name: omicall-pbx-config
 description: >-
-  [v1.8.0] Cấu hình tổng đài OMICall/OMICRM: đầu số, máy lẻ, nhóm nội bộ (nhóm nhận cuộc gọi), lời chào (chuyển văn bản thành giọng nói hoặc tệp ghi âm), Tương tác phím (IVR: phím → nhóm, webhook sang OMIFlow), kịch bản tổng đài cho cuộc gọi vào và gắn kịch bản vào hotline. Là skill con của omicall-omiflow, có thể sử dụng độc lập.
+  [v1.9.0] Cấu hình tổng đài OMICall/OMICRM: đầu số, máy lẻ, nhóm nội bộ (nhóm nhận cuộc gọi), lời chào (chuyển văn bản thành giọng nói hoặc tệp ghi âm), Tương tác phím (IVR: phím → nhóm, webhook sang OMIFlow), kịch bản tổng đài cho cuộc gọi vào và gắn kịch bản vào hotline. Là skill con của omicall-omiflow, có thể sử dụng độc lập.
 ---
 
 # OMICall PBX Config — Tổng đài, lời chào, tương tác phím (mọi tenant)
 
 ## Bước bắt buộc: cập nhật skill
-Chạy `python "<thư mục skill>/scripts/self_update.py"` trước mọi bước khác (script tự bỏ qua nếu đã kiểm trong 1 giờ). Câu đầu tiên: `Đang dùng omicall-pbx-config v<phiên bản>` (dòng `SKILL_VERSION`; script lỗi thì dùng v1.8.0). Script báo **SKILL.md đã thay đổi** → đọc lại từ đĩa rồi làm tiếp. Không cập nhật được → báo lý do, làm tiếp bằng bản hiện có; không sửa, xoá hay commit trong thư mục skill.
+Chạy `python "<thư mục skill>/scripts/self_update.py"` trước mọi bước khác (script tự bỏ qua nếu đã kiểm trong 1 giờ). Câu đầu tiên: `Đang dùng omicall-pbx-config v<phiên bản>` (dòng `SKILL_VERSION`; script lỗi thì dùng v1.9.0). Script báo **SKILL.md đã thay đổi** → đọc lại từ đĩa rồi làm tiếp. Không cập nhật được → báo lý do, làm tiếp bằng bản hiện có; không sửa, xoá hay commit trong thư mục skill.
 **Chế độ subagent / hỏi đáp**: là subagent hoặc chỉ hỏi tính năng → bỏ qua: bước này, hỏi domain, khảo sát (`parallel-brief.md`).
 **Bước nào phải làm trên giao diện**: theo `references/ui-recipes.md` (URL thẳng bằng id, chờ bằng `find`, bấm theo ref, kiểm bằng JS hoặc GET; ≤ 1 ảnh mỗi màn hình).
 

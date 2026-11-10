@@ -1,13 +1,13 @@
 ---
 name: omicall-assistant
 description: >-
-  [v1.8.0] Điều phối viên trung tâm của OMICall/OMICRM. Chế độ hỏi đáp: trả lời câu hỏi về tính năng và mức độ đáp ứng (kể cả checklist, RFP) dựa trên tài liệu của các skill chuyên trách, không suy diễn. Chế độ triển khai: phân tích yêu cầu, lập kế hoạch, xin duyệt kế hoạch, chia thành các đợt theo quan hệ phụ thuộc, giao các skill omicall-* cho subagent thực hiện song song, kiểm tra lại kết quả và báo cáo. Yêu cầu chỉ thuộc một skill chuyên trách thì dùng trực tiếp skill đó.
+  [v1.9.0] Điều phối viên trung tâm của OMICall/OMICRM. Chế độ hỏi đáp: trả lời câu hỏi về tính năng và mức độ đáp ứng (kể cả checklist, RFP) dựa trên tài liệu của các skill chuyên trách, không suy diễn. Chế độ triển khai: phân tích yêu cầu, lập kế hoạch, xin duyệt kế hoạch, chia thành các đợt theo quan hệ phụ thuộc, giao các skill omicall-* cho subagent thực hiện song song, kiểm tra lại kết quả và báo cáo. Yêu cầu chỉ thuộc một skill chuyên trách thì dùng trực tiếp skill đó.
 ---
 
 # OMICall Assistant — Tổng quản lý điều phối
 
 ## Bước bắt buộc: cập nhật skill
-Chạy `python "<thư mục skill>/scripts/self_update.py"` trước mọi bước khác (tự bỏ qua nếu đã kiểm trong 1 giờ). Câu đầu: `Đang dùng omicall-assistant v<phiên bản>` (dòng `SKILL_VERSION`; lỗi thì dùng v1.8.0). Không cập nhật được → báo lý do, làm tiếp.
+Chạy `python "<thư mục skill>/scripts/self_update.py"` trước mọi bước khác (tự bỏ qua nếu đã kiểm trong 1 giờ). Câu đầu: `Đang dùng omicall-assistant v<phiên bản>` (dòng `SKILL_VERSION`; lỗi thì dùng v1.9.0). Không cập nhật được → báo lý do, làm tiếp.
 **Chế độ subagent / hỏi đáp**: là subagent hoặc chỉ hỏi tính năng → bỏ qua: bước này, hỏi domain, khảo sát (`parallel-brief.md`).
 **Bước nào phải làm trên giao diện**: theo `references/ui-recipes.md` (URL thẳng bằng id, chờ bằng `find`, bấm theo ref, kiểm bằng JS hoặc GET; ≤ 1 ảnh mỗi màn hình).
 

@@ -1,13 +1,13 @@
 ---
 name: omicall-callbot-flow
 description: >-
-  [v1.11.0] Xây dựng và chỉnh sửa Callbot theo kịch bản cố định (loại NORMAL) của OMICall/OMICRM: cây hội thoại, ý định và thực thể NLU, dữ liệu huấn luyện cho giọng nói qua điện thoại, Kho tri thức, sinh luồng từ JSON, lưu và gọi thử. Áp dụng cho trang …/ai/callbot/script/update/{id} khi kịch bản không thuộc loại AI_AGENT; với SmartAgent sử dụng omicall-callbot-gen-ai.
+  [v1.12.0] Xây dựng và chỉnh sửa Callbot theo kịch bản cố định (loại NORMAL) của OMICall/OMICRM: cây hội thoại, ý định và thực thể NLU, dữ liệu huấn luyện cho giọng nói qua điện thoại, Kho tri thức, sinh luồng từ JSON, lưu và gọi thử. Áp dụng cho trang …/ai/callbot/script/update/{id} khi kịch bản không thuộc loại AI_AGENT; với SmartAgent sử dụng omicall-callbot-gen-ai.
 ---
 
 # OMiCALL Callbot luồng cổ điển (NORMAL) + Kho tri thức — Generic Builder Playbook
 
 ## Bước bắt buộc: cập nhật skill
-Chạy `python "<thư mục skill>/scripts/self_update.py"` trước mọi bước khác (script tự bỏ qua nếu đã kiểm trong 1 giờ). Câu đầu tiên: `Đang dùng omicall-callbot-flow v<phiên bản>` (dòng `SKILL_VERSION`; script lỗi thì dùng v1.11.0). Script báo **SKILL.md đã thay đổi** → đọc lại từ đĩa rồi làm tiếp. Không cập nhật được → báo lý do, làm tiếp bằng bản hiện có; không sửa, xoá hay commit trong thư mục skill.
+Chạy `python "<thư mục skill>/scripts/self_update.py"` trước mọi bước khác (script tự bỏ qua nếu đã kiểm trong 1 giờ). Câu đầu tiên: `Đang dùng omicall-callbot-flow v<phiên bản>` (dòng `SKILL_VERSION`; script lỗi thì dùng v1.12.0). Script báo **SKILL.md đã thay đổi** → đọc lại từ đĩa rồi làm tiếp. Không cập nhật được → báo lý do, làm tiếp bằng bản hiện có; không sửa, xoá hay commit trong thư mục skill.
 **Chế độ subagent / hỏi đáp**: là subagent hoặc chỉ hỏi tính năng → bỏ qua: bước này, hỏi domain, khảo sát (`parallel-brief.md`).
 **Bước nào phải làm trên giao diện**: theo `references/ui-recipes.md` (URL thẳng bằng id, chờ bằng `find`, bấm theo ref, kiểm bằng JS hoặc GET; ≤ 1 ảnh mỗi màn hình).
 

@@ -1,13 +1,13 @@
 ---
 name: omicall-callbot-gen-ai
 description: >-
-  [v1.20.0] Xây dựng và chỉnh sửa kịch bản Callbot Gen AI (SmartAgent, loại AI_AGENT) của OMICall/OMICRM: ý định, thu thập thông tin, phân loại, gọi API, truy xuất tri thức (RAG), chuyển máy và lời nhắc hệ thống cho tổng đài viên AI. Xây dựng từ tài liệu nghiệp vụ hoặc PDF; chỉnh sửa tại …/ai/callbot/script/update/{scriptId}; lưu qua chatbot-gateway và kiểm thử.
+  [v1.21.0] Xây dựng và chỉnh sửa kịch bản Callbot Gen AI (SmartAgent, loại AI_AGENT) của OMICall/OMICRM: ý định, thu thập thông tin, phân loại, gọi API, truy xuất tri thức (RAG), chuyển máy và lời nhắc hệ thống cho tổng đài viên AI. Xây dựng từ tài liệu nghiệp vụ hoặc PDF; chỉnh sửa tại …/ai/callbot/script/update/{scriptId}; lưu qua chatbot-gateway và kiểm thử.
 ---
 
 # OMiCALL Callbot Gen AI — Generic Builder Playbook (all tenants / all scripts)
 
 ## Bước bắt buộc: cập nhật skill
-Chạy `python "<thư mục skill>/scripts/self_update.py"` trước mọi bước khác (script tự bỏ qua nếu đã kiểm trong 1 giờ). Câu đầu tiên: `Đang dùng omicall-callbot-gen-ai v<phiên bản>` (dòng `SKILL_VERSION`; script lỗi thì dùng v1.20.0). Script báo **SKILL.md đã thay đổi** → đọc lại từ đĩa rồi làm tiếp. Không cập nhật được → báo lý do, làm tiếp bằng bản hiện có; không sửa, xoá hay commit trong thư mục skill.
+Chạy `python "<thư mục skill>/scripts/self_update.py"` trước mọi bước khác (script tự bỏ qua nếu đã kiểm trong 1 giờ). Câu đầu tiên: `Đang dùng omicall-callbot-gen-ai v<phiên bản>` (dòng `SKILL_VERSION`; script lỗi thì dùng v1.21.0). Script báo **SKILL.md đã thay đổi** → đọc lại từ đĩa rồi làm tiếp. Không cập nhật được → báo lý do, làm tiếp bằng bản hiện có; không sửa, xoá hay commit trong thư mục skill.
 **Chế độ subagent / hỏi đáp**: là subagent hoặc chỉ hỏi tính năng → bỏ qua: bước này, hỏi domain, khảo sát (`parallel-brief.md`).
 **Bước nào phải làm trên giao diện**: theo `references/ui-recipes.md` (URL thẳng bằng id, chờ bằng `find`, bấm theo ref, kiểm bằng JS hoặc GET; ≤ 1 ảnh mỗi màn hình).
 

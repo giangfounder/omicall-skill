@@ -1,13 +1,13 @@
 ---
 name: omicall-omiflow
 description: >-
-  [v1.23.0] Thiết kế, xây dựng và chỉnh sửa quy trình tự động OMIFlow của OMICall/OMICRM. Điều kiện bắt đầu: webhook API, cuộc gọi, phím bấm IVR, phiếu ghi, lịch, tệp Excel, đối tác, trạng thái khách hàng. Thành phần xử lý: điều kiện, trì hoãn, AI phân loại, gọi API ngoài, cập nhật khách hàng/phiếu ghi/cuộc gọi, cửa sổ tương tác cho nhân viên, SMS/ZNS, chạy hoặc liên kết Callbot/Chatbot. Đọc và lưu qua API campaign-v1. Cấu hình nền được giao cho omicall-crm-config, omicall-pbx-config và omicall-ai-insight.
+  [v1.24.0] Thiết kế, xây dựng và chỉnh sửa quy trình tự động OMIFlow của OMICall/OMICRM. Điều kiện bắt đầu: webhook API, cuộc gọi, phím bấm IVR, phiếu ghi, lịch, tệp Excel, đối tác, trạng thái khách hàng. Thành phần xử lý: điều kiện, trì hoãn, AI phân loại, gọi API ngoài, cập nhật khách hàng/phiếu ghi/cuộc gọi, cửa sổ tương tác cho nhân viên, SMS/ZNS, chạy hoặc liên kết Callbot/Chatbot. Đọc và lưu qua API campaign-v1. Cấu hình nền được giao cho omicall-crm-config, omicall-pbx-config và omicall-ai-insight.
 ---
 
 # OMICall OMIFlow — Builder Playbook (mọi tenant, mọi bài toán)
 
 ## Bước bắt buộc: cập nhật skill
-Chạy `python "<thư mục skill>/scripts/self_update.py"` trước mọi bước khác (script tự bỏ qua nếu đã kiểm trong 1 giờ). Câu đầu tiên: `Đang dùng omicall-omiflow v<phiên bản>` (dòng `SKILL_VERSION`; script lỗi thì dùng v1.23.0). Script báo **SKILL.md đã thay đổi** → đọc lại từ đĩa rồi làm tiếp. Không cập nhật được → báo lý do, làm tiếp bằng bản hiện có; không sửa, xoá hay commit trong thư mục skill.
+Chạy `python "<thư mục skill>/scripts/self_update.py"` trước mọi bước khác (script tự bỏ qua nếu đã kiểm trong 1 giờ). Câu đầu tiên: `Đang dùng omicall-omiflow v<phiên bản>` (dòng `SKILL_VERSION`; script lỗi thì dùng v1.24.0). Script báo **SKILL.md đã thay đổi** → đọc lại từ đĩa rồi làm tiếp. Không cập nhật được → báo lý do, làm tiếp bằng bản hiện có; không sửa, xoá hay commit trong thư mục skill.
 **Chế độ subagent / hỏi đáp**: là subagent hoặc chỉ hỏi tính năng → bỏ qua: bước này, hỏi domain, khảo sát (`parallel-brief.md`).
 **Bước nào phải làm trên giao diện**: theo `references/ui-recipes.md` (URL thẳng bằng id, chờ bằng `find`, bấm theo ref, kiểm bằng JS hoặc GET; ≤ 1 ảnh mỗi màn hình).
 

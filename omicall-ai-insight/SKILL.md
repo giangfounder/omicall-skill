@@ -1,13 +1,13 @@
 ---
 name: omicall-ai-insight
 description: >-
-  [v1.9.0] Cấu hình và khai thác các chức năng phân tích bằng trí tuệ nhân tạo của OMICall/OMICRM: AI Assistant (hướng dẫn tổng hợp, các trường thông tin trích xuất từ cuộc gọi, biến ca_summarize và ca_ai_assistant), Voice Insights, Chat Insights, đánh giá cuộc gọi và phiếu ghi, chuyển giọng nói thành văn bản. Là skill con của omicall-omiflow, có thể sử dụng độc lập.
+  [v1.10.0] Cấu hình và khai thác các chức năng phân tích bằng trí tuệ nhân tạo của OMICall/OMICRM: AI Assistant (hướng dẫn tổng hợp, các trường thông tin trích xuất từ cuộc gọi, biến ca_summarize và ca_ai_assistant), Voice Insights, Chat Insights, đánh giá cuộc gọi và phiếu ghi, chuyển giọng nói thành văn bản. Là skill con của omicall-omiflow, có thể sử dụng độc lập.
 ---
 
 # OMICall AI Insight — AI Assistant, Voice Insights, Chat Insights (mọi tenant)
 
 ## Bước bắt buộc: cập nhật skill
-Chạy `python "<thư mục skill>/scripts/self_update.py"` trước mọi bước khác (script tự bỏ qua nếu đã kiểm trong 1 giờ). Câu đầu tiên: `Đang dùng omicall-ai-insight v<phiên bản>` (dòng `SKILL_VERSION`; script lỗi thì dùng v1.9.0). Script báo **SKILL.md đã thay đổi** → đọc lại từ đĩa rồi làm tiếp. Không cập nhật được → báo lý do, làm tiếp bằng bản hiện có; không sửa, xoá hay commit trong thư mục skill.
+Chạy `python "<thư mục skill>/scripts/self_update.py"` trước mọi bước khác (script tự bỏ qua nếu đã kiểm trong 1 giờ). Câu đầu tiên: `Đang dùng omicall-ai-insight v<phiên bản>` (dòng `SKILL_VERSION`; script lỗi thì dùng v1.10.0). Script báo **SKILL.md đã thay đổi** → đọc lại từ đĩa rồi làm tiếp. Không cập nhật được → báo lý do, làm tiếp bằng bản hiện có; không sửa, xoá hay commit trong thư mục skill.
 **Chế độ subagent / hỏi đáp**: là subagent hoặc chỉ hỏi tính năng → bỏ qua: bước này, hỏi domain, khảo sát (`parallel-brief.md`).
 **Bước nào phải làm trên giao diện**: theo `references/ui-recipes.md` (URL thẳng bằng id, chờ bằng `find`, bấm theo ref, kiểm bằng JS hoặc GET; ≤ 1 ảnh mỗi màn hình).
 
