@@ -6,7 +6,7 @@
   "builder": "sinh",
   "template": null,
   "source": "references/api-reference.md#BEGIN (runtime",
-  "verified_on": null,
+  "verified_on": "Cần xác nhận",
   "ui_hint": "Kiểm chứng: api-reference mục 'Bài học tenant trống' (add_v2 tối thiểu BEGIN + ADD_CLASSIFY + END_CALL đã chạy). Trường mặc định lấy từ GET baseline; tenant trống: Cần xác nhận."
  },
  {
@@ -96,7 +96,7 @@
   "builder": "sinh",
   "template": null,
   "source": "references/api-reference.md#ADD_CLASSIFY",
-  "verified_on": null,
+  "verified_on": "Cần xác nhận",
   "ui_hint": "Kiểm chứng: api-reference mục 'Bài học tenant trống'. Runtime key data, editor key datas."
  },
  {
@@ -106,7 +106,7 @@
   "builder": "sinh",
   "template": null,
   "source": "references/api-reference.md#END_CALL",
-  "verified_on": null,
+  "verified_on": "Cần xác nhận",
   "ui_hint": "Kiểm chứng: api-reference mục 'Bài học tenant trống'. description runtime + data.description/data.content editor; quy tắc nội dung: playbook mục 'Kết thúc và chuyển cuộc gọi'."
  },
  {
@@ -146,7 +146,7 @@
   "builder": "giu_nguyen",
   "template": null,
   "source": "references/api-reference.md#Cấu hình API cho agent",
-  "verified_on": null,
+  "verified_on": "Cần xác nhận",
   "ui_hint": "Builder chép từ spec.knowledge.apis hoặc giữ theo base (--update). Header che khi in; endpoint chỉ dùng khi tài liệu khách nêu, không bịa."
  },
  {
@@ -156,7 +156,7 @@
   "builder": "khong",
   "template": null,
   "source": "references/api-reference.md#Cấu hình API cho agent",
-  "verified_on": null,
+  "verified_on": "Cần xác nhận",
   "ui_hint": "Thuộc mục 'mẫu verify từ script thật'. Builder chưa sinh: thêm tay sau bước collect_variables (api-reference mục 'Bài học tenant trống', ý Builder)."
  },
  {
@@ -166,7 +166,7 @@
   "builder": "khong",
   "template": null,
   "source": "references/api-reference.md#Cấu hình API cho agent",
-  "verified_on": null,
+  "verified_on": "Cần xác nhận",
   "ui_hint": "Thuộc mục 'mẫu verify từ script thật'. Builder chưa sinh: thêm tay vào top-level variables."
  },
  {

@@ -70,7 +70,7 @@ def as_list(v):
 
 def bot_end_handle(node):
     """Nút AI Chatbot (OMI_BOT_AI): nhánh "BOT chủ động kết thúc" nằm ở next_nodes nhưng edge dùng
-    sourceHandle = id trường hợp kết thúc (trùng ai_analyze.customer_not_response.id; node-catalog.md mục 2.1,
+    sourceHandle = id trường hợp kết thúc (trùng ai_analyze.customer_not_response.id; node-condition.md mục 2.1,
     ✔ UI 10/2026). Chưa có JSON mẫu nên dò ở mọi tầng của node. Không thấy → None."""
     if node.get('node_type') != 'OMI_BOT_AI':
         return None
@@ -151,7 +151,7 @@ def declared_vars(flow):
             if d.get('variable_code'):
                 reg(d.get('variable_code'), d.get('variable_name'))
             if d.get('field_code') and d.get('field_name') and 'field_type' in d:
-                # trường của FORM_DIALOG: giá trị nhân viên nhập thành biến {{<field_code>}} (node-catalog mục 4)
+                # trường của FORM_DIALOG: giá trị nhân viên nhập thành biến {{<field_code>}} (node-action-contact.md mục 4)
                 reg(d.get('field_code'), d.get('field_name'))
     return codes, names
 
@@ -520,13 +520,13 @@ def check(flow, mode='pre', sent=None, quota=None, context=None):
     nm = flow.get('name_mappings')
     if not nm:
         r.add('WARN', 'X9', 'thiếu name_mappings (bản editor): editor có thể hiện "Chưa có dữ liệu"; '
-              'sửa nút phải sửa cả nodes lẫn name_mappings (node-catalog.md mục 6)', 'name_mappings')
+              'sửa nút phải sửa cả nodes lẫn name_mappings (node-editor-get.md)', 'name_mappings')
     elif isinstance(nm, list):
         ids = {hk(m.get('id')) for m in nm if isinstance(m, dict) and m.get('id')}
         lack = [hk(n.get('id')) for _, n in work if hk(n.get('id')) not in ids] if ids else []
         if not ids:
             r.add('WARN', 'X9', 'name_mappings không rỗng nhưng không phần tử nào có khoá id: không đối chiếu được với '
-                  'nodes; phần tử phải chép nguyên từ bản GET của nút cùng loại (node-catalog.md mục 6): Cần xác nhận',
+                  'nodes; phần tử phải chép nguyên từ bản GET của nút cùng loại (node-editor-get.md): Cần xác nhận',
                   'name_mappings')
         elif lack:
             r.add('WARN', 'X9', f'name_mappings thiếu bản editor của {len(lack)} nút: {lack[:5]}', 'name_mappings')

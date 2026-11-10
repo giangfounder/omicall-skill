@@ -40,4 +40,4 @@ Cột "Ghi" là đường nhanh nhất đã có; thứ tự ưu tiên chung: c�
 - Gửi tin hay gọi cho người thật, công cụ ghi vào tổng đài/khách/phiếu: từng việc một, user đồng ý trước.
 - Mỗi tenant có gói khác nhau: kiểm `get_service_package` và quota flow/nút/bot trước khi hứa.
 - Một số hành động không có JSON đã kiểm chứng (`node-status.json` ghi `unverified`, `enum`, `ui_only`): không bịa schema, đi giao diện hoặc ghi "Cần xác nhận".
-- Token, cookie, mật khẩu: không đọc, không in, không chuyển; đăng nhập bằng form cục bộ (`omi-mcp.md` mục 2a).
+- Token, cookie, mật khẩu: không đọc, không in, không chuyển; đăng nhập bằng form cục bộ (`omi-login.md` mục 2a).

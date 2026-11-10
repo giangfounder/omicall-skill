@@ -91,7 +91,7 @@ class TestUiRecipes(unittest.TestCase):
     def test_brief_template_asks_for_screenshot_count(self):
         g = json.loads((ROOT / "shared" / "skill-graph.json").read_text(encoding="utf-8"))
         self.assertIn("ui-recipes.md", g["giao_dien"])
-        brief = "\n".join(g["mau_giao_viec"])
+        brief = "\n".join(g["mau_giao_viec"]).replace("{tra_ve}", g["mau_tra_ve"])  # mẫu trả về tách khoá riêng 11/2026
         self.assertIn("ui-recipes.md", brief)
         self.assertIn("số ảnh đã chụp", brief)
 

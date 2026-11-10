@@ -10,13 +10,14 @@ Các mục:
  (b) Cụm từ an toàn theo skill. Có --baseline-dir: cụm có trong baseline mà nay mất khỏi skill → FAIL.
      Không có baseline: cụm vắng mặt → FAIL.
  (c) REVIEW: bullet trong mục Rules/Gotchas/Quy tắc của baseline mà câu chuẩn hoá không còn ở đâu trong skill.
- (d) sync_shared --check (file dùng chung khớp shared/) và omi-mcp.md giống hệt ở mọi skill.
+ (d) sync_shared --check (file dùng chung khớp shared/) và omi-mcp.md, omi-login.md, parallel-brief.md giống hệt ở mọi skill.
  (e) Mọi đường dẫn references/... và scripts/... nhắc trong SKILL.md đều tồn tại.
  (f) Dữ liệu nhạy cảm: SĐT VN, JWT (eyJ...), email, '<tên>.omicrm.io', '*_session.json'.
      Ngoại lệ ở tools/sensitive_allowlist.json. Mọi file credentials.md bị bỏ qua theo đường dẫn, không mở.
  (g) Không còn chuỗi '3 skill' (bộ hiện có 7 skill chuyên trách và omicall-assistant).
  (h) Kích thước SKILL.md so với baseline (chỉ WARN).
  (i) Khối sinh từ shared/skill-graph.json (tools/gen_skill_links.py --check) khớp.
+ (j) references/node-status.json của 4 skill có bảng trạng thái node (tools/check_node_status.py, mã NS1–NS7).
 Kiểm cả omicall-assistant (cửa vào, điều phối) như skill đầy đủ.
 """
 import argparse
@@ -214,17 +215,19 @@ def check_sync(rep, root, skills):
             rep.add("FAIL", "d", "sync_shared: " + l[5:])
     if n == 0:
         rep.add("PASS", "d", "sync_shared --check khớp")
-    hashes = {}
-    for s in skills:
-        p = root / s / "references" / "omi-mcp.md"
-        if p.is_file():
-            hashes[s] = hashlib.sha256(p.read_bytes()).hexdigest()
-        else:
-            rep.add("FAIL", "d", f"thiếu {s}/references/omi-mcp.md")
-    if len(set(hashes.values())) > 1:
-        rep.add("FAIL", "d", "omi-mcp.md không giống hệt: " + ", ".join(f"{k}={v[:12]}" for k, v in hashes.items()))
-    elif hashes:
-        rep.add("PASS", "d", f"omi-mcp.md giống hệt ở {len(hashes)} skill")
+    # file chung mọi skill đều nạp (lõi đăng nhập/token, đăng nhập chi tiết, file ngắn cho subagent)
+    for name in ("omi-mcp.md", "omi-login.md", "parallel-brief.md"):
+        hashes = {}
+        for s in skills:
+            p = root / s / "references" / name
+            if p.is_file():
+                hashes[s] = hashlib.sha256(p.read_bytes()).hexdigest()
+            else:
+                rep.add("FAIL", "d", f"thiếu {s}/references/{name}")
+        if len(set(hashes.values())) > 1:
+            rep.add("FAIL", "d", f"{name} không giống hệt: " + ", ".join(f"{k}={v[:12]}" for k, v in hashes.items()))
+        elif hashes:
+            rep.add("PASS", "d", f"{name} giống hệt ở {len(hashes)} skill")
 
 
 def check_paths(rep, root, skills):
@@ -341,6 +344,21 @@ def check_generated(rep, root):
         rep.add("PASS", "i", f"khối sinh khớp skill-graph.json ({len(files)} file)")
 
 
+def check_node_status(rep, root):
+    try:
+        import check_node_status as cns
+    except ImportError as e:
+        rep.add("FAIL", "j", f"không nạp được tools/check_node_status.py: {e}")
+        return
+    viol, exc = cns.check(root, [s for s in cns.SKILLS if (Path(root) / s).is_dir()])
+    for code, skill, i, t, side, msg in viol:
+        rep.add("FAIL", "j", f"{code} {skill}[{i}] {t} ({side}): {msg}")
+    for skill, i, t, side, reason in exc:
+        rep.add("REVIEW", "j", f"NS7 ngoại lệ {skill}[{i}] {t} ({side}): {reason}")
+    if not viol:
+        rep.add("PASS", "j", "node-status.json khớp nguồn, schema và builder")
+
+
 def run(root=ROOT, baseline=None, allowlist=None):
     root = Path(root).resolve()
     baseline = Path(baseline).resolve() if baseline else None
@@ -359,6 +377,7 @@ def run(root=ROOT, baseline=None, allowlist=None):
     check_3skill(rep, root, skills)
     check_sizes(rep, root, skills, baseline)
     check_generated(rep, root)
+    check_node_status(rep, root)
     print(f"RESULT {'FAIL' if rep.fails else 'PASS'} ({rep.fails} FAIL)")
     return rep
 

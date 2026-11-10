@@ -54,6 +54,25 @@ class TestSurvey(unittest.TestCase):
         self.assertIn("crm.ma_truong_moi", got["_ghi_boi"])
         self.assertFalse(Path(str(out) + ".lock").exists())
 
+    def test_resurvey_after_config_survey_keeps_pbx_ai_config(self):
+        # config_survey (dữ liệu giả, không mạng) ghi pbx/ai_config vào cùng --out; tenant_survey --replay sau đó không xoá
+        from unittest import mock
+        sys.path.insert(0, str(ROOT / "shared" / "scripts"))
+        sys.path.insert(0, str(HERE))
+        import config_survey
+        from test_config_survey import fake_call
+        out = self.tmp / "ctx.json"
+        orig = config_survey.survey
+        with mock.patch.object(config_survey, "survey", lambda *a, **k: orig(call=fake_call)), mock.patch("sys.stdout"):
+            self.assertEqual(config_survey.main(["--out", str(out)]), 0)
+        before = json.loads(out.read_text(encoding="utf-8"))
+        self.assertIn("pbx", before)
+        self.assertIn("ai_config", before)
+        got, _ = self.survey()
+        self.assertEqual(got["pbx"], before["pbx"])
+        self.assertEqual(got["ai_config"], before["ai_config"])
+        self.assertEqual(got["survey_at"], "2026-01-01T00:00:00")
+
     def test_unverified_not_called_by_default(self):
         got, text = self.survey()
         called = {r["key"] for r in got["_endpoints"] if r["goi"]}

@@ -7,18 +7,18 @@ description: >-
 # OMiCALL/OMiCRM AI Chatbot (OmiBot) Gen AI — Generic Builder Playbook (mọi tenant / mọi bot)
 
 ## Bước bắt buộc: cập nhật skill
-Chạy `python "<thư mục skill>/scripts/self_update.py"` trước mọi bước khác, 1 lần/phiên (đã chạy rồi, kể cả ở skill khác, thì bỏ qua). Câu đầu tiên: `Đang dùng omicall-chatbot-gen-ai v<phiên bản>` (dòng `SKILL_VERSION`; script lỗi thì dùng v1.14.0). Script báo **SKILL.md đã thay đổi** → đọc lại từ đĩa rồi làm tiếp. Không cập nhật được → báo lý do, làm tiếp bằng bản hiện có; không sửa, xoá hay commit trong thư mục skill.
-**Chế độ subagent / hỏi đáp**: là subagent hoặc chỉ hỏi tính năng → bỏ qua bước này, hỏi domain, khảo sát (`parallel.md` mục 1).
+Chạy `python "<thư mục skill>/scripts/self_update.py"` trước mọi bước khác (script tự bỏ qua nếu đã kiểm trong 1 giờ). Câu đầu tiên: `Đang dùng omicall-chatbot-gen-ai v<phiên bản>` (dòng `SKILL_VERSION`; script lỗi thì dùng v1.14.0). Script báo **SKILL.md đã thay đổi** → đọc lại từ đĩa rồi làm tiếp. Không cập nhật được → báo lý do, làm tiếp bằng bản hiện có; không sửa, xoá hay commit trong thư mục skill.
+**Chế độ subagent / hỏi đáp**: là subagent hoặc chỉ hỏi tính năng → bỏ qua: bước này, hỏi domain, khảo sát (`parallel-brief.md`).
 **Bước nào phải làm trên giao diện**: theo `references/ui-recipes.md` (URL thẳng bằng id, chờ bằng `find`, bấm theo ref, kiểm bằng JS hoặc GET; ≤ 1 ảnh mỗi màn hình).
 
 ## Bắt đầu và cách trao đổi (BẮT BUỘC)
 Làm theo `references/conversation.md`, chung cho mọi skill OMI:
-- Mục 1: hỏi domain → `python "<thư mục skill>/scripts/omi_login.py" ensure --domain <domain>` → `"need":"setup"` thì mở form cục bộ `omi_login.py setup --ui` trong agent (cách duy nhất; dự phòng: `references/omi-mcp.md` mục 2a). Không nhận mật khẩu qua chat, không gõ hay đọc form.
+- Mục 1: hỏi domain → `python "<thư mục skill>/scripts/omi_login.py" ensure --domain <domain>` → `"need":"setup"` thì mở form cục bộ `omi_login.py setup --ui` trong agent (cách duy nhất; dự phòng: `references/omi-login.md` mục 2a). Không nhận mật khẩu qua chat, không gõ hay đọc form.
 - Mục 2–6: khung 5 bước, cách hỏi lại, mẫu câu, lời thường.
 
 ## Đường nhanh
 Chạy script bằng đường dẫn tuyệt đối `<thư mục skill>/scripts/...`. Mỗi bước chỉ trỏ tới quy tắc gốc bên dưới, không thay thế.
-1. `omi_preflight.py --domain <domain>` → route `api`/`login`/`ui`/`blocked`, không in token. `login` → tự chạy `omi_login.py login --domain <domain>`; `blocked` → form `omi_login.py setup --ui` theo `references/conversation.md` mục 1; không đọc cookie.
+1. `ensure` `ok:true` (`route=api`) → đi tiếp; `ok:false` → `omi_preflight.py --domain <domain>` → `login`/`ui`/`blocked`, không in token. `login` → tự chạy `omi_login.py login --domain <domain>`; `blocked` → form `omi_login.py setup --ui` theo `references/conversation.md` mục 1; không đọc cookie.
 2. `tenant_survey.py --out <scratch>/tenant_context.json` + MCP `get_all_channels`, `get_service_package`: kênh, widget LiveTalk test, quota Bot/Dữ liệu khác/OMIFlow (mục "kiểm tra quota"). Thiếu → "Cần xác nhận".
 3. `bot_outline.py --id <bot_id> --domain <domain> --save` (hoặc `--file <GET.json>`) → baseline: trường hợp, node, cạnh, biến, Truy vấn, RAG, `is_draft`/`is_publish`.
 4. Spec theo `references/spec-bot.example.json` (Bước 2–4; song song/tuần tự: `references/parallel.md`). Tra `references/node-status.json`: `verified` → API (chuyển nhân viên = `handoff` → flow phụ thuộc); chưa có JSON (gửi tin, kết thúc, Kích hoạt ngữ cảnh) → UI, mỗi nút: điền → đóng hết ngăn kéo → Lưu lại → GET (Gotchas).

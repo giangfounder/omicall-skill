@@ -5,6 +5,7 @@ Giá trị nhạy cảm giả được ghép lúc chạy để chính file test 
 Đặt env OMI_BASELINE_DIR=<bản chụp trước khi sửa> để chạy thêm test trên bản chụp gốc.
 """
 import importlib
+import json
 import os
 import re
 import shutil
@@ -33,13 +34,48 @@ def run_tool(script, *args):
     return p.returncode, p.stdout + p.stderr
 
 
+def snapshot(repo):
+    """{đường dẫn tương đối: (cỡ, mtime_ns)} của mọi file trong bản chép."""
+    out = {}
+    for d, _, files in os.walk(repo):
+        for f in files:
+            p = os.path.join(d, f)
+            st = os.stat(p)
+            out[os.path.relpath(p, repo)] = (st.st_size, st.st_mtime_ns)
+    return out
+
+
+_SHARED = {}
+
+
+def tearDownModule():
+    if _SHARED:
+        shutil.rmtree(_SHARED["tmp"], ignore_errors=True)
+        _SHARED.clear()
+
+
 class Base(unittest.TestCase):
+    """Một bản chép repo dùng chung cho cả module (chép và lần đọc đầu file mới chép tốn vài giây mỗi lần).
+    Sau mỗi test, file bị sửa/xoá được chép lại từ ROOT, file mới sinh bị xoá → test sau thấy bản sạch như chép riêng."""
+
     def setUp(self):
-        self.tmp = Path(tempfile.mkdtemp(prefix="omi_tools_"))
-        self.repo = copy_repo(self.tmp / "repo")
+        if not _SHARED:
+            tmp = Path(tempfile.mkdtemp(prefix="omi_tools_"))
+            repo = copy_repo(tmp / "repo")
+            _SHARED.update(tmp=tmp, repo=repo, snap=snapshot(repo))
+        self.repo = _SHARED["repo"]
 
     def tearDown(self):
-        shutil.rmtree(self.tmp, ignore_errors=True)
+        repo, snap = _SHARED["repo"], _SHARED["snap"]
+        cur = snapshot(repo)
+        for rel in set(cur) - set(snap):
+            os.remove(repo / rel)
+        for rel, st in snap.items():
+            if cur.get(rel) != st:
+                (repo / rel).parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(ROOT / rel, repo / rel)
+                s2 = os.stat(repo / rel)
+                snap[rel] = (s2.st_size, s2.st_mtime_ns)
 
 
 class TestSyncShared(Base):
@@ -123,6 +159,133 @@ class TestCheckSkills(Base):
         self.assertIn("FAIL (f) omicall-callbot-gen-ai/references/api-reference.md:133", out)
         self.assertIn("FAIL (f) omicall-chatbot-gen-ai/references/api-reference.md:32", out)
         self.assertIn("FAIL (g)", out)
+
+
+class TestSharedCopyRestore(Base):
+    def test_restore_after_mutation(self):
+        p = self.repo / "omicall-omiflow" / "SKILL.md"
+        p.write_text("# hỏng\n", encoding="utf-8")
+        (self.repo / "omicall-omiflow" / "references" / "credentials.md").write_text("x\n", encoding="utf-8")
+        gone = self.repo / "omicall-callbot-flow" / "references" / "node-status.json"
+        gone.unlink()
+        self.tearDown()
+        self.assertEqual(p.read_bytes(), (ROOT / "omicall-omiflow" / "SKILL.md").read_bytes())
+        self.assertFalse((self.repo / "omicall-omiflow" / "references" / "credentials.md").exists())
+        self.assertTrue(gone.is_file())
+        self.assertEqual(snapshot(self.repo), _SHARED["snap"])
+
+
+NS_DOC = """# Tài liệu
+## 1. Hành động
+| `ADD_CLASSIFY` | Phân loại |
+| `TRANSFER_CALL` | Chuyển máy, Ring_group |
+### 1.1 ADD_CLASSIFY [verify JSON]
+```json
+# không phải tiêu đề
+```
+## 2. Khác
+Không nhắc loại nào.
+"""
+NS_BUILDER = '''"""Builder giả. Docstring nhắc HOLDING_CALL nhưng không tính."""
+SUPPORTED_ACTIONS = ("ADD_CLASSIFY", "TRANSFER_CALL")
+UNSUPPORTED = {"ring_group": "Ring_group"}
+def build():
+    return {"type": "ADD_CLASSIFY"}, {"type": "TRANSFER_CALL", "actionType": "Extension"}
+'''
+
+
+def ns_row(**kw):
+    r = {"type": "ADD_CLASSIFY", "side": "action", "status": "enum", "builder": "sinh", "template": None,
+         "source": "references/doc.md#1.1 ADD_CLASSIFY", "verified_on": None, "ui_hint": "-"}
+    r.update(kw)
+    return r
+
+
+class TestCheckNodeStatus(unittest.TestCase):
+    """tools/check_node_status.py trên skill giả trong thư mục tạm (không đụng dữ liệu thật)."""
+
+    @classmethod
+    def setUpClass(cls):
+        sys.path.insert(0, str(TOOLS))
+        try:
+            cls.cns = importlib.import_module("check_node_status")
+        finally:
+            sys.path.remove(str(TOOLS))
+
+    def setUp(self):
+        self.tmp = Path(tempfile.mkdtemp(prefix="omi_ns_"))
+        for skill in ("omicall-callbot-flow", "omicall-omiflow"):
+            (self.tmp / skill / "references").mkdir(parents=True)
+            (self.tmp / skill / "scripts").mkdir()
+            (self.tmp / skill / "references" / "doc.md").write_text(NS_DOC, encoding="utf-8")
+        (self.tmp / "omicall-callbot-flow" / "scripts" / "build_callflow.py").write_text(NS_BUILDER, encoding="utf-8")
+
+    def tearDown(self):
+        shutil.rmtree(self.tmp, ignore_errors=True)
+
+    def run_ns(self, rows, skill="omicall-callbot-flow"):
+        p = self.tmp / skill / "references" / "node-status.json"
+        p.write_text(json.dumps(rows, ensure_ascii=False), encoding="utf-8")
+        viol, exc = self.cns.check(self.tmp, [skill])
+        return sorted(v[0] for v in viol), viol, exc
+
+    def test_clean_rows_pass(self):
+        codes, viol, _ = self.run_ns([
+            ns_row(status="verified", verified_on="2026-11"),
+            ns_row(type="TRANSFER_CALL Extension", source="references/doc.md#1. Hành động", verified_on=None),
+            ns_row(type="ADD_CLASSIFY (cũ)", side="runtime", builder="khong", source="references/doc.md:3"),
+            ns_row(type="TRANSFER_CALL Ring_group", builder="khong", source="references/doc.md#1. Hành động",
+                   status="verified", verified_on="Cần xác nhận")])
+        self.assertEqual(codes, [], viol)
+
+    def test_each_code(self):
+        codes, viol, _ = self.run_ns([
+            ns_row(source="references/doc.md#9. Không có"),                    # NS2 mục không tồn tại
+            ns_row(type="PUSH_NOTIFICATION", builder="khong",
+                   source="references/doc.md#2. Khác"),                        # NS2 mục không nhắc loại
+            ns_row(type="ADD_CLASSIFY (b)", source="references/doc.md#không phải tiêu đề"),             # NS2 dòng '#' trong khối ``` không tính
+            ns_row(type="X_Y", source="references/doc.md:2", builder="khong"), # NS2 dòng lệch (kiểu cũ)
+            ns_row(type="ADD_CLASSIFY", side="editor", template="references/templates/khong_co.json"),  # NS3
+            ns_row(type="ADD_CLASSIFY", side="editor"),                         # NS4 trùng type+side
+            ns_row(type="TRANSFER_CALL Ring_group", source="references/doc.md#1. Hành động"),  # NS6 UNSUPPORTED
+            ns_row(type="ACTION/HOLDING_CALL", source="references/doc.md#1. Hành động"),       # NS2 + NS6 không có mã
+            ns_row(type="TRANSFER_CALL", side="editor", source="references/doc.md#1. Hành động",
+                   status="verified", verified_on=None),                       # NS5
+            ns_row(type="TRANSFER_CALL", side="runtime", source="references/doc.md#1. Hành động", status="verified",
+                   verified_on="2026-11", ui_hint="trường phụ: Cần xác nhận"),  # NS7
+        ])
+        self.assertEqual(codes.count("NS2"), 5, viol)
+        self.assertEqual([c for c in codes if c != "NS2"], ["NS3", "NS4", "NS5", "NS6", "NS6", "NS7"], viol)
+
+    def test_schema_and_no_builder(self):
+        row = ns_row(builder="sinh")
+        del row["verified_on"]
+        codes, viol, _ = self.run_ns([row, ns_row(side="edge", builder="khong", extra=1)], skill="omicall-omiflow")
+        msgs = [v[5] for v in viol]
+        self.assertIn("thiếu khoá verified_on", msgs)
+        self.assertIn("khoá lạ extra", msgs)
+        self.assertTrue(any("skill không có builder" in m for m in msgs), msgs)  # omiflow: builder phải 'khong'
+
+    def test_ns7_exception_listed_not_failed(self):
+        key = next(iter(self.cns.NGOAI_LE))
+        skill, t, side = key
+        (self.tmp / skill / "references").mkdir(parents=True, exist_ok=True)
+        (self.tmp / skill / "references" / "doc.md").write_text(f"# x\n## {t}\n{t}\n", encoding="utf-8")
+        codes, viol, exc = self.run_ns([ns_row(type=t, side=side, builder="khong", status="verified", verified_on="2026-11",
+                                               source=f"references/doc.md#{t}", ui_hint="phụ: Cần xác nhận")], skill=skill)
+        self.assertNotIn("NS7", codes, viol)
+        self.assertEqual(len(exc), 1)
+
+    def test_cli_exit_codes(self):
+        self.run_ns([ns_row()])
+        code, out = run_tool("check_node_status.py", "--root", self.tmp, "--skill", "omicall-callbot-flow")
+        self.assertEqual(code, 0, out)
+        self.assertIn("RESULT PASS", out)
+        self.run_ns([ns_row(source="references/doc.md#9. Không có")])
+        code, out = run_tool("check_node_status.py", "--root", self.tmp, "--skill", "omicall-callbot-flow")
+        self.assertEqual(code, 1, out)
+        self.assertIn("FAIL NS2 omicall-callbot-flow[0]", out)
+        self.assertIn("Tổng theo mã: NS2 1", out)
 
 
 class TestReleasePreflight(Base):

@@ -10,6 +10,10 @@
 5. **Ảnh là bậc cuối**: chỉ khi 2–4 không trả lời được (vị trí kéo nối cạnh, bố cục canvas, danh sách chọn tự vẽ). Luôn `scale` 0.4–0.5 hoặc `zoom` vùng nhỏ. Ngân sách: **≤ 1 ảnh mỗi màn hình hoặc ngăn**; chụp tới ảnh thứ 3 trên cùng một màn hình là dấu hiệu thiếu công thức → dừng, viết công thức (mục 5) rồi làm tiếp bằng chữ.
 6. **Gộp**: chuỗi đã biết (mở ngăn → gõ → chọn → Lưu lại → Xác nhận) đi trong một `browser_batch` (≤ 25 thao tác), chỉ đọc kết quả ở cuối.
 
+Thêm hai điều (chuyển từ `omi-mcp.md` mục 4c cũ):
+1. **Pane**: `resize_window` 1500x900 một lần đầu phiên (pane hẹp làm drawer bị cắt), nhớ trả `preset desktop` khi xong.
+2. **Dựng ít nút nhất có thể trên UI**: mỗi loại nút một lần để lấy schema, phần còn lại sinh bằng script từ bản GET (xem `omicall-omiflow/references/node-editor-get.md`).
+
 ## 2. Đọc trạng thái giao diện bằng chữ (JS chỉ đọc)
 ◐ 11/2026: đã chạy đúng trên trang mẫu dựng theo lớp Ant Design và React Flow; các lớp `ant-drawer`, `ant-switch-checked`, `ant-checkbox-wrapper-checked` đã thấy trong phiên thật, còn `ant-form-item` trên form OMI: Cần xác nhận. Lần đầu dùng trên tenant thật: đối chiếu kết quả với một ảnh `scale` 0.5, khớp thì đổi dấu này thành ✔ kèm tháng. Dán nguyên vào `javascript_tool`. Không sửa trang, không đọc cookie hay storage. Trả JSON ≤ 6.000 ký tự: `layer` (tiêu đề hộp thoại/ngăn trên cùng), `fields` (nhãn = giá trị; `LỖI:` nếu ô báo lỗi), `inputs` (khi form không dùng `ant-form-item`), `buttons` (nút đang hiện, `(tắt)` nếu bị vô hiệu), `toasts` (thông báo gần nhất), `canvas` (nút React Flow: 6 ký tự cuối id + chữ trên thẻ, số cạnh).
 ```js
@@ -80,4 +84,7 @@ Nhãn là chữ hiển thị để `find`; mốc là nhãn chứng tỏ màn hì
 Không có trong bảng: canvas kéo nối cạnh (dùng API sửa `edges` + `name_mappings`, `ui-build-and-test.md` mục 5), danh sách chọn tự vẽ (một ảnh `zoom`).
 
 ## 5. Thao tác mới chưa có công thức
-Lần đầu làm: được phép tối đa 2 ảnh `scale` 0.5 để định hướng, rồi chuyển sang `find` + ref. Xong việc, thêm một dòng vào bảng mục 4 (mốc, chuỗi nhãn, cách kiểm) ở `shared/references/ui-recipes.md` của repo nguồn, không ghi tên khách hay dữ liệu thật (`omi-mcp.md` mục 4b). Lần sau không chụp lại.
+Lần đầu làm: được phép tối đa 2 ảnh `scale` 0.5 để định hướng, rồi chuyển sang `find` + ref. Xong việc, thêm một dòng vào bảng mục 4 (mốc, chuỗi nhãn, cách kiểm) ở `shared/references/ui-recipes.md` của repo nguồn, không ghi tên khách hay dữ liệu thật (đoạn dưới). Lần sau không chụp lại.
+
+**Ghi lại tri thức học bằng giao diện** (chuyển từ `omi-mcp.md` mục 4b cũ, để lần sau không chụp lại):
+Ngay khi một ảnh chụp hoặc lần đọc giao diện cho ra điều skill chưa có (đường dẫn màn hình, nhãn trường, danh sách lựa chọn, quy tắc của form, endpoint thấy được, gotcha), ghi vào reference của skill phụ trách (`pbx-config.md`, `ai-insight.md`, `crm-config.md`, `ui-build-and-test.md`…) kèm nhãn `✔ UI <tháng/năm>`. Chỉ ghi năng lực nền tảng, không ghi dữ liệu khách (tên, số, id). Ghi vào repo nguồn khi user cho phép; chưa được phép thì gom vào báo cáo cuối phiên để user duyệt.

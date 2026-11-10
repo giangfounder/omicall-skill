@@ -1,4 +1,4 @@
-# Bộ tình huống kiểm thử chung cho callbot và chatbot
+# Bộ tình huống kiểm thử chung (callbot chấm n/12; chatbot chấm G1–G14, dùng bảng này làm kịch bản thử)
 
 Chạy sau mỗi lần dựng hoặc sửa, trước khi giao. Kỳ vọng lấy từ `references/default-behaviors.md`; ô nào bảng đó ghi "—" thì kỳ vọng là "Cần xác nhận với user", không tự đoán. Callbot: gọi thử bằng số user đưa (callbot gen-ai có `scripts/webcall_test.py`). Chatbot: chat thử trên LiveTalk, gõ `/end` sau mỗi lần cập nhật bot rồi dùng hội thoại mới.
 

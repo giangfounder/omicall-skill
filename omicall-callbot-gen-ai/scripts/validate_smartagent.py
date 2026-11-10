@@ -27,6 +27,11 @@ Mã X<n> = mục bổ sung:
       hệ thống chuyển nút ngay khi đủ biến → gửi dữ liệu/cúp máy trước khi khách xác nhận — WARN
       (cách đúng: ý định thu biến để trống nút kế tiếp → ý định "khách xác nhận" → phân loại/API; agent-config-guide mục 4)
   X14 (build_smartagent.py in ra, không phải validator) intent kind collect không có ý định confirm — WARN
+  X15 TRANSFER_CALL: runtime data.actionType khớp editor (datas.actionType, datas.transferType, orgDatas[].datas.transferType,
+      trường nào có thì so); typeOptions[actionType] có option thì data.ids phải nằm trong value của các option đó.
+      Có --context: Extension mà id nằm trong pbx.internal_groups/outer_groups, hoặc Ring_group/Outer_group mà id nằm trong
+      agents → FAIL. actionType ngoài Extension/Ring_group/Outer_group → WARN. (id nhóm = _id nhóm pbx: theo
+      api-reference mục Ring_group, mẫu _meta.verified=false — Cần xác nhận.)
 C6 kiểm: không connection/next_node về BEGIN, không connection đi ra từ END_CALL. Phần "node cuối của nhánh không
 terminal không có connection đi ra" với node ACTION thì validator không biết nhánh nào là cuối → agent tự kiểm theo thiết kế.
 """
@@ -131,6 +136,81 @@ class Script:
                 if c.get("source") != self.begin_id:
                     stack.append(c.get("target"))
         return seen
+
+
+TRANSFER_TYPES = ("Extension", "Ring_group", "Outer_group")
+
+
+def _ctx_ids(context):
+    """(id nhân viên, id nhóm) từ tenant_context: agents (tenant_survey/MCP), pbx.internal_groups/outer_groups (config_survey)."""
+    agents, groups = set(), {}
+    for a in (context or {}).get("agents") or []:
+        if isinstance(a, dict):
+            for k in ("_id", "agent_id", "contact_id", "id"):
+                if a.get(k):
+                    agents.add(str(a[k]))
+    pbx = (context or {}).get("pbx") or {}
+    for key, typ in (("internal_groups", "Ring_group"), ("outer_groups", "Outer_group")):
+        for g in pbx.get(key) or []:
+            if isinstance(g, dict) and g.get("_id"):
+                groups[str(g["_id"])] = typ
+    return agents, groups
+
+
+def check_transfer_type(sc, r, context=None):
+    agents, groups = _ctx_ids(context)
+    for i, n in enumerate(sc.nodes):
+        for a in sc.actions_of(n, "TRANSFER_CALL"):
+            path = "nodes[%d].actions[].data.actionType" % i
+            d = a.get("data") or {}
+            rt = d.get("actionType")
+            ids = [str(x) for x in d.get("ids") or [] if str(x).strip()]
+            org = sc.org_by_id.get(n.get("id")) or {}
+            ed = [x for x in sc.org_actions_of(org, "TRANSFER_CALL") if x.get("id") == a.get("id")] or sc.org_actions_of(org, "TRANSFER_CALL")
+            seen = []  # (nơi, giá trị)
+            opts = {}
+            for e in ed:
+                ds = e.get("datas") or {}
+                for k in ("actionType", "transferType"):
+                    if ds.get(k):
+                        seen.append(("editor datas.%s" % k, ds[k]))
+                to = ds.get("typeOptions")
+                if isinstance(to, dict):
+                    for k, v in to.items():
+                        if isinstance(v, list):
+                            opts.setdefault(k, set()).update(str(o.get("value")) for o in v if isinstance(o, dict) and o.get("value"))
+            for od in org.get("orgDatas") or []:
+                ds = (od or {}).get("datas") if isinstance(od, dict) else None
+                if isinstance(ds, dict) and ds.get("transferType"):
+                    seen.append(("orgDatas.datas.transferType", ds["transferType"]))
+            errs = []
+            if not rt:
+                errs.append("runtime thiếu data.actionType")
+            else:
+                if rt not in TRANSFER_TYPES:
+                    r.add("WARN", "X15", "TRANSFER_CALL %s actionType %r ngoài %s (Cần xác nhận)" % (n.get("id"), rt, "/".join(TRANSFER_TYPES)), path)
+                lech = ["%s=%s" % (w, v) for w, v in seen if v != rt]
+                if lech:
+                    errs.append("runtime actionType=%s nhưng %s" % (rt, ", ".join(lech)))
+                if opts.get(rt):
+                    lack = [x for x in ids if x not in opts[rt]]
+                    if lack:
+                        errs.append("ids %s không có trong typeOptions.%s của editor" % (lack, rt))
+                if rt == "Extension":
+                    bad = [x for x in ids if x in groups]
+                    if bad:
+                        errs.append("actionType Extension nhưng ids %s là id nhóm trong tenant_context.pbx" % bad)
+                elif rt in ("Ring_group", "Outer_group"):
+                    bad = [x for x in ids if x in agents and x not in groups]
+                    if bad:
+                        errs.append("actionType %s nhưng ids %s là nhân viên trong tenant_context.agents, không phải nhóm" % (rt, bad))
+                    wrong = [x for x in ids if groups.get(x) not in (None, rt)]
+                    if wrong:
+                        errs.append("actionType %s nhưng ids %s thuộc loại nhóm khác trong tenant_context.pbx" % (rt, wrong))
+            if errs:
+                r.add("FAIL", "X15", "%s %s" % (n.get("id"), "; ".join(errs)), path)
+            else:
+                r.ok("X15", "TRANSFER_CALL %s actionType %s khớp editor và loại id" % (n.get("id"), rt))
 
 
 def check(sc, mode, sent=None, context=None):
@@ -374,6 +454,9 @@ def check(sc, mode, sent=None, context=None):
                     lack = [x for x in ids if str(x) not in agent_ids]
                     if lack:
                         r.add("WARN", "X11", "nhân viên %s không có trong tenant_context.agents (Cần xác nhận)" % lack, "nodes[%d].actions[0].data.ids" % i)
+
+    # X15 actionType khớp loại id
+    check_transfer_type(sc, r, context)
 
     # X5
     x5 = True

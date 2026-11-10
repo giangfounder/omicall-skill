@@ -15,11 +15,14 @@ NEW = ROOT / "shared" / "references" / "omi-mcp.md"
 EXTRA = ROOT / "shared" / "references" / "omi-mcp-extra.md"  # chỉ dẫn cho skill điều phối (assistant)
 TOOLS = ROOT / "shared" / "references" / "omi-mcp-tools.md"  # mục 3-5 cũ: công cụ theo bước, tiết kiệm token, danh mục
 README = ROOT / "README.md"  # phụ lục A cũ: cài MCP cho client khác (cấu hình không chứa mật khẩu)
+LOGIN = ROOT / "shared" / "references" / "omi-login.md"  # mục 2a, 2 (11/2026): chỉ đọc khi need=setup/blocked/nghi sai tenant
+UI = ROOT / "shared" / "references" / "ui-recipes.md"  # mục 4b, 4c cũ (11/2026)
 BASE = HERE / "fixtures" / "omi-mcp.baseline.md"
+BASE2 = HERE / "fixtures" / "omi-mcp.2026-11.md"  # bản 163ff72, trước khi tách lõi ~7 KB
 sys.path.insert(0, str(ROOT / "tools"))
 import sync_shared  # noqa: E402
 
-CORE_MAX = 17000  # byte; lõi omi-mcp.md nạp ở mọi skill (21,5 KB trước đợt 3; phần còn lại là quy tắc an toàn)
+CORE_MAX = 7000  # byte; lõi omi-mcp.md nạp ở mọi skill (21,5 KB trước đợt 3; 15,3 KB trước 11/2026)
 NO_PW = ["không chứa mật khẩu"]
 
 # dòng baseline được phép đổi -> (lý do, cụm phải còn ở đâu đó trong bản mới)
@@ -59,6 +62,24 @@ CHANGED = {
     126: ("§5 chuyển xuống Phụ lục B (nay ở omi-mcp-tools.md)", ["Phụ lục B — Danh mục công cụ theo nhóm và module cần bật"]),
 }
 
+# dòng của BASE2 (163ff72) được phép đổi khi tách lõi -> (lý do, cụm phải còn trong bản mới)
+CHANGED2 = {
+    5: ("trỏ mục 2a sang omi-login.md", ["Dự phòng: `setup` không `--ui` trong terminal của user (ô nhập ẩn).",
+                                          "`omi-login.md` mục 2a"]),
+    8: ("danh sách CẤM chuyển sang parallel-brief.md", ["sổ chung, mẫu giao việc: `parallel.md` mục 5",
+                                                         "danh sách CẤM: `parallel-brief.md`"]),
+    9: ("4b chuyển sang ui-recipes.md mục 5", ["**Đọc cấu hình tenant: API trước, ảnh chụp sau cùng** — mục 4a.",
+                                                "`ui-recipes.md` mục 5"]),
+    15: ("file phiên ở omi-login.md mục 2 ý 3", ["`omi-login.md` mục 2 ý 3", "| agent (thông tin đăng nhập do user cất"]),
+    55: ("tiêu đề 4b thành đoạn in đậm ở ui-recipes.md mục 5", ["**Ghi lại tri thức học bằng giao diện**"]),
+    58: ("tiêu đề 4c thành đoạn ở ui-recipes.md mục 1", ["chuyển từ `omi-mcp.md` mục 4c cũ"]),
+    59: ("câu tự trỏ: ui-recipes.md chính là nguồn", ["## 1. Giao thức (BẮT BUỘC, theo thứ tự)", "Thêm hai điều"]),
+    48: ("thêm cờ --max-age của hai script khảo sát", ["3. **Script đọc bằng API**", "Một lệnh thay cho hàng chục lần mở trang."]),
+    61: ("node-catalog.md mục 6 tách thành node-editor-get.md", ["2. **Dựng ít nút nhất có thể trên UI**",
+                                                                  "`omicall-omiflow/references/node-editor-get.md`"]),
+    67: ("trỏ mục 2a, 2 sang omi-login.md", ["(`omi-login.md` mục 2a)", "(`omi-login.md` mục 2)"]),
+}
+
 
 def lines(p):
     return p.read_text(encoding="utf-8").replace("\r\n", "\n").split("\n")
@@ -67,13 +88,23 @@ def lines(p):
 class TestOmiMcp(unittest.TestCase):
     def setUp(self):
         self.core = lines(NEW)
-        self.new = self.core + lines(EXTRA) + lines(TOOLS) + lines(README)
+        self.new = self.core + lines(EXTRA) + lines(TOOLS) + lines(README) + lines(LOGIN) + lines(UI)
         self.text = "\n".join(self.new)
 
     def test_no_line_lost(self):
         newset = set(self.new)
         lost = [(i, l) for i, l in enumerate(lines(BASE), 1) if l.strip() and l not in newset and i not in CHANGED]
         self.assertEqual(lost, [], "dòng baseline bị mất: %r" % lost[:5])
+
+    def test_no_line_lost_since_core_split(self):
+        newset = set(self.new)
+        lost = [(i, l) for i, l in enumerate(lines(BASE2), 1) if l.strip() and l not in newset and i not in CHANGED2]
+        self.assertEqual(lost, [], "dòng bản 163ff72 bị mất: %r" % lost[:5])
+        for i, (why, phrases) in CHANGED2.items():
+            for ph in phrases:
+                self.assertIn(ph, self.text, "dòng %d (%s): thiếu cụm %r" % (i, why, ph))
+        moved = self.core + lines(LOGIN) + lines(UI)
+        self.assertGreaterEqual(sum(l.count("✔") for l in moved), sum(l.count("✔") for l in lines(BASE2)))
 
     def test_changed_lines_keep_meaning(self):
         for i, (why, phrases) in CHANGED.items():
@@ -86,8 +117,13 @@ class TestOmiMcp(unittest.TestCase):
         end = next(i for i in range(start + 1, len(self.core)) if self.core[i].startswith("## "))
         self.assertLessEqual(len([l for l in self.core[start:end] if l.strip()]), 10)
         core = "\n".join(self.core)
-        for h in ("## 2a.", "## 2. Đăng nhập bằng MCP", "## 4a.", "## 4b.", "## 4c.", "## 6. Xử lý lỗi"):
+        for h in ("## 4a.", "## 6. Xử lý lỗi"):
             self.assertIn(h, core, "mục được skill khác trỏ tới phải còn trong lõi")
+        login = LOGIN.read_text(encoding="utf-8")
+        for h in ("## 2a.", "## 2. Đăng nhập bằng MCP"):
+            self.assertIn(h, login, "mục đăng nhập ở omi-login.md")
+        self.assertIn("không nhận qua chat", core)  # quy tắc mật khẩu phải còn trong lõi
+        self.assertIn("`tenant_id`", core)
         self.assertIn("## 7. Dựng nhiều artefact", self.text)
         self.assertIn("## 8. Mẫu giao việc cho subagent", self.text)
         self.assertIn("Bảng quyết định token", core)
@@ -97,13 +133,13 @@ class TestOmiMcp(unittest.TestCase):
         readme = README.read_text(encoding="utf-8")
         self.assertNotRegex(self.text, r"OMICALL_PASSWORD=<")
         self.assertNotIn('"OMICALL_PASSWORD"', self.text)
-        self.assertIn("npx -y omicall-mcp", "\n".join(self.core))
+        self.assertIn("npx -y omicall-mcp", "\n".join(self.core + lines(LOGIN)))
         self.assertIn("npx -y omicall-mcp", readme)
         self.assertIn("OMICall-<domain>", readme)
         self.assertIn("omi_login.py serve --domain <domain>", readme)
         self.assertIn("setup --ui", readme)
         self.assertNotRegex(self.text, r"(?<!\d)[34] skill")
-        head = "\n".join(self.core).split("## 2a.")[0]
+        head = "\n".join(self.core)
         self.assertNotIn("cookie", head.replace("Không đọc cookie hay token trong trang", ""))
 
     def test_401_rule_unified(self):
@@ -112,7 +148,8 @@ class TestOmiMcp(unittest.TestCase):
         self.assertIn("Công cụ MCP báo hết phiên", core)
 
     def test_identical_in_skills(self):
-        for rel in ("references/omi-mcp.md", "references/omi-mcp-tools.md", "references/omi-mcp-extra.md"):
+        for rel in ("references/omi-mcp.md", "references/omi-mcp-tools.md", "references/omi-mcp-extra.md",
+                    "references/omi-login.md"):
             src = (ROOT / "shared" / rel).read_bytes()
             for s in sync_shared.MAP[rel]:
                 self.assertEqual((ROOT / s / rel).read_bytes(), src, s)

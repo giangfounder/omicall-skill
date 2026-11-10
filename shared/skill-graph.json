@@ -1,5 +1,5 @@
 {
-  "_ghi_chu": "Nguồn duy nhất về quan hệ giữa các skill, thứ tự đợt, cổng của user, quy tắc duyệt, chế độ subagent/hỏi đáp và danh sách CẤM cho subagent. Sửa ở đây rồi chạy: python tools/gen_skill_links.py (sinh khối vào mọi SKILL.md, omicall-assistant/references/orchestration.md, plan-and-approval.md và shared/references/parallel.md), sau đó python tools/sync_shared.py. Mỗi cạnh: from cần to khi 'when' xảy ra; 'can_cong': cổng user phải qua trước khi from dùng được kết quả của to. 'entry': skill cửa vào, chỉ gọi đi, không skill nào gọi tới.",
+  "_ghi_chu": "Nguồn duy nhất về quan hệ giữa các skill, thứ tự đợt, cổng của user, quy tắc duyệt, chế độ subagent/hỏi đáp và danh sách CẤM cho subagent. Sửa ở đây rồi chạy: python tools/gen_skill_links.py (sinh khối vào mọi SKILL.md, omicall-assistant/references/orchestration.md, plan-and-approval.md, shared/references/parallel.md và parallel-brief.md), sau đó python tools/sync_shared.py. Mỗi cạnh: from cần to khi 'when' xảy ra; 'can_cong': cổng user phải qua trước khi from dùng được kết quả của to. 'entry': skill cửa vào, chỉ gọi đi, không skill nào gọi tới.",
   "entry": [
     "omicall-assistant"
   ],
@@ -328,7 +328,8 @@
       "khi": "được `omicall-assistant` hoặc agent khác giao việc",
       "bo_qua": "`self_update.py` (hoặc chạy với `--subagent`), câu phiên bản, hỏi domain, khảo sát tenant",
       "dung": "domain, phiên đăng nhập sẵn có, `tenant_context.json` (chỉ đọc) và manifest ghi trong lời giao việc; không chia tiếp",
-      "ngan": "là subagent"
+      "ngan": "là subagent",
+      "khong_doc": "`conversation.md` mục 2–6, `system-model.md`, `solution-method.md`, `parallel.md` (file này thay thế)"
     },
     {
       "ten": "Hỏi đáp",
@@ -352,7 +353,7 @@
     "chia tiếp cho subagent khác"
   ],
   "mau_giao_viec": [
-    "Nạp skill <omicall-…> bằng công cụ Skill (chỉ skill này). Bạn là SUBAGENT: theo \"Chế độ subagent\" của parallel.md mục 1 (không chạy self_update.py, không hỏi domain, KHÔNG khảo sát lại tenant).",
+    "Nạp skill <omicall-…> bằng công cụ Skill (chỉ skill này). Bạn là SUBAGENT: đọc references/parallel-brief.md (chế độ subagent, giới hạn, CẤM, mẫu trả về; không đọc file chung khác) (không chạy self_update.py, không hỏi domain, KHÔNG khảo sát lại tenant).",
     "Domain <d>. Việc đã duyệt, CHỈ làm đúng danh sách này: <liệt kê>. Artefact <key>, owner <tên subagent>.",
     "Đầu vào: <scratch>/tenant_context.json (chỉ đọc); manifest <đường dẫn> (OMI_MANIFEST); giá trị cần từ phần khác: <producer>.<trường> (đọc bằng manifest.py get ngay trước khi lưu, không đoán).",
     "Giao diện: chỉ khi API/MCP không làm được; tabs_create một tab riêng rồi truyền tabId ở MỌI lệnh; đọc references/ui-recipes.md trước bước giao diện đầu tiên (URL thẳng bằng id, find mốc chữ thay chờ rồi chụp, find một lần rồi browser_batch bấm theo ref, kiểm bằng JS mục 2 hoặc GET, ≤1 ảnh mỗi màn hình, scale 0.5).",
@@ -361,7 +362,17 @@
     "Sau mỗi lần Lưu: tải lại trang → GET → chạy validator của skill (mode post) → manifest.py set <key> kèm verify_report.",
     "CẤM: {cam}.",
     "Gặp cổng của user, điều cần user quyết hoặc cần đăng nhập giao diện: dừng nhánh đó, trả \"blocked\" (không tự đoán).",
-    "Trả về tối đa 10 dòng: key | trạng thái done/partial/blocked | id/uuid đã GET | verify_report (PASS/FAIL) | Cần xác nhận | chưa làm được + lý do | cổng chờ user | số ảnh đã chụp. Không dán JSON hay log dài."
+    "{tra_ve}"
   ],
-  "giao_dien": "**Bước nào phải làm trên giao diện**: theo `references/ui-recipes.md` (URL thẳng bằng id, chờ bằng `find`, bấm theo ref, kiểm bằng JS hoặc GET; ≤ 1 ảnh mỗi màn hình)."
+  "giao_dien": "**Bước nào phải làm trên giao diện**: theo `references/ui-recipes.md` (URL thẳng bằng id, chờ bằng `find`, bấm theo ref, kiểm bằng JS hoặc GET; ≤ 1 ảnh mỗi màn hình).",
+  "subagent_quy_tac": [
+    "Chỉ làm đúng danh sách được giao. Gặp việc cần chia, thuộc skill khác, chạm cổng của user hoặc cần đăng nhập giao diện: dừng nhánh đó, trả \"blocked\" kèm đề xuất (không tự đoán).",
+    "Một artefact = một subagent = một tiến trình ghi. Không truyền, không in token, cookie, mật khẩu (kể cả trong sổ chung, file tạm); dùng phiên sẵn có."
+  ],
+  "gioi_han": {
+    "giao_dien": 3,
+    "chi_api": 8,
+    "ghi_chu": "mỗi subagent giao diện một tab riêng (`tabs_create`, truyền `tabId` ở mọi lệnh), khung trình duyệt dùng chung với user"
+  },
+  "mau_tra_ve": "Trả về tối đa 10 dòng: key | trạng thái done/partial/blocked | id/uuid đã GET | verify_report (PASS/FAIL) | Cần xác nhận | chưa làm được + lý do | cổng chờ user | số ảnh đã chụp. Không dán JSON hay log dài."
 }

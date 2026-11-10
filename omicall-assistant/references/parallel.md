@@ -3,12 +3,7 @@
 Làm ở bước lập kế hoạch, **trước lượt duyệt**: kết quả (việc nào song song, việc nào tuần tự, vì sao) đưa luôn vào bảng gửi user duyệt. Đơn vị chia và chỗ phải tuần tự của từng skill: mục 6.
 
 ## 1. Ai được chia, chế độ subagent / hỏi đáp
-<!-- gen:modes (sinh từ shared/skill-graph.json bằng tools/gen_skill_links.py, đừng sửa tay) -->
-**Chế độ subagent / hỏi đáp** (khối "Bước bắt buộc" trong SKILL.md trỏ về đây):
-- **Subagent** (được `omicall-assistant` hoặc agent khác giao việc): bỏ qua `self_update.py` (hoặc chạy với `--subagent`), câu phiên bản, hỏi domain, khảo sát tenant; dùng domain, phiên đăng nhập sẵn có, `tenant_context.json` (chỉ đọc) và manifest ghi trong lời giao việc; không chia tiếp.
-- **Hỏi đáp** (user chỉ hỏi tính năng, mức đáp ứng (không đọc hay ghi tenant)): bỏ qua `self_update.py`, hỏi domain, đăng nhập, khảo sát tenant; dùng tài liệu của skill; thiếu nguồn thì ghi "Chưa có thông tin".
-<!-- /gen:modes -->
-- **Đang là subagent** (được `omicall-assistant` hoặc agent khác giao việc): không chia tiếp, chỉ làm đúng danh sách được giao. Gặp việc cần chia, thuộc skill khác hoặc chạm cổng của user thì trả "blocked" kèm đề xuất.
+- **Đang là subagent hoặc chỉ hỏi đáp**: đọc `parallel-brief.md` (chế độ, giới hạn, quy tắc, CẤM, mẫu trả về; sinh từ `shared/skill-graph.json`), không đọc file này.
 - **Skill được gọi thẳng**: chỉ chia các artefact của chính skill mình.
 - **Việc phải ghi vào từ 2 skill khác trở lên** (ví dụ bot + flow + menu phím): chuyển cho `omicall-assistant` điều phối, skill chuyên trách không tự làm điều phối viên.
 
@@ -21,11 +16,11 @@ Làm ở bước lập kế hoạch, **trước lượt duyệt**: kết quả (
 Cả bốn câu đều "không" → chạy song song được.
 
 ## 3. Giới hạn (đã gặp thật, không nới)
-- Tối đa **3 subagent giao diện** cùng lúc, mỗi subagent một tab riêng (`tabs_create`, truyền `tabId` ở mọi lệnh); khung trình duyệt dùng chung với user. Subagent chỉ API/MCP: tối đa 5.
+- Số subagent cùng lúc (giao diện, chỉ API/MCP) và tab riêng: `parallel-brief.md` mục 2 (một nguồn: `skill-graph.json` khoá `gioi_han`).
 - **Một artefact = một subagent = một tiến trình ghi.**
 - **Tài nguyên chung chạy tuần tự**, một tiến trình mỗi lúc: Kho tri thức NLU của callbot (mỗi lần nhập là huấn luyện lại toàn bộ), cấu hình AI Assistant, cấu hình phân bổ, bộ trạng thái đang được flow dùng.
 - Không truyền token, cookie, mật khẩu cho subagent (kể cả trong lời giao việc, sổ chung, file tạm); subagent dùng phiên sẵn có. Chưa đăng nhập giao diện thì user tự đăng nhập trước khi giao việc giao diện.
-- Subagent không qua cổng nào của user; danh sách CẤM đầy đủ: mục 5.
+- Subagent không qua cổng nào của user; danh sách CẤM đầy đủ: `parallel-brief.md` mục 3.
 
 ## 4. Chọn cách chạy
 | Tình huống | Cách chạy |
@@ -43,11 +38,11 @@ Cả bốn câu đều "không" → chạy song song được.
 - Sổ chung `manifest.py`: `init`; sau khi lưu và validate `set <key> --owner <tên> --json '{"id":..,"verify":"PASS","verify_report":..,"saved_at":..,"verified_at":..}'`; bên dùng ghi `consumed_values`; user xuất bản xong → `stale <producer>`, GET lại rồi `set`; `check` báo bên dùng đang trỏ giá trị cũ; `gates` liệt kê cổng chờ user. Manifest không chứa token hay mật khẩu (script tự từ chối).
 - Phần giống nhau (domain, điều cấm, sổ chung, mẫu trả về) ghi một lần vào `<scratch>/brief_common.md`; mỗi subagent chỉ nhận thêm phần riêng.
 <!-- gen:cam (sinh từ shared/skill-graph.json bằng tools/gen_skill_links.py, đừng sửa tay) -->
-**CẤM cho subagent** (danh sách duy nhất; mọi chỗ khác trỏ về đây): xuất bản, bật/tắt, xoá, gắn hotline/kênh/phím thật, gọi hoặc nhắn người thật, nhập mật khẩu, in hay chuyển token/cookie, đụng artefact không phải của mình, ghi `tenant_context.json` (ghi qua `manifest.py`), tự đánh dấu verified cho template (`extract_template --mark-verified`), chia tiếp cho subagent khác.
+**CẤM cho subagent**: danh sách duy nhất ở `parallel-brief.md` mục 3 (mẫu dưới chép lại để dán vào lời giao việc).
 
 **Mẫu giao việc** (dán vào lời giao việc, điền phần trong `<>`; phần chung để ở `<scratch>/brief_common.md`):
 ```
-Nạp skill <omicall-…> bằng công cụ Skill (chỉ skill này). Bạn là SUBAGENT: theo "Chế độ subagent" của parallel.md mục 1 (không chạy self_update.py, không hỏi domain, KHÔNG khảo sát lại tenant).
+Nạp skill <omicall-…> bằng công cụ Skill (chỉ skill này). Bạn là SUBAGENT: đọc references/parallel-brief.md (chế độ subagent, giới hạn, CẤM, mẫu trả về; không đọc file chung khác) (không chạy self_update.py, không hỏi domain, KHÔNG khảo sát lại tenant).
 Domain <d>. Việc đã duyệt, CHỈ làm đúng danh sách này: <liệt kê>. Artefact <key>, owner <tên subagent>.
 Đầu vào: <scratch>/tenant_context.json (chỉ đọc); manifest <đường dẫn> (OMI_MANIFEST); giá trị cần từ phần khác: <producer>.<trường> (đọc bằng manifest.py get ngay trước khi lưu, không đoán).
 Giao diện: chỉ khi API/MCP không làm được; tabs_create một tab riêng rồi truyền tabId ở MỌI lệnh; đọc references/ui-recipes.md trước bước giao diện đầu tiên (URL thẳng bằng id, find mốc chữ thay chờ rồi chụp, find một lần rồi browser_batch bấm theo ref, kiểm bằng JS mục 2 hoặc GET, ≤1 ảnh mỗi màn hình, scale 0.5).
@@ -71,7 +66,7 @@ Trả về tối đa 10 dòng: key | trạng thái done/partial/blocked | id/uui
 **omicall-pbx-config**
 - Song song: lời chào ‖ nhóm nội bộ (khác artefact, không cần id của nhau).
 - Tuần tự theo cây, dựng từ dưới lên: lời chào + nhóm → Tương tác phím (cần id nhóm, lời chào; lời chào mới chưa có thì tạm trỏ lời chào có sẵn rồi thay sau) → kịch bản cuộc gọi → gắn hotline (bước cuối, user duyệt riêng).
-- Mỗi menu phím, mỗi kịch bản cuộc gọi một tiến trình ghi; mọi bước nối phím → bot/flow do cùng một subagent giữ menu đó làm.
+- Mỗi menu phím, mỗi kịch bản cuộc gọi một tiến trình ghi. Nối phím → bot/flow là gắn phím thật (CẤM cho subagent): sau cổng `gan_so`, do assistant làm.
 - Đích là bot hoặc flow chưa xuất bản → nhánh đó chờ cổng xuất bản, phần còn lại vẫn làm.
 
 **omicall-crm-config**

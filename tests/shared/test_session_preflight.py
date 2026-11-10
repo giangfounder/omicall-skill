@@ -66,6 +66,18 @@ class TestPreflight(Base):
         self.assertNotIn(tok, out + err)
         self.assertNotIn(tok.split(".")[1], out + err)
 
+    def test_ensure_prints_route_like_preflight(self):
+        """ok:true thì ensure in route=api cùng ngưỡng với preflight: SKILL.md không cần chạy preflight lần nữa."""
+        tok = fake_jwt(exp_in=3600)
+        self.token_file(tok)
+        code, out, err = self.run_py(SCRIPTS / "omi_login.py", "ensure", "--domain", "congtyabc")
+        j = json.loads([l for l in out.splitlines() if l.strip()][-1])
+        self.assertEqual(code, 0, out + err)
+        self.assertTrue(j["ok"])
+        self.assertEqual(j["route"], self.preflight()[1]["route"])
+        self.assertEqual(j["route"], "api")
+        self.assertNotIn(tok, out + err)
+
     def test_expired(self):
         self.token_file(fake_jwt(exp_in=-10))
         code, j, out, _ = self.preflight()
@@ -88,7 +100,8 @@ class TestPreflight(Base):
         code, j, out, _ = self.preflight()
         self.assertEqual(code, 3)
         self.assertEqual(j["route"], "blocked")
-        self.assertIn("omi_login.py\" setup --domain congtyabc", j["next_step"])
+        self.assertIn("setup --ui --no-browser", j["next_step"])  # đường chuẩn: form
+        self.assertLess(j["next_step"].index("setup --ui"), j["next_step"].index("setup --domain congtyabc"))  # terminal chỉ dự phòng
         self.assertIn("ô nhập ẩn", j["next_step"])
         self.assertIn("Cài MCP cho client khác", j["next_step"])
         self.assertNotIn("<cli>", j["next_step"])

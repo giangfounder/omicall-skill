@@ -12,7 +12,7 @@
   (không xoá) rồi thay bằng junction/symlink vào bản clone. Máy không có git: chỉ báo.
 - Không cập nhật được (mất mạng, có sửa đổi chưa commit...): báo lý do, vẫn cho làm tiếp với bản hiện có.
 - Mốc kiểm tra ghi sau MỌI lần thử (kể cả khi lỗi): trong 1 giờ sau đó mọi skill OMI bỏ qua, không gọi mạng
-  (thêm `--force` để kiểm tra lại). Tránh mỗi lần nạp skill (kể cả từng subagent) lại chờ fetch tới 90 giây.
+  (thêm `--force` để kiểm tra lại). Tránh mỗi lần nạp skill (kể cả từng subagent) lại chờ fetch (pull tối đa 30 giây).
 - Chạy trong subagent: `--subagent` hoặc biến môi trường `OMI_SUBAGENT=1` → bỏ qua hẳn (không git, không mạng),
   chỉ in dòng SKILL_VERSION. Subagent vốn không cần chạy script này (khối "Chế độ subagent / hỏi đáp" trong SKILL.md).
 Không sửa nội dung, không commit trong repo skill. Dòng cuối luôn là `SKILL_VERSION=<tên skill> <phiên bản>`.
@@ -34,6 +34,8 @@ NAME = SKILL_DIR.name
 CACHE = Path.home() / ".cache" / "omicall-skill"
 STAMP = CACHE / "all.last"  # ngoài thư mục skill để không bẩn git; một dấu chung vì một lần pull cập nhật mọi skill
 TTL = 3600
+GIT_LOCAL = 5  # rev-parse/diff chạy cục bộ
+GIT_PULL = 30  # pull qua mạng; chờ xấu nhất 5+5+30+5+5 = 50 giây (150 giây trước 11/2026)
 CLONE_HOME = Path.home() / "omicall-skill"  # nơi tự clone khi skill đang là bản chép tay
 PREFIX = "omicall-"
 
@@ -224,13 +226,13 @@ def replace_copies(top, d):
 
 
 def pull(top):
-    before_head = run(["git", "-C", str(top), "rev-parse", "HEAD"], 15)[1]
+    before_head = run(["git", "-C", str(top), "rev-parse", "HEAD"], GIT_LOCAL)[1]
     before = repo_skills(top)
-    code, out, err = run(["git", "-C", str(top), "pull", "--ff-only", "--quiet"], 90)
-    after_head = run(["git", "-C", str(top), "rev-parse", "HEAD"], 15)[1]
+    code, out, err = run(["git", "-C", str(top), "pull", "--ff-only", "--quiet"], GIT_PULL)
+    after_head = run(["git", "-C", str(top), "rev-parse", "HEAD"], GIT_LOCAL)[1]
     changed = []
     if code == 0 and before_head != after_head:
-        changed = run(["git", "-C", str(top), "diff", "--name-only", before_head, after_head], 15)[1].splitlines()
+        changed = run(["git", "-C", str(top), "diff", "--name-only", before_head, after_head], GIT_LOCAL)[1].splitlines()
     return code, err or out, before, repo_skills(top), changed
 
 
@@ -355,7 +357,8 @@ def main(argv=None):
         print(f"Bộ skill OMI đã kiểm tra cập nhật lúc {time.strftime('%H:%M', time.localtime(STAMP.stat().st_mtime))} (dưới 1 giờ) — bỏ qua.")
         print(f"SKILL_VERSION={NAME} {version()}")
         return
-    code, top, _ = run(["git", "-C", str(SKILL_DIR), "rev-parse", "--show-toplevel"], 15)
+    mark_checked()  # ghi mốc TRƯỚC khi pull: phiên khác nạp skill trong lúc này không pull chồng; lỗi cũng không thử lại trong 1 giờ
+    code, top, _ = run(["git", "-C", str(SKILL_DIR), "rev-parse", "--show-toplevel"], GIT_LOCAL)
     if code == 0 and top:
         update_clone(Path(top), link=a.link)
     else:
@@ -365,7 +368,6 @@ def main(argv=None):
             if not a.link:
                 print("Skill đang là bản chép tay. Muốn tự cập nhật về sau: hỏi user, đồng ý thì chạy lại với "
                       "--force --link (clone repo về ~/omicall-skill, chuyển bản chép tay sang backup, tạo đường dẫn).")
-    mark_checked()  # ghi mốc cả khi lỗi: không fetch lại ở mỗi lần nạp skill trong 1 giờ
     final = read_version(SKILL_DIR) or read_version(SKILL_DIR.parent / NAME) or "chưa có"
     print(f"SKILL_VERSION={NAME} {final}")
 

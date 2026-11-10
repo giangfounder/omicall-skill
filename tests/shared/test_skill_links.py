@@ -150,8 +150,61 @@ class TestGeneratorOnCopy(unittest.TestCase):
     def test_parallel_has_single_forbidden_list_and_template(self):
         t = self.read("shared/references/parallel.md")
         self.assertEqual(t.count("**CẤM cho subagent**"), 1)
-        self.assertIn("CẤM: xuất bản", t)
-        self.assertIn("Chế độ subagent / hỏi đáp", t)
+        self.assertIn("CẤM: xuất bản", t)  # mẫu giao việc chép lại danh sách để dán cho subagent
+        self.assertIn("parallel-brief.md", t)
+        self.assertNotIn("gen:modes", t)
+        b = self.read("shared/references/parallel-brief.md")
+        self.assertIn("Chế độ subagent / hỏi đáp", b)
+        self.assertEqual(b.count("## 3. CẤM cho subagent"), 1)
+        self.assertIn(", ".join(self.g["cam_subagent"]) + ".", b)  # danh sách CẤM nằm nguyên trong file ngắn
+        self.assertIn(self.g["mau_tra_ve"], b)
+
+    def test_parallel_brief_is_small_and_skips_long_files(self):
+        p = ROOT / "shared" / "references" / "parallel-brief.md"
+        self.assertLessEqual(len(p.read_bytes()), 2500)
+        b = self.read("shared/references/parallel-brief.md")
+        for f in ("`conversation.md` mục 2–6", "`system-model.md`", "`solution-method.md`", "`parallel.md`"):
+            self.assertIn(f, b.split("**Không đọc**")[1].split("\n")[0], f)
+        for s in SKILLS:
+            self.assertIn("(`parallel-brief.md`)", self.read(f"{s}/SKILL.md"), s)
+
+    def test_fast_path_skips_preflight_when_ensure_ok(self):
+        for s in SKILLS:
+            t = self.read(f"{s}/SKILL.md")
+            fast = t.split("## Đường nhanh")[1].split("\n## ")[0]
+            pre = [l for l in fast.split("\n") if "omi_preflight.py --domain" in l]
+            if s in self.g["entry"]:
+                continue
+            self.assertEqual(len(pre), 1, s)
+            self.assertIn("`ensure`", pre[0], s)
+            self.assertLess(pre[0].index("ok:false"), pre[0].index("omi_preflight.py"), s)
+
+    def test_rule_conflicts_resolved(self):
+        lim = self.g["gioi_han"]
+        b = self.read("shared/references/parallel-brief.md")
+        self.assertIn("**%d subagent chỉ API/MCP**" % lim["chi_api"], b)
+        self.assertIn("**%d subagent giao diện**" % lim["giao_dien"], b)
+        par = self.read("shared/references/parallel.md")
+        orch = self.read("omicall-assistant/references/orchestration.md")
+        self.assertNotIn("tối đa 5", par)
+        self.assertNotIn("≤ 5", orch)
+        self.assertNotIn("subagent giao diện vẫn tối đa 3", orch)
+        self.assertNotIn("do cùng một subagent giữ menu đó làm", par)  # gắn phím là cổng gan_so
+        crm = self.read("omicall-crm-config/SKILL.md")
+        self.assertNotIn("vào `tenant_context.json`", crm)
+        self.assertIn("manifest.py ctx-set", crm)
+        pb = self.read("omicall-omiflow/references/playbook.md")
+        self.assertNotIn("setup --domain <domain> --email", pb)
+        self.assertIn("setup --ui", pb)
+        kqa = self.read("omicall-assistant/references/knowledge-qa.md")
+        self.assertNotIn("hỏi user trước", kqa)
+        tc = self.read("shared/references/test-cases.md").split("\n")[0]
+        self.assertIn("G1–G14", tc)
+        for s in SKILLS:
+            t = self.read(f"{s}/SKILL.md")
+            self.assertNotIn("1 lần/phiên", t, s)
+            self.assertIn("trong 1 giờ", t, s)
+            self.assertIn("bỏ qua: bước này, hỏi domain, khảo sát", t, s)
         for f in ("omicall-assistant/references/orchestration.md", "shared/references/omi-mcp-extra.md"):
             self.assertNotIn("CẤM: xuất bản", self.read(f), f)
 

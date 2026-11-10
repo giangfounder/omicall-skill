@@ -5,6 +5,7 @@ import hashlib
 import json
 import os
 import re
+import sys
 import unittest
 
 from _util import SKILL
@@ -127,30 +128,46 @@ class TestDocs(unittest.TestCase):
     def test_node_status(self):
         with open(os.path.join(SKILL, "references", "node-status.json"), encoding="utf-8") as f:
             rows = json.load(f)
-        keys = {"type", "side", "status", "template", "source", "verified_on", "ui_hint"}
+        keys = {"type", "side", "status", "builder", "template", "source", "verified_on", "ui_hint"}
+        sys.path.insert(0, os.path.join(os.path.dirname(SKILL), "tools"))
+        try:
+            import check_node_status as cns
+        finally:
+            sys.path.pop(0)
+        sections = {}
         for r in rows:
             self.assertEqual(set(r), keys, r)
             self.assertIn(r["side"], ("runtime", "editor", "edge", "action"))
             self.assertIn(r["status"], ("verified", "enum", "ui_only", "unverified"))
-            path, line = r["source"].rsplit(":", 1)
+            self.assertIn(r["builder"], ("sinh", "giu_nguyen", "khong", "Cần xác nhận"))
+            # nguồn trỏ theo TÊN MỤC (file#đầu tiêu đề, duy nhất), không theo số dòng
+            self.assertNotRegex(r["source"], r":\d+$")
+            path, anchor = r["source"].split("#", 1)
             full = os.path.join(SKILL, path)
             self.assertTrue(os.path.exists(full), path)
-            self.assertLessEqual(int(line), len(read(full).splitlines()), r["source"])
+            sec, hits = cns.section(read(full).splitlines(), anchor)
+            self.assertEqual(hits, 1, r["source"])
+            sections[r["source"]] = sec
         st = {r["type"]: r["status"] for r in rows}
         for t in ("SEND_MESSAGE (Gửi tin nhắn chung)", "END (Kết thúc trò chuyện)",
                   "KICK_OFF_CONTEXT (Kích hoạt ngữ cảnh)"):
             self.assertEqual(st[t], "ui_only")
         # chuyển nhân viên = ACTION START_OTHER_CAMPAIGN gọi flow phụ thuộc, không phải nút giao diện
         self.assertEqual(st["Chuyển nhân viên"], "verified")
-        # source trỏ đúng dòng (theo số dòng nên dễ lệch khi sửa tài liệu): kiểm vài dòng mốc
+        # source trỏ đúng mục: mục được trỏ phải chứa chuỗi mốc của loại
         anchors = {"Chuyển nhân viên": "huyển nhân viên", "ACTION START_OTHER_CAMPAIGN": "START_OTHER_CAMPAIGN",
                    "ACTION SEND_WEBHOOK": "SEND_WEBHOOK", "OMI_BOT_COLLECT_INFO": "collect_variables",
                    "INTENT (ý định hệ thống)": "omi_intent_phone", "api_knowledge (Truy vấn)": "API Knowledge"}
         for r in rows:
             if r["type"] in anchors:
-                path, line = r["source"].rsplit(":", 1)
-                text = read(os.path.join(SKILL, path)).splitlines()[int(line) - 1]
-                self.assertIn(anchors[r["type"]], text, r["source"])
+                self.assertIn(anchors[r["type"]], sections[r["source"]], r["source"])
+        # builder theo mã build_bot.py: loại báo exit 2 (UI_ONLY, ý định hệ thống) không ghi 'sinh'
+        b = {(r["type"], r["side"]): r["builder"] for r in rows}
+        for t in ("SEND_MESSAGE (Gửi tin nhắn chung)", "END (Kết thúc trò chuyện)", "KICK_OFF_CONTEXT (Kích hoạt ngữ cảnh)"):
+            self.assertEqual(b[(t, "runtime")], "khong", t)
+        self.assertEqual(b[("INTENT (ý định hệ thống)", "editor")], "khong")
+        self.assertEqual(b[("ACTION SEND_WEBHOOK", "editor")], "khong")  # build_bot không chép mẫu editor
+        self.assertEqual(b[("Chuyển nhân viên", "action")], "sinh")  # handoff
         self.assertTrue(any("OMI_BOT_AI" in r["ui_hint"] for r in rows if r["type"].startswith("ACTION SEND_WEBHOOK")))
 
     def test_consistency_round2(self):

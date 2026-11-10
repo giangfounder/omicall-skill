@@ -4,6 +4,7 @@ Không mở bất kỳ file credentials.md nào (bỏ qua theo đường dẫn).
 import json
 import os
 import re
+import sys
 import unittest
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -11,11 +12,19 @@ ROOT = os.path.dirname(os.path.dirname(HERE))
 SKILL = os.path.join(ROOT, 'omicall-omiflow')
 REF = os.path.join(SKILL, 'references')
 ENUM_MIN = 33  # số nhãn [enum] trong node-catalog.md ở bản trước đợt sửa (baseline)
+# node-catalog.md tách 11/2026: mục lục + 5 file theo loại nút (chuyển nguyên văn)
+NODE_FILES = ('node-catalog.md', 'node-trigger.md', 'node-condition.md', 'node-action-ticket.md',
+              'node-action-contact.md', 'node-editor-get.md')
+CATALOG_BEFORE_SPLIT = os.path.join(HERE, 'fixtures', 'node-catalog.2026-11.md')  # bản 163ff72
 
 
 def read(*p):
     with open(os.path.join(SKILL, *p), encoding='utf-8') as f:
         return f.read()
+
+
+def catalog():
+    return '\n'.join(read('references', f) for f in NODE_FILES)
 
 
 def read_path(p):
@@ -93,7 +102,7 @@ class DocsTest(unittest.TestCase):
         for s in ('flow_outline.py --list', 'kick_off.id', 'Cần xác nhận'):
             self.assertIn(s, sec)
         stale = ['không xem lại được sau khi xuất bản', 'URL webhook có thể sinh mới', 'Xuất bản đổi id flow →']
-        for f in ('playbook.md', 'ui-build-and-test.md', 'node-catalog.md'):
+        for f in ('playbook.md', 'ui-build-and-test.md') + NODE_FILES:
             t = read('references', f)
             for s in stale:
                 self.assertNotIn(s, t, (f, s))
@@ -107,7 +116,7 @@ class DocsTest(unittest.TestCase):
         # mẫu đặt giới hạn lượt phải ghi rõ lệch quy ước mặc định (X11)
         tail = 'lệch quy ước mặc định, chỉ giữ nếu user yêu cầu'
         dp = read('references', 'design-patterns.md')
-        nc = read('references', 'node-catalog.md')
+        nc = catalog()
         for text, key in ((dp, 'Flow B — GENERAL'), (dp, 'tối đa N lần'), (dp, 'giao bot một lần'),
                           (nc, '1 lần/đối tượng')):
             line = next(l for l in text.split('\n') if key in l)
@@ -139,7 +148,7 @@ class DocsTest(unittest.TestCase):
     def test_first_save_single_statement(self):
         api = read('references', 'api-reference.md')
         self.assertEqual(api.count('**Vỏ flow tối thiểu và lần "Lưu lại" đầu**'), 1)
-        for f in ('node-catalog.md', 'playbook.md', 'ui-build-and-test.md'):
+        for f in NODE_FILES + ('playbook.md', 'ui-build-and-test.md'):
             t = read('references', f)
             self.assertNotIn('editor không còn nút lưu nháp', t, f)
             self.assertNotIn('lưu ngay sau khi chọn trigger', t, f)
@@ -163,14 +172,14 @@ class DocsTest(unittest.TestCase):
         self.assertIn('Ba loại id và URL webhook', w)
 
     def test_bot_end_branch_documented(self):
-        self.assertNotIn('FAIL X1 giả', read('references', 'node-catalog.md'))
+        self.assertNotIn('FAIL X1 giả', catalog())
         api = read('references', 'api-reference.md')
         self.assertIn('customer_not_response.id', api[api.index('## Node và nhánh'):api.index('## Lưu flow')])
 
     def test_no_machine_or_host_guess_or_industry(self):
         own = ['SKILL.md'] + ['references/%s' % f for f in (
-            'api-reference.md', 'concepts.md', 'design-patterns.md', 'node-catalog.md', 'playbook.md',
-            'react-flow-selectors.md', 'solution-map.md', 'ui-build-and-test.md', 'webhook-examples.md')]
+            'api-reference.md', 'concepts.md', 'design-patterns.md', 'playbook.md',
+            'react-flow-selectors.md', 'solution-map.md', 'ui-build-and-test.md', 'webhook-examples.md') + NODE_FILES]
         for f in own:
             t = read(*f.split('/'))
             for s in ('1142', 'Windows-MCP', 'production đổi domain', 'bệnh nhân', 'tái khám', 'phân bón'):
@@ -210,46 +219,66 @@ class DocsTest(unittest.TestCase):
             self.assertNotRegex(s, r'eyJ[A-Za-z0-9_-]{10,}')
 
     def test_enum_count_not_decreased(self):
-        self.assertGreaterEqual(read('references', 'node-catalog.md').count('[enum]'), ENUM_MIN)
+        self.assertGreaterEqual(catalog().count('[enum]'), ENUM_MIN)
         base = os.environ.get('OMI_BASELINE_DIR')
         if base:
             p = os.path.join(base, 'omicall-omiflow', 'references', 'node-catalog.md')
             if os.path.exists(p):
-                self.assertGreaterEqual(read('references', 'node-catalog.md').count('[enum]'),
+                self.assertGreaterEqual(catalog().count('[enum]'),
                                         read_path(p).count('[enum]'))
 
     def test_node_catalog_numbering(self):
-        nc = read('references', 'node-catalog.md')
-        nums = [int(m) for m in re.findall(r'^## (\d+)\.', nc, re.M)]
+        nc = catalog()
+        nums = sorted(int(m) for m in re.findall(r'^## (\d+)\.', nc, re.M))
         self.assertEqual(nums, list(range(1, len(nums) + 1)))
+        idx = read('references', 'node-catalog.md')
+        self.assertIn('## Mục lục', idx[:600])  # file trên 100 dòng: mục lục ở đầu
+        for f in NODE_FILES[1:]:
+            self.assertIn('`%s`' % f, idx, f)  # mục lục trỏ tới từng file
         for t in ('ADD_NEW_CONTACT', 'UPDATE_INFO_CONTACT'):
             row = next(l for l in nc.split('\n') if l.startswith(f'| `{t}` |'))
             self.assertIn('runtime verify (mục 6', row)
             self.assertIn('editor một phần', row)
+
+    def test_split_catalog_loses_no_line(self):
+        old = [l for l in read_path(CATALOG_BEFORE_SPLIT).split('\n') if l.strip() and l.strip() != '---']
+        new = set(catalog().split('\n'))
+        lost = [l for l in old if l not in new]
+        self.assertEqual(lost, [], 'dòng bị mất khi tách node-catalog: %r' % lost[:3])
+        self.assertEqual(catalog().count('✔'), read_path(CATALOG_BEFORE_SPLIT).count('✔'))
+        self.assertLessEqual(len(read('references', 'node-catalog.md').encode('utf-8')), 14000)
 
     def test_node_status(self):
         with open(os.path.join(REF, 'node-status.json'), encoding='utf-8') as f:
             rows = json.load(f)
         self.assertIsInstance(rows, list)
         self.assertGreater(len(rows), 10)
-        keys = {'type', 'side', 'status', 'template', 'source', 'verified_on', 'ui_hint'}
+        keys = {'type', 'side', 'status', 'builder', 'template', 'source', 'verified_on', 'ui_hint'}
+        sys.path.insert(0, os.path.join(ROOT, 'tools'))
+        try:
+            import check_node_status as cns
+        finally:
+            sys.path.pop(0)
         cache = {}
         for r in rows:
             self.assertEqual(set(r), keys, r)
             self.assertIn(r['side'], ('runtime', 'editor', 'edge', 'action'))
             self.assertIn(r['status'], ('verified', 'enum', 'ui_only', 'unverified'))
+            self.assertEqual(r['builder'], 'khong')  # omiflow không có builder
             self.assertIsNone(r['template'])  # chưa có template nào được duyệt verified
-            m = re.match(r'^references/([\w.-]+):(\d+)$', r['source'])
+            # nguồn trỏ theo TÊN MỤC (file#đầu tiêu đề, duy nhất), không theo số dòng
+            m = re.match(r'^references/([\w.-]+)#(.+)$', r['source'])
             self.assertTrue(m, r['source'])
-            fn, ln = m.group(1), int(m.group(2))
+            fn, anchor = m.group(1), m.group(2)
             if fn not in cache:
                 cache[fn] = read('references', fn).split('\n')
-            lines = cache[fn]
-            self.assertLessEqual(ln, len(lines), r['source'])
+            sec, hits = cns.section(cache[fn], anchor)
+            self.assertEqual(hits, 1, r['source'])
+            self.assertTrue(cns.mentions(sec, r['type']), f"{r['source']} không nhắc {r['type']}")
             if r['status'] == 'verified':
-                win = lines[max(0, ln - 6):ln + 5]
-                self.assertTrue(any('[verify JSON' in l or l.strip() == '```json' for l in win),
-                                f"{r['type']} verified nhưng {r['source']} không gần nhãn [verify JSON] hay khối ```json")
+                self.assertTrue('[verify JSON' in sec or '```json' in sec,
+                                f"{r['type']} verified nhưng mục {r['source']} không có nhãn [verify JSON] hay khối ```json")
+                self.assertTrue(r['verified_on'] == 'Cần xác nhận' or re.match(r'^\d{4}-\d{2}', r['verified_on'] or ''), r)
         by = {r['type']: r['status'] for r in rows}
         for t in ('SEND_RESPONSE_WEBHOOK_API', 'OMI_BOT_AI', 'START_OTHER_CAMPAIGN', 'CREATE_CUSTOM_VARIABLE/CHAT_GPT (tab LLM)',
                   'UPDATE_INFO_CONTACT/thuộc tính kiểu danh sách'):

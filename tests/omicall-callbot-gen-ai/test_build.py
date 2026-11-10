@@ -207,6 +207,53 @@ class TestBuild(unittest.TestCase):
         self.assertIn("extract_template", err)
         self.assertNotIn("Traceback", err)
 
+    # --- TRANSFER_CALL: chỉ nhân bản nút mẫu actionType Extension (builder không sinh Ring_group/Outer_group)
+    def ring_group_copy(self, node, org, nid):
+        """Biến bản sao nút chuyển nhân viên thành nút Ring_group (khuôn theo references/templates/TRANSFER_CALL_Ring_group.json)."""
+        import copy
+        n, o = copy.deepcopy(node), copy.deepcopy(org)
+        n["id"] = o["id"] = nid
+        opt = {"sipNumber": "201", "members": 1, "label": "Nhom mau", "value": "nhom_mau_1"}
+        for a in n["actions"]:
+            if a.get("type") == "TRANSFER_CALL":
+                a["data"].update(actionType="Ring_group", ids=["nhom_mau_1"], sip_number="201")
+        for a in o["data"]["actions"]:
+            if a.get("type") == "TRANSFER_CALL":
+                a["datas"].update(transferType="Ring_group", selected=dict(opt),
+                                  typeOptions={"Extension": [], "Ring_group": [dict(opt)], "Outer_group": []})
+        for od in o.get("orgDatas") or []:
+            od["datas"].update(transferType="Ring_group", selected=dict(opt))
+        return n, o
+
+    def xfer_actions(self, payload):
+        return [a for n in payload["nodes"] for a in n.get("actions") or [] if a.get("type") == "TRANSFER_CALL"]
+
+    def test_ring_group_sample_listed_first_still_builds_extension(self):
+        with open(BASE, encoding="utf-8") as f:
+            b = json.load(f)
+        i = next(k for k, n in enumerate(b["nodes"]) if any(a.get("type") == "TRANSFER_CALL" for a in n.get("actions") or []))
+        org = next(o for o in b["org_nodes"] if o["id"] == b["nodes"][i]["id"])
+        rn, ro = self.ring_group_copy(b["nodes"][i], org, "xfer_nhom_mau")
+        b["nodes"].insert(1, rn)
+        b["org_nodes"].insert(1, ro)
+        code, out, err = self.build(SPEC, "--new", "--out", self.p("o.json"), base=self.write("b.json", b))
+        self.assertEqual(code, 0, out + err)
+        acts = self.xfer_actions(self.load_out())
+        self.assertEqual([a["data"]["actionType"] for a in acts], ["Extension"])
+        self.assertNotIn("nhom_mau_1", acts[0]["data"]["ids"])
+
+    def test_only_ring_group_sample_exit_2(self):
+        with open(BASE, encoding="utf-8") as f:
+            b = json.load(f)
+        for i, n in enumerate(b["nodes"]):
+            if any(a.get("type") == "TRANSFER_CALL" for a in n.get("actions") or []):
+                j = next(k for k, o in enumerate(b["org_nodes"]) if o["id"] == n["id"])
+                b["nodes"][i], b["org_nodes"][j] = self.ring_group_copy(n, b["org_nodes"][j], n["id"])
+        code, out, err = self.build(SPEC, "--new", "--out", self.p("o.json"), base=self.write("b.json", b))
+        self.assertEqual(code, 2, out + err)
+        self.assertIn("TRANSFER_CALL", err)
+        self.assertNotIn("Traceback", err)
+
     # --- collect + confirm (agent-config-guide mục 4: không gửi/ghi dữ liệu trước khi khách xác nhận)
     def conds(self, payload):
         return {c.get("name") or c["id"]: c for c in payload["nodes"][0]["ai_agent_config"]["ai_analyze"]["conditions"]}

@@ -131,11 +131,16 @@ class Base:
         self.ed_conds = [c for c in ((self.org_begin.get("data") or {}).get("conditions") or []) if isinstance(c, dict)]
         self.conns = [c for c in (s.get("connections") or []) if isinstance(c, dict)]
 
-    def node_with_action(self, typ):
+    def node_with_action(self, typ, action_type=None):
+        """Nút mẫu có action `typ`; action_type đặt thì chỉ nhận nút có runtime data.actionType đúng giá trị đó
+        (TRANSFER_CALL: base có thể có nút Ring_group/Outer_group, builder chỉ sinh Extension)."""
         for n in self.nodes:
             for a in n.get("actions") or []:
-                if isinstance(a, dict) and a.get("type") == typ and n.get("id") in self.org:
-                    return n, self.org[n["id"]]
+                if not (isinstance(a, dict) and a.get("type") == typ and n.get("id") in self.org):
+                    continue
+                if action_type is not None and (a.get("data") or {}).get("actionType") != action_type:
+                    continue
+                return n, self.org[n["id"]]
         return None
 
     def node_of_type(self, nt):
@@ -317,9 +322,13 @@ def build(spec, base_obj, mode, context=None, warns=None):
         if not p:
             raise BuildError("base thiếu điều kiện hệ thống %s ở runtime hoặc editor → GET lại baseline" % sid)
         sys_pairs[sid] = p
-    xfer_s = b.node_with_action("TRANSFER_CALL") or load_template("TRANSFER_CALL")
+    xfer_s = b.node_with_action("TRANSFER_CALL", action_type="Extension") or load_template("TRANSFER_CALL")
+    if xfer_s and any(isinstance(a, dict) and a.get("type") == "TRANSFER_CALL"
+                      and (a.get("data") or {}).get("actionType") not in (None, "Extension")
+                      for a in xfer_s[0].get("actions") or []):
+        xfer_s = None  # mẫu templates/TRANSFER_CALL.json không phải chuyển nhân viên
     if not xfer_s:
-        raise unverified("TRANSFER_CALL")
+        raise unverified("TRANSFER_CALL Extension (base không có nút chuyển nhân viên; nút Ring_group/Outer_group không dùng làm mẫu)")
     clf_s = None
     if "classify" in kinds or "collect" in kinds or "confirm" in kinds:
         clf_s = b.node_with_action("ADD_CLASSIFY") or load_template("ADD_CLASSIFY")

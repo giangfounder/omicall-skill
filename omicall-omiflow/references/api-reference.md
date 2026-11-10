@@ -40,7 +40,7 @@ name_mappings, classifies, sale_allocations, upload_files, template_id, public_k
 - Quota: số flow trên gói ("Thêm mới 11/20"), số nút mỗi flow ("Số lượng nút 16/20").
 
 ## Node và nhánh — DUAL: nodes + edges + name_mappings
-Flow lưu ba phần phải khớp nhau: `nodes[]` (runtime, snake_case), `edges.connections[]` (cạnh), `name_mappings[]` (bản editor, camelCase, nút đầu loại `BEGIN` — `node-catalog.md` mục 6). Sửa nút phải sửa cả `nodes` lẫn `name_mappings`, nếu không editor hiện "Chưa có dữ liệu"; schema chi tiết của `name_mappings` chưa có mẫu kiểm chứng (Cần xác nhận, lấy từ GET thật).
+Flow lưu ba phần phải khớp nhau: `nodes[]` (runtime, snake_case), `edges.connections[]` (cạnh), `name_mappings[]` (bản editor, camelCase, nút đầu loại `BEGIN` — `node-editor-get.md` mục 6). Sửa nút phải sửa cả `nodes` lẫn `name_mappings`, nếu không editor hiện "Chưa có dữ liệu"; schema chi tiết của `name_mappings` chưa có mẫu kiểm chứng (Cần xác nhận, lấy từ GET thật).
 
 Mỗi liên kết lưu **2 nơi**: trong node (`next_nodes` / `conditions[].next_nodes` / `success_next_nodes` / `fail_next_nodes`) **và** trong `edges.connections`.
 
@@ -73,9 +73,9 @@ def save_draft(flow):  # flow phải có _id của flow nháp
 ```
 **Vỏ flow tối thiểu và lần "Lưu lại" đầu** (mục duy nhất; nơi khác trỏ về đây):
 - Flow mới: tạo vỏ trên UI để có `_id` nháp (lưu lần đầu đổi URL sang `/flow/edit/<id>`), rồi lưu nháp vào đó bằng `omi_save.py flow`.
-- Vỏ đã lưu được (✔ UI 11/2026): trigger + vài nút, kết thúc bằng nút Hành động, kể cả khi nhánh mặc định của nút Điều kiện chưa nối. Nút cuối là `CONDITION`/`DELAY` làm lưu thất bại (X3, `node-catalog.md` mục 6). Vỏ chỉ có trigger có lưu được không: Cần xác nhận.
+- Vỏ đã lưu được (✔ UI 11/2026): trigger + vài nút, kết thúc bằng nút Hành động, kể cả khi nhánh mặc định của nút Điều kiện chưa nối. Nút cuối là `CONDITION`/`DELAY` làm lưu thất bại (X3, `node-editor-get.md` mục 6). Vỏ chỉ có trigger có lưu được không: Cần xác nhận.
 - Lần "Lưu lại" đầu: một lần (✔ UI 11/2026) thấy sau đó editor chỉ còn "Xuất bản", nút thêm sau không lên server; ghi chép khác (10/2026) vẫn Lưu lại nhiều lần trên flow nháp. Khi nào bị khoá: Cần xác nhận. Đường an toàn: dựng đủ nút trước lần lưu đầu, hoặc sửa tiếp bằng `omi_save.py flow` (lưu nháp vào `_id`). Agent không bấm Xuất bản để lưu.
-- `node-catalog.md` mục 6 có ghi lưu flow mới bằng `save_draft_v2` sau khi bỏ `_id`: Cần xác nhận, script không làm.
+- `node-editor-get.md` (mục 6) có ghi lưu flow mới bằng `save_draft_v2` sau khi bỏ `_id`: Cần xác nhận, script không làm.
 
 An toàn: muốn sửa flow đang chạy của khách thì **GET → sao chép → sửa → lưu nháp hoặc tạo flow mới chưa xuất bản**, chỉ cập nhật bản đang chạy khi user đồng ý. Không xoá và không tắt flow của khách nếu user không yêu cầu.
 
@@ -88,9 +88,9 @@ Chạy tự động: `python <thư mục skill>/scripts/validate_flow.py <GET.js
 5. **[C5]** Sau `ADD_TICKET` cần gắn cuộc gọi hoặc người liên quan: có `DELAY` (5–10 giây) trước `GET_RELATED` cuộc gọi (bản ghi cuộc gọi chưa có ngay) **[X6]**.
 6. **[C6]** Số nút ≤ quota gói; flow mới chỉ lưu nháp, **chưa xuất bản** cho tới khi test xong và user duyệt (giữ quy ước Hoạt động của user, `SKILL.md` Rule 3; nháp có chạy hay không: Cần xác nhận). Validator kiểm "chưa xuất bản" ở mode post (thiếu `is_publish` → WARN Cần xác nhận) và cảnh báo khi payload mode pre có `is_publish=true`; quy ước mặc định (Hoạt động, Không giới hạn lượt, không khoảng hiệu lực) kiểm ở **[X11]**.
 7. **[C7]** Test: gọi URL webhook bằng cURL hoặc tạo sự kiện thật (khi user đồng ý) → tab **Lịch sử** của flow xem từng nút chạy và nhánh đã đi. Validator không thay được bước này.
-8. **[X3]** Nút cuối chuỗi không phải `DELAY` hoặc `CONDITION` (lưu sẽ thất bại; kết thúc bằng nút Hành động — `node-catalog.md` mục 6).
+8. **[X3]** Nút cuối chuỗi không phải `DELAY` hoặc `CONDITION` (lưu sẽ thất bại; kết thúc bằng nút Hành động — `node-editor-get.md`).
 9. **[X8]** Thuộc tính khách kiểu danh sách (`is_list` trong `tenant_context.json`) không nhận biến: rẽ nhánh theo giá trị, mỗi nhánh gán một giá trị cố định.
-10. **[X9]** `name_mappings` có đủ bản editor cho các nút trong `nodes` (`node-catalog.md` mục 6); phần tử chép nguyên từ bản GET của nút cùng loại, không tự viết. Hiện chỉ WARN vì chưa có template editor kiểm chứng; không đối chiếu được id thì WARN "Cần xác nhận", không PASS.
+10. **[X9]** `name_mappings` có đủ bản editor cho các nút trong `nodes` (`node-editor-get.md`); phần tử chép nguyên từ bản GET của nút cùng loại, không tự viết. Hiện chỉ WARN vì chưa có template editor kiểm chứng; không đối chiếu được id thì WARN "Cần xác nhận", không PASS.
 11. **[X10]** Bản GET khớp bản đã gửi (id nút, số edge) — mode post với `--sent`.
 12. **[X11]** Quy ước mặc định mọi flow (trừ khi user nói khác): Hoạt động, Không giới hạn lượt (`iteration_config.is_limit=false`), không đặt khoảng hiệu lực (`start_date`/`end_date` null). WARN khi `iteration_config.is_limit=true`, `start_date` hoặc `end_date` khác null, `is_pause` hoặc `is_stopped` = true (thiếu trường coi như null; không đọc `status`/`is_active` vì chưa rõ giá trị) — lệch quy ước mặc định, chỉ giữ nếu user yêu cầu. Giao diện mặc định ngược lại (hạn +7 ngày, giới hạn 2 lượt; `ui-build-and-test.md` mục 1).
 

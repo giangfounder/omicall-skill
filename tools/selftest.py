@@ -7,12 +7,14 @@ Môi trường test:
 - HOME/USERPROFILE trỏ thư mục tạm (không đụng ~/.omicall-mcp, ~/.cache thật);
 - PYTHONDONTWRITEBYTECODE=1, NO_NETWORK=1;
 - sitecustomize trong thư mục tạm chặn mọi socket.connect ngoài 127.0.0.1/localhost/::1;
-- mỗi thư mục test chạy trong một tiến trình riêng (tránh trùng tên module).
+- mỗi thư mục test chạy trong một tiến trình riêng (tránh trùng tên module), song song tối đa --jobs tiến trình
+  (mặc định: số thư mục, tối đa 8; --jobs 1 = tuần tự); mỗi tiến trình có HOME và OMI_SCRATCH riêng.
 In bảng PASS/FAIL/SKIP, exit 1 khi có FAIL hoặc ERROR. Thiếu thư viện ngoài (requests, openpyxl, python-docx,
 pymupdf, websocket-client) thì test liên quan tự SKIP và được liệt kê ở đầu báo cáo.
 Sau khi chạy, xoá các thư mục __pycache__ mới sinh trong repo.
 """
 import argparse
+import concurrent.futures
 import importlib.util
 import json
 import os
@@ -104,6 +106,7 @@ def main(argv):
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("dirs", nargs="*", help="thư mục test (mặc định: mọi thư mục con trong tests/)")
+    ap.add_argument("--jobs", type=int, default=0, help="số thư mục chạy song song (mặc định: tối đa 8; 1 = tuần tự)")
     ap.add_argument("--inner", help=argparse.SUPPRESS)
     a = ap.parse_args(argv)  # -h/--help -> exit 0; cờ lạ -> exit 2
     if a.inner:
@@ -125,18 +128,26 @@ def main(argv):
     for k in [k for k in env if k.startswith("OMI_API_BASE")] + [
             "OMI_TOKEN", "OMI_TOKEN_FILE", "OMI_DOMAIN", "OMI_MANIFEST", "OMI_VALIDATOR_OVERRIDE", "OMI_TEST_MODE"]:
         env.pop(k, None)
+    def run_dir(k, t):
+        if not t.is_dir():
+            return [{"id": str(t), "status": "ERROR", "detail": "không phải thư mục"}]
+        # HOME/OMI_SCRATCH riêng cho mỗi thư mục: chạy song song không dùng chung thư mục tạm
+        own = tmp / f"d{k}"
+        (own / "home").mkdir(parents=True)
+        e = dict(env, HOME=str(own / "home"), USERPROFILE=str(own / "home"), OMI_SCRATCH=str(own / "scratch"))
+        p = subprocess.run([sys.executable, "-B", str(Path(__file__).resolve()), "--inner", str(t)],
+                           capture_output=True, text=True, encoding="utf-8", errors="replace", env=e, cwd=str(ROOT))
+        got = [json.loads(l[6:]) for l in p.stdout.splitlines() if l.startswith("@@ROW ")]
+        if p.returncode != 0 or (not got and p.stderr.strip()):
+            got.append({"id": f"{t.name} (tiến trình)", "status": "ERROR", "detail": p.stderr[-2000:]})
+        return got
+
     rows = []
+    jobs = a.jobs if a.jobs > 0 else max(1, min(8, len(targets)))
     try:
-        for t in targets:
-            if not t.is_dir():
-                rows.append({"id": str(t), "status": "ERROR", "detail": "không phải thư mục"})
-                continue
-            p = subprocess.run([sys.executable, "-B", str(Path(__file__).resolve()), "--inner", str(t)],
-                               capture_output=True, text=True, encoding="utf-8", errors="replace", env=env, cwd=str(ROOT))
-            got = [json.loads(l[6:]) for l in p.stdout.splitlines() if l.startswith("@@ROW ")]
-            rows.extend(got)
-            if p.returncode != 0 or (not got and p.stderr.strip()):
-                rows.append({"id": f"{t.name} (tiến trình)", "status": "ERROR", "detail": p.stderr[-2000:]})
+        with concurrent.futures.ThreadPoolExecutor(max_workers=jobs) as ex:
+            for got in ex.map(run_dir, range(len(targets)), targets):  # giữ thứ tự thư mục trong báo cáo
+                rows.extend(got)
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
         for d in pycache_dirs() - before:

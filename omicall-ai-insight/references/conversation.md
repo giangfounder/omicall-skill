@@ -2,12 +2,14 @@
 
 User thường **không rành kỹ thuật**: nói lời thường, hỏi ít mà trúng, luôn cho biết bước tiếp theo.
 
+**Đọc "mục N" của một file** (mọi con trỏ trong skill OMI): `grep -n "^##" <file>` lấy số dòng các mục, rồi Read với `offset`/`limit` đúng mục đó; không đọc cả file khi chỉ cần một mục.
+
 ## 1. Bắt đầu: domain và đăng nhập
 1. Câu đầu chỉ hỏi **domain** (`<tên>.omicrm.io`); đã có trong yêu cầu thì bỏ qua.
 2. `python "<thư mục skill>/scripts/omi_login.py" ensure --domain <domain>`. `"ok":true` → làm tiếp, không nói thêm về đăng nhập.
-3. `"need":"setup"` → mở form đăng nhập theo `references/omi-mcp.md` mục 2a (form trong agent, không nhận mật khẩu qua chat, không gõ/đọc/chụp form, chờ `OMI_LOGIN_RESULT=OK|FAIL` rồi chạy lại `ensure`). User lỡ gửi mật khẩu trong chat: không dùng, không nhắc lại, khuyên đổi.
+3. `"need":"setup"` → mở form đăng nhập theo `references/omi-login.md` mục 2a (form trong agent, không nhận mật khẩu qua chat, không gõ/đọc/chụp form, chờ `OMI_LOGIN_RESULT=OK|FAIL` rồi chạy lại `ensure`). User lỡ gửi mật khẩu trong chat: không dùng, không nhắc lại, khuyên đổi.
 4. Skill được skill khác gọi trong cùng phiên thì dùng lại domain, đăng nhập, `tenant_context.json`; bỏ qua mục này.
-5. **Làm tiếp từ tài liệu bàn giao**: id kịch bản/flow/bot trong tài liệu có thể đã cũ (mỗi lần lưu hoặc xuất bản đổi id, user có thể đã tự xuất bản) → liệt kê và GET lại trước khi sửa; trạng thái "nháp/đã xuất bản" cũng kiểm lại. Dùng MCP để đọc thì kiểm `tenant_id` của server trước (`omi-mcp.md` mục 2, ý 6). Xong việc thì cập nhật lại tài liệu bàn giao (id mới, việc đã xong, rủi ro còn mở).
+5. **Làm tiếp từ tài liệu bàn giao**: id kịch bản/flow/bot trong tài liệu có thể đã cũ (mỗi lần lưu hoặc xuất bản đổi id, user có thể đã tự xuất bản) → liệt kê và GET lại trước khi sửa; trạng thái "nháp/đã xuất bản" cũng kiểm lại. Dùng MCP để đọc thì kiểm `tenant_id` của server trước (`omi-login.md` mục 2, ý 6). Xong việc thì cập nhật lại tài liệu bàn giao (id mới, việc đã xong, rủi ro còn mở).
 
 ## 2. Khung 5 bước
 1. Vào (mục 1) → 2. Hiểu việc: đọc tài liệu, điền phiếu bài toán (`solution-method.md` mục 1), hỏi ô trống theo mục 3 → 3. Xin duyệt bằng mẫu "Tóm tắt" → 4. Làm: mỗi chặng lớn một dòng tiến độ, không dán JSON/log → 5. Giao bằng mẫu "Giao kết quả".

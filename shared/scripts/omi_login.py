@@ -284,8 +284,9 @@ def do_login(domain, tenant_id=None, _retry=True):
     """Đăng nhập qua MCP OMI. Trả về (exit code, thông báo) — không chứa mật khẩu hay token."""
     env = _mcp_env(domain, home=omi_session.session_home())
     if env is None:
-        return 1, ('Chưa có thông tin đăng nhập đã cất cho %s: user chạy `omi_login.py setup --domain %s` '
-                   'trong terminal (một lần).' % (domain, domain))
+        return 1, ('Chưa có thông tin đăng nhập đã cất cho %s: agent chạy nền `omi_login.py setup --ui --no-browser` '
+                   'và mở form cho user điền một lần (dự phòng không mở được form: user tự chạy '
+                   '`omi_login.py setup --domain %s` trong terminal).' % (domain, domain))
     tenant_id = tenant_id or _accounts().get(domain, {}).get('tenant_id')
     if tenant_id:
         _drop_session_if_other_tenant(tenant_id)
@@ -657,6 +658,8 @@ def cmd_ensure(a):
     if out['ok']:
         info, _ = omi_session.inspect(expect_domain=a.domain)
         out.update(tenant_id=info['tenant_id'], minutes_left=info['seconds_left'] // 60)
+    # cùng ngưỡng và cùng nghĩa với omi_preflight.py: ok:true -> route=api, khỏi chạy preflight lần nữa
+    out['route'] = 'api' if out['ok'] else ('blocked' if out.get('need') == 'setup' else 'login')
     print(json.dumps(out, ensure_ascii=False))
     return 0 if out['ok'] else 3
 

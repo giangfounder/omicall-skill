@@ -7,8 +7,8 @@ description: >-
 # OMICall Assistant — Tổng quản lý điều phối
 
 ## Bước bắt buộc: cập nhật skill
-Chạy `python "<thư mục skill>/scripts/self_update.py"` 1 lần/phiên, trước mọi bước khác. Câu đầu: `Đang dùng omicall-assistant v<phiên bản>` (dòng `SKILL_VERSION`; lỗi thì dùng v1.8.0). Không cập nhật được → báo lý do, làm tiếp.
-**Chế độ subagent / hỏi đáp**: là subagent hoặc chỉ hỏi tính năng → bỏ qua bước này, hỏi domain, khảo sát (`parallel.md` mục 1).
+Chạy `python "<thư mục skill>/scripts/self_update.py"` trước mọi bước khác (tự bỏ qua nếu đã kiểm trong 1 giờ). Câu đầu: `Đang dùng omicall-assistant v<phiên bản>` (dòng `SKILL_VERSION`; lỗi thì dùng v1.8.0). Không cập nhật được → báo lý do, làm tiếp.
+**Chế độ subagent / hỏi đáp**: là subagent hoặc chỉ hỏi tính năng → bỏ qua: bước này, hỏi domain, khảo sát (`parallel-brief.md`).
 **Bước nào phải làm trên giao diện**: theo `references/ui-recipes.md` (URL thẳng bằng id, chờ bằng `find`, bấm theo ref, kiểm bằng JS hoặc GET; ≤ 1 ảnh mỗi màn hình).
 
 ## Đường nhanh
@@ -22,7 +22,7 @@ Chỉ điều phối (hiểu việc, chia phần, giao skill khác, kiểm, giao
 6. **Giao subagent**: khảo sát một lần (`scripts/tenant_survey.py`, `scripts/config_survey.py`), sau đó `tenant_context.json` chỉ đọc; mỗi artefact một subagent; mẫu giao việc `references/parallel.md` mục 5; sổ chung `scripts/manifest.py`.
 7. **Kiểm và giao**: tự GET lại và validator, một lượt hỏi user cho nhánh bị chặn, báo "Đợt n/N" (`orchestration.md` mục 7). Sửa/xuất bản bot xong: `scripts/check_callin.py --domain <d> --scratch <scratch>` (chỉ báo); STALE → cổng gắn số.
 
-Không bao giờ: làm thay skill chuyên trách · tin báo cáo subagent khi chưa tự kiểm · hai subagent cùng ghi một thứ · để subagent qua cổng (CẤM: `parallel.md` mục 5) · ghi hệ thống thật khi chưa duyệt.
+Không bao giờ: làm thay skill chuyên trách · tin báo cáo subagent khi chưa tự kiểm · hai subagent cùng ghi một thứ · để subagent qua cổng (CẤM: `parallel-brief.md`) · ghi hệ thống thật khi chưa duyệt.
 
 <!-- skill-links:start (sinh từ shared/skill-graph.json bằng tools/gen_skill_links.py, đừng sửa tay) -->
 ## Gọi skill liên quan

@@ -24,7 +24,7 @@ Cấu trúc flow:
 
 ## Trả dữ liệu động cho bên gọi [suy luận]
 
-`response_config` là body cố định, không chèn được dữ liệu tra cứu. Trả dữ liệu động dùng hành động "Trả kết quả qua API" (`SEND_RESPONSE_WEBHOOK_API`, schema chưa kiểm chứng: dựng thử một lần trên UI rồi GET — `node-catalog.md` mục 1a). Khung: trigger API nhận SĐT → xác định khách → `SEND_RESPONSE_WEBHOOK_API` trả body chèn `{{...}}`. Mẫu thiết kế: `design-patterns.md` mục C (dòng "Chatbot hoặc callbot cần tra CRM").
+`response_config` là body cố định, không chèn được dữ liệu tra cứu. Trả dữ liệu động dùng hành động "Trả kết quả qua API" (`SEND_RESPONSE_WEBHOOK_API`, schema chưa kiểm chứng: dựng thử một lần trên UI rồi GET — `node-trigger.md` mục 1a). Khung: trigger API nhận SĐT → xác định khách → `SEND_RESPONSE_WEBHOOK_API` trả body chèn `{{...}}`. Mẫu thiết kế: `design-patterns.md` mục C (dòng "Chatbot hoặc callbot cần tra CRM").
 
 ## Kiểm flow có chạy
 1. Gọi cURL, kiểm HTTP 200.

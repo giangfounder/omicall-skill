@@ -7,9 +7,13 @@
   Đợt 0: --out <scratch>/tenant_context.json. Sau đợt 0 tenant_context.json chỉ đọc: kiểm lại thì --out ra file riêng.
 - In ra màn hình chỉ số lượng và tên; không in token, không in số điện thoại.
 - Endpoint lỗi (404, 401, mạng) → ghi vào `can_xac_nhan`, chạy tiếp phần còn lại.
+- Ghi mốc `config_survey_at` (riêng, không dùng `survey_at` của tenant_survey.py). --max-age <phút>: mốc này chưa quá số
+  phút đó (cùng domain nếu file có tenant.domain, lần trước không endpoint nào lỗi) → bỏ qua, 0 request, không ghi file.
+- Request gọi tuần tự (không song song), dùng chung kết nối, timeout omi_api.SURVEY_TIMEOUT (connect, read).
 Không tạo, sửa hay xoá gì trên tenant.
 """
 import argparse
+import datetime
 import json
 import os
 import sys
@@ -84,7 +88,9 @@ def slim(kind, x):
 def survey(call=None):
     """Trả về (pbx, ai_config, lỗi). `call(service, method, path)` để test thay mạng."""
     def default_call(service, method, path):
-        return omi_api.get(service, path) if method == 'GET' else omi_api.post_json(service, path, {})
+        if method == 'GET':
+            return omi_api.get(service, path, timeout=omi_api.SURVEY_TIMEOUT)
+        return omi_api.post_json(service, path, {}, timeout=omi_api.SURVEY_TIMEOUT)
     call = call or default_call
     out, errors = {}, []
     for kind, (service, method, path, key) in ENDPOINTS.items():
@@ -110,13 +116,55 @@ def _lock(path):
         return contextlib.nullcontext()
 
 
+def _parse_time(s):
+    try:
+        return datetime.datetime.fromisoformat(str(s))
+    except (TypeError, ValueError):
+        return None
+
+
+def fresh_age(path, max_age, domain=None, now=None):
+    """Số phút tuổi của config_survey_at trong --out nếu còn mới; không thì None."""
+    try:
+        with open(path, encoding='utf-8') as f:
+            old = json.load(f)
+    except (OSError, ValueError):
+        return None
+    if not isinstance(old, dict):
+        return None
+    parts = (old.get('pbx'), old.get('ai_config'))
+    if not all(isinstance(p, dict) for p in parts) or any(v is None for p in parts for v in p.values()):
+        return None  # chưa có hoặc lần trước có endpoint lỗi (giá trị None) → khảo sát lại
+    at = _parse_time(old.get('config_survey_at'))
+    cur = _parse_time(now) if now else datetime.datetime.now()
+    if at is None or cur is None:
+        return None
+    if not domain or (old.get('tenant') or {}).get('domain') != domain:
+        return None  # chỉ tin file khi ghi đúng domain đang làm (tránh dùng nhầm file của tenant khác)
+    try:
+        age = (cur - at).total_seconds() / 60.0
+    except TypeError:
+        return None
+    return age if 0 <= age < max_age else None
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument('--out', required=True, help='file JSON ở scratch (gộp vào nếu đã có)')
     ap.add_argument('--domain', help='kiểm token đúng domain')
+    ap.add_argument('--max-age', type=float, metavar='PHUT',
+                    help='bỏ qua (0 request) nếu --out có config_survey_at chưa quá số phút này')
+    ap.add_argument('--now', help=argparse.SUPPRESS)
     a = ap.parse_args(argv)
+    if a.max_age is not None and not a.domain:
+        ap.error('--max-age cần --domain (chỉ bỏ qua khảo sát khi file ghi đúng domain đang làm)')
     if hasattr(sys.stdout, 'reconfigure'):
         sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+    if a.max_age is not None:
+        age = fresh_age(a.out, a.max_age, a.domain, a.now)
+        if age is not None:
+            print('Bỏ qua: %s còn mới (config_survey %.0f phút trước, --max-age %g) — 0 request.' % (a.out, age, a.max_age))
+            return 0
     if a.domain:
         omi_api._headers(expect_domain=a.domain)  # dừng sớm nếu token sai tenant
     pbx, ai, errors = survey()
@@ -126,6 +174,7 @@ def main(argv=None):
             with open(a.out, encoding='utf-8') as f:
                 ctx = json.load(f)
         ctx['pbx'], ctx['ai_config'] = pbx, ai
+        ctx['config_survey_at'] = a.now or datetime.datetime.now().replace(microsecond=0).isoformat()
         ctx['can_xac_nhan'] = [c for c in ctx.get('can_xac_nhan', []) if not c.startswith(tuple(ENDPOINTS))] + errors
         tmp = a.out + '.tmp'
         with open(tmp, 'w', encoding='utf-8') as f:

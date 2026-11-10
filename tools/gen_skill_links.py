@@ -14,9 +14,12 @@ Khối sinh ra:
   3. omicall-assistant/references/orchestration.md, giữa <!-- gen:waves -->: bảng đợt kèm cổng (khoá `waves`, `gates`).
   4. omicall-assistant/references/plan-and-approval.md, giữa <!-- gen:gates -->: quy tắc duyệt và danh sách cổng
      (khoá `approval`, `gates`).
-  5. shared/references/parallel.md, giữa <!-- gen:modes --> và <!-- gen:cam -->: chế độ subagent/hỏi đáp, danh sách
-     CẤM và mẫu giao việc (khoá `modes`, `cam_subagent`, `mau_giao_viec`). Sau khi ghi phải chạy
-     `python tools/sync_shared.py` để chép parallel.md sang các skill.
+  5. shared/references/parallel.md, giữa <!-- gen:cam -->: mẫu giao việc (khoá `mau_giao_viec`, `cam_subagent`,
+     `mau_tra_ve`).
+  6. shared/references/parallel-brief.md (file ngắn subagent đọc thay parallel.md), giữa <!-- gen:brief -->: chế độ
+     subagent/hỏi đáp, giới hạn số subagent, quy tắc, danh sách CẤM, mẫu trả về (khoá `modes`, `gioi_han`,
+     `subagent_quy_tac`, `cam_subagent`, `mau_tra_ve`).
+  Sau khi ghi phải chạy `python tools/sync_shared.py` để chép hai file chung sang các skill.
 Không gọi mạng. Ghi giữ kiểu xuống dòng của file.
 """
 import argparse
@@ -49,21 +52,23 @@ Gọi bằng công cụ Skill theo bảng; thứ tự đợt và cổng: `refere
 |---|---|
 """
 
-UPDATE = ('Chạy `python "<thư mục skill>/scripts/self_update.py"` trước mọi bước khác, 1 lần/phiên (đã chạy rồi, '
-          'kể cả ở skill khác, thì bỏ qua). Câu đầu tiên: '
+UPDATE = ('Chạy `python "<thư mục skill>/scripts/self_update.py"` trước mọi bước khác (script tự bỏ qua nếu đã '
+          'kiểm trong 1 giờ). Câu đầu tiên: '
           '`Đang dùng {name} v<phiên bản>` (dòng `SKILL_VERSION`; script lỗi thì dùng v{ver}). '
           'Script báo **SKILL.md đã thay đổi** → đọc lại từ đĩa rồi làm tiếp. Không cập nhật được → '
           'báo lý do, làm tiếp bằng bản hiện có; không sửa, xoá hay commit trong thư mục skill.')
-UPDATE_ENTRY = ('Chạy `python "<thư mục skill>/scripts/self_update.py"` 1 lần/phiên, trước mọi bước khác. Câu đầu: '
+UPDATE_ENTRY = ('Chạy `python "<thư mục skill>/scripts/self_update.py"` trước mọi bước khác (tự bỏ qua nếu đã kiểm '
+                'trong 1 giờ). Câu đầu: '
                 '`Đang dùng {name} v<phiên bản>` (dòng `SKILL_VERSION`; lỗi thì dùng v{ver}). Không cập nhật được '
                 '→ báo lý do, làm tiếp.')
 CONVERSATION = """Làm theo `references/conversation.md`, chung cho mọi skill OMI:
-- Mục 1: hỏi domain → `python "<thư mục skill>/scripts/omi_login.py" ensure --domain <domain>` → `"need":"setup"` thì mở form cục bộ `omi_login.py setup --ui` trong agent (cách duy nhất; dự phòng: `references/omi-mcp.md` mục 2a). Không nhận mật khẩu qua chat, không gõ hay đọc form.
+- Mục 1: hỏi domain → `python "<thư mục skill>/scripts/omi_login.py" ensure --domain <domain>` → `"need":"setup"` thì mở form cục bộ `omi_login.py setup --ui` trong agent (cách duy nhất; dự phòng: `references/omi-login.md` mục 2a). Không nhận mật khẩu qua chat, không gõ hay đọc form.
 - Mục 2–6: khung 5 bước, cách hỏi lại, mẫu câu, lời thường."""
 
 ORCH = Path("omicall-assistant") / "references" / "orchestration.md"
 PLAN = Path("omicall-assistant") / "references" / "plan-and-approval.md"
 PARALLEL = Path("shared") / "references" / "parallel.md"
+BRIEF = Path("shared") / "references" / "parallel-brief.md"
 
 
 def load(root=ROOT):
@@ -86,7 +91,7 @@ def short_order(g):
 
 def mode_line(g):
     who = " hoặc ".join(m["ngan"] for m in g.get("modes", []))
-    return "**Chế độ subagent / hỏi đáp**: %s → bỏ qua bước này, hỏi domain, khảo sát (`parallel.md` mục 1)." % who
+    return "**Chế độ subagent / hỏi đáp**: %s → bỏ qua: bước này, hỏi domain, khảo sát (`parallel-brief.md`)." % who
 
 
 def links_block(g, skill):
@@ -183,19 +188,35 @@ def gates_block(g):
     return "\n".join(out)
 
 
-def modes_block(g):
-    out = ["**Chế độ subagent / hỏi đáp** (khối \"Bước bắt buộc\" trong SKILL.md trỏ về đây):"]
+def limit_line(g):
+    h = g["gioi_han"]
+    return "Tối đa **%s subagent giao diện** và **%s subagent chỉ API/MCP** cùng lúc; %s." % (
+        h["giao_dien"], h["chi_api"], h["ghi_chu"])
+
+
+def brief_block(g):
+    """Phần subagent cần: chế độ, giới hạn, quy tắc, CẤM, mẫu trả về (file ngắn parallel-brief.md)."""
+    out = ["## 1. Chế độ subagent / hỏi đáp"]
     for m in g.get("modes", []):
-        out.append("- **%s** (%s): bỏ qua %s; dùng %s." % (m["ten"], m["khi"], m["bo_qua"], m["dung"]))
+        line = "- **%s** (%s): bỏ qua %s; dùng %s." % (m["ten"], m["khi"], m["bo_qua"], m["dung"])
+        if m.get("khong_doc"):
+            line += " **Không đọc**: %s." % m["khong_doc"]
+        out.append(line)
+    out += ["", "## 2. Giới hạn và quy tắc", "- " + limit_line(g)]
+    out += ["- " + r for r in g.get("subagent_quy_tac", [])]
+    out += ["", "## 3. CẤM cho subagent (danh sách duy nhất; mọi chỗ khác trỏ về đây)",
+            ", ".join(g.get("cam_subagent", [])) + ".",
+            "", "## 4. Mẫu trả về", g["mau_tra_ve"]]
     return "\n".join(out)
 
 
 def cam_block(g):
     cam = ", ".join(g.get("cam_subagent", []))
-    out = ["**CẤM cho subagent** (danh sách duy nhất; mọi chỗ khác trỏ về đây): " + cam + ".", "",
+    out = ["**CẤM cho subagent**: danh sách duy nhất ở `parallel-brief.md` mục 3 (mẫu dưới chép lại để dán vào lời "
+           "giao việc).", "",
            "**Mẫu giao việc** (dán vào lời giao việc, điền phần trong `<>`; phần chung để ở `<scratch>/brief_common.md`):",
            "```"]
-    out += [l.replace("{cam}", cam) for l in g.get("mau_giao_viec", [])]
+    out += [l.replace("{cam}", cam).replace("{tra_ve}", g["mau_tra_ve"]) for l in g.get("mau_giao_viec", [])]
     out.append("```")
     return "\n".join(out)
 
@@ -234,7 +255,8 @@ def plan(root=ROOT):
         out.append((p, raw, new))
     docs = [(ORCH, [("waves", waves_block(g))]),
             (PLAN, [("gates", gates_block(g))]),
-            (PARALLEL, [("modes", modes_block(g)), ("cam", cam_block(g))])]
+            (PARALLEL, [("cam", cam_block(g))]),
+            (BRIEF, [("brief", brief_block(g))])]
     for rel, blocks in docs:
         p = root / rel
         if not p.is_file():

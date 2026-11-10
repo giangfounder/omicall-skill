@@ -28,7 +28,7 @@ Trước hết đọc kênh: MCP `get_all_channels` (hoặc trang cấu hình Đ
 4. Ghi lại đường menu và tên trường thật vào mục này sau khi làm.
 
 ### 2.2 Đường B — OMIFlow đón tin nhắn LiveTalk
-Thiết kế (mã nút theo `omicall-omiflow/references/node-catalog.md`):
+Thiết kế (mã nút theo `omicall-omiflow/references/node-catalog.md`, JSON ở `node-*.md`):
 ```
 GENERAL (đối tượng: hội thoại được thêm mới; điều kiện: kênh = LiveTalk, widget = <widget test>)
   → [tuỳ chọn] CONDITION khung giờ / khách đã có hồ sơ

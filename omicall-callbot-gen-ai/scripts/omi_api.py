@@ -10,7 +10,10 @@
   (ví dụ OMI_API_BASE_CHATBOT) ghi đè một host — CHỈ dành cho stub test: chỉ nhận host 127.0.0.1/localhost/[::1]
   (host khác -> ApiError, không gửi token đi), và luôn in WARN ra stderr khi đang bật.
 - Header Authorization lấy từ omi_session.headers() (kiểm hạn và domain). 401 -> ApiError 'token hết hạn -> omi_login.py login'.
-- `requests` chỉ được import khi thật sự gọi mạng.
+- `requests` chỉ được import khi thật sự gọi mạng. Mọi lệnh trong một tiến trình dùng chung một requests.Session
+  (dùng lại kết nối tới cùng host), không giữ cookie; không tự thử lại (retry có thể lặp POST).
+- TIMEOUT 120 giây là mặc định cho mọi lệnh (lưu, tải tệp lớn). Lệnh khảo sát chỉ đọc truyền SURVEY_TIMEOUT
+  (connect 5 giây, read 30 giây).
 - File ghi ra mặc định nằm trong env OMI_SCRATCH hoặc thư mục tạm; không ghi vào thư mục skill.
 """
 import json
@@ -39,6 +42,7 @@ BASE = {
     'contact': 'https://contact-v1-stg.omicrm.com',
 }
 TIMEOUT = 120
+SURVEY_TIMEOUT = (5, 30)  # (connect, read) cho tenant_survey.py / config_survey.py
 MASK = '***'
 SECRET_KEY = re.compile(r'^(authorization|x-access-token|access_?token|refresh_?token|token|id_token|password|passwd|'
                         r'mat_khau|cookie|set-cookie|secret|client_secret|api_?key|x-api-key)$', re.I)
@@ -109,14 +113,25 @@ def _requests():
     return requests
 
 
+_SESSION = None
+
+
+def _session():
+    """Một requests.Session cho cả tiến trình: các request tuần tự tới cùng host dùng lại kết nối."""
+    global _SESSION
+    if _SESSION is None:
+        from http.cookiejar import DefaultCookiePolicy
+        _SESSION = _requests().Session()
+        _SESSION.cookies.set_policy(DefaultCookiePolicy(allowed_domains=[]))  # không giữ cookie giữa request (như trước)
+    return _SESSION
+
+
 def get(service, path='', expect_domain=None, timeout=TIMEOUT):
-    rq = _requests()
-    return _handle(rq.get(url(service, path), headers=_headers(expect_domain), timeout=timeout))
+    return _handle(_session().get(url(service, path), headers=_headers(expect_domain), timeout=timeout))
 
 
 def post_json(service, path, body, expect_domain=None, timeout=TIMEOUT):
-    rq = _requests()
-    return _handle(rq.post(url(service, path), json=body, headers=_headers(expect_domain), timeout=timeout))
+    return _handle(_session().post(url(service, path), json=body, headers=_headers(expect_domain), timeout=timeout))
 
 
 def multipart_files(obj, field='file'):
@@ -124,9 +139,8 @@ def multipart_files(obj, field='file'):
 
 
 def post_multipart(service, path, obj, field='file', expect_domain=None, timeout=TIMEOUT):
-    rq = _requests()
-    return _handle(rq.post(url(service, path), files=multipart_files(obj, field), headers=_headers(expect_domain),
-                           timeout=timeout))
+    return _handle(_session().post(url(service, path), files=multipart_files(obj, field), headers=_headers(expect_domain),
+                                   timeout=timeout))
 
 
 def mask_text(s):

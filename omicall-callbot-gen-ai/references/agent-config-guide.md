@@ -112,7 +112,7 @@ Mọi quy tắc END_CALL (cách hệ thống chạy endcall, chỉ Ý định "H
 - Phần phải làm lại ở tenant đích: chọn nhân viên nhận chuyển máy và thông báo, dán khoá API, tải file RAG.
 
 ## 9. Đăng nhập MCP trong Claude desktop (tab Code)
-Đăng nhập và đăng ký MCP bằng `omi_login.py setup --ui` (mật khẩu cất trong kho bí mật hệ điều hành, cấu hình MCP chỉ chứa lệnh `omi_login.py serve`, không chứa mật khẩu); không tự ghi server hay mật khẩu vào `~/.claude.json`. Xem `references/conversation.md` mục 1 và `references/omi-mcp.md` mục 2a.
+Đăng nhập và đăng ký MCP bằng `omi_login.py setup --ui` (mật khẩu cất trong kho bí mật hệ điều hành, cấu hình MCP chỉ chứa lệnh `omi_login.py serve`, không chứa mật khẩu); không tự ghi server hay mật khẩu vào `~/.claude.json`. Xem `references/conversation.md` mục 1 và `references/omi-login.md` mục 2a.
 
 ## 10. Luồng sản phẩm và đặt hàng (mẫu dùng lại)
 - Hai trường hợp trong Kịch bản chung: khách chưa rõ sản phẩm → hỏi nhu cầu (đối tượng sử dụng, mục đích, vấn đề đang gặp) → gọi API → gợi ý 1–2 sản phẩm; khách đã nói rõ tên → tra đúng tên, xác nhận lại tên và quy cách, có biến thể thì hỏi chọn, không hỏi lại thông tin tư vấn.

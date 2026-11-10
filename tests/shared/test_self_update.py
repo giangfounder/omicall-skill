@@ -120,6 +120,21 @@ class TestSelfUpdateMain(unittest.TestCase):
             code = self.su.main(argv)
         return code, buf.getvalue()
 
+    def test_stamp_before_pull_and_short_timeouts(self):
+        seen = []
+        orig = self.su.run
+
+        def spy(args, timeout=60):
+            seen.append((args, timeout, self.su.STAMP.exists()))
+            return orig(args, timeout)
+        self.su.run = spy
+        self.out([], {"OMI_SUBAGENT": ""})
+        git = [(a, t, s) for a, t, s in seen if a[0] == "git"]
+        pulls = [s for a, t, s in git if "pull" in a]
+        self.assertEqual(pulls, [True], "mốc phải ghi trước khi pull (phiên khác không pull chồng)")
+        worst = sum(t for a, t, s in git)  # tất cả lệnh git trên đường cập nhật repo clone
+        self.assertLessEqual(worst, 50, "chờ xấu nhất %d giây" % worst)  # 150 giây trước 11/2026
+
     def test_stamp_written_even_when_pull_fails(self):
         code, out = self.out([], {"OMI_SUBAGENT": ""})
         self.assertIn("KHÔNG CẬP NHẬT ĐƯỢC", out)

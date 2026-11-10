@@ -3,6 +3,7 @@ một nguồn cho API nhân viên và nhãn upload_excel, nguồn node-status tr
 gọi đúng hàm có thật. Chỉ kiểm file của riêng skill (bỏ qua bản chép từ shared/)."""
 import ast
 import re
+import sys
 import unittest
 
 from _util import REFS, SKILL, load
@@ -97,11 +98,17 @@ class TestLoginSafety(unittest.TestCase):
 
     def test_node_status_source_line_matches_type(self):
         bad = []
+        sys.path.insert(0, str(SKILL.parent / "tools"))
+        try:
+            import check_node_status as cns
+        finally:
+            sys.path.pop(0)
         for r in load(REFS / "node-status.json"):
-            f, n = r["source"].rsplit(":", 1)
-            line = read(SKILL / f).splitlines()[int(n) - 1]
+            # nguồn dạng file#tiêu đề: mục được trỏ phải nhắc mã của loại (ví dụ CUSTOMER_RESPONSE_WRONG)
+            f, anchor = r["source"].split("#", 1)
+            sec, hits = cns.section(read(SKILL / f).splitlines(), anchor)
             key = r["type"].split(" ")[0].rsplit("/", 1)[-1]
-            if key.lower() not in line.lower():
+            if hits != 1 or key.lower() not in sec.lower():
                 bad.append("%s -> %s" % (r["type"], r["source"]))
         self.assertEqual(bad, [])
 

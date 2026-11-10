@@ -72,12 +72,20 @@ class TestDocs(unittest.TestCase):
         rows = load(REFS / "node-status.json")
         self.assertTrue(rows)
         for r in rows:
-            self.assertEqual(set(r), {"type", "side", "status", "template", "source", "verified_on", "ui_hint"})
+            self.assertEqual(set(r), {"type", "side", "status", "builder", "template", "source", "verified_on", "ui_hint"})
             self.assertIn(r["side"], ("runtime", "editor", "edge", "action"))
             self.assertIn(r["status"], ("verified", "enum", "ui_only", "unverified"))
-            f, line = r["source"].rsplit(":", 1)
-            n = len(read(SKILL / f).splitlines())
-            self.assertTrue(1 <= int(line) <= n, r["source"])
+            self.assertIn(r["builder"], ("sinh", "giu_nguyen", "khong", "Cần xác nhận"))
+            # nguồn trỏ theo TÊN MỤC (file#đầu tiêu đề), không theo số dòng
+            self.assertNotRegex(r["source"], r":\d+$")
+            f, anchor = r["source"].split("#", 1)
+            heads = [l.lstrip("#").strip() for l in read(SKILL / f).splitlines() if l.startswith("#")]
+            self.assertEqual(sum(h.startswith(anchor) for h in heads), 1, r["source"])
+        # builder: dòng 'khong' là loại build_callflow.py không sinh (dừng ở SUPPORTED_ACTIONS hoặc không có nhánh mã)
+        b = {(r["type"], r["side"]): r["builder"] for r in rows}
+        for t in ("CONDITION/KEYWORD", "CONDITION/CUSTOMER_RESPONSE", "ACTION/TRANSFER_CALL Ring_group",
+                  "ACTION/ADD_TICKET", "ACTION/ADD_CONTACT", "ACTION/HOLDING_CALL"):
+            self.assertEqual(next(v for (k, _), v in b.items() if k == t), "khong", t)
         st = {r["type"]: r["status"] for r in rows if r["side"] != "editor"}
         for t in ("STAFF", "CONDITION/INTENT", "CONDITION/CUSTOMER_NOT_RESPONSE", "CONDITION/CUSTOMER_RESPONSE_WRONG",
                   "CONDITION/FROM_SYSTEM EQUAL", "ACTION/ADD_CLASSIFY", "ACTION/TRANSFER_CALL Extension"):

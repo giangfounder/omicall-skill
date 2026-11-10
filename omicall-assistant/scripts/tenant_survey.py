@@ -13,6 +13,10 @@
   TRANSFER_CALL (tài liệu còn mâu thuẫn: Cần xác nhận).
 - --replay <thư mục>: đọc <key>.json thay vì gọi mạng (dùng cho test). Không ghi token; file ra đi qua mask_secrets.
 - Đếm 'đã đọc' chỉ gồm endpoint trả về ok; endpoint lỗi in WARN riêng (phần đó KHÔNG phải trống).
+- --out đã có: giữ giá trị ghi bằng `manifest.py ctx-set` (_ghi_boi) và mọi khoá cấp đầu mà khảo sát này không sinh
+  (ví dụ `pbx`, `ai_config`, `config_survey_at` của config_survey.py).
+- --max-age <phút>: --out có `survey_at` chưa quá số phút này (cùng domain, lần trước không endpoint nào lỗi) -> bỏ qua,
+  0 request, không ghi file. Request gọi tuần tự, dùng chung kết nối, timeout omi_api.SURVEY_TIMEOUT (connect, read).
 Exit: 0 xong (có thể kèm WARN khi một phần lỗi); 3 chưa có token; 4 không đọc được endpoint nào (không ghi --out).
 """
 import argparse
@@ -92,8 +96,9 @@ def fetch(ep, tenant_id, replay):
     import omi_api
     try:
         if ep['method'] == 'GET':
-            return omi_api.get(ep['service'], _fill(ep['path'], tenant_id)), None
-        return omi_api.post_json(ep['service'], _fill(ep['path'], tenant_id), _fill(ep.get('body') or {}, tenant_id)), None
+            return omi_api.get(ep['service'], _fill(ep['path'], tenant_id), timeout=omi_api.SURVEY_TIMEOUT), None
+        return omi_api.post_json(ep['service'], _fill(ep['path'], tenant_id), _fill(ep.get('body') or {}, tenant_id),
+                                 timeout=omi_api.SURVEY_TIMEOUT), None
     except (omi_api.ApiError, OSError) as e:
         return None, str(e)[:200]
     except Exception as e:  # requests.RequestException...
@@ -264,6 +269,52 @@ def _keep_ctx_set(path, ctx):
     return n
 
 
+def _keep_foreign_keys(path, ctx):
+    """Giữ các khoá cấp đầu của file cũ mà khảo sát này không sinh (pbx, ai_config... của config_survey.py)."""
+    try:
+        with open(path, encoding='utf-8') as f:
+            old = json.load(f)
+    except (OSError, ValueError):
+        return []
+    if not isinstance(old, dict):
+        return []
+    kept = [k for k in old if k not in ctx]
+    for k in kept:
+        ctx[k] = old[k]
+    return kept
+
+
+def _parse_time(s):
+    try:
+        return datetime.datetime.fromisoformat(str(s))
+    except (TypeError, ValueError):
+        return None
+
+
+def fresh_age(path, max_age, domain=None, now=None):
+    """Số phút tuổi của --out nếu còn mới (survey_at < max_age phút, cùng domain, lần trước không endpoint lỗi); không thì None."""
+    try:
+        with open(path, encoding='utf-8') as f:
+            old = json.load(f)
+    except (OSError, ValueError):
+        return None
+    if not isinstance(old, dict):
+        return None
+    at = _parse_time(old.get('survey_at'))
+    cur = _parse_time(now) if now else datetime.datetime.now()
+    if at is None or cur is None:
+        return None
+    if not domain or (old.get('tenant') or {}).get('domain') != domain:
+        return None  # chỉ tin file khi ghi đúng domain đang làm (tránh dùng nhầm file của tenant khác)
+    if any(r.get('goi') and r.get('ket_qua') != 'ok' for r in old.get('_endpoints') or [] if isinstance(r, dict)):
+        return None
+    try:
+        age = (cur - at).total_seconds() / 60.0
+    except TypeError:  # một mốc có múi giờ, một mốc không
+        return None
+    return age if 0 <= age < max_age else None
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument('--out', required=True)
@@ -271,10 +322,19 @@ def main(argv=None):
     ap.add_argument('--tenant-id')
     ap.add_argument('--replay')
     ap.add_argument('--include-unverified', action='store_true')
+    ap.add_argument('--max-age', type=float, metavar='PHUT',
+                    help='bỏ qua (0 request) nếu --out có survey_at chưa quá số phút này')
     ap.add_argument('--now', help=argparse.SUPPRESS)
     a = ap.parse_args(argv)
+    if a.max_age is not None and not a.domain:
+        ap.error('--max-age cần --domain (chỉ bỏ qua khảo sát khi file ghi đúng domain đang làm)')
     if hasattr(sys.stdout, 'reconfigure'):
         sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+    if a.max_age is not None:
+        age = fresh_age(os.path.abspath(a.out), a.max_age, a.domain, a.now)
+        if age is not None:
+            print('Bỏ qua: %s còn mới (khảo sát %.0f phút trước, --max-age %g) — 0 request.' % (a.out, age, a.max_age))
+            return 0
     tenant_id, domain = a.tenant_id, a.domain
     if not a.replay:
         import omi_session
@@ -300,12 +360,15 @@ def main(argv=None):
     os.makedirs(os.path.dirname(out) or '.', exist_ok=True)
     with _lock(out):  # khoá chung với manifest.py ctx-set / config_survey.py
         kept = _keep_ctx_set(out, ctx)
+        foreign = _keep_foreign_keys(out, ctx)
         tmp = out + '.tmp'
         with open(tmp, 'w', encoding='utf-8') as f:
             json.dump(omi_api.mask_secrets(ctx), f, ensure_ascii=False, indent=1)
         os.replace(tmp, out)
     if kept:
         print('Giữ %d giá trị đã ghi bằng manifest.py ctx-set (_ghi_boi).' % kept)
+    if foreign:
+        print('Giữ khoá không do tenant_survey sinh: %s.' % ', '.join(foreign))
     print('Đã ghi %s: %d endpoint đã đọc, %d lỗi, %d artefact, %d mục Cần xác nhận.'
           % (out, len(ok), len(failed), len(ctx['existing_artefacts']), len(ctx['can_xac_nhan'])))
     if failed:

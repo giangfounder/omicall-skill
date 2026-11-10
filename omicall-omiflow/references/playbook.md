@@ -11,11 +11,11 @@ Tài liệu chính thức: `https://omicrm.io/post/topic/omiflow-7` (tổng quan
 
 ## Input contract (hỏi một lần rồi tự làm)
 1. **Domain doanh nghiệp** (`<tên>.omicrm.io`).
-2. **Email** đăng nhập; mật khẩu user gõ một lần vào ô nhập ẩn của `omi_login.py setup` trong terminal, không gửi qua chat; agent không nhập mật khẩu hộ.
+2. **Email** và **mật khẩu**: user tự điền một lần vào form đăng nhập cục bộ (`omi_login.py setup --ui`), không gửi qua chat; agent không nhập mật khẩu hộ.
 3. **Bài toán nghiệp vụ**: file hoặc prompt mô tả (sự kiện gì, cần ra kết quả gì, ai nhận, hệ thống ngoài nào).
 
 **Đăng nhập — ưu tiên MCP OMI** (chi tiết `references/omi-mcp.md`). Bước đầu luôn là `scripts/omi_preflight.py --domain <domain>` (không in token, không gọi mạng). Áp dụng trên mọi agent/client hỗ trợ MCP chứ không mặc định Codex hay Claude. Không in mật khẩu/token và không ghi bí mật vào repo hoặc file tạm. Thứ tự:
-- **(a) MCP OMI + `omi_login.py` (chuẩn)**: `omi_preflight.py` báo `blocked` → agent mở terminal cho user với `python "<thư mục skill>/scripts/omi_login.py" setup --domain <domain> --email <email>`; user gõ mật khẩu vào ô nhập ẩn đúng một lần, script cất vào kho bí mật hệ điều hành, tự đăng nhập MCP OMI và đăng ký server `OMICall-<domain>` (cấu hình không chứa mật khẩu); agent đi đường API ngay. `route=login` (hết hạn, sai tenant) → agent tự chạy `omi_login.py login --domain <domain>`, không hỏi user. MCP có trong phiên thì `login_omicall_mcp` (+ `select_tenant`) cũng được. Token cho API lấy bằng `omi_session.py` (không in token). Chi tiết `references/omi-mcp.md` mục 2a.
+- **(a) MCP OMI + `omi_login.py` (chuẩn)**: một cách duy nhất theo `references/conversation.md` mục 1: `ensure` báo `"need":"setup"` (hoặc `omi_preflight.py` báo `blocked`) → agent chạy nền `python "<thư mục skill>/scripts/omi_login.py" setup --ui --no-browser` và mở form cục bộ cho user tự điền (agent không đọc, không chụp form; terminal chỉ là dự phòng khi không mở được form, `references/omi-login.md` mục 2a); script cất vào kho bí mật hệ điều hành, tự đăng nhập MCP OMI và đăng ký server `OMICall-<domain>` (cấu hình không chứa mật khẩu); agent đi đường API ngay. `route=login` (hết hạn, sai tenant) → agent tự chạy `omi_login.py login --domain <domain>`, không hỏi user. MCP có trong phiên thì `login_omicall_mcp` (+ `select_tenant`) cũng được. Token cho API lấy bằng `omi_session.py` (không in token). Chi tiết `references/omi-login.md` mục 2a.
 - **(b)** Phiên có sẵn: `OMI_TOKEN_FILE` do user tự đặt.
 - **(c)** Không có (a), (b): dựng và test bằng giao diện (`references/ui-build-and-test.md`). User tự đăng nhập **một lần** trong browser pane; không chuyển trang khi user đang đăng nhập. **Không đọc cookie lấy token** (bằng JS hay CDP): bị bộ lọc an toàn chặn thì dừng, không lách.
 
@@ -50,7 +50,7 @@ Khung 8 câu (design-patterns mục A): sự kiện kích hoạt · đối tư�
 - Đặt tên: `<số> - [MỤC ĐÍCH]`; thêm nút Ghi chú chứa URL webhook và cURL mẫu.
 
 ### Bước 3 — Dựng JSON và lưu
-- Lấy một flow cùng tenant làm khung (top-level fields), dựng `nodes` + `edges.connections` + `name_mappings` theo mô hình DUAL ở `references/api-reference.md` (nhánh lưu cả trong node lẫn edge; bản editor nằm ở `name_mappings`). Loại nút nào dùng JSON được: tra `references/node-status.json`. `name_mappings` đang `unverified`: phần tử editor chỉ chép nguyên từ bản GET của nút cùng loại đã dựng trên UI (`node-catalog.md` mục 6, Cách học nhanh), không tự viết; không có bản GET mẫu → dựng nút đó trên UI.
+- Lấy một flow cùng tenant làm khung (top-level fields), dựng `nodes` + `edges.connections` + `name_mappings` theo mô hình DUAL ở `references/api-reference.md` (nhánh lưu cả trong node lẫn edge; bản editor nằm ở `name_mappings`). Loại nút nào dùng JSON được: tra `references/node-status.json`. `name_mappings` đang `unverified`: phần tử editor chỉ chép nguyên từ bản GET của nút cùng loại đã dựng trên UI (`node-editor-get.md` mục 6, Cách học nhanh), không tự viết; không có bản GET mẫu → dựng nút đó trên UI.
 - Chỉ lưu nháp `save_draft_v2` trên flow nháp có `_id` (✔ 10/2026), multipart field `file`, Python `requests` (không dùng curl) — dùng `scripts/omi_save.py flow`. Không dùng `add_v2` (tạo luôn bản ĐÃ xuất bản, chỉ khi user duyệt) hay `update_v2` (chưa kiểm chứng): `api-reference.md` mục *Tạo flow mới bằng `add_v2`*; flow mới thì tạo vỏ trên UI rồi lưu nháp vào `_id` đó.
 - Nếu API lưu chưa verify cho tenant đó → dựng bằng **dán JSON nút vào canvas** (định dạng clipboard editor, `concepts.md` mục 7) hoặc thao tác UI, rồi GET để đối chiếu.
 
@@ -65,7 +65,7 @@ Khung 8 câu (design-patterns mục A): sự kiện kích hoạt · đối tư�
   Dọn dữ liệu test (`delete_ticket`, `delete_contact`) chỉ khi user đồng ý.
 - Giao: editor URL `https://{domain}.omicrm.io/flow/edit/{id}?lng=vi`, sơ đồ luồng, bảng biến, cURL test, các điểm "Cần xác nhận".
 
-## Danh mục module (tóm tắt — chi tiết và JSON: `references/node-catalog.md`)
+## Danh mục module (tóm tắt; mục lục `references/node-catalog.md`, JSON `references/node-*.md`)
 - **Trigger** (node CONDITION đầu tiên): API (`WEB_HOOK`); Điều kiện (`GENERAL`: đối tượng thêm mới hoặc cập nhật thoả thuộc tính, hoặc sự kiện mở rộng như cuộc gọi kết thúc, phím IVR, phiếu mới, khách quan tâm OA, đánh giá ZNS); Biểu mẫu; Định kỳ (ngày, tuần, tháng, trước hoặc sau một thuộc tính thời gian, thời điểm cụ thể); File Excel; Đối tác (liên kết trực tiếp: Haravan, Sapo, KiotViet, WooCommerce, Pancake…; webhook; đối tác tự định nghĩa); Cuộc gọi đang diễn ra; Phiếu ghi chuyển trạng thái.
 - **Logic**: Điều kiện (nhiều trường hợp + nhánh mặc định; so sánh biến, cuộc gọi, khách, phiếu, khung giờ làm việc), Trì hoãn (sau khoảng, thời điểm cụ thể, khung giờ tiếp tục, hoặc điều kiện đến trước), Random (A/B), Phân tích thông tin (AI phân loại theo chủ đề hoặc ý định đã đào tạo, mỗi ý định một nhánh).
 - **Hành động** (22): thêm hoặc cập nhật khách, tạo hoặc cập nhật phiếu, thông báo, nhắc nhở, trả kết quả qua Biểu mẫu hoặc API, biến liên kết tùy chỉnh (API, ChatGPT, tính toán, ngẫu nhiên, ảnh thư mời), gán đối tượng liên quan, Google Sheet, cập nhật hội thoại, cuộc gọi, nhân viên, cửa sổ, đánh giá AI Chatbot, gọi API ra ngoài, phân loại, chuyển tiếp cuộc gọi, gọi flow khác, cập nhật đối tác, giữ cuộc gọi.
@@ -132,7 +132,7 @@ Khung 8 câu (design-patterns mục A): sự kiện kích hoạt · đối tư�
 
 ## Tài liệu tham khảo
 - `references/concepts.md` — cơ chế nền tảng: đối tượng và vị trí, trigger, biến, cú pháp truy vấn JSON, trì hoãn, AI, marketing, trò chuyện, dán JSON vào canvas, Google Sheet.
-- `references/node-catalog.md` — mọi trigger, nút, hành động, điều kiện, biến; JSON đã kiểm chứng.
+- `references/node-catalog.md` — mục lục và bảng mã mọi trigger, nút, hành động, điều kiện, biến; JSON đã kiểm chứng ở `node-trigger.md` (1a–1c), `node-condition.md` (2.1–2.6), `node-action-ticket.md` (3.1), `node-action-contact.md` (3.2–3.6, 4), `node-editor-get.md` (6).
 - `references/solution-map.md` — bốn lớp (CRM, tổng đài, AI, OMIFlow), nguyên tắc chọn, công thức ghép module theo bài toán khách, câu hỏi chốt.
 - `references/design-patterns.md` — khung suy luận 8 câu, 7 mẫu đã chạy (B7: phân lead có duyệt + SLA + thu hồi), mẫu mở rộng theo lĩnh vực, lỗi thiết kế cần tránh.
 - Skill con: `omicall-crm-config/references/crm-config.md` (thuộc tính động, bộ trạng thái khách, chủ đề và trạng thái phiếu, phân bổ), `omicall-pbx-config/references/pbx-config.md` (tổng đài, lời chào, TTP, kịch bản gọi vào), `omicall-ai-insight/references/ai-insight.md` (AI Assistant, Voice/Chat Insights, đánh giá).

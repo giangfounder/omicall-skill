@@ -1,7 +1,7 @@
 # OMiCall Callbot Gen AI — API Reference & Schemas
 
 ## Base URL & Auth
-`https://chatbot-gateway-v1-stg.omicrm.com` (frontend map `chatBot`). Mọi endpoint cần `Authorization: Bearer <accessToken>`. Token: `scripts/omi_session.py` → `headers()` (đọc phiên do `omi_login.py` ghi; vị trí file phiên: `omi-mcp.md` mục 2 ý 3); kiểm hạn và domain bằng `omi_preflight.py --domain <domain>`. Đăng nhập: `conversation.md` mục 1. Không đọc cookie bằng JS/CDP.
+`https://chatbot-gateway-v1-stg.omicrm.com` (frontend map `chatBot`). Mọi endpoint cần `Authorization: Bearer <accessToken>`. Token: `scripts/omi_session.py` → `headers()` (đọc phiên do `omi_login.py` ghi; vị trí file phiên: `omi-login.md` mục 2 ý 3); kiểm hạn và domain bằng `omi_preflight.py --domain <domain>`. Đăng nhập: `conversation.md` mục 1. Không đọc cookie bằng JS/CDP.
 
 > **Trạng thái kiểm chứng và việc builder có sinh được hay không: chỉ ghi ở `references/node-status.json`** (cột `status`: verified → sinh JSON được; enum/ui_only/unverified → dựng trên UI hoặc "Cần xác nhận"; cột `builder`: `sinh` | `giu_nguyen` | `khong` = builder dừng exit 2, ghép tay theo mục nguồn). File này chỉ mô tả schema; mục nào ghi khác node-status thì node-status thắng.
 > Vì sao nhiều loại là `unverified`: tài liệu không có nhãn kiểm chứng trực tiếp cho loại đó (chỉ suy từ câu tóm tắt add_v2 tối thiểu, chưa có fixture JSON thật) → chỉ nhân bản từ GET baseline; nâng `verified` qua `extract_template.py --mark-verified` kèm validator post PASS trên GET thật, do agent chính hoặc user duyệt.
@@ -149,6 +149,9 @@ Mục duy nhất về id cạnh. `id = "reactflow__edge-" + source + sourceHandl
 {"ref_id":"<mã_biến_action>","name":"<tên>","url":"<endpoint OMi custom: https://customize-v2-stg.omicrm.com/{slug}/...>","method":"POST","headers":[{"id":"<uuid>","key":"Content-Type","value":"application/json"}],"body_type":"raw","body_json":"{\n  \"phone\": \"<so_dien_thoai>\"\n}","variables":null,"prompt":"","query_prompt":"<parse response + luật trả lời>","param_type":"json","time_out":60,"api_response_guide":[],"retrieve_data":null}
 ```
 RAG `knowledge.files[]`: `{"url","id","name"}`. Tải file: xem mục "RAG — File đào tạo" bên dưới.
+**2) Biến ACTION top-level**: `{"field_name":"<tên hiển thị>","field_code":"<mã_biến_action / ref_id>","field_value":"","field_type":"","type":"ACTION","is_dynamic_attribute":true}` — type `ACTION` = kết quả API, nhúng `{{<ref_id>}}` vào prompt/PUSH_NOTIFICATION; KHÔNG đưa vào `collect_info_variables`.
+**3) Intent bước `search_knowledge`**: runtime `action_steps:[{"action":"search_knowledge","prompt":"<dùng {{ref_id}} + biến thu>","variables_code":null}]`; editor `actionStep:[{"action":"search_knowledge","labelUnsigned":"huong dan agent","id":"<uuid>","value":"search_knowledge","prompt":"<cùng prompt>"}]` (editor hiện "huong dan agent").
+**query_prompt/prompt phải dạy LLM**: khi nào gọi API; `statusCode==9999` thành công; payload có nhiều mã khách (một số điện thoại gắn nhiều hồ sơ/hợp đồng) → 1 mã đọc luôn, ≥2 mã đọc tên chủ hồ sơ rồi hỏi khách XÁC NHẬN, không tự chọn; bỏ bản ghi trùng theo `<ma_hoa_don>`; `<tong_tien>` đọc thành tiền Việt; `<trang_thai>` đổi mã trạng thái sang câu dễ hiểu (ví dụ đã thanh toán / chưa thanh toán); không đọc field nội bộ (mã đơn vị, mã hệ thống...); tham số từ biến đã thu. Tên trường thật lấy theo tài liệu API của khách, không đoán. Endpoint customize OMi: `https://customize-v2-stg.omicrm.com/{slug}/...`.
 
 ## RAG — File đào tạo (knowledge.files) — mục duy nhất về RAG callbot; ◐ put_v2 11/2026 (tải lên ✔, truy xuất Cần xác nhận)
 UI: Ngữ cảnh bắt đầu → **File đào tạo**. Editor KHÔNG tải file lúc chọn; tải khi bấm **Cập nhật**, với mỗi file chưa có `url`:
@@ -163,9 +166,6 @@ UI: Ngữ cảnh bắt đầu → **File đào tạo**. Editor KHÔNG tải file
 - Tạo bản ghi: `scripts/rag_other.py <file.docx> --name <tên> --domain <domain>` (dùng thư viện của skill chatbot-gen-ai: `put_v2` với `business_type=warehouse_of_knowledge_files`, `warehouse_of_knowledge/other/add`, `training`; in `record_id`). Tên bản ghi phải duy nhất (`get_id_by_name` trả trùng → `DUPLICATE_NAME`).
 - Gắn vào callbot: `{"id":"<uuid1>","name":"<tên>","other_wok_id":"<record_id>"}` ở `nodes[BEGIN].ai_agent_config.knowledge.files[]` và `org_nodes[BEGIN].data.selectedTraining[]` + `typeTrainingFile:"other"`.
 - CHƯA chứng minh: bản ghi vẫn hiện `not_training`, `bots_use_file:0` dù lệnh training trả `true`. Chỉ coi RAG hoạt động sau khi gọi thử một cuộc hỏi câu có trong tài liệu (cần user đồng ý và cho số điện thoại + máy lẻ); tới lúc đó báo "Cần xác nhận".
-**2) Biến ACTION top-level**: `{"field_name":"<tên hiển thị>","field_code":"<mã_biến_action / ref_id>","field_value":"","field_type":"","type":"ACTION","is_dynamic_attribute":true}` — type `ACTION` = kết quả API, nhúng `{{<ref_id>}}` vào prompt/PUSH_NOTIFICATION; KHÔNG đưa vào `collect_info_variables`.
-**3) Intent bước `search_knowledge`**: runtime `action_steps:[{"action":"search_knowledge","prompt":"<dùng {{ref_id}} + biến thu>","variables_code":null}]`; editor `actionStep:[{"action":"search_knowledge","labelUnsigned":"huong dan agent","id":"<uuid>","value":"search_knowledge","prompt":"<cùng prompt>"}]` (editor hiện "huong dan agent").
-**query_prompt/prompt phải dạy LLM**: khi nào gọi API; `statusCode==9999` thành công; payload có nhiều mã khách (một số điện thoại gắn nhiều hồ sơ/hợp đồng) → 1 mã đọc luôn, ≥2 mã đọc tên chủ hồ sơ rồi hỏi khách XÁC NHẬN, không tự chọn; bỏ bản ghi trùng theo `<ma_hoa_don>`; `<tong_tien>` đọc thành tiền Việt; `<trang_thai>` đổi mã trạng thái sang câu dễ hiểu (ví dụ đã thanh toán / chưa thanh toán); không đọc field nội bộ (mã đơn vị, mã hệ thống...); tham số từ biến đã thu. Tên trường thật lấy theo tài liệu API của khách, không đoán. Endpoint customize OMi: `https://customize-v2-stg.omicrm.com/{slug}/...`.
 
 ## collect_data entry (org BEGIN collectData)
 ```json
@@ -178,7 +178,7 @@ UI: Ngữ cảnh bắt đầu → **File đào tạo**. Editor KHÔNG tải file
 ```
 
 ## Validation checklist (sau mỗi save — GET /callbot/script/get/{new_id})
-Tự động: `validate_smartagent.py <GET.json> --mode post --sent payload.json` (trước khi lưu: `--mode pre`). Mã C1..C11 dưới đây khớp output validator; mục bổ sung X1..X14 ghi ở đầu script. Assert TẤT CẢ (phần validator không tự kiểm được ghi rõ ở từng mục, agent tự kiểm tay):
+Tự động: `validate_smartagent.py <GET.json> --mode post --sent payload.json` (trước khi lưu: `--mode pre`). Mã C1..C11 dưới đây khớp output validator; mục bổ sung X1..X15 ghi ở đầu script (X15: `actionType` của TRANSFER_CALL khớp bản editor và loại id; builder chỉ chép nút mẫu Extension). Assert TẤT CẢ (phần validator không tự kiểm được ghi rõ ở từng mục, agent tự kiểm tay):
 1. **C1** `nodes` BEGIN `ai_analyze.conditions` ≥5 `CUSTOM_INTENT` (quy ước, validator chỉ WARN), mỗi `data[].type=="OMI_BOT_INTENT"`.
 2. **C2** `org_nodes` BEGIN `data.conditions` cùng intent ids như `nodes`, cùng thứ tự, 2 system CUỐI.
 3. **C3** Mỗi org intent `data[]` có `isCustomComp==true` && `targetType=="OMI_BOT_INTENT"` (không → editor trống).

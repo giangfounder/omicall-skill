@@ -111,6 +111,59 @@ class TestValidate(unittest.TestCase):
         self.assertRegex(out, r"(?m)^WARN X13 .*Khách có nhu cầu.*END_CALL")
         self.assertRegex(out, r"(?m)^FAIL X6 ")  # tên không phải Hoàn tất nên X6 cũng FAIL
 
+    def test_good_transfer_type_consistent_x15(self):
+        code, out, err = run("validate_smartagent.py", os.path.join(FIX, "good.json"))
+        self.assertEqual(code, 0, out + err)
+        self.assertRegex(out, r"(?m)^PASS X15 ")
+
+    def test_runtime_ring_group_editor_extension_fails_x15(self):
+        # lỗi baseline: runtime actionType Ring_group kèm id nhân viên, editor vẫn Extension
+        def m(g):
+            next(x for x in g["nodes"] if x["id"] == "xfer_1")["actions"][0]["data"]["actionType"] = "Ring_group"
+        code, out, err = run("validate_smartagent.py", self._variant(m))
+        self.assertEqual(code, 1, out + err)
+        self.assertRegex(out, r"(?m)^FAIL X15 xfer_1")
+        self.assertRegex(out, r"(?m)^PASS X3 ")  # X3 chỉ kiểm ids khác rỗng: không bắt được ca này
+
+    def test_ids_not_in_type_options_fails_x15(self):
+        # runtime và editor cùng Ring_group nhưng ids là nhân viên (typeOptions.Ring_group không có id đó)
+        def m(g):
+            next(x for x in g["nodes"] if x["id"] == "xfer_1")["actions"][0]["data"]["actionType"] = "Ring_group"
+            o = next(x for x in g["org_nodes"] if x["id"] == "xfer_1")
+            ds = o["data"]["actions"][0]["datas"]
+            ds["transferType"] = "Ring_group"
+            ds["typeOptions"] = {"Extension": [], "Ring_group": [{"value": "nhom_mau_1", "label": "Nhom mau"}], "Outer_group": []}
+            for od in o.get("orgDatas") or []:
+                od["datas"]["transferType"] = "Ring_group"
+        code, out, err = run("validate_smartagent.py", self._variant(m))
+        self.assertEqual(code, 1, out + err)
+        self.assertRegex(out, r"(?m)^FAIL X15 xfer_1.*nhan_vien_mau_1")
+
+    def test_consistent_ring_group_passes_x15(self):
+        # nút Ring_group ghép tay đúng (api-reference mục Ring_group): runtime, editor, typeOptions cùng nhóm
+        def m(g):
+            d = next(x for x in g["nodes"] if x["id"] == "xfer_1")["actions"][0]["data"]
+            d.update(actionType="Ring_group", ids=["nhom_mau_1"])
+            o = next(x for x in g["org_nodes"] if x["id"] == "xfer_1")
+            ds = o["data"]["actions"][0]["datas"]
+            ds["transferType"] = "Ring_group"
+            ds["typeOptions"] = {"Extension": [], "Ring_group": [{"value": "nhom_mau_1", "label": "Nhom mau"}], "Outer_group": []}
+            for od in o.get("orgDatas") or []:
+                od["datas"]["transferType"] = "Ring_group"
+        code, out, err = run("validate_smartagent.py", self._variant(m))
+        self.assertRegex(out, r"(?m)^PASS X15 ")
+        self.assertNotRegex(out, r"(?m)^FAIL X15 ")
+
+    def test_extension_with_group_id_from_context_fails_x15(self):
+        d = tempfile.mkdtemp(prefix="cg_ctx_")
+        self.addCleanup(shutil.rmtree, d, True)
+        ctx = os.path.join(d, "ctx.json")
+        with open(ctx, "w", encoding="utf-8") as f:
+            json.dump({"agents": [], "pbx": {"internal_groups": [{"_id": "nhan_vien_mau_1", "name": "Nhom mau"}]}}, f)
+        code, out, err = run("validate_smartagent.py", os.path.join(FIX, "good.json"), "--context", ctx)
+        self.assertEqual(code, 1, out + err)
+        self.assertRegex(out, r"(?m)^FAIL X15 xfer_1.*nhóm")
+
     def test_post_without_sent_warns_x10(self):
         code, out, err = run("validate_smartagent.py", "--mode", "post", os.path.join(FIX, "good.json"))
         self.assertEqual(code, 0, out + err)

@@ -10,8 +10,9 @@ In đúng 1 dòng JSON:
                   -> agent TỰ chạy `omi_login.py login --domain <domain>` rồi chạy lại lệnh này. Exit 3.
 - route=ui      : có token hỏng/hết hạn, chưa cất thông tin đăng nhập -> gọi login_omicall_mcp nếu MCP có trong
                   phiên; không thì user chạy omi_login.py setup (một lần). Exit 3.
-- route=blocked : không có nguồn token nào -> user chạy `omi_login.py setup --domain <domain>` trong terminal của
-                  mình (nhập mật khẩu ở ô ẩn, một lần). Trong lúc chờ, làm tiếp phần offline. Exit 3.
+- route=blocked : không có nguồn token nào -> agent chạy nền `omi_login.py setup --ui --no-browser`, user điền form
+                  cục bộ một lần (dự phòng: `setup --domain <domain>` trong terminal, ô nhập ẩn). Trong lúc chờ, làm
+                  tiếp phần offline. Exit 3.
 Không in token, không đọc cookie, không nhận mật khẩu.
 """
 import argparse
@@ -27,8 +28,14 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 
 
 def setup_command(domain):
+    """Lệnh dự phòng trong terminal (ô nhập ẩn): chỉ khi không mở được form `setup --ui`."""
     d = domain or '<domain>'
     return 'python "%s" setup --domain %s' % (os.path.join(HERE, 'omi_login.py'), d)
+
+
+def setup_ui_command():
+    """Đường chuẩn (conversation.md mục 1): form cục bộ user tự điền, agent không đọc form."""
+    return 'python "%s" setup --ui --no-browser' % os.path.join(HERE, 'omi_login.py')
 
 
 def credential_stored(domain):
@@ -62,24 +69,27 @@ def decide(domain, min_minutes=5):
     elif stored:
         out['route'] = 'login'
         out['next_step'] = ('Agent tự chạy `python "%s" login --domain %s` (thông tin đăng nhập lấy từ kho bí mật, '
-                            'không hỏi user) rồi chạy lại omi_preflight.py. Lỗi đăng nhập thì báo user chạy lại '
-                            'setup: `%s`.' % (os.path.join(HERE, 'omi_login.py'), domain or '<domain>',
-                                              setup_command(domain)))
+                            'không hỏi user) rồi chạy lại omi_preflight.py. Lỗi đăng nhập thì agent chạy nền '
+                            '`%s` và mở form cho user điền lại.' % (os.path.join(HERE, 'omi_login.py'),
+                                                                    domain or '<domain>', setup_ui_command()))
     elif info['source']:
         out['route'] = 'ui'
         out['next_step'] = ('Token không dùng được (%s). Nếu công cụ MCP OMI có trong phiên: gọi login_omicall_mcp '
-                            '(+ select_tenant đúng domain %s) rồi chạy lại omi_preflight.py. Nếu không: user chạy '
-                            'một lần trong terminal `%s` để agent tự đăng nhập từ đó về sau.'
-                            % (info['error'], domain or '<domain>', setup_command(domain)))
+                            '(+ select_tenant đúng domain %s) rồi chạy lại omi_preflight.py. Nếu không: agent chạy nền '
+                            '`%s` và mở form cho user điền một lần (dự phòng không mở được form: user tự chạy '
+                            '`%s` trong terminal).'
+                            % (info['error'], domain or '<domain>', setup_ui_command(), setup_command(domain)))
     else:
         out['route'] = 'blocked'
-        out['next_step'] = ('Cần user làm MỘT việc: chạy trong terminal `%s`, nhập email và mật khẩu ở ô nhập ẩn '
-                            '(mật khẩu cất vào kho bí mật của hệ điều hành, không qua hội thoại). Script tự đăng nhập '
-                            'MCP OMI và đăng ký server MCP; agent đi đường API ngay trong phiên này. Client có công cụ '
-                            'mở terminal thì agent mở sẵn lệnh này cho user. Cần Node.js 18+. Dự phòng: đăng ký MCP cho client '
+        out['next_step'] = ('Cần user làm MỘT việc: agent chạy nền `%s`, mở địa chỉ ở dòng đầu trong khung trình '
+                            'duyệt của agent (không có trình duyệt thì bỏ --no-browser); user tự điền domain, email, '
+                            'mật khẩu (agent không đọc, không chụp form; mật khẩu cất vào kho bí mật của hệ điều hành, '
+                            'không qua hội thoại). Script tự đăng nhập MCP OMI và đăng ký server MCP; agent đi đường '
+                            'API ngay trong phiên này. Không mở được form: user tự chạy `%s` trong terminal (ô nhập '
+                            'ẩn). Cần Node.js 18+. Dự phòng: đăng ký MCP cho client '
                             'khác theo README mục "Cài MCP cho client khác", hoặc user tự đặt OMI_TOKEN_FILE. '
                             'Trong lúc chờ: làm tiếp phần offline (extract_text, phân tích, spec).'
-                            % setup_command(domain))
+                            % (setup_ui_command(), setup_command(domain)))
     return out
 
 

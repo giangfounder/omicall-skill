@@ -75,7 +75,7 @@ Mục lục: 1. Tạo flow và Thông tin Flow · 2. Trigger (kể cả Biểu m
 - Thanh chip biến dưới ngăn (Khách hàng, Phiếu ghi, Dữ liệu thu thập, Biểu mẫu, Cuộc gọi, AI Assistant, Nhân viên, Khác, Biến liên kết tuỳ chỉnh…) chèn `{{mã}}` vào **ô nhập thường được focus gần nhất**. Với trình soạn thảo nội dung thông báo, chip có thể chèn nhầm sang ô Tiêu đề, nên gõ tay mã biến. Chọn ô thuộc tính phiếu trước rồi mới mở chip để biến chèn đúng ô.
 - Biến hệ thống gõ tay được: `{{full_name}}`, `{{phone_number}}`… Biến form là mã ngẫu nhiên dễ lẫn `I`/`l`: lấy mã chính xác bằng JS (`input.value` sau khi chèn chip) hoặc từ query string của trang form. Biến đúng hiển thị thành tên thuộc tính trên thẻ nút (ví dụ "Tên đầy đủ"); biến sai vẫn hiện `{{...}}` thô.
 - **Bộ chọn "Biến liên kết tuỳ chỉnh"** (✔ UI 11/2026): ô tìm kiếm **không** tìm được biến trigger webhook theo tên trường (gõ tên → "Không có dữ liệu") dù tiêu đề ghi "Tìm kiếm | N thuộc tính". Xoá từ khoá rồi **cuộn danh sách** và bấm biến; mỗi dòng hiện tên trường và mã `{{xxxxxxxxxx}}`.
-- Ngăn mở từ "Bước tiếp theo" của nút khác có danh sách "Biến liên kết tuỳ chỉnh" rỗng → gõ tay `{{mã}}` hoặc mở nút từ canvas (`node-catalog.md` mục 2.5).
+- Ngăn mở từ "Bước tiếp theo" của nút khác có danh sách "Biến liên kết tuỳ chỉnh" rỗng → gõ tay `{{mã}}` hoặc mở nút từ canvas (`node-condition.md` mục 2.5).
 
 ### Trì hoãn
 - Mặc định "Sau khoảng thời gian = 1 Ngày". Đơn vị đổi bằng mũi tên ◂ ▸ quay vòng. Thứ tự đã ghi khác nhau giữa hai lần dựng (10/2026: Ngày → Giờ → Phút…; 11/2026: Ngày → Giây → Phút → Giờ…) → **luôn đọc lại đơn vị bằng chữ sau mỗi lần bấm**. Sau khi gõ giá trị, nút ✕ xuất hiện làm lệch vị trí mũi tên: `find` lại mũi tên rồi bấm theo ref (không bấm theo toạ độ cũ). Nhanh hơn: đặt khoảng chờ qua API (`flow_outline` + `omi_save`).
@@ -83,7 +83,7 @@ Mục lục: 1. Tạo flow và Thông tin Flow · 2. Trigger (kể cả Biểu m
 
 ### Điều kiện
 - **Trường hợp mới** bằng "Thêm trường hợp" (nút dịch xuống ~47px mỗi trường hợp); chọn biến, toán tử, ô giá trị (chờ ~1s rồi mới gõ).
-- **Khung giờ**: không dùng được với "Điều kiện HOẶC" (báo "Điều kiện Khung giờ không hoạt động khi áp dụng điều kiện HOẶC", không cho đóng ngăn) và phải đi cùng ≥1 điều kiện khác (`node-catalog.md` mục 2.1). **Đóng ngăn con "Khung giờ" bằng cách bấm vùng mờ** có thể bật ra một ngăn "Điều kiện so sánh" rỗng; bấm vùng mờ sát mép trái (x≈30–120) lần nữa để đóng, ngăn này không thêm điều kiện (✔ UI 10/2026).
+- **Khung giờ**: không dùng được với "Điều kiện HOẶC" (báo "Điều kiện Khung giờ không hoạt động khi áp dụng điều kiện HOẶC", không cho đóng ngăn) và phải đi cùng ≥1 điều kiện khác (`node-condition.md` mục 2.1). **Đóng ngăn con "Khung giờ" bằng cách bấm vùng mờ** có thể bật ra một ngăn "Điều kiện so sánh" rỗng; bấm vùng mờ sát mép trái (x≈30–120) lần nữa để đóng, ngăn này không thêm điều kiện (✔ UI 10/2026).
 - **Thuộc tính khách hàng dùng được trong điều kiện** (49 mục, mã hiển thị trong ô chọn): `full_name`, `phone_number`, `mail`, `contact_tags`, `contact_categories`, `user_owner_id`, `user_owner_email`, `transfer_agent_log_note`, `last_log_note`, `change_status_log_note`, `contact_related_employee`, `interactive_call` / `_sms` / `_zns` / `_email` / `_note` / `_ticket` / `_diary` / `_change_status` / `_evaluation`, `total_interactive`, `closest_interaction_time`, `last_call_transaction_time`, `contact_created_date`, `contact_created_by`, `contact_last_updated_date`, `last_transfer_agent_time`, `last_transfer_agent_by`, `win_lose`, `opportunity_expired`, trạng thái pipeline… Kiểu thời gian so với một mốc HH:mm dd/MM/yyyy cố định, không có "trong N phút qua" → dùng điều kiện Mở rộng bên dưới.
 
 ### Điều kiện SLA: "Kiểm tra tương tác khách hàng" (nhóm Mở rộng)
@@ -95,7 +95,7 @@ Mục lục: 1. Tạo flow và Thông tin Flow · 2. Trigger (kể cả Biểu m
 ### Nút AI Chatbot (`OMI_BOT_AI`) (✔ UI 11/2026)
 - "AI Chatbot sẽ kết thúc khi" mặc định có "BOT chủ động kết thúc"; "Thêm trường hợp" cho 3 kiểu xét **tin nhắn của khách**: Chủ đề / Ý định mong muốn, Từ khoá, Đạt giới hạn. "Trạng thái hành động" chỉ có "Thất bại".
 - Không có nhánh theo hành động (ACTION) bên trong bot → muốn flow làm việc gì khi bot chọn một trường hợp mà bot không nhắn gì: bot dùng ACTION "Gọi đến kịch bản OMIFlow" (flow phụ thuộc), không nối bước tiếp theo.
-- Nhánh "BOT chủ động kết thúc" cũng chạy khi khách im lặng hết thời gian chờ; JSON của nhánh: `api-reference.md` bảng DUAL, `node-catalog.md` mục 2.1.
+- Nhánh "BOT chủ động kết thúc" cũng chạy khi khách im lặng hết thời gian chờ; JSON của nhánh: `api-reference.md` bảng DUAL, `node-condition.md` mục 2.1.
 
 ## 4. AI điền CRM sau cuộc gọi: bóc trường bằng LLM rồi gán thuộc tính (dựng thật qua UI, 10/2026)
 

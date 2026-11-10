@@ -52,7 +52,7 @@ Gotchas ✔:
 ## 6. Gọi tự động (Autocall) dùng lại khối tổng đài [API công khai]
 - `POST /api/v2/auto-call/direct-call` (gọi ngay, không tạo phiên; `phoneNumbers`, `scripts`, `sipNumbers`, tuỳ chọn `httpCallback`) và `POST /api/v2/autoCall/executeByPhone` (tạo phiên: `sendTime`, `numberCallPerTime` ≤ CCU gói, `durationOfEachCall`, `maxRetryOfDetail`, `retryAfterSeconds`, `autoPause` khi hết nhân viên rảnh — chỉ với kịch bản chuyển vào nhóm nội bộ).
 - Bước kịch bản: `recording` (lời chào), `textVariable`/`callBotTextVariable` (TTS có biến), `ivrMenu` (số nội bộ của một Tương tác phím), `ringGroup` (số nội bộ của nhóm nội bộ) → một chiến dịch gọi ra có thể đọc thông báo, cho bấm phím, rồi chuyển vào nhóm. Nguồn: https://api.omicall.com/omicall-api/autocall/goi-tu-dong-thong-thuong-api-v2
-- Trong OMIFlow cùng năng lực này là nút Marketing `AUTOCALL` (`omicall-omiflow` node-catalog 2.6).
+- Trong OMIFlow cùng năng lực này là nút Marketing `AUTOCALL` (`omicall-omiflow` `node-condition.md` 2.6).
 
 ## 7. Đọc hiện trạng — bằng API, không mở giao diện
 `python <thư mục skill>/scripts/config_survey.py --out <scratch>/tenant_context.json --domain <domain>` → khoá `pbx` (đầu số + giờ làm việc, kịch bản cuộc gọi, Tương tác phím, nhóm nội bộ/bên ngoài, lời chào). Công cụ tổng đài của MCP (`list_groups`, `list_ivr`, `list_scripts`, `list_audio`, `list_hotlines`, `list_eval_criteria`) **trả 404 trên tenant miền `.omicrm.com` (10/2026)** — không dùng. Public API (mục 3–6) cần **apiKey của doanh nghiệp**: bí mật, agent không tự lấy hay nhập.

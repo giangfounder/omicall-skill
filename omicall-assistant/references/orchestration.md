@@ -35,10 +35,10 @@ Thứ tự ngắn: crm-config → ai-insight → pbx-config (nhóm, lời chào)
 Quy tắc xếp: A cần giá trị của B → B trước (ghi `consumed_values`). Phần không phụ thuộc nhau vào cùng đợt. Cổng (⛔) chỉ chặn nhánh phụ thuộc nó; quy tắc duyệt và danh sách cổng: `plan-and-approval.md`.
 
 ## 3. Giới hạn song song (đã gặp thật, không nới)
-Theo `parallel.md` mục 3 (subagent giao diện ≤ 3, mỗi cái một tab; chỉ API/MCP ≤ 5; một artefact một tiến trình ghi; tài nguyên chung tuần tự; không truyền bí mật). Không chép lại ở đây để khỏi lệch.
+Theo `parallel.md` mục 3 (một artefact một tiến trình ghi; tài nguyên chung tuần tự; không truyền bí mật); số subagent cùng lúc: `parallel-brief.md` mục 2. Không chép lại ở đây để khỏi lệch.
 
 ## 4. Lời giao việc và mẫu trả về
-Mẫu giao việc, mẫu trả về và danh sách CẤM cho subagent: **chỉ ở** `parallel.md` mục 5 (sinh từ `shared/skill-graph.json`). Chọn loại tác tử mới, tự chứa đủ; chỉ dùng "fork" khi hội thoại còn ngắn. Việc chỉ đọc/tra cứu dùng model nhẹ; việc ghi lên hệ thống giữ model mặc định. Assistant chỉ tin kết quả sau khi tự kiểm (mục 7).
+Mẫu giao việc: **chỉ ở** `parallel.md` mục 5; danh sách CẤM và mẫu trả về: **chỉ ở** `parallel-brief.md` (cả hai sinh từ `shared/skill-graph.json`). Chọn loại tác tử mới, tự chứa đủ; chỉ dùng "fork" khi hội thoại còn ngắn. Việc chỉ đọc/tra cứu dùng model nhẹ; việc ghi lên hệ thống giữ model mặc định. Assistant chỉ tin kết quả sau khi tự kiểm (mục 7).
 
 ## 5. (gộp vào mục 4)
 
@@ -58,7 +58,7 @@ Chia câu hỏi theo bảng `knowledge-qa.md` mục 2, mỗi skill con một sub
 4. **Xuất bản đổi id** của bot (uuid giữ nguyên) và để lại bản cũ. **Mỗi lần sửa hoặc xuất bản lại bot** (không chỉ lần đầu) phải đồng bộ luồng gọi vào: lấy id mới từ sổ chung → **xin user duyệt** cập nhật menu phím (đổi đường đi cuộc gọi thật) → cập nhật → GET lại từng phím → kiểm đầu số vẫn gắn kịch bản gọi đến (chưa gắn thì báo user; gắn lại chỉ sau khi user duyệt). `is_publish` do server trả không dùng để biết đã xuất bản.
 5. **Voice Bot GenAI không nhận phím và chưa có node chuyển sang bot khác**; chọn ngành bằng phím phải do Tương tác phím (hành động `Callbot` + id kịch bản). Lời chào menu là lời thoại TTS của tổng đài (tab "Robot đọc", chọn giọng Việt), không phải một bot.
 6. **Báo cáo subagent có thể sai**: ví dụ báo nhóm có 0 thành viên trong khi GET thật có 1. Luôn tự chạy `config_survey.py --out <scratch>/kiem_tra.json` (file riêng; `tenant_context.json` chỉ đọc) và đối chiếu sổ chung trước khi báo user.
-7. **Giới hạn song song**: 8 subagent chỉ-API chạy cùng lúc không gặp lỗi quá tải; subagent giao diện vẫn tối đa 3, mỗi cái một tab. Một số phiên có bộ phân quyền chặn thao tác gắn kịch bản vào đầu số ("Production Deploy") kể cả khi user đã đồng ý trong chat: dừng, không vòng qua, đưa user các bước tự gắn trên giao diện.
+7. **Giới hạn song song**: đã chạy 8 subagent chỉ-API cùng lúc không gặp lỗi quá tải; số chốt ở `parallel-brief.md` mục 2. Một số phiên có bộ phân quyền chặn thao tác gắn kịch bản vào đầu số ("Production Deploy") kể cả khi user đã đồng ý trong chat: dừng, không vòng qua, đưa user các bước tự gắn trên giao diện.
 8. **Subagent chủ động ghi** điều mới học vào reference của skill đích (`pbx-config.md`, `api-reference.md`, `agent-config-guide.md`); assistant chỉ ghi bài học điều phối ở mục này.
 
 ## 9. Tối ưu thời gian và token, không giảm chất lượng (✔ 11/2026)
@@ -71,6 +71,6 @@ Nguyên tắc: bớt chỗ **lặp và chờ**, không bớt chỗ **kiểm**. V
 6. **Kiểm bằng script, không bằng LLM**: sau mỗi đợt có sửa/xuất bản bot chạy `python <thư mục skill>/scripts/check_callin.py --domain <d> --scratch <scratch>` (một lệnh, ~1 giây): phím Tương tác phím và từng bước của kịch bản cuộc gọi (vd "Call in", `action_id`) → bot còn là bản mới nhất, nhóm/menu còn tồn tại, đầu số đã gắn kịch bản chưa. Script chỉ báo. STALE/MISSING → liệt kê phím/kịch bản cuộc gọi/đầu số sẽ đổi, **chờ user duyệt** (cổng riêng), rồi giao đúng subagent giữ menu map lại và chạy lại.
 7. **Hỏi một lượt ngay đầu**: mọi điều chặn nhiều nhánh (thành viên nhóm nhận cuộc gọi, giờ làm việc, số đầu số dùng, tên công ty demo, giọng đọc) hỏi trong lượt duyệt đợt 0 để khỏi làm lại. Cổng hay bị chặn (gắn đầu số vào kịch bản, xuất bản) báo user ở đợt 0 là họ tự làm hoặc phải cấp quyền.
 8. **Chạy nền, không hỏi thăm**: giao xong thì không poll; làm phần độc lập khác (kiểm, viết tài liệu, chuẩn bị đợt sau) trong lúc chờ thông báo.
-9. **Báo cáo trả về ≤ 10 dòng** theo mẫu `parallel.md` mục 5; chi tiết ghi vào tệp báo cáo ở scratch, assistant chỉ đọc khi cần kiểm.
+9. **Báo cáo trả về ≤ 10 dòng** theo mẫu `parallel-brief.md` mục 4; chi tiết ghi vào tệp báo cáo ở scratch, assistant chỉ đọc khi cần kiểm.
 10. **Không làm lại cái đã có**: trước khi dựng, liệt kê artefact đã có trên tenant (bot, menu, lời chào, bản "tối ưu" do người khác tạo) để dùng lại hoặc map, không tạo trùng.
 
