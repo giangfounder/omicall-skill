@@ -23,6 +23,10 @@ Mã C1..C7 = mục 1..7 "Validation checklist" trong references/api-reference.md
   X9 tenant_id của bot khớp tenant_context (khi có --context)
   X10 node ACTION START_OTHER_CAMPAIGN: runtime data.ids khác rỗng và khớp datas.selected.value của editor
       (name_mappings cùng id) — runtime chạy theo data.ids, editor chỉ hiển thị
+  X11 (WARN) cạnh sót: sourceHandle không phải "2" và không khớp id case nào (runtime/editor) của nút nguồn có case —
+      thường còn lại sau khi sửa case trên UI; không chép sang bot mới
+X3 ở nút khác BEGIN (CONTEXT, nút thu thập...): tham chiếu Truy vấn/RAG không có ở top-level chỉ WARN — nền tảng có chạy
+được tham chiếu như vậy không còn Cần xác nhận (references/api-reference.md mục "Bot nhiều ngữ cảnh").
 Mức cảnh báo có chủ ý (WARN, không FAIL): C1 system_prompt rỗng, C4 history_config.enable khác true (bot vẫn chạy
 được, cần người duyệt), C7 is_publish:true ở mode pre (payload sẽ giữ trạng thái xuất bản — chỉ khi user đã duyệt).
 Exit: 0 khi không có FAIL (WARN vẫn cho qua), 1 khi có FAIL, 2 khi sai cách gọi.
@@ -208,6 +212,15 @@ def check_rag(r, bot, mode):
               base + ".api_knowledge_ids")
     else:
         r.ok("X3", "api_knowledge_ids ⊆ api_knowledge[].ref_id (%d)" % len(ak_ids), base + ".api_knowledge_ids")
+    for i, n in enumerate(campaign(bot).get("nodes") or []):
+        if i == ni or not isinstance(n, dict):
+            continue
+        na = n.get("ai_analyze") or {}
+        lost = [x for x in (na.get("vector_store_ids") or []) if x not in refs] + \
+               [x for x in (na.get("api_knowledge_ids") or []) if x not in ak_refs]
+        if lost:
+            r.warn("X3", "nút %s %s tham chiếu Truy vấn/RAG không có ở top-level: %s" % (
+                n.get("node_type"), n.get("id"), ", ".join(map(str, lost))), "$.campaign.nodes[%d].ai_analyze" % i)
     if not vs_ids and not files and not bot.get("question_answer"):
         r.ok("C6", "không dùng RAG (vector_store/question_answer rỗng)", "$.vector_store")
         return
@@ -298,6 +311,42 @@ def check_edges(r, bot):
         r.warn("X5", "cạnh thiếu source/target — chỉ so được theo target", "$.campaign.edges.connections")
     if not problems:
         r.ok("X5", "mọi next_node/next_nodes có node đích và có cạnh (%d cạnh)" % len(conns), "$.campaign")
+
+
+SYSTEM_HANDLES = {"bot_can_not_answer", "customer_not_response"}
+
+
+def orphan_edges(bot):
+    """Cạnh có sourceHandle không phải "2" và không khớp id case nào của nút nguồn có case (X11)."""
+    camp = campaign(bot)
+    case_ids = {}
+    for n in camp.get("nodes") or []:
+        if isinstance(n, dict):
+            case_ids.setdefault(n.get("id"), set()).update(
+                c.get("id") for c in ((n.get("ai_analyze") or {}).get("conditions") or []) if isinstance(c, dict))
+    for m in camp.get("name_mappings") or []:
+        if isinstance(m, dict):
+            case_ids.setdefault(m.get("id"), set()).update(
+                c.get("id") for c in (m.get("conditions") or []) if isinstance(c, dict))
+    out = []
+    for i, c in enumerate(connections(bot)):
+        if not isinstance(c, dict):
+            continue
+        h = c.get("sourceHandle")
+        ids = (case_ids.get(c.get("source")) or set()) - {None}
+        if ids and h not in (None, "1", "2") and h not in SYSTEM_HANDLES and h not in ids:
+            out.append((i, c))
+    return out
+
+
+def check_orphan_edges(r, bot):
+    """X11 (WARN)."""
+    lost = orphan_edges(bot)
+    for i, c in lost:
+        r.warn("X11", "cạnh sót %s [%s] → %s: sourceHandle không khớp case nào của nút nguồn" % (
+            c.get("source"), c.get("sourceHandle"), c.get("target")), "$.campaign.edges.connections[%d]" % i)
+    if not lost:
+        r.ok("X11", "không có cạnh sót", "$.campaign.edges.connections")
 
 
 # '***' đứng riêng (giữa khoảng trắng, trong đường dẫn URL '/***/', sau '?', trước ',') cũng bị bắt: mask_text che JWT
@@ -409,6 +458,7 @@ def validate(bot, mode="pre", sent=None, context=None):
     check_edges(r, bot)
     check_secrets(r, bot)
     check_start_other_campaign(r, bot)
+    check_orphan_edges(r, bot)
     if context:
         check_context(r, bot, context)
     return r

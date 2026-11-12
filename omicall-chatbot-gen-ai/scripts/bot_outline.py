@@ -19,7 +19,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 if HERE not in sys.path:
     sys.path.insert(0, HERE)
 
-from validate_bot import find_begin, connections, load  # noqa: E402
+from validate_bot import find_begin, connections, load, orphan_edges  # noqa: E402
 
 GROUPS = [
     ("G1", "Mở đầu"), ("G2", "FAQ (RAG)"), ("G3", "Ý định"), ("G4", "Thu thập thông tin"),
@@ -71,6 +71,21 @@ def outline(bot):
                      "url": (a.get("url") or "").split("?")[0],
                      "header_keys": [h.get("key") for h in a.get("headers") or [] if isinstance(h, dict) and h.get("key")],
                      "bat_o_begin": a.get("ref_id") in ak_on})
+    edmap = {m.get("id"): m for m in maps}
+    kickoffs, contexts = [], []
+    for n in nodes:
+        aa = n.get("ai_analyze") or {}
+        if n.get("node_type") == "KICK_OFF_CONTEXT":
+            kickoffs.append({"id": n.get("id"), "next": n.get("next_nodes") or [],
+                             "mo_ta": short(aa.get("context") or (edmap.get(n.get("id")) or {}).get("content"))})
+        elif n.get("node_type") == "CONTEXT":
+            ed = {c.get("id"): c for c in ((edmap.get(n.get("id")) or {}).get("conditions") or []) if isinstance(c, dict)}
+            contexts.append({"id": n.get("id"), "name": n.get("name"), "content_len": len(aa.get("content") or ""),
+                             "cases": [{"id": c.get("id"), "next": c.get("next_node") or "",
+                                        "mo_ta": short(c.get("intent_name") or (ed.get(c.get("id")) or {}).get("personality"), 60)}
+                                       for c in aa.get("conditions") or [] if isinstance(c, dict)],
+                             "vector_store_ids": aa.get("vector_store_ids") or [],
+                             "api_knowledge_ids": aa.get("api_knowledge_ids") or [], "next": n.get("next_nodes") or []})
     vs = bot.get("vector_store") or {}
     rag = [{"ref_id": f.get("ref_id"), "file_training_status": f.get("file_training_status"), "language": f.get("language")}
            for f in (vs.get("vector_store_files") or []) if isinstance(f, dict)]
@@ -81,7 +96,10 @@ def outline(bot):
         "history_config": bot.get("history_config"), "max_characters_reply": bot.get("max_characters_reply"),
         "system_prompt_len": len(bot.get("system_prompt") or ""),
         "begin_content_len": len(((nodes[ni].get("ai_analyze") or {}).get("content") or "")) if ni is not None else 0,
-        "cases": cases, "nodes": node_rows, "edges": edges, "collect_vars": collect,
+        "cases": cases, "kickoffs": kickoffs, "contexts": contexts,
+        "orphan_edges": [{"source": c.get("source"), "handle": c.get("sourceHandle"), "target": c.get("target")}
+                         for _, c in orphan_edges(bot)],
+        "nodes": node_rows, "edges": edges, "collect_vars": collect,
         "api_knowledge": apis, "rag_files": rag, "question_answer": bool(bot.get("question_answer")),
     }
 
@@ -95,6 +113,18 @@ def render(o):
     L.append("Trường hợp ở Ngữ cảnh bắt đầu (%d):" % len(o["cases"]))
     for c in o["cases"]:
         L.append("  - [%s] %s %s → %s" % (c["type"], c["id"], ("“%s”" % c["mo_ta"]) if c["mo_ta"] else "", c["next"] or "(không nối)"))
+    if o["kickoffs"]:
+        L.append("Kích hoạt ngữ cảnh (%d) — không cần cạnh vào:" % len(o["kickoffs"]))
+        for k in o["kickoffs"]:
+            L.append("  - %s “%s” → %s" % (k["id"], k["mo_ta"], ", ".join(map(str, k["next"])) or "-"))
+    if o["contexts"]:
+        L.append("Ngữ cảnh con (%d):" % len(o["contexts"]))
+        for c in o["contexts"]:
+            L.append("  - %s “%s” prompt %d ký tự RAG=%s Truy vấn=%s → %s" % (
+                c["id"], c["name"] or "", c["content_len"], ",".join(map(str, c["vector_store_ids"])) or "-",
+                ",".join(map(str, c["api_knowledge_ids"])) or "-", ", ".join(map(str, c["next"])) or "(dừng ở đây)"))
+            for k in c["cases"]:
+                L.append("      · [%s] “%s” → %s" % (k["id"], k["mo_ta"], k["next"] or "(không nối)"))
     L.append("Node (%d):" % len(o["nodes"]))
     for n in o["nodes"]:
         L.append("  - %s %s%s → %s" % (n["node_type"], n["id"], (" actions=" + ",".join(map(str, n["actions"]))) if n["actions"] else "",
@@ -102,6 +132,10 @@ def render(o):
     L.append("Cạnh (%d):" % len(o["edges"]))
     for e in o["edges"]:
         L.append("  - %s [%s] → %s" % (e["source"], e["handle"], e["target"]))
+    if o["orphan_edges"]:
+        L.append("Cạnh sót (%d) — handle không khớp case nào, không chép sang bot mới:" % len(o["orphan_edges"]))
+        for e in o["orphan_edges"]:
+            L.append("  - %s [%s] → %s" % (e["source"], e["handle"], e["target"]))
     L.append("Biến thu (%d):" % len(o["collect_vars"]))
     for v in o["collect_vars"]:
         L.append("  - %s (%s) ở %s: %s" % (v["variable_code"], v["variable_name"], v["node"], v["mo_ta"]))
