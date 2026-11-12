@@ -155,9 +155,9 @@
   "status": "ui_only",
   "builder": "khong",
   "template": null,
-  "source": "references/api-reference.md#Kịch bản (scenario)",
+  "source": "references/api-reference.md#Bot nhiều ngữ cảnh",
   "verified_on": null,
-  "ui_hint": "Chưa có JSON → dựng trên UI: điền → đóng hết ngăn kéo → Lưu lại → GET."
+  "ui_hint": "Mã runtime MULTI_CHANNEL_MESSAGE (actions TEXT); có JSON từ GET, chưa thử lưu qua API → dựng trên UI: điền → đóng hết ngăn kéo → Lưu lại → GET. Không có phần tử name_mappings."
  },
  {
   "type": "END (Kết thúc trò chuyện)",
@@ -165,9 +165,9 @@
   "status": "ui_only",
   "builder": "khong",
   "template": null,
-  "source": "references/api-reference.md#Kịch bản (scenario)",
+  "source": "references/api-reference.md#Bot nhiều ngữ cảnh",
   "verified_on": null,
-  "ui_hint": "Chưa có JSON → dựng trên UI."
+  "ui_hint": "Mã runtime END_BOT; có JSON từ GET, chưa thử lưu qua API → dựng trên UI. Không có phần tử name_mappings."
  },
  {
   "type": "Chuyển nhân viên",
@@ -185,9 +185,9 @@
   "status": "ui_only",
   "builder": "khong",
   "template": null,
-  "source": "references/api-reference.md#Kịch bản (scenario)",
+  "source": "references/api-reference.md#Bot nhiều ngữ cảnh",
   "verified_on": null,
-  "ui_hint": "Chưa có JSON → dựng trên UI."
+  "ui_hint": "Có JSON từ GET (runtime ai_analyze.context + type CUSTOM_INTENT; editor data_type/content), chưa thử lưu qua API → dựng trên UI. Nút không cần cạnh vào."
  },
  {
   "type": "question_answer (Bộ câu hỏi)",
@@ -218,5 +218,25 @@
   "source": "references/ui-gotchas.md#Bot không im lặng được khi đi tới nút Kết thúc",
   "verified_on": "2026-11",
   "ui_hint": "data.ids=[tên nhãn]; nhãn khai ở campaign.classifies[{name}]."
+ },
+ {
+  "type": "CONTEXT (Ngữ cảnh con)",
+  "side": "runtime",
+  "status": "unverified",
+  "builder": "khong",
+  "template": null,
+  "source": "references/api-reference.md#Bot nhiều ngữ cảnh",
+  "verified_on": null,
+  "ui_hint": "Có JSON từ GET (prompt, case, RAG riêng qua training_data), chưa thử lưu qua API → dựng trên UI rồi GET."
+ },
+ {
+  "type": "ACTION PUSH_NOTIFICATION (Tạo thông báo)",
+  "side": "runtime",
+  "status": "unverified",
+  "builder": "khong",
+  "template": null,
+  "source": "references/api-reference.md#Bot nhiều ngữ cảnh",
+  "verified_on": null,
+  "ui_hint": "Có JSON từ GET (runtime data + editor datas), chưa thử lưu qua API → dựng trên UI rồi GET; contact_id từ list_agents."
  }
 ]
