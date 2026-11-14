@@ -160,6 +160,7 @@ UI: Ngữ cảnh bắt đầu → **File đào tạo**. Editor KHÔNG tải file
 2. `url = "https://cdn.omicrm.com/crm/" + object name`; `id` = uuid mới (editor sinh uuid v1); `name` = tên file gốc.
 3. Ghi `{"id","name","url"}` vào **cả hai**: `nodes[BEGIN].ai_agent_config.knowledge.files[]` (runtime) và `org_nodes[BEGIN].data.selectedTraining[]` + `data.typeTrainingFile:"file"` (editor hiển thị).
 4. Lưu `add_v2` như mọi lần sửa. Không có API "huấn luyện" riêng cho callbot.
+   - Loại file (✔ 11/2026): `.md` bị từ chối khi tải; đổi đuôi sang `.txt` (cùng nội dung) thì tải được.
 Đường nhanh: `scripts/rag_upload.py <file> --base GET.json --out payload.json` (put_v2, lỗi thì thử put) rồi `omi_save.py callbot payload.json --update --confirm-update --base GET.json`. Cần xác nhận lần đầu: gọi thử hỏi câu có trong file mới.
 
 **Dự phòng: chế độ "other"** (chọn bản ghi Dữ liệu khác của kho chung, khi đường file đào tạo không tải được):

@@ -127,6 +127,8 @@ Mục duy nhất về kéo/nối cạnh; nơi khác trỏ về đây.
 - Vỏ tối thiểu và lần "Lưu lại" đầu: `api-reference.md` mục *Vỏ flow tối thiểu và lần "Lưu lại" đầu*.
 - **Id flow, id phiên bản, URL webhook** sau mỗi lần lưu hoặc Xuất bản → `api-reference.md` mục *Ba loại id và URL webhook*. Trước khi báo cáo hoặc gắn: `flow_outline.py --list` rồi GET lại `kick_off.id`.
 - Agent bấm "Xuất bản" hoặc "Cập nhật" trong hộp URL có thể bị hệ thống phân quyền chặn → để user tự bấm.
+- **Xuất bản bằng giao diện (✔ 11/2026, user đã duyệt)**: mở `/flow/edit/<id nháp>` ở tab đang hiển thị (tab nền có thể đứng ở "0/N" không tải xong), chờ `.react-flow__node` đủ số nút **và** nút "Xuất bản" xuất hiện, bấm "Xuất bản" → hộp `role=dialog` có chữ "bạn có chắc muốn thực hiện" → bấm nút "Xác nhận" trong hộp. URL nhảy sang id phiên bản mới, nhãn "Phiên bản N" tăng. Không bấm "Cập nhật" trước đó (xem `api-reference.md` *Ghi chú vận hành*).
+- **Sau mỗi lần Xuất bản**: GET bản đang chạy (`flow_outline.py --list` → `--save <id>`) và đối chiếu ĐÚNG nội dung vừa sửa (model LLM, câu lệnh, mô tả phiếu), không chỉ đếm nút: đã gặp phiên/người khác xuất bản xen giữa (version nhảy 2 bậc) làm bản đang chạy mang nội dung cũ.
 
 ## 7. Gỡ lỗi biến liên kết và sửa nút qua UI (10/2026)
 
