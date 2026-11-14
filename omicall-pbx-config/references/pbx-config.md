@@ -87,6 +87,7 @@ Khuôn dữ liệu đáng nhớ:
 - Form giao diện: nhấn "+" thêm dòng phím; dòng đầu trống `ivr:""` là dòng mặc định. Lời chào (ba ô nhạc chờ) chỉ chọn từ danh sách Lời chào có sẵn; form Lời chào "Khác" chỉ có giọng tiếng Anh (Roger, Sarah…).
 - Nhóm nội bộ: `internal_group/add` bắt buộc ≥1 thành viên.
 - Kịch bản cuộc gọi (✔ API 11/2026): `POST pbx/call_script/add` body `{script_name, enable_criteria:false, criterias:[], scripts:[{order:0, action_type:"Ivr_menu", action_id:"<id Tương tác phím>"}]}` → trả `_id` và `extension` (số nội bộ đại diện); thành công `status_code` 9999. Gắn đầu số vẫn là bước riêng.
+- **Đổi Callbot cho đầu số** (✔ API 11/2026, user duyệt cổng gắn số): `POST pbx/call_script/update/<id kịch bản cuộc gọi>` body `{script_name, enable_criteria:false, criterias:[], scripts:[{order:0, action_type:"Callbot", action_id:"<id bản callbot mới nhất>", callbot_script_uuid:"<uuid>"}]}` → `status_code` 9999. Lưu bản GET cũ trước để chuyển lại; mỗi lần lưu/xuất bản callbot id đổi → cập nhật lại bước này rồi chạy `check_callin.py`.
 
 ## 10. Còn phải khảo sát
 Danh sách loại **tiêu chí** (`criterias`) của kịch bản cuộc gọi và nhóm nội bộ (theo khách, theo người phụ trách), mã `weekday` của Chủ nhật, Nhóm bên ngoài, Hộp thư thoại (nghe ở đâu), cấu hình Truy vấn mở rộng, ghi âm. Khảo sát được mục nào thì ghi vào đây kèm ✔ và tháng.
