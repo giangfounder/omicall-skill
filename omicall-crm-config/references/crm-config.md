@@ -77,6 +77,7 @@ Tên hiển thị trường tự tạo nằm ở `field_name.custom`. `scripts/t
 - Bài toán SLA phiếu → ưu tiên cấu hình sẵn của Chủ đề (hạn theo độ ưu tiên, ca làm việc, nhắc trước) trước khi dựng OMIFlow; OMIFlow chỉ bù phần thiếu (vd. hạn phản hồi đầu tiên, leo thang).
 - Trường có tập giá trị cố định (hạng, nguồn lead, kết quả gọi) → Danh sách tùy chọn / Ô chọn; nhớ kiểu này không nhận biến trong flow. Giá trị lấy từ hệ thống ngoài, thay đổi thường xuyên → để Hộp ký tự (nhận biến) thay vì dropdown nhập tay.
 - Danh mục phiếu (Chủ đề) đọc bằng MCP `get_ticket_categories`; lệnh này có thể lỗi 500 → xem tab Chủ đề trên giao diện (mở chủ đề chỉ để xem, bấm Đóng).
+- **Tạo chủ đề phiếu** (✔ UI 11/2026): `/config/attribute/ticket/topic` → "Thêm mới" → "Tên chủ đề" (≤48 ký tự), giữ "Bộ thuộc tính mặc định" và bộ trạng thái có sẵn → nút "Thêm mới" ở góc dưới → toast "Thêm mới thành công". Id chủ đề không hiện trên giao diện và XHR khác domain không bắt được: lấy id bằng cách chọn chủ đề trong nút Tạo phiếu của flow rồi GET flow (`ticket_detail.ticket_category_id`, editor `datas.topic.value`).
 - Tạo/sửa cấu hình là thao tác ghi trên tenant khách → hỏi user trước.
 
 ## 5. Cấu hình doanh nghiệp liên quan dữ liệu (✔ UI 10/2026, chỉ xem)

@@ -13,6 +13,13 @@ Tách nguyên văn từ `node-catalog.md` (mục lục và bảng mã ở đó).
  "next_nodes":["<nodeElse>"],
  "collapse_obj":{"<caseA>":false,"<caseB>":false,"NEXT_STEP":false}}
 ```
+**So sánh biến webhook (trigger API) — dựng bằng API, chạy thật [đã kiểm 11/2026]**: runtime đúng mẫu trên (`target_type:"CUSTOM_VARIABLE"`, `field_code` = mã 10 ký tự của biến trong `multi_variables`, `field_name` = tên biến). Bản editor tối thiểu gửi lên rồi server chuẩn hoá thành (GET thật, editor hiển thị "Loại = \"dat_hang\""):
+```json
+{"id":"<nodeId>","type":"CONDITION","conditions":[{"id":"<caseId>","operatorType":"AND","name":"<tên trường hợp>",
+  "datas":[{"values":[{"start_value":"dat_hang"}],"value":"<code10>","label":"<tên biến>","targetType":"CUSTOM_VARIABLE",
+            "isComparison":true,"fieldCode":"<code10>","operator":"=","operator_type":"AND","type":"CUSTOM","attributeType":"CUSTOM"}]}]}
+```
+Nhánh còn lại = `next_nodes` của nút (edge `sourceHandle:"2"`). Trên UI: mục "Biến liên kết tuỳ chỉnh" của ngăn Điều kiện **không liệt kê biến webhook** ("Không có dữ liệu"); mục "Tùy chỉnh" cho so sánh nội dung tự do (gõ `{{<code10>}}`). Nút Điều kiện mới thêm trên UI mà chưa có nút sau thì "Cập nhật" lặng lẽ không lưu (không báo lỗi) → dựng cả nhánh rồi mới lưu, hoặc dựng bằng API như trên.
 **Mở rộng → "Kiểm tra tương tác khách hàng"** [UI đã dựng]: chọn *Tương tác mới* hoặc *Không có tương tác*; loại tương tác (Cuộc gọi, SMS, ZBS, Email Marketing, Ghi chú, Chuyển trạng thái, Log, Phiếu ghi, Đánh giá); người tương tác (bắt buộc: Nhân viên cụ thể, Nhóm, Nhân viên phụ trách KH, Nhân viên liên quan, Hệ thống — chip "Nhân viên phụ trách KH" để trống bị báo thiếu, dùng chip Nhân viên + chọn người); "Thời điểm tương tác gần nhất" N phút/giờ. Cửa sổ tính lùi từ lúc nút chạy. Dùng cho mọi SLA "không gọi / không ghi chú trong N phút": DELAY N → điều kiện này → cảnh báo/thu hồi; không cần biến tự đếm cuộc gọi.
 
 Các mục Mở rộng khác (35): Kiểm tra khách hàng tồn tại, Khách hàng được thêm mới, Khung giờ, Kiểm tra biến liên kết đã tồn tại, trạng thái SMS/ZBS/Email/AutoCall/AI Callbot/ZCC, Khách hàng được cập nhật, Khách hàng/Phiếu ghi thay đổi người phụ trách, Kiểm tra tương tác Phiếu ghi, Nhân viên rời/tham gia hội thoại, Kiểm tra khung giờ làm việc, đánh giá ZBS, Kiểm tra trạng thái nhân viên.

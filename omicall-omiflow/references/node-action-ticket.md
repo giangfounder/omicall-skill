@@ -30,3 +30,14 @@ Tách nguyên văn từ `node-catalog.md` (mục lục và bảng mã ở đó).
  "created_by":{"option":"SYSTEM"}}
 ```
   UI "Nhân viên cụ thể" lưu thành `specific_allocation` với **contact_id** nhân viên (không phải user id). Mỗi thuộc tính phiếu thêm bằng "Thêm thuộc tính" ở cuối ngăn; ô để trống vẫn lưu `display_value:""`. Thuộc tính `multi_text` lưu HTML bọc `<div>`. Giá trị cố định gõ thẳng chữ được. Kiểm sau lưu: duyệt `attribute_structure[]` theo `field_code`, ô nào `display_value` rỗng là chưa gán.
+
+**Mô tả phiếu dạng thẻ HTML/CSS ([đã kiểm 11/2026] phiếu thật hiển thị đúng)**
+- `ticket_detail.description` nhận HTML có **CSS inline**: `<div style="border:2px solid #..;border-radius:10px">`, thanh tiêu đề `background:#..;color:#fff`, `<table>` hai cột nhãn/giá trị, `<span>` dạng huy hiệu. Trang chi tiết phiếu và trình soạn mô tả đều hiển thị đúng (bảng có thể được thêm viền mặc định). Dùng mã thực thể HTML cho tiếng Việt/emoji nếu ghi qua API cho chắc.
+- **HTML nằm trong GIÁ TRỊ biến bị lọc** (`<b>`, `<br>`, `\n` đều mất, chữ dính liền) → HTML phải nằm ở mẫu; nguồn gửi (bot, API ngoài) chỉ gửi dữ liệu thô, mỗi thông tin một biến webhook (ví dụ `n1..n4` nhãn, `v1..v4` giá trị).
+- Muốn mỗi loại yêu cầu một mẫu (đơn hàng / khiếu nại): nguồn gửi thêm biến `type`; flow: trigger → CONDITION `CUSTOM_VARIABLE type = <giá trị>` (`node-condition.md` mục 2.1) → mỗi nhánh một ADD_TICKET với tiêu đề/mẫu riêng (nhãn cố định, không có dòng trống). Đưa giá trị màu qua biến vào thuộc tính `style` cũng chạy nhưng kém sạch hơn.
+- Sửa mô tả trên UI: ô Mô tả là trình soạn rich text; gõ Enter tạo `<div>` mới mỗi dòng; Ctrl+A rồi gõ để thay toàn bộ.
+
+**Gắn đối tượng vào phiếu vừa tạo — `ASSIGN_TICKET_PIN_OBJECT`** ([đã kiểm GET 11/2026] với cuộc gọi; hội thoại: đã lưu và xuất bản, giá trị mã hội thoại **Cần xác nhận**)
+- Runtime (đặt ngay sau ADD_TICKET trong cùng nút ACTION): `{"type":"ASSIGN_TICKET_PIN_OBJECT","data":{"fix_attribute":{"pin_info":[{"action":"add","ref_type":"<call_transaction|social|contact|agent|ticket>","ref_id":"{{<mã biến>}}"}],"pin_all":{"<ref_type>":true}}}}`. Cuộc gọi: `ref_type:"call_transaction"`, `ref_id:"{{ct_transaction_id}}"`.
+- Editor: phần tử `type:"UPDATE_INFO_TICKET"` trong `name_mappings[].actions`, `datas.assign[0]` `value:"ticket_attachment_object"`, `values.selectOpt` = `{"label":"social","value":"social"}` (hoặc `callHistory`/`call_transaction`), `values.content` = `{{mã biến}}`. Chép nguyên phần tử từ một flow có sẵn rồi đổi `selectOpt` và `content`. Editor hiển thị "Cập nhật phiếu ghi – Đối tượng đính kèm".
+- Gắn hội thoại từ chatbot: biến Đa kênh của bot có `{{social_id}}`, `{{social_session_id}}`; biến nào là mã hội thoại (log bot: `data.target_value` khi `target_type:"SOCIAL_CONVERSATION"`): Cần xác nhận bằng một lượt chat thật rồi đối chiếu log flow.
