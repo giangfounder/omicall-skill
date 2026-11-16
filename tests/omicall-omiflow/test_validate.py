@@ -127,6 +127,18 @@ class ValidateFlowTest(unittest.TestCase):
         flow['kick_off']['event'] = 'GENERAL'
         self.assert_fail(flow, 'C1')
 
+    def test_period_trigger_saved_by_ui(self):
+        flow = load_base()
+        flow['kick_off']['event'] = 'PERIOD'
+        trig = next(n for n in flow['nodes'] if n.get('is_first_node'))
+        trig['conditions'][0]['type'] = None
+        trig['conditions'][0]['data'] = [{'type': 'PERIOD', 'start_type': 'BEFORE', 'start_at': '1', 'start_unit': 'day',
+                                          'fields': ['<code>'], 'field_type': 'CONTACT'}]
+        rc, out = self.run_validator(flow)
+        self.assertNotIn('C1', self.fails(out), out)
+        trig['conditions'][0]['data'] = [{'type': 'COMPARE'}]  # type rỗng mà data không phải PERIOD vẫn FAIL
+        self.assert_fail(flow, 'C1')
+
     def test_get_related_call_after_ticket_without_delay(self):
         flow = load_base()
         ticket = node(flow, '<node_ticket>')

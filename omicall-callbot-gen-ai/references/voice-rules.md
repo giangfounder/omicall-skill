@@ -38,3 +38,8 @@ Mọi câu em nói được chuyển thẳng thành giọng nói tiếng Việt,
 ```
 Áp dụng cả cho `start_call_instruction` và `END_CALL.content`: tự kiểm tra trước khi lưu, không còn chữ số, ký hiệu hay chữ viết tắt trong câu khách nghe. Kiểm tự động: `scripts/tts_lint.py` (cũng chạy trong `validate_smartagent.py`, mã X9).
 
+## Lời chào bot GỌI RA nhắc lịch / thông báo (user chỉ định 16/11/2026; chưa gọi thử lại sau khi sửa)
+- Khác bot gọi vào: lời chào phải **báo luôn nội dung chính** (ai gọi, tên bé, ngày giờ, khoa, phòng, bác sĩ) và **lời nhờ xác nhận** trong cùng lượt đầu. Bản trước chào ngắn, chờ khách đáp rồi mới báo lịch; các cuộc gọi thử chỉ 17–20 giây, nhiều khả năng khách chưa nghe được lịch (chưa đọc được lời thoại để xác nhận).
+- Mẫu: "Dạ em là trợ lý tự động của Bệnh viện …, gọi nhắc lịch khám của bé {{tên bé}}. Bé có lịch khám ngày mai, {{ngày}}, lúc {{giờ}}, tại {{khoa}}, {{phòng}}, bác sĩ {{bác sĩ}}. Nhờ gia đình xác nhận giúp em là có đưa bé đi khám đúng hẹn ạ." Sau lời chào bot chỉ nghe và xử lý nhánh (đi / đổi / huỷ / không phải phụ huynh), không đọc lại lịch trừ khi khách hỏi; biến trống thì bỏ phần đó.
+- Lời chào là văn bản cố định: TTS đọc thẳng "17/11/2026", "09:00" (nghe cứng); đọc tự nhiên hơn: Cần xác nhận.
+

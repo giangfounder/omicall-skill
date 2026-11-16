@@ -132,6 +132,12 @@ def _dig(obj, dotted):
     return cur
 
 
+def _native_path(p):
+    # Git Bash $PWD cho '/d/...'; Python trên Windows không mở được -> 'D:/...'
+    m = re.match(r'^/([A-Za-z])/(.*)$', p or '')
+    return '%s:/%s' % (m.group(1).upper(), m.group(2)) if m and os.name == 'nt' else p
+
+
 def _ts(s):
     try:
         return datetime.datetime.fromisoformat(str(s).replace('Z', '+00:00')).replace(tzinfo=None)
@@ -219,7 +225,7 @@ def check(data, strict=False):
             rows.append(('FAIL', key, 'thiếu hoặc sai verified_at'))
         elif sa and va < sa:
             rows.append(('FAIL', key, 'verified_at %s < saved_at %s (kiểm trước lần lưu cuối)' % (a['verified_at'], a['saved_at'])))
-        rep = a.get('verify_report')
+        rep = _native_path(a.get('verify_report'))
         if not rep or not os.path.isfile(rep):
             rows.append(('FAIL', key, 'không thấy file verify_report %r' % rep))
         else:

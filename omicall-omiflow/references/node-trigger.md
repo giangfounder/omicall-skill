@@ -1,4 +1,4 @@
-# OMIFlow — Trigger có JSON đã kiểm chứng (1a–1c)
+# OMIFlow — Trigger có JSON đã kiểm chứng (1a–1d)
 
 Tách nguyên văn từ `node-catalog.md` (mục lục và bảng mã ở đó). Số mục giữ như cũ.
 
@@ -35,3 +35,23 @@ Thuộc tính cuộc gọi hay dùng: `ct_call_status` (answered, noanswered…)
 ```json
 {"type":"GENERAL","data":[{"type":"CUSTOM","custom_data":[{"target_type":"NEW_TICKET","category":{"id":"<ticket_category_id>"}}]}]}
 ```
+
+### 1d. PERIOD — "Trước khi" N ngày so với thuộc tính NGÀY của khách [verify JSON: GET 16/11/2026; flow chưa xuất bản nên giờ kích hoạt thật: Cần xác nhận]
+Bản do giao diện lưu (`kick_off` + nút đầu là CONDITION chứa `data[].type = "PERIOD"`):
+```json
+"kick_off":{"type":null,"event":"PERIOD","id":null,"name":null},
+"kick_off_ids":["contact_<field_code trường Ngày>"],
+"start_date":null,"end_date":null,
+"nodes":[{"is_first_node":true,"node_type":"CONDITION","conditions":[{"id":"<caseId>","type":null,"operator_type":"AND",
+  "data":[{"type":"PERIOD","start_type":"BEFORE","start_at":"1","start_unit":"day","fields":["<field_code>"],"field_type":"CONTACT",
+           "time_slot":{"from":"08:00","to":"08:30"},
+           "apply_days":["monday","tuesday","wednesday","thursday","friday","saturday","sunday"]}],
+  "next_nodes":["<nodeId>"]}]}]
+```
+- Đối tượng (khách) **suy ra từ thuộc tính thời gian**; ngăn PERIOD không có ô chọn đối tượng và **không có điều kiện thuộc tính** → lọc thêm (ví dụ "Trạng thái lịch hẹn = Đã đặt") bằng nút `CONDITION` ngay sau (`target_type:"CONTACT"`, `is_dynamic_field:true`).
+- Thuộc tính phải **kiểu Ngày**; trường Ngày tự tạo **có hiện** trong danh sách (đã kiểm 16/11). Trường kiểu chữ chứa "dd/MM/yyyy" không dùng được → `omicall-crm-config` tạo thêm trường Ngày, giữ trường chữ nếu bot cần đọc.
+- Giờ là **khung** `time_slot` từ–đến (bật "Đặt khung giờ kích hoạt"), không phải mốc cố định; xuất bản sau khung giờ thì lượt đầu chạy sáng hôm sau.
+- `conditions[0].type = null` là bản UI tự lưu; `validate_flow.py` (từ 16/11/2026) lấy loại từ `data[0].type` khi `kick_off.event = "PERIOD"`.
+- Form tạo mới mặc định hiệu lực **7 ngày** (vd 16/11→23/11) và nút ✕ khó bấm → sau lần lưu đầu đặt `start_date`/`end_date` = `null` qua `save_draft_v2`.
+- Tab "Lặp lại" (Hằng ngày/Tuần/Tháng + "Vào lúc HH:mm") không bắt chọn đối tượng trên UI; lưu và chạy trần: Cần xác nhận. Tab "Sau khi", "Thời gian cụ thể": cùng bố cục, chưa lưu thử.
+

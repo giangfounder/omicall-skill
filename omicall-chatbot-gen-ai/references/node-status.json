@@ -57,7 +57,7 @@
   "template": null,
   "source": "references/api-reference.md#Bot thu SĐT rồi gọi webhook OMIFlow",
   "verified_on": "2026-10",
-  "ui_hint": "Case theo biến được xét ở tin nhắn kế tiếp của khách."
+  "ui_hint": "Case theo biến được xét ở tin nhắn kế tiếp của khách. Bắt buộc customer_not_response.waiting_time 180 (0 = phiên đóng ngay). Trường hợp 'Nhận dạng ý định' ở nút này dùng data[{type:OMI_BOT_INTENT,content}] và chỉ xét tin mới nhất (playbook Gotchas)."
  },
  {
   "type": "OMI_BOT_COLLECT_INFO",
@@ -96,8 +96,8 @@
   "builder": "sinh",
   "template": null,
   "source": "references/api-reference.md#Bot thu SĐT rồi gọi webhook OMIFlow",
-  "verified_on": "2026-10",
-  "ui_hint": "SEND_WEBHOOK (sau nút Thu thập thông tin) chưa chạy khi bot được giao qua OMI_BOT_AI trên kênh thật (references/api-reference.md:260) — test đúng kênh trước khi dựa vào; START_OTHER_CAMPAIGN thì đã chạy qua OMI_BOT_AI."
+  "verified_on": "2026-11",
+  "ui_hint": "Đã chạy qua OMI_BOT_AI trên LiveTalk (✔ 11/2026, tạo phiếu thật) khi nút Thu thập có waiting_time 180; lần 10/2026 không chạy nhiều khả năng do waiting_time 0. Test qua đúng kênh thật."
  },
  {
   "type": "ACTION SEND_WEBHOOK",

@@ -1,0 +1,1 @@
+{"_ghi_chu":"Fixture theo khuôn đã đọc 11/2026, giá trị là placeholder.","payload":[{"_id":"<status_set_id>","name":"<tên bộ trạng thái>","keyword":"<tu khoa>","statuses":[{"index":0,"sort_index":0,"color":"#000000","name":"<trạng thái đầu>","finish":false},{"index":1,"sort_index":1,"color":"#000000","name":"<trạng thái cuối>","finish":true}],"is_deleted":false}]}

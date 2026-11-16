@@ -2,7 +2,7 @@
 
 Tách nguyên văn từ `node-catalog.md` (mục lục và bảng mã ở đó). Số mục giữ như cũ.
 
-Mục lục: 3.2 Cập nhật phiếu ghi · 3.3 PUSH_NOTIFICATION · 3.4 SEND_WEBHOOK · 3.5 CREATE_CUSTOM_VARIABLE · 3.6 GET_RELATED · 4 Cửa sổ tương tác. Định vị: `grep -n "^##" node-action-contact.md`.
+Mục lục: 3.2 Cập nhật phiếu ghi · 3.2b Cập nhật thuộc tính khách · 3.3 PUSH_NOTIFICATION · 3.4 SEND_WEBHOOK · 3.5 CREATE_CUSTOM_VARIABLE · 3.6 GET_RELATED · 4 Cửa sổ tương tác. Định vị: `grep -n "^##" node-action-contact.md`.
 
 ### 3.2 Cập nhật phiếu ghi (`ASSIGN_TICKET_*`) [verify JSON]
 ```json
@@ -15,6 +15,18 @@ Mục lục: 3.2 Cập nhật phiếu ghi · 3.3 PUSH_NOTIFICATION · 3.4 SEND_W
   "update_types":[{"field_code":"<attr>","field_type":"single_text","type":"OVERWRITE"}]}}
 ```
 `update_types[].type`: `INSERT` (chèn thêm), `OVERWRITE` (ghi đè), gỡ giá trị (nhóm "Gỡ giá trị" trên UI). `current_type` của `ASSIGN_TICKET_TYPE` chọn trạng thái trong bộ trạng thái của danh mục (theo thứ tự).
+
+### 3.2b Cập nhật thuộc tính động của KHÁCH HÀNG (`ASSIGN_ATTRIBUTE_STRUCTURE`) [verify JSON: GET 16/11/2026 sau khi dựng trên UI; ✔ chạy thật 16/11 bằng cURL vào webhook: khách nhận đủ 12 thuộc tính]
+```json
+{"type":"ASSIGN_ATTRIBUTE_STRUCTURE","data":{"attribute_type":"DYNAMIC_ATTRIBUTE",
+  "attribute_structures":[{"field_code":"<attr>","field_type":"single_text","identify":false,
+                           "value":[{"display_value":"{{<code10 biến>}}","value_type":"","data_type":""}]}],
+  "update_types":[{"field_code":"<attr>","field_type":"single_text","type":"OVERWRITE"}]}}
+```
+- Biến dùng trong `display_value` phải có trong `nodes[].variables[]` của nút: `{"name":"<code10>","type":"CUSTOM",...}`.
+- Bản editor: `name_mappings[].actions[]` có `type:"UPDATE_INFO_CONTACT"`, `datas.assign[]` mỗi thuộc tính một phần tử (`value` = field_code, `_id` = id thuộc tính trong layout khách) → chép từ một bản GET đã dựng trên UI, không tự viết.
+- Trigger API không có khách gốc: đặt `GET_RELATED CLOSEST_CONTACT` theo SĐT (3.6) trước nút này; khách chưa có → `ADD_CONTACT` trước (SĐT đã có trả `CONTACT_EXIST`, không trùng). Rẽ nhánh success/fail của GET_RELATED khi không tìm thấy: Cần xác nhận.
+- Ô giá trị kiểu chữ không có phần ghi chú/log như trạng thái pipeline. Trường **kiểu Ngày** (`field_type:"date"`) nhận `display_value` là chuỗi `"dd/MM/yyyy"` (✔ 16/11, hiển thị đúng và dùng được cho PERIOD).
 
 ### 3.3 PUSH_NOTIFICATION [verify JSON]
 ```json

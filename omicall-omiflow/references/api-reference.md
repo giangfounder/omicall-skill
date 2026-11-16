@@ -76,6 +76,8 @@ def save_draft(flow):  # flow phải có _id của flow nháp
 - Vỏ đã lưu được (✔ UI 11/2026): trigger + vài nút, kết thúc bằng nút Hành động, kể cả khi nhánh mặc định của nút Điều kiện chưa nối. Nút cuối là `CONDITION`/`DELAY` làm lưu thất bại (X3, `node-editor-get.md` mục 6). Vỏ chỉ có trigger có lưu được không: Cần xác nhận.
 - Lần "Lưu lại" đầu: một lần (✔ UI 11/2026) thấy sau đó editor chỉ còn "Xuất bản", nút thêm sau không lên server; ghi chép khác (10/2026) vẫn Lưu lại nhiều lần trên flow nháp. Khi nào bị khoá: Cần xác nhận. Đường an toàn: dựng đủ nút trước lần lưu đầu, hoặc sửa tiếp bằng `omi_save.py flow` (lưu nháp vào `_id`). Agent không bấm Xuất bản để lưu.
 - `node-editor-get.md` (mục 6) có ghi lưu flow mới bằng `save_draft_v2` sau khi bỏ `_id`: Cần xác nhận, script không làm.
+- **Flow ĐÃ xuất bản** (✔ 11/2026, nhiều lần): `save_draft_v2` gửi nguyên object GET của **id nháp cố định** (sửa nút/biến/mô tả) lưu được, GET lại thấy đúng, editor hiện "đang ở trạng thái Nháp… nhấn Xuất bản"; bản đang chạy không đổi tới khi bấm Xuất bản. Đây cũng là việc nút "Cập nhật" của editor làm. `omi_save.py flow` hiện vẫn chặn flow đã xuất bản (cẩn trọng): khi user đã duyệt sửa, gọi `omi_api.post_multipart('campaign','/omi_v2/campaign/save_draft_v2', obj)` rồi GET + `validate_flow.py` thủ công. Không gửi file GET đã che `***`.
+- **Đọc lượt chạy (log) bằng API** thay cho tab Lịch sử: `POST /omi_v2/campaign/log/search?page=1&size=N` body `{}` trả cả lượt của flow lẫn **chatbot** (`campaign_name` = tên bot, `node_type:"OMI_BOT_AI"`). Mỗi item: `node_type`, `session_id`, `is_start_event`, `data.action_details[].status/status_code` (ví dụ `FAIL MISSING_CONTENT`), `data.gpt_convs[]` (hội thoại bot), biến webhook nhận được (`collect_variables` của trigger WEB_HOOK: `display_name`, `value`). Dùng để biết webhook có được gọi hay không, bot trả lời ở nút nào. Tab Lịch sử trên UI có thể treo khi pane ẩn.
 
 An toàn: muốn sửa flow đang chạy của khách thì **GET → sao chép → sửa → lưu nháp hoặc tạo flow mới chưa xuất bản**, chỉ cập nhật bản đang chạy khi user đồng ý. Không xoá và không tắt flow của khách nếu user không yêu cầu.
 
@@ -109,6 +111,9 @@ Mục duy nhất về `add_v2`/`update_v2`. **Cảnh báo**: `add_v2` không t�
 - Kết quả `status_code 9999`, payload có `_id`, `uuid` mới, **`version:1`, `is_publish:true`** (add_v2 tạo luôn bản đã xuất bản, không phải nháp) → chỉ dùng khi user đã duyệt cho chạy, hoặc flow phụ thuộc (không tự chạy theo sự kiện).
 - Đường nhanh tạo flow phụ thuộc gọi từ bot: nhân bản flow có trigger Đa kênh, trigger chỉ giữ `social_channel`, bỏ nút `OMI_BOT_AI`, `dependent_config:{"is_dependent":true}` → add_v2 → `validate_flow.py --mode pre` PASS trước khi gửi.
 - Id nháp / id phiên bản / URL webhook sau khi sửa hoặc xuất bản: mục *Ba loại id và URL webhook*. Flow phụ thuộc được gọi qua bot chạy với đối tượng `SOCIAL_CONVERSATION` đúng hội thoại (log `target_value` = id hội thoại), `RE_DISTRIBUTE` SUCCESS (✔ 11/2026).
+
+## Xoá flow (✔ 16/11/2026, cách giao diện làm)
+`DELETE campaign-v1-stg…/omi_v2/campaign/delete/<id>` → `status_code` 9999, `payload:true` (còn `delete_many`/`delete_multiple`, chưa dùng). Trước khi xoá: GET và lưu JSON, đối chiếu đúng tên flow; chỉ xoá khi user duyệt rõ. `omi_api.py` chưa có hàm `delete`: gọi `omi_api._session().delete(omi_api.url('campaign', path), headers=omi_api._headers(domain))`. Flow thử gọi ra nên xoá ngay sau khi thử.
 
 ## Ba loại id và URL webhook (✔ GET 11/2026)
 Mục duy nhất về id flow và URL webhook; nơi khác chỉ trỏ về đây.

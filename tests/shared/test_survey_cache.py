@@ -76,7 +76,7 @@ class TestSurveyMaxAge(unittest.TestCase):
     def test_rerun_within_max_age_makes_no_request(self):
         n_t, _ = self.count("tenant_survey.py", "--now", T0)
         n_c, _ = self.count("config_survey.py", "--now", T0)
-        self.assertEqual((n_t, n_c), (7, 10))  # 17 request lần đầu
+        self.assertEqual((n_t, n_c), (8, 10))  # 18 request lần đầu
         n_t, out_t = self.count("tenant_survey.py", "--now", "2026-01-01T00:10:00", "--max-age", "60")
         n_c, out_c = self.count("config_survey.py", "--now", "2026-01-01T00:10:00", "--max-age", "60")
         self.assertEqual((n_t, n_c), (0, 0))
@@ -92,7 +92,7 @@ class TestSurveyMaxAge(unittest.TestCase):
         self.count("config_survey.py", "--now", T0)
         n_t, _ = self.count("tenant_survey.py", "--now", "2026-01-01T02:00:00", "--max-age", "60")
         n_c, _ = self.count("config_survey.py", "--now", "2026-01-01T02:00:00", "--max-age", "60")
-        self.assertEqual((n_t, n_c), (7, 10))
+        self.assertEqual((n_t, n_c), (8, 10))
         ctx = json.loads(self.out.read_text(encoding="utf-8"))
         self.assertEqual((ctx["survey_at"], ctx["config_survey_at"]), ("2026-01-01T02:00:00", "2026-01-01T02:00:00"))
 
@@ -100,7 +100,7 @@ class TestSurveyMaxAge(unittest.TestCase):
         # config_survey ghi mốc riêng: không làm tenant_survey tưởng file còn mới
         self.count("config_survey.py", "--now", T0)
         n_t, _ = self.count("tenant_survey.py", "--now", T0, "--max-age", "60")
-        self.assertEqual(n_t, 7)
+        self.assertEqual(n_t, 8)
 
     def test_max_age_needs_domain_and_same_domain(self):
         self.count("tenant_survey.py", "--now", T0)

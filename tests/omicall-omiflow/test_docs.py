@@ -245,7 +245,8 @@ class DocsTest(unittest.TestCase):
         new = set(catalog().split('\n'))
         lost = [l for l in old if l not in new]
         self.assertEqual(lost, [], 'dòng bị mất khi tách node-catalog: %r' % lost[:3])
-        self.assertEqual(catalog().count('✔'), read_path(CATALOG_BEFORE_SPLIT).count('✔'))
+        # chỉ cấm mất dấu kiểm chứng khi tách; bài học mới được phép thêm ✔
+        self.assertGreaterEqual(catalog().count('✔'), read_path(CATALOG_BEFORE_SPLIT).count('✔'))
         self.assertLessEqual(len(read('references', 'node-catalog.md').encode('utf-8')), 14000)
 
     def test_node_status(self):

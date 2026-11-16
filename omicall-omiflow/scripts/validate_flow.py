@@ -203,6 +203,10 @@ def check(flow, mode='pre', sent=None, quota=None, context=None):
         i, n = firsts[0]
         conds = n.get('conditions') or []
         ctype = conds[0].get('type') if conds and isinstance(conds[0], dict) else None
+        if not ctype and kick.get('event') == 'PERIOD':
+            # UI lưu trigger định kỳ với conditions[0].type = null, loại nằm ở data[0].type (node-trigger.md 1d)
+            d0 = (conds[0].get('data') or [{}])[0] if conds and isinstance(conds[0], dict) else {}
+            ctype = d0.get('type') if isinstance(d0, dict) else None
         if n.get('node_type') != 'CONDITION':
             r.add('FAIL', 'C1', f'nút trigger phải là CONDITION, đang là {n.get("node_type")}', f'nodes[{i}].node_type')
         elif not ctype:

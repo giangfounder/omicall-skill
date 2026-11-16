@@ -13,6 +13,13 @@ Tách nguyên văn từ `node-catalog.md` (mục lục và bảng mã ở đó).
  "next_nodes":["<nodeElse>"],
  "collapse_obj":{"<caseA>":false,"<caseB>":false,"NEXT_STEP":false}}
 ```
+**So sánh biến webhook (trigger API) — dựng bằng API, chạy thật đã kiểm 11/2026**: runtime đúng mẫu trên (`target_type:"CUSTOM_VARIABLE"`, `field_code` = mã 10 ký tự của biến trong `multi_variables`, `field_name` = tên biến). Bản editor tối thiểu gửi lên rồi server chuẩn hoá thành (GET thật, editor hiển thị "Loại = \"dat_hang\""):
+```json
+{"id":"<nodeId>","type":"CONDITION","conditions":[{"id":"<caseId>","operatorType":"AND","name":"<tên trường hợp>",
+  "datas":[{"values":[{"start_value":"dat_hang"}],"value":"<code10>","label":"<tên biến>","targetType":"CUSTOM_VARIABLE",
+            "isComparison":true,"fieldCode":"<code10>","operator":"=","operator_type":"AND","type":"CUSTOM","attributeType":"CUSTOM"}]}]}
+```
+Nhánh còn lại = `next_nodes` của nút (edge `sourceHandle:"2"`). Trên UI: mục "Biến liên kết tuỳ chỉnh" của ngăn Điều kiện **không liệt kê biến webhook** ("Không có dữ liệu"); mục "Tùy chỉnh" cho so sánh nội dung tự do (gõ `{{<code10>}}`). Nút Điều kiện mới thêm trên UI mà chưa có nút sau thì "Cập nhật" lặng lẽ không lưu (không báo lỗi) → dựng cả nhánh rồi mới lưu, hoặc dựng bằng API như trên.
 **Mở rộng → "Kiểm tra tương tác khách hàng"** [UI đã dựng]: chọn *Tương tác mới* hoặc *Không có tương tác*; loại tương tác (Cuộc gọi, SMS, ZBS, Email Marketing, Ghi chú, Chuyển trạng thái, Log, Phiếu ghi, Đánh giá); người tương tác (bắt buộc: Nhân viên cụ thể, Nhóm, Nhân viên phụ trách KH, Nhân viên liên quan, Hệ thống — chip "Nhân viên phụ trách KH" để trống bị báo thiếu, dùng chip Nhân viên + chọn người); "Thời điểm tương tác gần nhất" N phút/giờ. Cửa sổ tính lùi từ lúc nút chạy. Dùng cho mọi SLA "không gọi / không ghi chú trong N phút": DELAY N → điều kiện này → cảnh báo/thu hồi; không cần biến tự đếm cuộc gọi.
 
 Các mục Mở rộng khác (35): Kiểm tra khách hàng tồn tại, Khách hàng được thêm mới, Khung giờ, Kiểm tra biến liên kết đã tồn tại, trạng thái SMS/ZBS/Email/AutoCall/AI Callbot/ZCC, Khách hàng được cập nhật, Khách hàng/Phiếu ghi thay đổi người phụ trách, Kiểm tra tương tác Phiếu ghi, Nhân viên rời/tham gia hội thoại, Kiểm tra khung giờ làm việc, đánh giá ZBS, Kiểm tra trạng thái nhân viên.
@@ -85,3 +92,18 @@ Bổ sung đã kiểm chứng bằng GET (✔ UI 11/2026, flow trigger API):
 - **Đầu số** liệt kê cả hotline lẫn **đầu số Zalo** (logo Zalo, mã ~19 số): chọn đầu số Zalo = gọi qua Zalo OA (ZCC), người nhận phải đã đồng ý yêu cầu gọi (Marketing → "Yêu cầu cuộc gọi ZCC": đồng ý trong 24h, gọi được 30 ngày).
 - Thành phần cuộc gọi: Lời chào, **Robot đọc** (TTS, chèn biến; nút "Biến liên kết (ký tự)" đọc từng ký tự, "(chữ)" đọc thành từ), AI Callbot, Tương tác nhấn phím, Nhóm nội bộ.
 - Người nhận: Khách hàng (cần khách trong luồng) / **Số điện thoại tuỳ chỉnh** (biến) / nhân viên. Tuỳ chọn gọi lại khi không nghe máy, phân bổ N cuộc mỗi 30s.
+
+### 2.6b MARKETING → AUTOCALL loại AI Callbot (Voice_bot) [verify JSON: GET 16/11/2026; lịch sử khách thử có 2 cuộc gọi ra 17–20 giây bằng bot này nhưng chưa xác minh do flow nào gọi; nội dung bot đọc: Cần xác nhận]
+```json
+{"type":"AUTOCALL","data":{"name":"","autocall_detail":{"name":"<tên phiên>","phone_number":"<đầu số>","public_number_of_tenant_id":"<id đầu số>",
+   "num_per_call":10,"distance_per_call":30,"num_retry":0,"distance_retry":0,"timeSlots":[],"ringTimeoutSeconds":30,
+   "allocation_type":"fixed","type":"Voice_bot",
+   "templateDialplans":[{"target":"<id kịch bản>_","target_type":"Campaign_voice_bot","target_name":"<tên kịch bản>","speed":0,"voice":"northern_female_ngocanh"}],
+   "callbot_script_uuid":"<uuid kịch bản>","ai_variables":{}},
+ "sending_option":{"contact":true,"other":false,"phone_numbers":[]}}}
+```
+- `target` = id kịch bản **kèm dấu `_`** ở cuối. Mỗi lần lưu/xuất bản bot đổi id → cập nhật `target` (uuid giữ nguyên).
+- `ai_variables` = `{"<mã biến bot>": "<giá trị>"}`; ngăn UI hiện mỗi biến của kịch bản một ô, chèn được `{{full_name}}`, `{{phone_number}}`, `{{<field_code thuộc tính khách>}}`.
+- Cách user chọn (11/2026): prompt bot dùng thẳng thuộc tính khách (`{{full_name}}`, `{{<field_code>}}`, chip "Khách hàng" trong editor bot), flow gọi tới **Khách hàng** với `ai_variables:{}`. Bot đọc đúng giá trị hay trống: Cần xác nhận bằng nghe lại cuộc gọi.
+- Ô "Số điện thoại tuỳ chỉnh" nhận `{{mã biến webhook}}` không: chưa thử. Kịch bản nháp có hiện trong danh sách chọn không: chưa rõ.
+- Gọi thử 1 số: flow tạm giới hạn 1 lượt rồi **tắt hoặc xoá ngay sau khi thử** (đã để sót một flow thử ở trạng thái xuất bản); hoặc phiên gọi ra thủ công Marketing → Gọi tự động → Tạo phiên → thành phần AI Callbot (gọi người thật: hỏi user trước).
