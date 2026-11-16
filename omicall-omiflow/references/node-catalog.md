@@ -5,11 +5,14 @@
 |---|---|---|
 | 1 | Bảng trigger | file này |
 | 1a–1c | WEB_HOOK, GENERAL cuộc gọi, GENERAL phiếu ghi mới (JSON) | `node-trigger.md` |
+| 1d | PERIOD "Trước khi" N ngày theo thuộc tính Ngày của khách (JSON) | `node-trigger.md` |
 | 2 | Bảng loại nút | file này |
 | 2.1–2.6 | CONDITION, DELAY, COLLECT_INFO, DESCRIPTION, ZALO_PERSONAL_MESSAGE, MARKETING AUTOCALL (JSON) | `node-condition.md` |
+| 2.6b | MARKETING AUTOCALL loại AI Callbot (Voice_bot, JSON) | `node-condition.md` |
 | 3 | Bảng hành động | file này |
 | 3.1 | ADD_TICKET (JSON) | `node-action-ticket.md` |
 | 3.2–3.6, 4 | Cập nhật phiếu, PUSH_NOTIFICATION, SEND_WEBHOOK, CREATE_CUSTOM_VARIABLE, GET_RELATED; cửa sổ tương tác | `node-action-contact.md` |
+| 3.2b | Cập nhật thuộc tính động của khách (ASSIGN_ATTRIBUTE_STRUCTURE, JSON) | `node-action-contact.md` |
 | 5 | Biến dùng được trong flow | file này |
 | 6 | Cấu trúc đã kiểm chứng bằng GET sau khi dựng trên editor (`name_mappings`, vỏ flow) | `node-editor-get.md` |
 

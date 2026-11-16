@@ -51,7 +51,30 @@
   }
  ],
  "ticket_categories": [],
- "status_sets": [],
+ "status_sets": [
+  {
+   "_id": "<status_set_id>",
+   "name": "<tên bộ trạng thái>",
+   "keyword": "<tu khoa>",
+   "statuses": [
+    {
+     "index": 0,
+     "sort_index": 0,
+     "color": "#000000",
+     "name": "<trạng thái đầu>",
+     "finish": false
+    },
+    {
+     "index": 1,
+     "sort_index": 1,
+     "color": "#000000",
+     "name": "<trạng thái cuối>",
+     "finish": true
+    }
+   ],
+   "is_deleted": false
+  }
+ ],
  "sale_allocations": [
   {
    "_id": "<allocation_id>",
@@ -140,8 +163,7 @@
   }
  ],
  "can_xac_nhan": [
-  "ticket_status_sets: endpoint chưa kiểm chứng, không gọi (omicall-omiflow/SKILL.md:43 — chưa ghi method và khuôn phản hồi)",
-  "bots: endpoint chưa kiểm chứng, không gọi (omicall-chatbot-gen-ai/references/api-reference.md:12 — body chưa ghi)",
+  "bots: endpoint chưa kiểm chứng, không gọi (omicall-chatbot-gen-ai/references/api-reference.md:12 — body chưa ghi (11/2026: body {} trả payload null, chưa kết luận))",
   "agents_api: endpoint chưa kiểm chứng, không gọi (omicall-callbot-flow/references/playbook.md \"Bước 0\" (\"agent-v1-stg …/get_all_agent/no_role\" — thiếu tiền tố đường dẫn); dùng MCP list_agents)",
   "existing_artefacts[callbot].hotline_attached: kiểm bằng MCP list_hotlines (inbound_script_id)",
   "attributes.is_list: suy từ field_type theo bảng LIST_TYPES — Cần xác nhận mã kiểu thật; is_list=null nghĩa là chưa biết, kiểm trên giao diện trước khi gán biến",
@@ -210,15 +232,15 @@
   },
   {
    "key": "ticket_status_sets",
-   "verified": false,
-   "nguon": "omicall-omiflow/SKILL.md:43 — chưa ghi method và khuôn phản hồi",
-   "goi": false,
-   "ket_qua": null
+   "verified": true,
+   "nguon": "omicall-crm-config/references/crm-config.md \"2. Phiếu ghi\" (✔ đọc 11/2026: Bộ trạng thái phiếu)",
+   "goi": true,
+   "ket_qua": "ok"
   },
   {
    "key": "bots",
    "verified": false,
-   "nguon": "omicall-chatbot-gen-ai/references/api-reference.md:12 — body chưa ghi",
+   "nguon": "omicall-chatbot-gen-ai/references/api-reference.md:12 — body chưa ghi (11/2026: body {} trả payload null, chưa kết luận)",
    "goi": false,
    "ket_qua": null
   },

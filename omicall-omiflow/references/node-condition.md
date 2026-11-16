@@ -92,3 +92,18 @@ Bổ sung đã kiểm chứng bằng GET (✔ UI 11/2026, flow trigger API):
 - **Đầu số** liệt kê cả hotline lẫn **đầu số Zalo** (logo Zalo, mã ~19 số): chọn đầu số Zalo = gọi qua Zalo OA (ZCC), người nhận phải đã đồng ý yêu cầu gọi (Marketing → "Yêu cầu cuộc gọi ZCC": đồng ý trong 24h, gọi được 30 ngày).
 - Thành phần cuộc gọi: Lời chào, **Robot đọc** (TTS, chèn biến; nút "Biến liên kết (ký tự)" đọc từng ký tự, "(chữ)" đọc thành từ), AI Callbot, Tương tác nhấn phím, Nhóm nội bộ.
 - Người nhận: Khách hàng (cần khách trong luồng) / **Số điện thoại tuỳ chỉnh** (biến) / nhân viên. Tuỳ chọn gọi lại khi không nghe máy, phân bổ N cuộc mỗi 30s.
+
+### 2.6b MARKETING → AUTOCALL loại AI Callbot (Voice_bot) [verify JSON: GET 16/11/2026; lịch sử khách thử có 2 cuộc gọi ra 17–20 giây bằng bot này nhưng chưa xác minh do flow nào gọi; nội dung bot đọc: Cần xác nhận]
+```json
+{"type":"AUTOCALL","data":{"name":"","autocall_detail":{"name":"<tên phiên>","phone_number":"<đầu số>","public_number_of_tenant_id":"<id đầu số>",
+   "num_per_call":10,"distance_per_call":30,"num_retry":0,"distance_retry":0,"timeSlots":[],"ringTimeoutSeconds":30,
+   "allocation_type":"fixed","type":"Voice_bot",
+   "templateDialplans":[{"target":"<id kịch bản>_","target_type":"Campaign_voice_bot","target_name":"<tên kịch bản>","speed":0,"voice":"northern_female_ngocanh"}],
+   "callbot_script_uuid":"<uuid kịch bản>","ai_variables":{}},
+ "sending_option":{"contact":true,"other":false,"phone_numbers":[]}}}
+```
+- `target` = id kịch bản **kèm dấu `_`** ở cuối. Mỗi lần lưu/xuất bản bot đổi id → cập nhật `target` (uuid giữ nguyên).
+- `ai_variables` = `{"<mã biến bot>": "<giá trị>"}`; ngăn UI hiện mỗi biến của kịch bản một ô, chèn được `{{full_name}}`, `{{phone_number}}`, `{{<field_code thuộc tính khách>}}`.
+- Cách user chọn (11/2026): prompt bot dùng thẳng thuộc tính khách (`{{full_name}}`, `{{<field_code>}}`, chip "Khách hàng" trong editor bot), flow gọi tới **Khách hàng** với `ai_variables:{}`. Bot đọc đúng giá trị hay trống: Cần xác nhận bằng nghe lại cuộc gọi.
+- Ô "Số điện thoại tuỳ chỉnh" nhận `{{mã biến webhook}}` không: chưa thử. Kịch bản nháp có hiện trong danh sách chọn không: chưa rõ.
+- Gọi thử 1 số: flow tạm giới hạn 1 lượt rồi **tắt hoặc xoá ngay sau khi thử** (đã để sót một flow thử ở trạng thái xuất bản); hoặc phiên gọi ra thủ công Marketing → Gọi tự động → Tạo phiên → thành phần AI Callbot (gọi người thật: hỏi user trước).

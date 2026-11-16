@@ -52,12 +52,12 @@
  {
   "type": "PERIOD",
   "side": "runtime",
-  "status": "enum",
+  "status": "verified",
   "builder": "khong",
   "template": null,
-  "source": "references/node-catalog.md#1. Điều kiện bắt đầu",
-  "verified_on": null,
-  "ui_hint": "Dựng thử 1 lần trên UI → GET → extract_template"
+  "source": "references/node-trigger.md#1d. PERIOD",
+  "verified_on": "2026-11-16",
+  "ui_hint": "UI lưu lần đầu → save_draft_v2; đặt start_date/end_date=null"
  },
  {
   "type": "EXCEL",
@@ -188,6 +188,26 @@
   "source": "references/node-condition.md#2.6 MARKETING",
   "verified_on": "Cần xác nhận",
   "ui_hint": "Marketing → Gọi tự động"
+ },
+ {
+  "type": "MARKETING/AUTOCALL Voice_bot (AI Callbot)",
+  "side": "runtime",
+  "status": "verified",
+  "builder": "khong",
+  "template": null,
+  "source": "references/node-condition.md#2.6b MARKETING",
+  "verified_on": "2026-11-16",
+  "ui_hint": "Marketing → AI Callbot; target = <id kịch bản>_"
+ },
+ {
+  "type": "ASSIGN_ATTRIBUTE_STRUCTURE (thuộc tính động khách)",
+  "side": "action",
+  "status": "verified",
+  "builder": "khong",
+  "template": null,
+  "source": "references/node-action-contact.md#3.2b Cập nhật thuộc tính động",
+  "verified_on": "2026-11-16",
+  "ui_hint": "Dựng 1 nút trên UI → GET lấy bản editor UPDATE_INFO_CONTACT"
  },
  {
   "type": "MARKETING (SMS, ZNS, ZCC, Email, CALLBOT, Viber)",

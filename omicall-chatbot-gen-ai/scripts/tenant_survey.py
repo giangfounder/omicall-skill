@@ -47,9 +47,9 @@ ENDPOINTS = [
     {'key': 'attributes', 'service': 'tenant', 'method': 'GET', 'path': '/attribute/get_all?has_attr=true',
      'verified': True, 'nguon': 'omicall-omiflow/references/crm-config.md:56 (✔ đọc 10/2026: chỉ trả bộ thuộc tính Phiếu ghi)'},
     {'key': 'ticket_status_sets', 'service': 'ticket', 'method': 'GET', 'path': '/ticket/status-set/get-all',
-     'verified': False, 'nguon': 'omicall-omiflow/SKILL.md:43 — chưa ghi method và khuôn phản hồi'},
+     'verified': True, 'nguon': 'omicall-crm-config/references/crm-config.md "2. Phiếu ghi" (✔ đọc 11/2026: Bộ trạng thái phiếu)'},
     {'key': 'bots', 'service': 'chatbot', 'method': 'POST', 'path': '/omiai_assistant/get_list', 'body': {},
-     'verified': False, 'nguon': 'omicall-chatbot-gen-ai/references/api-reference.md:12 — body chưa ghi'},
+     'verified': False, 'nguon': 'omicall-chatbot-gen-ai/references/api-reference.md:12 — body chưa ghi (11/2026: body {} trả payload null, chưa kết luận)'},
     {'key': 'agents_api', 'service': 'agent', 'method': None, 'path': None,
      'verified': False, 'nguon': 'omicall-callbot-flow/references/playbook.md "Bước 0" ("agent-v1-stg …/get_all_agent/no_role" — thiếu tiền tố đường dẫn); '
                                  'dùng MCP list_agents'},

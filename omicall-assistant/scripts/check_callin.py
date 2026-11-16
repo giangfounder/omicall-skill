@@ -10,7 +10,10 @@ Kiểm:
   3. Kịch bản cuộc gọi (call_scripts, vd "Call in"): từng bước scripts[].action_id kiểm như phím (Callbot bản mới
      nhất, nhóm/menu còn tồn tại). Tenant gắn Callbot thẳng vào kịch bản cuộc gọi, không qua Tương tác phím, cũng bị
      STALE sau mỗi lần xuất bản.
-  4. Đầu số: default_script có trống không (trống = gọi vào chưa nghe menu) -> WARN.
+  4. Đầu số: default_script trống VÀ working_days không chọn kịch bản nào (gọi vào chưa nghe menu) -> WARN.
+     Đầu số chia theo giờ làm việc (working_days[].script, time_frames[].script) thì liệt kê các kịch bản đó;
+     kịch bản không còn tồn tại -> MISSING.
+  5. Bước Callbot có id không còn trong danh sách: dò bản mới nhất theo callbot_script_uuid -> STALE kèm id mới.
 Script CHỈ BÁO. Map lại phím/kịch bản cuộc gọi/đầu số là cổng `gan_so` của user (orchestration.md mục 2), không tự làm.
 tenant_context.json chỉ đọc (lấy tenant_id); khảo sát tổng đài ghi ra file riêng <scratch>/callin_survey.json.
 Exit 0: không STALE/MISSING (WARN vẫn 0). Exit 1: có STALE hoặc MISSING. Exit 2: lỗi chạy.
@@ -66,12 +69,18 @@ def evaluate(pbx, scripts):
     call_scripts = {c.get('_id'): c for c in pbx.get('call_scripts', [])}
     lines, bad = [], 0
 
-    def check(label, t, act):
+    def check(label, t, act, uuid=None):
         """Một đích (phím TTP hoặc bước của kịch bản cuộc gọi) -> (dòng báo cáo, 1 nếu STALE/MISSING)."""
         if t == 'Callbot':
             cur = by_id.get(act)
             if not cur:
-                return '  %s: MISSING  Callbot %s không có trong danh sách kịch bản' % (label, act), 1
+                # id cũ có thể không còn trong danh sách: bước của kịch bản cuộc gọi còn giữ uuid để dò bản mới nhất
+                same = [s for s in scripts if uuid and s.get('uuid') == uuid]
+                if not same:
+                    return '  %s: MISSING  Callbot %s không có trong danh sách kịch bản' % (label, act), 1
+                new = newest_of(scripts, same[0])
+                return '  %s: STALE    %s (không còn trong danh sách) -> map sang %s v%s (%s)' % (
+                    label, act, new.get('id'), new.get('version'), new.get('name')), 1
             new = newest_of(scripts, cur)
             if new.get('id') != act:
                 return '  %s: STALE    %s v%s -> map sang %s v%s (%s)' % (
@@ -96,12 +105,20 @@ def evaluate(pbx, scripts):
     for cs in call_scripts.values():
         lines.append('Kịch bản cuộc gọi "%s" (%s)' % (cs.get('name'), cs.get('_id')))
         for s in cs.get('scripts') or []:
-            line, b = check('bước %s' % s.get('order'), s.get('action_type'), s.get('action_id'))
+            line, b = check('bước %s' % s.get('order'), s.get('action_type'), s.get('action_id'),
+                            s.get('callbot_script_uuid'))
             lines.append(line)
             bad += b
     for h in pbx.get('hotlines', []):
         ds = h.get('default_script')
-        if not ds:
+        timed = {x.get('script') for w in h.get('working_days') or []
+                 for x in [w] + (w.get('time_frames') or []) if x.get('script')}
+        if not ds and timed:
+            note = 'chia theo giờ làm việc: %s' % ', '.join(
+                '%s ("%s")' % (i, call_scripts[i].get('name')) if i in call_scripts else '%s (MISSING)' % i
+                for i in sorted(timed))
+            bad += len(timed - set(call_scripts))
+        elif not ds:
             note = 'WARN chưa gắn kịch bản gọi vào (gọi vào chưa nghe menu)'
         elif ds in call_scripts:
             note = 'kịch bản %s ("%s")' % (ds, call_scripts[ds].get('name'))

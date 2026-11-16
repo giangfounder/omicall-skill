@@ -100,6 +100,13 @@ class TestManifest(unittest.TestCase):
         self.assertEqual(code, 1)
         self.assertIn("verify_report", out)
 
+    @unittest.skipUnless(os.name == "nt", "đường dẫn kiểu Git Bash chỉ có trên Windows")
+    def test_git_bash_report_path(self):
+        p = str(self.report).replace("\\", "/")
+        self.saved("flow_lead", "agentA", verify_report="/%s/%s" % (p[0].lower(), p[3:]))
+        code, out = self.run_m("check")
+        self.assertEqual(code, 0, out)
+
     def test_report_without_pass_and_order(self):
         bad = self.tmp / "bad.txt"
         bad.write_text("FAIL C2\nRESULT FAIL\n", encoding="utf-8")

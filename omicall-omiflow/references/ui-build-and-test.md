@@ -37,6 +37,10 @@ Mục lục: 1. Tạo flow và Thông tin Flow · 2. Trigger (kể cả Biểu m
 - Hộp "Thông tin về URL" khi lưu: tick "Tôi xác nhận đã lưu lại các URL" rồi Cập nhật. URL webhook → `api-reference.md` mục *Ba loại id và URL webhook*.
 - Ngăn của trigger API không có mục "Nút kế tiếp" → đổi nút đứng sau trigger phải sửa cạnh trên canvas (mục 5).
 
+### Xảy ra định kỳ (`PERIOD`) (✔ UI 16/11/2026)
+- 4 tab: Lặp lại (Hằng ngày/Tuần/Tháng + "Vào lúc") · Trước khi · Sau khi · Thời gian cụ thể. Trước/Sau khi: "+" chọn thuộc tính thời gian (khách, phiếu, đa kênh, voucher; trường Ngày tự tạo cũng hiện), nhập số + đơn vị "Ngày", bật "Đặt khung giờ kích hoạt" (từ–đến, ngày áp dụng T2..CN).
+- Không có ô đối tượng và không có điều kiện thuộc tính trong ngăn → thêm nút Điều kiện ngay sau. JSON và lưu ý: `node-trigger.md` 1d.
+
 ### Biểu mẫu (nguồn lead, trigger `FORM`)
 - **OMIFlow → Biểu mẫu → Thêm biểu mẫu** (quota riêng, ví dụ 0/50). Tab *Thông tin*: tên, hoạt động/ngưng, thời gian hiệu lực, ngôn ngữ, phân quyền; tuỳ chọn: thông báo khi có trả lời, chặn trả lời trùng, cho sửa sau khi gửi, **CAPTCHA (bật sẵn)**, mã bảo vệ, liên kết Google Sheet.
 - Tab *Thiết kế* → **Thêm trường dữ liệu** → ngăn "Thêm thuộc tính":
@@ -126,7 +130,7 @@ Mục duy nhất về kéo/nối cạnh; nơi khác trỏ về đây.
 - **Lưu lại / Cập nhật** chỉ lưu nháp, không ảnh hưởng phiên bản đang chạy. **Xuất bản** (user bấm) tạo phiên bản mới và áp dụng ngay. Hộp "Xác nhận" của Xuất bản hiện ngay ở lần bấm đầu khi không có ngăn nút nào đang mở.
 - Vỏ tối thiểu và lần "Lưu lại" đầu: `api-reference.md` mục *Vỏ flow tối thiểu và lần "Lưu lại" đầu*.
 - **Id flow, id phiên bản, URL webhook** sau mỗi lần lưu hoặc Xuất bản → `api-reference.md` mục *Ba loại id và URL webhook*. Trước khi báo cáo hoặc gắn: `flow_outline.py --list` rồi GET lại `kick_off.id`.
-- Agent bấm "Xuất bản" hoặc "Cập nhật" trong hộp URL có thể bị hệ thống phân quyền chặn → để user tự bấm.
+- Agent bấm "Xuất bản" hoặc "Cập nhật" trong hộp URL có thể bị hệ thống phân quyền chặn → để user tự bấm. **Lần "Lưu lại" đầu của flow mới** chỉ xong khi bấm "Cập nhật" trong hộp "Thông tin về URL" (tạo bản nháp, không xuất bản); `add_v2` qua API tạo luôn bản **đã xuất bản** nên không thay được. Lời giao việc phải gọi đúng tên: CẤM nút "Cập nhật" **lưu flow trong editor**, ĐƯỢC bấm "Cập nhật" **trong hộp "Thông tin về URL"**. Viết chung "không bấm Cập nhật" làm subagent bị chặn 2 lần (16/11/2026); lời làm rõ của agent điều phối không được bộ phân quyền tính là đồng ý của user → xin user cho phép nút này ngay ở bước duyệt kế hoạch.
 - **Xuất bản bằng giao diện (✔ 11/2026, user đã duyệt)**: mở `/flow/edit/<id nháp>` ở tab đang hiển thị (tab nền có thể đứng ở "0/N" không tải xong), chờ `.react-flow__node` đủ số nút **và** nút "Xuất bản" xuất hiện, bấm "Xuất bản" → hộp `role=dialog` có chữ "bạn có chắc muốn thực hiện" → bấm nút "Xác nhận" trong hộp. URL nhảy sang id phiên bản mới, nhãn "Phiên bản N" tăng. Không bấm "Cập nhật" trước đó (xem `api-reference.md` *Ghi chú vận hành*).
 - **Sau mỗi lần Xuất bản**: GET bản đang chạy (`flow_outline.py --list` → `--save <id>`) và đối chiếu ĐÚNG nội dung vừa sửa (model LLM, câu lệnh, mô tả phiếu), không chỉ đếm nút: đã gặp phiên/người khác xuất bản xen giữa (version nhảy 2 bậc) làm bản đang chạy mang nội dung cũ.
 

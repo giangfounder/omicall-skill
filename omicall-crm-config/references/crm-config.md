@@ -31,11 +31,18 @@ Danh sách bộ thuộc tính (vd. một bộ mặc định cho khách cá nhân
 - **Thêm thuộc tính** vào nhóm, **Thêm nhóm thuộc tính** mới; nhóm có thể tự thu gọn.
 - Kiểu trường khi thêm: **Hộp ký tự**, **Đoạn văn bản**, **Danh sách tùy chọn**, **Ô chọn (duy nhất)**, **Ô chọn (nhiều giá trị)**, **Thời gian** — chi tiết từng kiểu ở mục 3 (dùng chung cho Khách hàng và Phiếu ghi).
 
-Mỗi trường tạo ra một **mã ngẫu nhiên** (`field_code`) — dùng mã này trong OMIFlow (`ASSIGN_ATTRIBUTE_STRUCTURE`, điều kiện), Public API (`attribute_structure[]`, `otherDynamicUpdates`) và biến chatbot/callbot. Tra mã: thuộc tính **Phiếu ghi** bằng API `tenant-v1 …/attribute/get_all?has_attr=true` (mục 3); thuộc tính **Khách hàng** API này không trả → đọc trên giao diện hoặc thử `GET /api/v2/contact/layout/list` (Public API, chưa kiểm chứng).
+Mỗi trường tạo ra một **mã ngẫu nhiên** (`field_code`) — dùng mã này trong OMIFlow (`ASSIGN_ATTRIBUTE_STRUCTURE`, điều kiện), Public API (`attribute_structure[]`, `otherDynamicUpdates`) và biến chatbot/callbot. Tra mã: thuộc tính **Phiếu ghi** bằng API `tenant-v1 …/attribute/get_all?has_attr=true` (mục 3); thuộc tính **Khách hàng** API này không trả → đọc bằng `GET tenant-config-stg.omicrm.com/layout/contact_detail/{id bộ thuộc tính}` (✔ 16/11/2026: trả cấu trúc nhóm/zone, field_code, kiểu; không trả giá trị của khách).
+
+**Tạo thuộc tính khách hàng (✔ UI 16/11/2026, 12 trường)**: Cấu hình → Thuộc tính → Khách hàng → bộ "Cá nhân" → Cập nhật → "Thêm nhóm thuộc tính" / "Thêm thuộc tính" → … → Cập nhật → Xác nhận. API ghi đã kiểm chứng: chưa có (request lưu đi qua fetch khác domain).
+- **Không bật "Tiếp tục thêm mới"**: tên các trường bị dính vào nhau; tạo từng trường một.
+- Kiểu Ngày: chọn "Thời gian" → "Ngày (dd/MM/yyyy)" (`field_type:"date"`); có công tắc "Thuộc tính kỉ niệm" (nhiều khả năng là `is_memory`).
+- Lưu lại làm các trường mặc định nhóm Thông tin cá nhân đổi `order`; không ảnh hưởng field_code.
+- Thiết kế lịch hẹn cho flow nhắc trước N ngày: cần **một trường Ngày** để làm điều kiện "Xảy ra định kỳ" (trường chữ không dùng được) và có thể giữ **một trường chữ** dd/MM/yyyy cho bot đọc. Flow ghi trường Ngày bằng chuỗi `"dd/MM/yyyy"` (✔ 16/11, `omicall-omiflow` `node-action-contact.md` 3.2b).
+- MCP `create_contact`, `search_contacts` trả 500 trên tenant này (16/11) → tạo khách thử trên giao diện CRM.
 
 ## 2. Phiếu ghi (`/config/attribute/ticket/{tab}`)
 Tab: **Chủ đề**, **Trạng thái**, **Thuộc tính**, **Nhóm tiếp nhận**.
-- **Bộ trạng thái phiếu**: tối đa 14 thành phần theo thứ tự (≤30 ký tự), đánh dấu trạng thái hoàn thành/kết thúc.
+- **Bộ trạng thái phiếu**: tối đa 14 thành phần theo thứ tự (≤30 ký tự), đánh dấu trạng thái hoàn thành/kết thúc. Đọc bằng API (✔ đọc 11/2026, `tenant_survey.py` ghi vào `status_sets`): `GET ticket-v2-stg…/ticket/status-set/get-all` → danh sách `{_id, name, keyword, statuses[{index, sort_index, color, name, finish}], created_by, created_date, last_updated_date, is_deleted}`; `finish` (true/false) là cờ hoàn thành của từng trạng thái.
 - **Chủ đề** (danh mục phiếu) gom: bộ thuộc tính, bộ trạng thái, quyền mở lại phiếu (người tạo/tiếp nhận/liên quan/không liên quan), bắt buộc ghi chú khi chuyển trạng thái, khoá sửa khi hoàn thành, tự ẩn sau N ngày, chia sẻ phiếu (link công khai), trình tự chuyển trạng thái (số bậc, không chuyển ngược), **phân loại** (mỗi phân loại một cấu hình chọn sẵn), **độ ưu tiên**, **ngày hết hạn mặc định** theo độ ưu tiên + áp dụng **ca làm việc** + nhắc trước N phút (Thông báo và Email) + tự gia hạn khi mở lại, nhân viên tiếp nhận mặc định (tối đa 3) / liên quan, tự thêm người phụ trách khách / cuộc gọi làm liên quan.
 - Chi tiết phiếu ghi lại thời gian nằm ở từng trạng thái; thống kê phiếu có tỉ lệ hoàn thành trước hạn, đúng/chậm tiến độ, số lần mở lại.
 - **Hạn xử lý theo độ ưu tiên** (✔ UI 11/2026): ô "Thời hạn tối thiểu" của chủ đề mặc định 6 giờ, phải hạ xuống trước khi đặt được hạn ngắn hơn (ví dụ Cao 4 giờ). Giao diện gọi mức giữa là "Bình thường"; hạn nhập theo ngày/giờ bằng mũi tên đổi đơn vị.

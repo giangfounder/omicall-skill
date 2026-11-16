@@ -112,6 +112,9 @@ Mục duy nhất về `add_v2`/`update_v2`. **Cảnh báo**: `add_v2` không t�
 - Đường nhanh tạo flow phụ thuộc gọi từ bot: nhân bản flow có trigger Đa kênh, trigger chỉ giữ `social_channel`, bỏ nút `OMI_BOT_AI`, `dependent_config:{"is_dependent":true}` → add_v2 → `validate_flow.py --mode pre` PASS trước khi gửi.
 - Id nháp / id phiên bản / URL webhook sau khi sửa hoặc xuất bản: mục *Ba loại id và URL webhook*. Flow phụ thuộc được gọi qua bot chạy với đối tượng `SOCIAL_CONVERSATION` đúng hội thoại (log `target_value` = id hội thoại), `RE_DISTRIBUTE` SUCCESS (✔ 11/2026).
 
+## Xoá flow (✔ 16/11/2026, cách giao diện làm)
+`DELETE campaign-v1-stg…/omi_v2/campaign/delete/<id>` → `status_code` 9999, `payload:true` (còn `delete_many`/`delete_multiple`, chưa dùng). Trước khi xoá: GET và lưu JSON, đối chiếu đúng tên flow; chỉ xoá khi user duyệt rõ. `omi_api.py` chưa có hàm `delete`: gọi `omi_api._session().delete(omi_api.url('campaign', path), headers=omi_api._headers(domain))`. Flow thử gọi ra nên xoá ngay sau khi thử.
+
 ## Ba loại id và URL webhook (✔ GET 11/2026)
 Mục duy nhất về id flow và URL webhook; nơi khác chỉ trỏ về đây.
 - **Id bản nháp cố định**: `flow_outline.py --list` trả id này (`is_draft:true`), không đổi qua các lần xuất bản; GET id này ra nội dung mới nhất kèm `versions[]`. Dùng id này để lưu nháp (`omi_save.py flow`) và ghi manifest.

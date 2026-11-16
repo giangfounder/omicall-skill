@@ -99,6 +99,27 @@ class TestEvaluate(unittest.TestCase):
         self.assertIn("bước 2: MISSING  nhóm g9", text)
         self.assertIn("bước 3: MISSING", text)
 
+    def test_call_script_unlisted_id_resolved_by_uuid(self):
+        # id bản cũ không còn trong danh sách kịch bản: dò theo callbot_script_uuid -> STALE kèm id bản mới nhất
+        cs = call_in([("Callbot", "da-mat")])
+        cs[0]["scripts"][0]["callbot_script_uuid"] = "u1"
+        lines, bad = self.m.evaluate(pbx([], call_scripts=cs), SCRIPTS)
+        self.assertEqual(bad, 1)
+        self.assertIn("bước 0: STALE", "\n".join(lines))
+        self.assertIn("s1-new", "\n".join(lines))
+
+    def test_hotline_routed_by_working_days_is_not_warn(self):
+        day = {"weekday": 2, "type": "time_frame", "script": "cs1",
+               "time_frames": [{"from": "", "to": "", "script": "cs1"}, {"from": "08:00", "to": "17:00", "script": "cs9"}]}
+        p = pbx([], hotlines=[{"number": "<so>", "default_script": None, "working_days": [day]}],
+                call_scripts=call_in([("Ring_group", "g1")]))
+        lines, bad = self.m.evaluate(p, SCRIPTS)
+        text = "\n".join(lines)
+        self.assertNotIn("WARN chưa gắn", text)
+        self.assertIn('cs1 ("Call in")', text)
+        self.assertIn("cs9 (MISSING)", text)
+        self.assertEqual(bad, 1)
+
 
 class TestMainReadOnlyContext(unittest.TestCase):
     def setUp(self):
