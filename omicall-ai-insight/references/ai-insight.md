@@ -74,9 +74,9 @@ Cấu hình → AI → **Chat Insights** (`/config/ai/natural-language-analysis/
 
 ## 5. Đánh giá thủ công và API
 - Cấu hình → Doanh nghiệp → **Đánh giá** (`/config/company/evaluation/list`): Cần khảo sát.
-- [MCP] `list_eval_criteria`, `evaluate_call(transaction_id, agent_id, values[{criteria_id, point 0–10}], comment)`, `get_ticket_eval_criteria`, `create_ticket_evaluation` — **`list_eval_criteria` trả 404 trên tenant miền `.omicrm.com` (10/2026)**. Ghi điểm là dữ liệu thật → chỉ khi user đồng ý.
+- [MCP] `list_eval_criteria`, `evaluate_call(transaction_id, values[{criteria_id, point 1–10}], comment)` (tham số theo bản 1.4.0), `get_ticket_eval_criteria`, `create_ticket_evaluation` — **`list_eval_criteria` trả 404 trên tenant miền `.omicrm.com` (10/2026)**. Ghi điểm là dữ liệu thật → chỉ khi user đồng ý.
 - [API công khai] Voice Insights và Speech-to-Text chạy bất đồng bộ: đăng ký webhook `POST /api/ai/register_webhook_ai` (header apiKey, body `url`) → gửi file multipart (`file` .wav/.mp3/.m4a + `tracking_id`) tới `/api/ai/call_analyze` hoặc `/api/ai/speech_to_text` → kết quả đẩy về webhook, khớp bằng `tracking_id`; Voice Insights trả `criteria_classification_result` và `quality_evaluation_result` (STAFF/CUSTOMER). Dùng khi khách muốn phân tích file ghi âm từ hệ thống khác. Nguồn: https://api.omicall.com/omicall-api/ai-api/voice-insights-api , https://api.omicall.com/omicall-api/ai-api/speech-to-text-api
-- [MCP] `register_stt_webhook(url)` (chỉ HTTPS). apiKey và URL đích do user cung cấp; agent không tự lấy key.
+- [MCP] bản 1.4.0 đã bỏ `register_stt_webhook`: đăng ký webhook STT bằng API công khai ở dòng trên (chỉ HTTPS). apiKey và URL đích do user cung cấp; agent không tự lấy key.
 
 ## 5a. Đọc hiện trạng bằng API (✔ GET 10/2026, không mở giao diện)
 `python <thư mục skill>/scripts/config_survey.py --out <scratch>/tenant_context.json --domain <domain>` → khoá `ai_config`:

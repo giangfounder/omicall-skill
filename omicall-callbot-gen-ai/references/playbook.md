@@ -21,7 +21,7 @@ Không lưu mật khẩu vào file, `credentials.md` hay repo chia sẻ.
 ### Bước 0 — Login & API (giống mọi tenant)
 1. Đăng nhập theo mục *Input contract* (MCP OMI trước). `python "<thư mục skill>/scripts/omi_session.py"` in `tenant_id`, `domain`, thời hạn token (không in token).
 2. **Tra cứu một lần bằng MCP**, lưu `tenant_context.json` ở scratchpad (`tenant_survey.py` + MCP): `get_service_package` (module đã bật), `list_agents` + `list_extensions` (cho `TRANSFER_CALL`), `list_hotlines`. Không mở giao diện để tra những thứ này.
-3. Base API (MCP không có công cụ callbot): `https://chatbot-gateway-v1-stg.omicrm.com`, header lấy từ `omi_session.headers()`.
+3. Base API (MCP 1.4.0 chỉ xem kịch bản: `list_callbot_scripts`, `get_callbot_script`; dựng và lưu qua API): `https://chatbot-gateway-v1-stg.omicrm.com`, header lấy từ `omi_session.headers()`.
 4. Lấy script cũ làm baseline: `GET /callbot/script/get/{id}` (`script_outline.py --id <id> --save`) — **nguồn schema chuẩn** cho `nodes`/`org_nodes`/`connections` của TENANT ĐÓ: giữ voice/model, cấu trúc và mặc định của BEGIN, overwrite nội dung. `id`/`uuid`/`public_key` chỉ giữ khi sửa đúng script user chỉ định; dựng kịch bản mới từ baseline thì xoá chúng (Rules 4).
 
 ### Bước 1 — Hiểu nghiệp vụ (PHÂN TÍCH — do LLM)

@@ -14,7 +14,7 @@ Hỏi một lần: (1) **domain doanh nghiệp**; (2) đăng nhập: không hỏ
 - **MCP OMI + `omi_login.py` (chuẩn)**: `omi_preflight.py` báo `blocked` (hoặc `ensure` báo `need=setup`) → mở form đăng nhập cục bộ theo mục *Đăng nhập an toàn*. `route=login` (hết hạn, sai tenant) → agent tự chạy `omi_login.py login --domain <domain>`, không hỏi user. MCP có trong phiên thì `login_omicall_mcp` (+ `select_tenant`) cũng được. Token cho API lấy bằng `omi_session.py` (không in token). Chi tiết `references/omi-login.md` mục 2a. Script khác import `omi_session.headers()`.
 - **Tra một lần bằng MCP**, lưu `tenant_context.json` ở scratchpad: `get_service_package` (module `integrated`, `ai`), `get_all_channels` (oa_id, page_id, widget, bot_id để gắn bot), `list_agents` (nhân viên nhận chuyển hội thoại).
 - Dự phòng không có MCP: user tự đặt `OMI_TOKEN_FILE` (`omi_session.py` đọc), hoặc làm trên giao diện. Không đọc cookie bằng JS/CDP. Xem mục *Đăng nhập an toàn*.
-- Base API (MCP không có công cụ chatbot): `https://chatbot-gateway-v1-stg.omicrm.com` (`Authorization: Bearer <token>`).
+- Base API (MCP 1.4.0 chỉ xem bot: `list_omibots`, `get_omibot`; dựng và lưu qua API): `https://chatbot-gateway-v1-stg.omicrm.com` (`Authorization: Bearer <token>`).
 
 ## Bước 1 — Baseline schema
 - `POST /omiai_assistant/get/{bot_id}` body `{"_id": bot_id}` → cấu trúc bot hiện có (nếu cần tạo mới: dựng payload theo api-reference).

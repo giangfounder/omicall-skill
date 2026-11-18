@@ -1,13 +1,13 @@
 ---
 name: omicall-ai-insight
 description: >-
-  [v1.10.0] Cấu hình và khai thác các chức năng phân tích bằng trí tuệ nhân tạo của OMICall/OMICRM: AI Assistant (hướng dẫn tổng hợp, các trường thông tin trích xuất từ cuộc gọi, biến ca_summarize và ca_ai_assistant), Voice Insights, Chat Insights, đánh giá cuộc gọi và phiếu ghi, chuyển giọng nói thành văn bản. Là skill con của omicall-omiflow, có thể sử dụng độc lập.
+  [v1.11.0] Cấu hình và khai thác các chức năng phân tích bằng trí tuệ nhân tạo của OMICall/OMICRM: AI Assistant (hướng dẫn tổng hợp, các trường thông tin trích xuất từ cuộc gọi, biến ca_summarize và ca_ai_assistant), Voice Insights, Chat Insights, đánh giá cuộc gọi và phiếu ghi, chuyển giọng nói thành văn bản. Là skill con của omicall-omiflow, có thể sử dụng độc lập.
 ---
 
 # OMICall AI Insight — AI Assistant, Voice Insights, Chat Insights (mọi tenant)
 
 ## Bước bắt buộc: cập nhật skill
-Chạy `python "<thư mục skill>/scripts/self_update.py"` trước mọi bước khác (script tự bỏ qua nếu đã kiểm trong 1 giờ). Câu đầu tiên: `Đang dùng omicall-ai-insight v<phiên bản>` (dòng `SKILL_VERSION`; script lỗi thì dùng v1.10.0). Script báo **SKILL.md đã thay đổi** → đọc lại từ đĩa rồi làm tiếp. Không cập nhật được → báo lý do, làm tiếp bằng bản hiện có; không sửa, xoá hay commit trong thư mục skill.
+Chạy `python "<thư mục skill>/scripts/self_update.py"` trước mọi bước khác (script tự bỏ qua nếu đã kiểm trong 1 giờ). Câu đầu tiên: `Đang dùng omicall-ai-insight v<phiên bản>` (dòng `SKILL_VERSION`; script lỗi thì dùng v1.11.0). Script báo **SKILL.md đã thay đổi** → đọc lại từ đĩa rồi làm tiếp. Không cập nhật được → báo lý do, làm tiếp bằng bản hiện có; không sửa, xoá hay commit trong thư mục skill.
 **Chế độ subagent / hỏi đáp**: là subagent hoặc chỉ hỏi tính năng → bỏ qua: bước này, hỏi domain, khảo sát (`parallel-brief.md`).
 **Bước nào phải làm trên giao diện**: theo `references/ui-recipes.md` (URL thẳng bằng id, chờ bằng `find`, bấm theo ref, kiểm bằng JS hoặc GET; ≤ 1 ảnh mỗi màn hình).
 
@@ -50,7 +50,7 @@ Mắt xích thuộc skill khác (xem `references/system-model.md`) thì không t
 2. **Không bịa**: Voice Insights, Chat Insights chưa có dữ liệu khảo sát → chỉ khảo sát (xem, ít lần tải trang) và ghi "Cần khảo sát"/"Cần xác nhận"; không mô tả tính năng chưa thấy.
 3. **Khớp với CRM**: tên trường và tập giá trị trong hướng dẫn phải khớp thuộc tính đích, nếu không flow rẽ nhánh sẽ trượt.
 4. **Kết quả AI ghi trễ**: flow đọc `{{ca_ai_assistant}}` phải có Trì hoãn trước.
-5. **Đánh giá, STT là dữ liệu/cấu hình thật**: `evaluate_call`, `create_ticket_evaluation`, `register_stt_webhook` chỉ khi user đồng ý.
+5. **Đánh giá, STT là dữ liệu/cấu hình thật**: `evaluate_call`, `create_ticket_evaluation`, đăng ký webhook STT (API công khai) chỉ khi user đồng ý.
 
 ## Quan hệ với skill khác
 - `omicall-omiflow`: flow dùng `{{ca_summarize}}`, `{{ca_ai_assistant}}` (mẫu B5; `omicall-omiflow/references/ui-build-and-test.md` mục *AI điền CRM sau cuộc gọi*), điều kiện nhóm AI Assistant / Voice Insights / Chat Insights.

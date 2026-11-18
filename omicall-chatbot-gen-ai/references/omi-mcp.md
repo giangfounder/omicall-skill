@@ -1,7 +1,7 @@
 # MCP OMI (`omicall-mcp`) — cài đặt, đăng nhập, bản đồ công cụ, tiết kiệm token
 
 ## Đọc nhanh
-- **Đã có MCP** (gọi được `get_version`, bản 1.3.x trở lên): `login_omicall_mcp` → `select_tenant` (nếu nhiều tenant) → `python <thư mục skill>/scripts/omi_preflight.py --domain <domain>` (đường dẫn tuyệt đối). `route=api` thì đi đường API.
+- **Đã có MCP** (gọi được `get_version`, bản 1.4.x trở lên): `login_omicall_mcp` → `select_tenant` (nếu nhiều tenant) → `python <thư mục skill>/scripts/omi_preflight.py --domain <domain>` (đường dẫn tuyệt đối). `route=api` thì đi đường API.
 - **Chưa có MCP / chưa đăng nhập** (`route=blocked`): agent chạy nền `python <thư mục skill>/scripts/omi_login.py setup --ui --no-browser`, lấy địa chỉ ở dòng đầu kết quả rồi mở **form đăng nhập cục bộ** (domain, email, mật khẩu) ngay trong khung trình duyệt của agent, đưa ra trước mắt user (không có trình duyệt thì bỏ `--no-browser`). Sau khi hiện form, agent không đọc trang, không chụp ảnh. User điền một lần; mật khẩu đi thẳng từ form vào script (không qua hội thoại, agent không thấy), script cất vào kho bí mật hệ điều hành, tự đăng nhập MCP OMI, đăng ký server `OMICall-<domain>` không chứa mật khẩu; agent đọc dòng `OMI_LOGIN_RESULT=` rồi đi đường API ngay trong phiên. Dự phòng: `setup` không `--ui` trong terminal của user (ô nhập ẩn). Các bước: `omi-login.md` mục 2a.
 - **Token hết hạn / sai tenant** (`route=login`) hoặc **script/API gặp 401**: agent TỰ chạy `omi_login.py login --domain <domain> [--tenant-id <id>]`, không hỏi user, rồi chạy lại `omi_preflight.py`.
 - **Công cụ MCP báo hết phiên**: gọi lại `login_omicall_mcp`. Vẫn hỏng thì theo bảng quyết định token ngay dưới.
@@ -30,7 +30,7 @@ Mỗi ảnh chụp tốn vài giây và nhiều token; giao diện dùng chung v
 1. **Tri thức đã ghi trong skill** (reference của skill đang dùng và skill con): màn hình nào, trường nào, lựa chọn nào — không mở lại để "xem cho chắc".
 2. **`tenant_context.json` ở scratch** của phiên (đã khảo sát thì không khảo sát lại).
 3. **Script đọc bằng API**: `tenant_survey.py` (thuộc tính phiếu, trạng thái, phân bổ, artefact) và `config_survey.py` (đầu số + giờ làm việc, kịch bản cuộc gọi, Tương tác phím, nhóm nội bộ/bên ngoài, lời chào, mục đích cuộc gọi, AI Assistant, tiêu chí Chat Insights, tiêu chí đánh giá). Một lệnh thay cho hàng chục lần mở trang. Chạy lại: thêm `--max-age <phút> --domain <domain>` để bỏ qua khi file còn mới và đúng domain (0 request).
-4. **MCP OMI** (`get_service_package`, `list_agents`, `search_*`…). Công cụ tổng đài của MCP có thể trả 404 → dùng bậc 3.
+4. **MCP OMI** (`get_service_package`, `list_agents`, `search_*`…). Mọi công cụ trả `http_500` → `login_omicall_mcp` rồi thử lại; còn lỗi → bậc 3.
 5. **Giao diện bằng chữ**: `get_page_text` / `find` / `read_page` sau khi trang tải xong (chờ bằng `find` mốc chữ: rỗng thì `wait` 1 giây rồi tìm lại, tối đa 3 lần; trang trống là chưa tải, không phải lỗi). Đọc trạng thái form/ngăn/canvas: JS chỉ đọc ở `ui-recipes.md` mục 2.
 6. **Ảnh chụp** chỉ khi bậc 5 không thấy: danh sách chọn đang mở, canvas, bố cục. Chụp vùng nhỏ (`zoom`) hoặc `scale` 0.5.
 

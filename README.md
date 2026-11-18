@@ -79,7 +79,7 @@ Cách chuẩn là `omi_login.py setup --ui` (Bước 4), tự đăng ký cho Cla
 
 Khi bắt đầu một tác vụ OMI, agent phải tự kiểm tra MCP OMI (`get_version`, `omi_preflight.py`). Nếu chưa có, agent tự làm mọi phần không cần bí mật (nhận diện client, kiểm `node`/`npx`, xác nhận cú pháp, soạn lệnh, kiểm cấu hình sau khi cài) và đưa user đúng MỘT việc: tự chạy lệnh cài đã soạn sẵn (mật khẩu để placeholder) rồi mở phiên mới. Agent không cầm mật khẩu dạng rõ, không tự gõ mật khẩu vào lệnh, form hay API đăng nhập.
 
-1. Kiểm tra các công cụ MCP đang có. Nếu gọi được `get_version` và phiên bản trả về là `1.3.x` hoặc mới hơn thì dùng luôn.
+1. Kiểm tra các công cụ MCP đang có. Nếu gọi được `get_version` và phiên bản trả về là `1.4.x` hoặc mới hơn thì dùng luôn; bản cũ hơn thì xoá cache npx (`omi-mcp.md` mục 6) rồi mở phiên mới.
 2. Lấy `domain` và email từ yêu cầu hiện tại. Mật khẩu không đi qua agent: user tự điền vào form `setup --ui` (hoặc ô nhập ẩn của `setup` trong terminal), script cất vào kho bí mật của hệ điều hành. Không in lại mật khẩu/token và không ghi chúng vào repo hay file tạm. Thiếu domain hoặc email thì hỏi gộp đúng một lần.
 3. Kiểm tra `node` và `npx`. Dùng `npx -y omicall-mcp` để gói được tải tự động khi MCP khởi chạy; không cần cài npm toàn cục.
 4. Tự nhận diện **agent/client đang thực thi** qua danh mục công cụ, tiến trình hoặc CLI có trên máy. Skill không được mặc định chỉ có Codex hay Claude. Chỉ cấu hình client đang chạy ở phạm vi người dùng; mỗi môi trường khác khi dùng skill cũng phải tự thực hiện quy trình này. Đặt tên server theo domain (`OMICall-<domain>`) để nhiều tenant không ghi đè nhau.

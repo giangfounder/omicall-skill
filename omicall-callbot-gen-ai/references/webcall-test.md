@@ -17,7 +17,7 @@ Hai chế độ của `scripts/webcall_test.py`:
 | `sdkVersion` | `--sdk-version` | Phiên bản file `https://cdn.omicrm.com/sdk/web/<ver>/core.min.js` | Mặc định `3.0.35` (đã chạy thử). Danh sách phiên bản: `https://api.omicall.com/sdk/web-sdk/v3-changelog`. |
 | `botName` | `--bot-name` | Tên hiện trên trang và trong phụ đề | Tuỳ ý, ví dụ tên kịch bản. |
 | (plan) | `--plan` | Các câu khách cho chế độ `auto` | Tự soạn từ ca kiểm thử của kịch bản, mục 3. |
-| (giọng) | `--voice` | Giọng đọc câu khách (MCP `text_to_speech` / `generate_tts_audio` của OMI trả 404 khi thử 2026-10-28 → dùng edge-tts) | edge-tts: `vi-VN-NamMinhNeural` (nam, mặc định) hoặc `vi-VN-HoaiMyNeural` (nữ). `plan.json` có trường `voice` thì dùng trường đó. |
+| (giọng) | `--voice` | Giọng đọc câu khách (MCP `text_to_speech` của OMI trả 404 khi thử 2026-10-28, trước bản 1.4.0; bản 1.4.0 chưa thử lại vì có tính phí → dùng edge-tts) | edge-tts: `vi-VN-NamMinhNeural` (nam, mặc định) hoặc `vi-VN-HoaiMyNeural` (nữ). `plan.json` có trường `voice` thì dùng trường đó. |
 
 Script ghi các trường trên vào `config.json` trong thư mục chạy (ở `OMI_SCRATCH`), trang đọc rồi script **xoá file ngay khi đăng ký xong**. Thiếu trường bắt buộc → trang báo "Thiếu cấu hình" kèm tên trường.
 

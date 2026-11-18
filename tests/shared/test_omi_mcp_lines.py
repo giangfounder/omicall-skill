@@ -60,6 +60,34 @@ CHANGED = {
           ["**Không đổ JSON lớn vào hội thoại**", "flow_outline.py", "script_outline.py", "bot_outline.py",
            "hoặc chỉ in trường cần thiết"]),
     126: ("§5 chuyển xuống Phụ lục B (nay ở omi-mcp-tools.md)", ["Phụ lục B — Danh mục công cụ theo nhóm và module cần bật"]),
+    # omicall-mcp 1.4.0 (18/11/2026): 101 công cụ, bỏ nhóm công cụ tạo/chuyển/webhook, thêm aiconfig và omiflow
+    5: ("bản 1.4.0, 101 công cụ; MCP đọc được bot/kịch bản/flow nhưng vẫn không dựng",
+        ["bản 1.4.0", "**101 công cụ trong 11 nhóm**", "phần dựng vẫn gọi API `chatbot-gateway` hoặc `campaign-v1`"]),
+    13: ("bản tối thiểu 1.4.x", ["phiên bản trả về là `1.4.x` hoặc mới hơn thì dùng luôn"]),
+    75: ("1.4.0: list_agents gọn, không còn contact_id (✔ 18/11/2026)", ["`agent_id` ở `get_agent`", "| `list_agents`, `get_agent` |"]),
+    87: ("tham số theo schema 1.4.0", ["`update_hotline(hotline_id, inbound_script_id)`", "**chỉ khi user đồng ý**"]),
+    89: ("nội dung get_call_detail theo mô tả công cụ 1.4.0", ["`search_calls`, `get_call_detail(transaction_id)`"]),
+    90: ("giới hạn theo schema 1.4.0, có tính phí", ["`text_to_speech(text ≤300 ký tự, speaker_id, speed 0.8–1.2)`"]),
+    107: ("1.4.0: list_agents không còn contact_id", ["| Người nhận `PUSH_NOTIFICATION`, `ASSIGN_TICKET_REPORTER` |", "`get_agent`"]),
+    101: ("1.4.0 bỏ transfer_conversation", ["`set_conversation_bot`", "flow chuyển nhân viên"]),
+    114: ("mục 2 cũ nay là bảng quyết định token ở omi-mcp.md", ["### Chưa có trong MCP → gọi API trực tiếp bằng token"]),
+    115: ("1.4.0 đọc được bot/kịch bản/flow; dựng và lưu vẫn qua API",
+          ["`chatbot-gateway …/callbot/script/*`", "`campaign-v1 …/omi_v2/campaign/*`", "`tenant-v1 …/attribute/get_all`",
+           "`…/sale_allocation/search`", "template ZNS"]),
+    131: ("thêm get_version và khoá toolset", ["| Auth · `auth` (luôn nạp) | — |", "`get_version`"]),
+    132: ("1.4.0 bỏ create_group/ivr/script, sửa thành viên nhóm, generate_tts_audio",
+          ["| Tổng đài (Call Center) · `callcenter` | `switchboard` |", "`list_groups`/`update_group`/`delete_group`",
+           "`list_audio`/`delete_audio`"]),
+    133: ("thêm khoá toolset", ["| Gọi tự động · `autocall` | `switchboard` | `autocall_by_phone`"]),
+    134: ("1.4.0 bỏ transfer_tickets", ["| Phiếu ghi · `ticket` | `ticket` |", "`ticket_statistics`"]),
+    135: ("1.4.0 bỏ transfer_conversation", ["| Đa kênh · `multichannel` |", "`mark_conversation_read`"]),
+    136: ("thêm khoá toolset", ["| Nhân viên, thông báo · `agent` | — | `list_agents`"]),
+    137: ("1.4.0 bỏ register_webhook/destroy_webhook", ["| Webhook · `webhook` | — | `list_webhooks`"]),
+    138: ("1.4.0 bỏ register_stt_webhook", ["| AI · `ai` | `ai` | `text_to_speech` (4 giọng tiếng Việt"]),
+    139: ("module customer; thêm update/count/filter options",
+          ["| Khách hàng · `contact` | `customer` |", "`count_contacts`", "`update_contact`"]),
+    141: ("công cụ ghi theo 1.4.0 (không còn tạo IVR/nhóm/webhook; thêm bật/tắt, tạm dừng)",
+          ["**Công cụ ghi**", "chỉ chạy khi user đồng ý từng việc", "vẫn gom một lần mỗi phiên (mục 4)"]),
 }
 
 # dòng của BASE2 (163ff72) được phép đổi khi tách lõi -> (lý do, cụm phải còn trong bản mới)
@@ -78,6 +106,11 @@ CHANGED2 = {
     61: ("node-catalog.md mục 6 tách thành node-editor-get.md", ["2. **Dựng ít nút nhất có thể trên UI**",
                                                                   "`omicall-omiflow/references/node-editor-get.md`"]),
     67: ("trỏ mục 2a, 2 sang omi-login.md", ["(`omi-login.md` mục 2a)", "(`omi-login.md` mục 2)"]),
+    4: ("bản tối thiểu 1.4.x (omicall-mcp 1.4.0, 18/11/2026)", ["bản 1.4.x trở lên", "`route=api` thì đi đường API."]),
+    49: ("1.4.0 sửa lỗi 404 của công cụ tổng đài; mọi công cụ trả http_500 thì đăng nhập lại (✔ 18/11/2026)",
+         ["4. **MCP OMI** (`get_service_package`, `list_agents`, `search_*`…).", "`http_500` → `login_omicall_mcp` rồi thử lại"]),
+    39: ("1.4.0: list_agents gọn, không còn tenant_id → kiểm tenant bằng login_omicall_mcp hoặc get_agent",
+         ["6. **Tên server MCP không bảo đảm đúng tenant**", "`Tenant: <id>`", "`tenant_id` trong `get_agent`"]),
 }
 
 
