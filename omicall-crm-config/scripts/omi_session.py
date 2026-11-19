@@ -25,6 +25,7 @@ In JSON {tenant_id, domain, agent_id, con_han_giay, nguon}; exit 0 khi token dù
 import argparse
 import base64
 import binascii
+import glob
 import json
 import os
 import re
@@ -64,7 +65,13 @@ def _session_path(home=None):
     """session.json mà omicall-mcp đọc/ghi khi chạy với home này (mặc định: home của phiên hiện tại)."""
     if home is None:
         home = session_home() or os.path.expanduser('~')
-    return os.path.join(home, MCP_DIR_NAME, 'session.json')
+    path = os.path.join(home, MCP_DIR_NAME, 'session.json')
+    if not os.path.exists(path):
+        # omicall-mcp >= 1.4.1 ghi session-<bindKey>.json thay cho session.json: lấy file mới nhất
+        alts = glob.glob(os.path.join(home, MCP_DIR_NAME, 'session-*.json'))
+        if alts:
+            return max(alts, key=os.path.getmtime)
+    return path
 
 
 def _find(obj):
