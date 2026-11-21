@@ -1,6 +1,10 @@
 """Cập nhật TOÀN BỘ bộ skill OMI (cả repo omicall-skill) trước khi dùng — gọi một skill là cập nhật mọi skill.
 
-  python <thư mục skill>/scripts/self_update.py [--force] [--link] [--subagent]
+  python <thư mục skill>/scripts/self_update.py [--force] [--link] [--subagent] [--skill omicall-<tên> ...]
+
+- `--skill <tên>` (lặp được): skill sắp được gọi (omicall-assistant giao việc cho skill con). Cùng lần kéo repo và mốc
+  1 giờ như trên (một lần pull cập nhật mọi skill), thêm: báo đọc lại SKILL.md của skill đó nếu vừa đổi, bản chép tay
+  thì so VERSION của skill đó với GitHub, và in `CALLED_SKILL=<tên> <phiên bản>` (kể cả khi bỏ qua) để ghi vào lời giao việc.
 
 - Skill nằm trong bản git clone (cài theo README bằng junction/symlink): `git pull --ff-only` cả repo, báo mọi skill
   vừa đổi phiên bản và nhắc ĐỌC LẠI SKILL.md nếu file của skill đang gọi vừa đổi (nội dung agent đã nạp là bản cũ).
@@ -20,6 +24,7 @@ Không sửa nội dung, không commit trong repo skill. Dòng cuối luôn là 
 """
 import argparse
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -67,9 +72,9 @@ def as_tuple(v):
         return (0,)
 
 
-def remote_version():
+def remote_version(name=None):
     try:
-        with urllib.request.urlopen(f"{RAW}/{NAME}/VERSION", timeout=8) as r:
+        with urllib.request.urlopen(f"{RAW}/{name or NAME}/VERSION", timeout=8) as r:
             return r.read().decode("utf-8").strip()
     except Exception:
         return None
@@ -236,7 +241,7 @@ def pull(top):
     return code, err or out, before, repo_skills(top), changed
 
 
-def report(before, after, changed, top):
+def report(before, after, changed, top, called=()):
     lines = version_changes(before, after)
     if lines:
         print("ĐÃ CẬP NHẬT bộ skill OMI:")
@@ -246,8 +251,9 @@ def report(before, after, changed, top):
         print(f"Đã kéo bản mới của repo ({len(changed)} file đổi, không skill nào đổi phiên bản).")
     else:
         print(f"Bộ skill OMI đang ở bản mới nhất ({NAME} {after.get(NAME, version())}).")
-    if f"{NAME}/SKILL.md" in changed:
-        print(f"SKILL.md ĐÃ THAY ĐỔI: đọc lại {SKILL_DIR / 'SKILL.md'} từ đĩa trước khi làm tiếp (bản đã nạp là bản cũ).")
+    for n in [NAME, *called]:
+        if f"{n}/SKILL.md" in changed:
+            print(f"SKILL.md ĐÃ THAY ĐỔI ({n}): đọc lại {Path(top) / n / 'SKILL.md'} từ đĩa trước khi làm tiếp (bản đã nạp là bản cũ).")
     mine = [c for c in changed if c.startswith(NAME + "/") and ("/references/" in c or "/scripts/" in c)]
     if mine:
         print("File tham chiếu/script của skill này đổi: " + ", ".join(mine))
@@ -267,14 +273,14 @@ def pending_links(top, dirs):
     return [str(Path(d) / n) for d in dirs for n in names if not ((Path(d) / n).exists() or (Path(d) / n).is_symlink())]
 
 
-def update_clone(top, link=False):
+def update_clone(top, link=False, called=()):
     code, msg, before, after, changed = pull(top)
     if code != 0:
         print(f"KHÔNG CẬP NHẬT ĐƯỢC bộ skill OMI (đang dùng {NAME} {version()}): {msg}")
         print("Báo user lý do (mất mạng, sửa đổi chưa commit trong repo skill, nhánh lệch...) rồi làm tiếp với bản hiện có."
               " Không tự sửa/xoá/commit trong thư mục skill.")
     else:
-        report(before, after, changed, top)
+        report(before, after, changed, top, called)
     # skill còn thiếu (kể cả khi pull lỗi: repo có thể đã có skill mới từ lần pull trước)
     dirs = agent_dirs(top)
     if link:
@@ -338,37 +344,69 @@ def report_remote_only():
     return remote is not None
 
 
+def report_called_remote(called):
+    """Bản chép tay: so VERSION của từng skill sắp gọi với GitHub."""
+    for n in called:
+        old, remote = read_version(SKILL_DIR.parent / n), remote_version(n)
+        if old and remote and as_tuple(remote) > as_tuple(old):
+            print(f"CÓ BẢN MỚI {n} {remote} (đang dùng {old}): báo user; đồng ý thì chạy lại với --force --link.")
+
+
+def print_called(called):
+    """Dòng CALLED_SKILL cho skill sắp gọi (ở thư mục cạnh skill này: repo clone hoặc thư mục skill của agent)."""
+    for n in called:
+        v = read_version(SKILL_DIR.parent / n)
+        if v:
+            print(f"CALLED_SKILL={n} {v}")
+        else:
+            print(f"CHƯA CÀI {n} cạnh {SKILL_DIR.parent}: hỏi user, đồng ý thì chạy lại với --force --link rồi mở phiên mới.")
+
+
+def skill_name(s):
+    # tên đi vào đường dẫn và URL GitHub: chỉ nhận omicall-<chữ thường, số, gạch ngang>
+    if not re.fullmatch(r"omicall-[a-z0-9-]+", s):
+        raise argparse.ArgumentTypeError(f"tên skill không hợp lệ: {s!r} (cần dạng omicall-<tên>)")
+    return s
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--force", action="store_true", help="kiểm tra lại dù vừa kiểm trong 1 giờ")
     ap.add_argument("--link", action="store_true",
                     help="user đã đồng ý: tạo junction/symlink cho skill mới, thay bản chép tay bằng bản clone")
     ap.add_argument("--subagent", action="store_true", help="đang chạy trong subagent: bỏ qua, không git/mạng")
+    ap.add_argument("--skill", action="append", default=[], type=skill_name, metavar="omicall-<tên>",
+                    help="skill sắp được gọi (lặp được): báo đọc lại SKILL.md, so phiên bản, in CALLED_SKILL")
     a = ap.parse_args(argv)  # --help -> in hướng dẫn, exit 0; tham số lạ -> exit 2 (không gọi git hay mạng)
+    called = [n for n in dict.fromkeys(a.skill) if n != NAME]
     if not (SKILL_DIR / "VERSION").is_file():
         print(f"DỪNG: {SKILL_DIR} không có file VERSION — không phải thư mục skill (ví dụ shared/ là nguồn dùng chung). "
               "Chạy bản trong thư mục skill: <thư mục skill>/scripts/self_update.py")
         return 2
     if a.subagent or os.environ.get("OMI_SUBAGENT") == "1":
         print("Chế độ subagent: bỏ qua cập nhật skill (không git, không mạng).")
+        print_called(called)
         print(f"SKILL_VERSION={NAME} {version()}")
         return 0
     if not a.force and recently_checked():
         print(f"Bộ skill OMI đã kiểm tra cập nhật lúc {time.strftime('%H:%M', time.localtime(STAMP.stat().st_mtime))} (dưới 1 giờ) — bỏ qua.")
+        print_called(called)
         print(f"SKILL_VERSION={NAME} {version()}")
         return
     mark_checked()  # ghi mốc TRƯỚC khi pull: phiên khác nạp skill trong lúc này không pull chồng; lỗi cũng không thử lại trong 1 giờ
     code, top, _ = run(["git", "-C", str(SKILL_DIR), "rev-parse", "--show-toplevel"], GIT_LOCAL)
     if code == 0 and top:
-        update_clone(Path(top), link=a.link)
+        update_clone(Path(top), link=a.link, called=called)
     else:
         ok = adopt_copy() if a.link else None
         if ok is None:
             report_remote_only()
+            report_called_remote(called)
             if not a.link:
                 print("Skill đang là bản chép tay. Muốn tự cập nhật về sau: hỏi user, đồng ý thì chạy lại với "
                       "--force --link (clone repo về ~/omicall-skill, chuyển bản chép tay sang backup, tạo đường dẫn).")
     final = read_version(SKILL_DIR) or read_version(SKILL_DIR.parent / NAME) or "chưa có"
+    print_called(called)
     print(f"SKILL_VERSION={NAME} {final}")
 
 

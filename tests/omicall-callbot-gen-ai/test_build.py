@@ -308,6 +308,31 @@ class TestBuild(unittest.TestCase):
         code, out, err = self.build(self.write("s.json", s), "--new", "--out", self.p("o.json"))
         self.assertEqual(code, 0, out + err)
 
+    def _remember(self, spec):
+        code, out, err = self.build(self.write("s.json", spec), "--new", "--out", self.p("o.json"))
+        self.assertEqual(code, 0, out + err)
+        cv = self.load_out()["nodes"][0]["ai_agent_config"]["collect_variables"]
+        return {v["variable_code"]: v["remember"] for v in cv}, out
+
+    def test_remember_on_for_var_in_two_intents(self):
+        s = self.spec()
+        s["intents"].insert(2, {"name": "Khách báo lỗi", "kind": "collect", "collect_vars": ["var_ten"], "classify_labels": ["Báo lỗi"], "content": "Khách báo lỗi khi dùng dịch vụ, ví dụ: bên anh không gọi ra được."})
+        rem, out = self._remember(s)
+        self.assertEqual(rem, {"var_ten": True, "var_nhu_cau": False})
+        self.assertNotRegex(out, r"(?m)^WARN X16 ")
+
+    def test_remember_off_for_single_intent_vars(self):
+        rem, _ = self._remember(self.spec())
+        self.assertEqual(rem, {"var_ten": False, "var_nhu_cau": False})
+
+    def test_spec_remember_false_overrides_and_warns(self):
+        s = self.spec()
+        s["intents"].insert(2, {"name": "Khách báo lỗi", "kind": "collect", "collect_vars": ["var_ten"], "classify_labels": ["Báo lỗi"], "content": "Khách báo lỗi khi dùng dịch vụ, ví dụ: bên anh không gọi ra được."})
+        next(v for v in s["variables"] if v["code"] == "var_ten")["remember"] = False
+        rem, out = self._remember(s)
+        self.assertFalse(rem["var_ten"])
+        self.assertRegex(out, r"(?m)^WARN X16 ")
+
     def test_confirm_bad_reference_exit_2(self):
         s = self.spec()
         next(it for it in s["intents"] if it["kind"] == "confirm")["confirms"] = "khong_co"

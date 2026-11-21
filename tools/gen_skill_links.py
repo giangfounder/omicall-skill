@@ -60,7 +60,9 @@ UPDATE = ('Chạy `python "<thư mục skill>/scripts/self_update.py"` trước 
 UPDATE_ENTRY = ('Chạy `python "<thư mục skill>/scripts/self_update.py"` trước mọi bước khác (tự bỏ qua nếu đã kiểm '
                 'trong 1 giờ). Câu đầu: '
                 '`Đang dùng {name} v<phiên bản>` (dòng `SKILL_VERSION`; lỗi thì dùng v{ver}). Không cập nhật được '
-                '→ báo lý do, làm tiếp.')
+                '→ báo lý do, làm tiếp. **Trước khi gọi hoặc giao skill con** (gọi thẳng hay giao subagent): chạy lại với '
+                '`--skill <tên>` cho từng skill (mỗi đợt một lần, trước khi giao); có dòng SKILL.md ĐÃ THAY ĐỔI hay '
+                'CÓ BẢN MỚI thì làm theo, ghi `CALLED_SKILL` vào lời giao việc.')
 CONVERSATION = """Làm theo `references/conversation.md`, chung cho mọi skill OMI:
 - Mục 1: hỏi domain → `python "<thư mục skill>/scripts/omi_login.py" ensure --domain <domain>` → `"need":"setup"` thì mở form cục bộ `omi_login.py setup --ui` trong agent (cách duy nhất; dự phòng: `references/omi-login.md` mục 2a). Không nhận mật khẩu qua chat, không gõ hay đọc form.
 - Mục 2–6: khung 5 bước, cách hỏi lại, mẫu câu, lời thường."""

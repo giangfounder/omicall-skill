@@ -27,6 +27,7 @@ Mã X<n> = mục bổ sung:
       hệ thống chuyển nút ngay khi đủ biến → gửi dữ liệu/cúp máy trước khi khách xác nhận — WARN
       (cách đúng: ý định thu biến để trống nút kế tiếp → ý định "khách xác nhận" → phân loại/API; agent-config-guide mục 4)
   X14 (build_smartagent.py in ra, không phải validator) intent kind collect không có ý định confirm — WARN
+  X16 biến thu ở >= 2 ý định mà collect_variables[].remember chưa bật (Ghi nhớ thông tin) → bot hỏi lại — WARN
   X15 TRANSFER_CALL: runtime data.actionType khớp editor (datas.actionType, datas.transferType, orgDatas[].datas.transferType,
       trường nào có thì so); typeOptions[actionType] có option thì data.ids phải nằm trong value của các option đó.
       Có --context: Extension mà id nằm trong pbx.internal_groups/outer_groups, hoặc Ring_group/Outer_group mà id nằm trong
@@ -515,6 +516,25 @@ def check(sc, mode, sent=None, context=None):
             x13 = False
     if x13:
         r.ok("X13", "không có ý định thu biến nối thẳng SEND_WEBHOOK hay END_CALL")
+
+    # X16 biến thu ở >= 2 intent nên bật Ghi nhớ thông tin (remember) để bot không hỏi lại
+    uses = {}
+    for c in sc.rt_intents:
+        for st in c.get("action_steps") or []:
+            if isinstance(st, dict) and st.get("action") == "collect_variables":
+                for code in st.get("variables_code") or []:
+                    uses.setdefault(code, set()).add(c.get("name") or c.get("id"))
+    cvs = [v for v in (((sc.begin or {}).get("ai_agent_config") or {}).get("collect_variables") or []) if isinstance(v, dict)]
+    x16 = True
+    for j, v in enumerate(cvs):
+        its = uses.get(v.get("variable_code")) or set()
+        if len(its) >= 2 and not v.get("remember"):
+            r.add("WARN", "X16", "biến '%s' thu ở %d ý định (%s) nhưng chưa bật Ghi nhớ thông tin: bot sẽ hỏi lại khi khách chuyển ý định — "
+                  "bật remember (trừ biến theo từng lần như mô tả lỗi, ngày hẹn)" % (v.get("variable_name") or v.get("variable_code"), len(its), ", ".join(sorted(its))),
+                  "nodes[%d].ai_agent_config.collect_variables[%d].remember" % (sc.begin_idx, j))
+            x16 = False
+    if x16:
+        r.ok("X16", "biến dùng ở nhiều ý định đều bật Ghi nhớ thông tin")
 
     # X8
     x8 = True

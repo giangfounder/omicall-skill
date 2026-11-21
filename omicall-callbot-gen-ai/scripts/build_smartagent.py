@@ -357,6 +357,7 @@ def build(spec, base_obj, mode, context=None, warns=None):
         if isinstance(v, dict) and v.get("code"):
             var_defs[v["code"]] = v
     used_vars = []
+    use_count = {}
     for it in intents:
         for v in it.get("collect_vars") or []:
             code = v.get("code") if isinstance(v, dict) else v
@@ -364,6 +365,8 @@ def build(spec, base_obj, mode, context=None, warns=None):
                 var_defs.setdefault(code, v)
             if code not in var_defs:
                 raise BuildError("biến '%s' của intent '%s' chưa khai báo ở spec.variables" % (code, it.get("name")))
+            if (it.get("kind") or "").strip().lower() == "collect":  # chỉ kind collect sinh bước thu biến
+                use_count[code] = use_count.get(code, 0) + 1
             if code not in used_vars:
                 used_vars.append(code)
     carry_of = {}
@@ -699,6 +702,8 @@ def build(spec, base_obj, mode, context=None, warns=None):
             x = copy.deepcopy(cv_s)
             x.update({"variable_code": code, "variable_name": vname})
             set_if(x, "variable_value", vd.get("prompt") or "")
+            # Ghi nhớ thông tin: biến thu ở >= 2 intent thì bật để bot không hỏi lại (spec "remember" ghi đè)
+            x["remember"] = bool(vd["remember"]) if "remember" in vd else use_count.get(code, 0) >= 2
             cvl.append(x)
             y = copy.deepcopy(cd_s)
             y.update({"id": code, "name": vname})

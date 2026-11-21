@@ -6,6 +6,7 @@ Fixture chỉ chứng minh validator nhất quán nội bộ với tài liệu, 
 import copy
 import json
 import os
+import re
 import shutil
 import sys
 import tempfile
@@ -110,6 +111,27 @@ class TestValidate(unittest.TestCase):
         code, out, err = run("validate_smartagent.py", self._variant(m))
         self.assertRegex(out, r"(?m)^WARN X13 .*Khách có nhu cầu.*END_CALL")
         self.assertRegex(out, r"(?m)^FAIL X6 ")  # tên không phải Hoàn tất nên X6 cũng FAIL
+
+    def _var_in_two_intents(self, remember):
+        def m(g):
+            cfg = g["nodes"][0]["ai_agent_config"]
+            ban = next(c for c in cfg["ai_analyze"]["conditions"] if c["id"] == "i_ban")
+            ban["action_steps"] = [{"action": "collect_variables", "prompt": None, "variables_code": ["var_ten"]}]
+            next(v for v in cfg["collect_variables"] if v["variable_code"] == "var_ten")["remember"] = remember
+        return self._variant(m)
+
+    def test_good_passes_x16(self):
+        code, out, err = run("validate_smartagent.py", os.path.join(FIX, "good.json"))
+        self.assertRegex(out, r"(?m)^PASS X16 ")
+
+    def test_var_in_two_intents_without_remember_warns_x16(self):
+        code, out, err = run("validate_smartagent.py", self._var_in_two_intents(False))
+        self.assertRegex(out, r"(?m)^WARN X16 .*thu ở 2 ý định.*Ghi nhớ thông tin")
+        self.assertEqual(len(re.findall(r"(?m)^WARN X16 ", out)), 1, out)  # chỉ var_ten, không phải var_nhu_cau
+
+    def test_var_in_two_intents_with_remember_passes_x16(self):
+        code, out, err = run("validate_smartagent.py", self._var_in_two_intents(True))
+        self.assertRegex(out, r"(?m)^PASS X16 ")
 
     def test_good_transfer_type_consistent_x15(self):
         code, out, err = run("validate_smartagent.py", os.path.join(FIX, "good.json"))

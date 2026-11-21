@@ -10,6 +10,7 @@ Assistant là **người điều phối**: hiểu việc, chia phần, giao cho 
 | Dựng/sửa ≥ 2 phần | Mục 2–5: chia đợt, mỗi artefact một subagent |
 | Client không có subagent | Chạy tuần tự đúng thứ tự đợt, mọi quy tắc còn lại giữ nguyên |
 Cách đánh giá song song/tuần tự (bốn câu hỏi, giới hạn, khi nào không cần subagent) chung cho mọi skill: `parallel.md`. Mục 6 của file đó ghi đơn vị chia và chỗ phải tuần tự của từng skill chuyên trách; assistant đọc khi xếp đợt. Subagent được giao việc không chia tiếp.
+Cập nhật skill con: trước khi gọi thẳng hoặc giao một đợt, assistant chạy `scripts/self_update.py --skill <tên> [--skill <tên> …]` một lần cho mọi skill của đợt (không chạy khi subagent của đợt đó còn đang chạy). Một lần pull cập nhật cả repo; script báo đọc lại SKILL.md của skill vừa đổi, so phiên bản với GitHub khi cài chép tay và in `CALLED_SKILL=<tên> <phiên bản>`. Subagent vẫn không tự chạy self_update.
 Công cụ Workflow/nhiều tác tử quy mô lớn chỉ dùng khi user yêu cầu rõ.
 
 ## 2. Chia đợt theo phụ thuộc và cổng của user

@@ -26,6 +26,7 @@ Cá nhân hoá: dùng biến ngay trong kịch bản, ví dụ `"Xin chào, anh/
   - số đọc bằng chữ ("không chín tám một …") → ghi 10 chữ số liền nhau dạng `09xxxxxxxx`
   - "số của chị là 0912… à không 0988…" → `0988…`
 - Biến có thể kèm prompt suy luận giá trị (ví dụ gán mức độ, YES/NO) ngay trong mô tả biến.
+- **Ghi nhớ thông tin** (công tắc dưới ô Hướng dẫn Agent của từng biến; runtime `collect_variables[].remember`): **bật** khi biến được thu ở từ 2 Ý định trở lên (ví dụ "Tên công ty" thu ở cả "Cần tư vấn" và "Báo lỗi"), để bot dùng lại giá trị đã có, không hỏi lại khi khách chuyển sang ý định khác. Biến chỉ thu ở một Ý định thì để tắt. Giao diện ghi thêm "không xin lại ở cuộc gọi tiếp theo": bật cho biến nhận diện khách ổn định (họ tên, công ty) là hợp lý; không bật cho biến theo từng lần (mô tả lỗi, nhu cầu, ngày hẹn) dù dùng ở nhiều ý định, vì cuộc gọi sau sẽ dùng lại giá trị cũ. Validator X16 cảnh báo; `build_smartagent.py` tự bật theo quy tắc trên trừ khi spec ghi `"remember": false`. Trường editor tương ứng: Cần xác nhận (bật trên giao diện, Cập nhật, GET lại để xem khoá).
 - Trên giao diện: mã biến được **tự sinh từ tên biến** (`var_` + tên bỏ dấu, nối gạch dưới, ví dụ "Họ tên khách" → `{{var_ho_ten_khach}}`). Đặt tên xong mới tham chiếu mã trong prompt; tham chiếu mã không tồn tại thì editor không nhận. Biến mới chỉ hiện trong danh sách "Dữ liệu thu thập" (chip chèn biến) sau khi đóng mở lại panel hoặc sau lần lưu.
 
 ## 3. Ý định và Hành động
@@ -122,3 +123,4 @@ Mọi quy tắc END_CALL (cách hệ thống chạy endcall, chỉ Ý định "H
 ## Xuất bản (đã kiểm chứng, khi user đã duyệt)
 - Nút **Xuất bản** ở thanh trên cùng, cạnh nút Cập nhật; khung hẹp có thể nằm ngoài vùng nhìn, bấm bằng JS theo chữ nút. Hộp "Xác nhận" (Callbot sẽ hoạt động theo phiên bản này...) → bấm Xác nhận.
 - Dấu hiệu thành công: thông báo "Xuất bản thành công", số "Phiên bản" tăng, và **id kịch bản đổi** (URL tự chuyển sang id mới; uuid giữ nguyên). Sau đó GET lại danh sách để lấy id mới, ghi manifest.
+- **Xuất bản trên giao diện ghi phần runtime theo editor** (✔ 11/2026): bản nháp dựng bằng API (validator PASS) sau khi bấm Xuất bản bị FAIL C2 (2 điều kiện hệ thống mất khỏi `ai_analyze.conditions`), C9 (`classifies` rỗng), C10 (END_CALL mất description), X2. Luôn chạy `validate_smartagent.py --mode post` trên bản GET sau xuất bản; FAIL → lấy bản GET nháp đã PASS, thay `id`/`version`/`is_publish` bằng của bản xuất bản, `omi_save.py callbot --update --confirm-update --base <GET bản xuất bản>` (có hiệu lực ngay, id đổi tiếp, cờ publish giữ) → kiểm lại PASS rồi mới gắn số.

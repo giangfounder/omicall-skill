@@ -34,6 +34,7 @@ Cả bốn câu đều "không" → chạy song song được.
 | Client không có subagent | Chạy tuần tự đúng thứ tự, các quy tắc khác giữ nguyên |
 
 ## 5. Giao việc và kiểm
+- Trước khi giao một đợt: assistant chạy `self_update.py --skill <tên>` cho các skill của đợt (một lần, trước khi giao); subagent không tự chạy.
 - Khảo sát tenant **một lần** (`tenant_context.json`, đợt 0); sau đó file này **chỉ đọc**, mọi giá trị mới ghi qua `manifest.py` (có khoá: `set` cho artefact, `ctx-set` cho giá trị nền như mã trường). Subagent đọc, không khảo sát lại.
 - Sổ chung `manifest.py`: `init`; sau khi lưu và validate `set <key> --owner <tên> --json '{"id":..,"verify":"PASS","verify_report":..,"saved_at":..,"verified_at":..}'`; bên dùng ghi `consumed_values`; user xuất bản xong → `stale <producer>`, GET lại rồi `set`; `check` báo bên dùng đang trỏ giá trị cũ; `gates` liệt kê cổng chờ user. Manifest không chứa token hay mật khẩu (script tự từ chối).
 - Phần giống nhau (domain, điều cấm, sổ chung, mẫu trả về) ghi một lần vào `<scratch>/brief_common.md`; mỗi subagent chỉ nhận thêm phần riêng.

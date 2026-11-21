@@ -173,12 +173,45 @@ class TestSelfUpdateMain(unittest.TestCase):
                 return 128, "", "not a git repository"
             return 0, "git version", ""
         self.su.run = fake_run
-        self.su.remote_version = lambda: None
+        self.su.remote_version = lambda *a: None
         self.su.adopt_copy = lambda: self.fail("không được clone/di chuyển khi thiếu --link")
         code, out = self.out([], {"OMI_SUBAGENT": ""})
         self.assertIn("--link", out)
         self.assertTrue(self.su.STAMP.exists())
 
+
+    def test_called_skill_versions_on_every_path(self):
+        for argv, env in ((["--subagent", "--skill", "omicall-moi"], {}),           # subagent
+                          (["--skill", "omicall-moi"], {"OMI_SUBAGENT": ""}),       # pull (lỗi)
+                          (["--skill", "omicall-moi"], {"OMI_SUBAGENT": ""})):      # trong 1 giờ: bỏ qua
+            code, out = self.out(argv, env)
+            self.assertIn("CALLED_SKILL=omicall-moi 0.1.0", out)
+            self.assertTrue(out.strip().endswith("SKILL_VERSION=omicall-a 1.0.0"), out)
+
+    def test_called_skill_missing_and_bad_name(self):
+        code, out = self.out(["--subagent", "--skill", "omicall-khong-co"])
+        self.assertIn("CHƯA CÀI omicall-khong-co", out)
+        for bad in ("../x", "omicall-a/../../x", "khac"):
+            with self.assertRaises(SystemExit) as cm:
+                self.out(["--subagent", "--skill", bad])
+            self.assertEqual(cm.exception.code, 2)
+
+    def test_called_skill_md_changed_asks_reread(self):
+        import io
+        from contextlib import redirect_stdout
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            self.su.report({"omicall-moi": "0.1.0"}, {"omicall-moi": "0.2.0"},
+                           ["omicall-moi/SKILL.md"], self.tmp / "repo", ["omicall-moi"])
+        self.assertIn("SKILL.md ĐÃ THAY ĐỔI (omicall-moi)", buf.getvalue())
+
+    def test_copy_install_checks_called_skill_remote(self):
+        def fake_run(args, timeout=60):
+            return (128, "", "") if "--show-toplevel" in args else (0, "", "")
+        self.su.run = fake_run
+        self.su.remote_version = lambda name=None: "9.0.0" if name == "omicall-moi" else "1.0.0"
+        code, out = self.out(["--skill", "omicall-moi"], {"OMI_SUBAGENT": ""})
+        self.assertIn("CÓ BẢN MỚI omicall-moi 9.0.0 (đang dùng 0.1.0)", out)
 
 if __name__ == "__main__":
     unittest.main()
